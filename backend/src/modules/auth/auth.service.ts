@@ -1,0 +1,382 @@
+import { ConflictException, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcryptjs';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+
+// Default permissions definition
+const PERMISSIONS = [
+  { code: 'project.create', description: 'Create projects', module: 'project' },
+  { code: 'project.edit', description: 'Edit projects', module: 'project' },
+  { code: 'project.view', description: 'View projects', module: 'project' },
+  { code: 'project.delete', description: 'Delete projects', module: 'project' },
+  
+  { code: 'pfmea.create', description: 'Create PFMEA rows', module: 'pfmea' },
+  { code: 'pfmea.edit', description: 'Edit PFMEA rows', module: 'pfmea' },
+  { code: 'pfmea.view', description: 'View PFMEA rows', module: 'pfmea' },
+  { code: 'pfmea.delete', description: 'Delete PFMEA rows', module: 'pfmea' },
+  
+  { code: 'dfmea.create', description: 'Create DFMEA rows', module: 'dfmea' },
+  { code: 'dfmea.edit', description: 'Edit DFMEA rows', module: 'dfmea' },
+  { code: 'dfmea.view', description: 'View DFMEA rows', module: 'dfmea' },
+  { code: 'dfmea.delete', description: 'Delete DFMEA rows', module: 'dfmea' },
+
+  { code: 'cp.create', description: 'Create Control Plan rows', module: 'control_plan' },
+  { code: 'cp.edit', description: 'Edit Control Plan rows', module: 'control_plan' },
+  { code: 'cp.view', description: 'View Control Plan rows', module: 'control_plan' },
+  { code: 'cp.delete', description: 'Delete Control Plan rows', module: 'control_plan' },
+
+  { code: 'revision.create', description: 'Create document revisions', module: 'revision' },
+  { code: 'revision.submit', description: 'Submit document revisions', module: 'revision' },
+  { code: 'revision.review', description: 'Review document revisions', module: 'revision' },
+  { code: 'revision.approve', description: 'Approve document revisions', module: 'revision' },
+
+  { code: 'action.create', description: 'Create actions', module: 'action' },
+  { code: 'action.edit', description: 'Edit actions', module: 'action' },
+  { code: 'action.view', description: 'View actions', module: 'action' },
+  { code: 'action.close', description: 'Close/complete actions', module: 'action' },
+];
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
+
+  async signup(dto: SignupDto) {
+    // 1. Verify subdomain is unique
+    const existingTenant = await this.prisma.tenant.findUnique({
+      where: { subdomain: dto.subdomain },
+    });
+    if (existingTenant) {
+      throw new ConflictException('Subdomain is already registered');
+    }
+
+    // 2. Perform Tenant, User, and RBAC setup in a database transaction
+    return this.prisma.$transaction(async (tx) => {
+      // Create Tenant
+      const tenant = await tx.tenant.create({
+        data: {
+          name: dto.tenantName,
+          subdomain: dto.subdomain,
+        },
+      });
+
+      // Hash password
+      const passwordHash = await bcrypt.hash(dto.password, 12);
+
+      // Create User
+      const user = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: dto.email,
+          name: dto.name,
+          passwordHash,
+        },
+      });
+
+      // Seed core permissions (upsert to avoid duplication if already seeded)
+      const dbPermissions = [];
+      for (const p of PERMISSIONS) {
+        const perm = await tx.permission.upsert({
+          where: { code: p.code },
+          update: {},
+          create: p,
+        });
+        dbPermissions.push(perm);
+      }
+
+      // Seed roles for this tenant
+      const adminRole = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Admin',
+          description: 'Tenant Administrator with full access rights',
+          isSystem: true,
+        },
+      });
+
+      const qeRole = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Quality Engineer',
+          description: 'Standard engineer responsible for FMEA authoring',
+          isSystem: true,
+        },
+      });
+
+      const reviewerRole = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Reviewer',
+          description: 'Team member responsible for reviewing drafts',
+          isSystem: true,
+        },
+      });
+
+      const approverRole = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Approver',
+          description: 'Authorized sign-off authority',
+          isSystem: true,
+        },
+      });
+
+      const viewerRole = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Viewer',
+          description: 'Read-only access to all FMEA documents',
+          isSystem: true,
+        },
+      });
+
+      // Map Permissions to Admin Role (All permissions)
+      await tx.rolePermission.createMany({
+        data: dbPermissions.map((p) => ({
+          roleId: adminRole.id,
+          permissionId: p.id,
+        })),
+      });
+
+      // Map Permissions to Quality Engineer Role
+      const qePermCodes = [
+        'project.view', 'project.edit',
+        'pfmea.create', 'pfmea.edit', 'pfmea.view', 'pfmea.delete',
+        'dfmea.create', 'dfmea.edit', 'dfmea.view', 'dfmea.delete',
+        'cp.create', 'cp.edit', 'cp.view', 'cp.delete',
+        'revision.create', 'revision.submit',
+        'action.create', 'action.edit', 'action.view', 'action.close',
+      ];
+      const qePerms = dbPermissions.filter((p) => qePermCodes.includes(p.code));
+      await tx.rolePermission.createMany({
+        data: qePerms.map((p) => ({
+          roleId: qeRole.id,
+          permissionId: p.id,
+        })),
+      });
+
+      // Map Permissions to Reviewer Role
+      const revPermCodes = ['project.view', 'pfmea.view', 'dfmea.view', 'cp.view', 'revision.review', 'action.view'];
+      const revPerms = dbPermissions.filter((p) => revPermCodes.includes(p.code));
+      await tx.rolePermission.createMany({
+        data: revPerms.map((p) => ({
+          roleId: reviewerRole.id,
+          permissionId: p.id,
+        })),
+      });
+
+      // Map Permissions to Approver Role
+      const appPermCodes = ['project.view', 'pfmea.view', 'dfmea.view', 'cp.view', 'revision.approve', 'action.view'];
+      const appPerms = dbPermissions.filter((p) => appPermCodes.includes(p.code));
+      await tx.rolePermission.createMany({
+        data: appPerms.map((p) => ({
+          roleId: approverRole.id,
+          permissionId: p.id,
+        })),
+      });
+
+      // Map Permissions to Viewer Role
+      const viewPerms = dbPermissions.filter((p) => p.code.endsWith('.view'));
+      await tx.rolePermission.createMany({
+        data: viewPerms.map((p) => ({
+          roleId: viewerRole.id,
+          permissionId: p.id,
+        })),
+      });
+
+      // Assign Admin Role to User
+      await tx.userRole.create({
+        data: {
+          userId: user.id,
+          roleId: adminRole.id,
+        },
+      });
+
+      // Retrieve full user claims for token generation
+      const tokens = await this.generateTokens({
+        sub: user.id,
+        email: user.email,
+        tenantId: tenant.id,
+        roles: ['Admin'],
+        permissions: dbPermissions.map((p) => p.code),
+      });
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain,
+        },
+        ...tokens,
+      };
+    });
+  }
+
+  async login(dto: LoginDto) {
+    // 1. Resolve tenant by subdomain
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { subdomain: dto.subdomain },
+    });
+    if (!tenant || tenant.status !== 'active') {
+      throw new UnauthorizedException('Invalid subdomain or tenant suspended');
+    }
+
+    // 2. Resolve user by email inside this tenant
+    const user = await this.prisma.user.findUnique({
+      where: {
+        tenantId_email: {
+          tenantId: tenant.id,
+          email: dto.email,
+        },
+      },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // 3. Verify password
+    const isPasswordValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    // 4. Extract roles and permissions
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissionCodesSet = new Set<string>();
+    for (const ur of user.userRoles) {
+      for (const rp of ur.role.rolePermissions) {
+        permissionCodesSet.add(rp.permission.code);
+      }
+    }
+    const permissions = Array.from(permissionCodesSet);
+
+    // 5. Generate tokens
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      tenantId: tenant.id,
+      roles,
+      permissions,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      tenant: {
+        id: tenant.id,
+        name: tenant.name,
+        subdomain: tenant.subdomain,
+      },
+      ...tokens,
+    };
+  }
+
+  async generateTokens(payload: JwtPayload) {
+    const accessToken = await this.jwtService.signAsync({ ...payload } as any, {
+      secret: this.configService.get<string>('JWT_SECRET') || 'super-secret-fmea-token-key-2026',
+      expiresIn: (this.configService.get<string>('JWT_EXPIRES_IN') || '15m') as any,
+    });
+
+    const refreshToken = await this.jwtService.signAsync(
+      { sub: payload.sub, tenantId: payload.tenantId } as any,
+      {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'super-secret-fmea-refresh-token-key-2026',
+        expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d') as any,
+      },
+    );
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'super-secret-fmea-refresh-token-key-2026',
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        include: {
+          userRoles: {
+            include: {
+              role: {
+                include: {
+                  rolePermissions: {
+                    include: {
+                      permission: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user || user.status !== 'active') {
+        throw new UnauthorizedException('User not active');
+      }
+
+      const roles = user.userRoles.map((ur) => ur.role.name);
+      const permissionCodesSet = new Set<string>();
+      for (const ur of user.userRoles) {
+        for (const rp of ur.role.rolePermissions) {
+          permissionCodesSet.add(rp.permission.code);
+        }
+      }
+      const permissions = Array.from(permissionCodesSet);
+
+      const tokens = await this.generateTokens({
+        sub: user.id,
+        email: user.email,
+        tenantId: user.tenantId,
+        roles,
+        permissions,
+      });
+
+      return tokens;
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+}

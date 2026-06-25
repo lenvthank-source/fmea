@@ -1,0 +1,486 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id         String     @id @default(uuid()) @db.Uuid
+  name       String     @db.VarChar(255)
+  subdomain  String     @unique @db.VarChar(63)
+  plan       String     @default("standard") @db.VarChar(50)
+  status     String     @default("active") @db.VarChar(20)
+  settings   Json       @default("{}")
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  users        User[]
+  roles        Role[]
+  projects     Project[]
+  documents    Document[]
+  processItems ProcessItem[]
+  functions       Function[]
+  requirements    Requirement[]
+  failureModes    FailureMode[]
+  effects         Effect[]
+  causes          Cause[]
+  controls        Control[]
+  characteristics Characteristic[]
+
+  @@map("tenant")
+}
+
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  email        String         @db.VarChar(255)
+  name         String         @db.VarChar(255)
+  passwordHash String?        @map("password_hash") @db.VarChar(255)
+  avatarUrl    String?        @map("avatar_url") @db.VarChar(500)
+  status       String         @default("active") @db.VarChar(20)
+  mfaEnabled   Boolean        @default(false) @map("mfa_enabled")
+  lastLoginAt  DateTime?      @map("last_login_at") @db.Timestamptz
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles    UserRole[]
+  ledProjects  Project[]      @relation("TeamLead")
+  createdProjs Project[]      @relation("ProjectCreator")
+  createdDocs  Document[]     @relation("DocumentCreator")
+  createdRevs  DocumentRevision[] @relation("RevisionCreator")
+  approvals    Approval[]
+  pfmeaRows    PfmeaRow[]
+
+  @@unique([tenantId, email])
+  @@map("user")
+}
+
+model Role {
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  name            String           @db.VarChar(100)
+  description     String?
+  isSystem        Boolean          @default(false) @map("is_system")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@unique([tenantId, name])
+  @@map("role")
+}
+
+model Permission {
+  id              String           @id @default(uuid()) @db.Uuid
+  code            String           @unique @db.VarChar(100)
+  description     String?
+  module          String           @db.VarChar(50)
+  rolePermissions RolePermission[]
+
+  @@map("permission")
+}
+
+model UserRole {
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_role")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model Project {
+  id              String     @id @default(uuid()) @db.Uuid
+  tenantId        String     @map("tenant_id") @db.Uuid
+  name            String     @db.VarChar(255)
+  description     String?
+  customer        String?    @db.VarChar(255)
+  plantId         String?    @map("plant_id") @db.Uuid
+  productFamilyId String?    @map("product_family_id") @db.Uuid
+  modelYear       String?    @map("model_year") @db.VarChar(10)
+  status          String     @default("active") @db.VarChar(20)
+  teamLeadId      String?    @map("team_lead_id") @db.Uuid
+  createdById     String     @map("created_by") @db.Uuid
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teamLead        User?         @relation("TeamLead", fields: [teamLeadId], references: [id])
+  creator         User          @relation("ProjectCreator", fields: [createdById], references: [id])
+  documents       Document[]
+  processItems    ProcessItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("project")
+}
+
+model Document {
+  id                String             @id @default(uuid()) @db.Uuid
+  tenantId          String             @map("tenant_id") @db.Uuid
+  projectId         String             @map("project_id") @db.Uuid
+  type              String             @db.VarChar(20) // 'PFMEA', 'DFMEA', 'CONTROL_PLAN', 'PFD'
+  name              String             @db.VarChar(255)
+  currentRevisionId String?            @map("current_revision_id") @db.Uuid
+  status            String             @default("active") @db.VarChar(20)
+  createdById       String             @map("created_by") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator           User               @relation("DocumentCreator", fields: [createdById], references: [id])
+  revisions         DocumentRevision[]
+
+  @@index([projectId])
+  @@index([tenantId, type])
+  @@map("document")
+}
+
+model DocumentRevision {
+  id                String     @id @default(uuid()) @db.Uuid
+  documentId        String     @map("document_id") @db.Uuid
+  revisionNumber    String     @map("revision_number") @db.VarChar(20)
+  status            String     @default("draft") @db.VarChar(20)
+  summary           String?
+  changeDescription String?    @map("change_description")
+  effectiveFrom     DateTime?  @map("effective_from") @db.Date
+  effectiveTo       DateTime?  @map("effective_to") @db.Date
+  createdById       String     @map("created_by") @db.Uuid
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  submittedAt       DateTime?  @map("submitted_at") @db.Timestamptz
+  approvedAt        DateTime?  @map("approved_at") @db.Timestamptz
+  lockedAt          DateTime?  @map("locked_at") @db.Timestamptz
+  document          Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  creator           User          @relation("RevisionCreator", fields: [createdById], references: [id])
+  approvals         Approval[]
+  processSteps      ProcessStep[]
+  pfmeaRows         PfmeaRow[]
+
+  @@unique([documentId, revisionNumber])
+  @@index([documentId])
+  @@index([status])
+  @@map("document_revision")
+}
+
+model Approval {
+  id          String           @id @default(uuid()) @db.Uuid
+  revisionId  String           @map("revision_id") @db.Uuid
+  approverId  String           @map("approver_id") @db.Uuid
+  role        String           @db.VarChar(50) // 'reviewer', 'approver'
+  decision    String?          @db.VarChar(20) // 'approved', 'rejected', 'changes_requested'
+  comment     String?
+  decidedAt   DateTime?        @map("decided_at") @db.Timestamptz
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  revision    DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  approver    User             @relation(fields: [approverId], references: [id])
+
+  @@index([revisionId])
+  @@map("approval")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String   @map("entity_id") @db.Uuid
+  action     String   @db.VarChar(20) // 'create', 'update', 'delete', 'approve', 'reject', etc.
+  oldValue   Json?    @map("old_value")
+  newValue   Json?    @map("new_value")
+  diff       Json?
+  userId     String   @map("user_id") @db.Uuid
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent")
+  timestamp  DateTime @default(now()) @db.Timestamptz
+
+  @@index([entityType, entityId])
+  @@index([tenantId, timestamp(sort: Desc)])
+  @@index([userId, timestamp(sort: Desc)])
+  @@map("audit_log")
+}
+
+model ProcessItem {
+  id              String        @id @default(uuid()) @db.Uuid
+  tenantId        String        @map("tenant_id") @db.Uuid
+  projectId       String        @map("project_id") @db.Uuid
+  name            String        @db.VarChar(255)
+  description     String?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  processSteps    ProcessStep[]
+
+  @@map("process_item")
+}
+
+model ProcessStep {
+  id              String           @id @default(uuid()) @db.Uuid
+  revisionId      String           @map("revision_id") @db.Uuid
+  processItemId   String           @map("process_item_id") @db.Uuid
+  stepNumber      String           @map("step_number") @db.VarChar(20)
+  name            String           @db.VarChar(255)
+  description     String?
+  stepType        String           @default("operation") @map("step_type") @db.VarChar(30)
+  sequenceOrder   Int              @map("sequence_order")
+  inputs          String?
+  outputs         String?
+  resources       String?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  
+  revision        DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  processItem     ProcessItem      @relation(fields: [processItemId], references: [id], onDelete: Cascade)
+  workElements    WorkElement[]
+  pfmeaRows       PfmeaRow[]
+  controlPlanRows ControlPlanRow[]
+
+  @@index([revisionId])
+  @@index([revisionId, sequenceOrder])
+  @@map("process_step")
+}
+
+model WorkElement {
+  id            String      @id @default(uuid()) @db.Uuid
+  processStepId String      @map("process_step_id") @db.Uuid
+  name          String      @db.VarChar(255)
+  description   String?
+  sequenceOrder Int         @map("sequence_order")
+  processStep   ProcessStep @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+  pfmeaRows     PfmeaRow[]
+
+  @@map("work_element")
+}
+
+model Function {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(500)
+  description String?  @db.Text
+  isTemplate  Boolean  @default(false) @map("is_template")
+  source      String   @default("manual") @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows   PfmeaRowFunction[]
+
+  @@map("function")
+}
+
+model Requirement {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(500)
+  description String?  @db.Text
+  spec        String?  @db.VarChar(255)
+  tolerance   String?  @db.VarChar(100)
+  isTemplate  Boolean  @default(false) @map("is_template")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows   PfmeaRowRequirement[]
+
+  @@map("requirement")
+}
+
+model FailureMode {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(500)
+  description String?  @db.Text
+  isTemplate  Boolean  @default(false) @map("is_template")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows   PfmeaRowFailureMode[]
+
+  @@map("failure_mode")
+}
+
+model Effect {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(500)
+  description String?  @db.Text
+  level       String   @default("local") @db.VarChar(20)
+  isTemplate  Boolean  @default(false) @map("is_template")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows   PfmeaRowEffect[]
+
+  @@map("effect")
+}
+
+model Cause {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(500)
+  description String?  @db.Text
+  isTemplate  Boolean  @default(false) @map("is_template")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows   PfmeaRowCause[]
+
+  @@map("cause")
+}
+
+model Control {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  name            String   @db.VarChar(500)
+  description     String?  @db.Text
+  type            String   @db.VarChar(20)
+  detectionMethod String?  @map("detection_method") @db.VarChar(255)
+  isTemplate      Boolean  @default(false) @map("is_template")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows       PfmeaRowControl[]
+
+  @@map("control")
+}
+
+model Characteristic {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  name           String   @db.VarChar(500)
+  description    String?  @db.Text
+  classification String   @default("standard") @db.VarChar(20)
+  unitOfMeasure  String?  @map("unit_of_measure") @db.VarChar(50)
+  isTemplate     Boolean  @default(false) @map("is_template")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pfmeaRows      PfmeaRowCharacteristic[]
+
+  @@map("characteristic")
+}
+
+model PfmeaRow {
+  id            String            @id @default(uuid()) @db.Uuid
+  revisionId    String            @map("revision_id") @db.Uuid
+  processStepId String            @map("process_step_id") @db.Uuid
+  workElementId String?           @map("work_element_id") @db.Uuid
+  rowNumber     Int               @map("row_number")
+  severity      Int?              @db.SmallInt
+  occurrence    Int?              @db.SmallInt
+  detection     Int?              @db.SmallInt
+  ap            String?           @db.Char(1)
+  status        String            @default("draft") @db.VarChar(20)
+  accessLevel   String            @default("public") @map("access_level") @db.VarChar(20)
+  notes         String?           @db.Text
+  createdById   String            @map("created_by") @db.Uuid
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  revision      DocumentRevision  @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  processStep   ProcessStep       @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+  workElement   WorkElement?      @relation(fields: [workElementId], references: [id], onDelete: SetNull)
+  createdBy     User              @relation(fields: [createdById], references: [id])
+
+  functions       PfmeaRowFunction[]
+  requirements    PfmeaRowRequirement[]
+  failureModes    PfmeaRowFailureMode[]
+  effects         PfmeaRowEffect[]
+  causes          PfmeaRowCause[]
+  controls        PfmeaRowControl[]
+  characteristics PfmeaRowCharacteristic[]
+
+  @@index([revisionId])
+  @@index([processStepId])
+  @@index([revisionId, ap])
+  @@map("pfmea_row")
+}
+
+model ControlPlanRow {
+  id            String      @id @default(uuid()) @db.Uuid
+  processStepId String      @map("process_step_id") @db.Uuid
+  processStep   ProcessStep @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+
+  @@map("control_plan_row")
+}
+
+// Junction Models
+model PfmeaRowFunction {
+  pfmeaRowId String   @map("pfmea_row_id") @db.Uuid
+  functionId String   @map("function_id") @db.Uuid
+  pfmeaRow   PfmeaRow @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  function   Function @relation(fields: [functionId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, functionId])
+  @@map("pfmea_row_function")
+}
+
+model PfmeaRowRequirement {
+  pfmeaRowId    String      @map("pfmea_row_id") @db.Uuid
+  requirementId String      @map("requirement_id") @db.Uuid
+  pfmeaRow      PfmeaRow    @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, requirementId])
+  @@map("pfmea_row_requirement")
+}
+
+model PfmeaRowFailureMode {
+  pfmeaRowId    String      @map("pfmea_row_id") @db.Uuid
+  failureModeId String      @map("failure_mode_id") @db.Uuid
+  pfmeaRow      PfmeaRow    @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  failureMode   FailureMode @relation(fields: [failureModeId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, failureModeId])
+  @@map("pfmea_row_failure_mode")
+}
+
+model PfmeaRowEffect {
+  pfmeaRowId String   @map("pfmea_row_id") @db.Uuid
+  effectId   String   @map("effect_id") @db.Uuid
+  pfmeaRow   PfmeaRow @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  effect     Effect   @relation(fields: [effectId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, effectId])
+  @@map("pfmea_row_effect")
+}
+
+model PfmeaRowCause {
+  pfmeaRowId String   @map("pfmea_row_id") @db.Uuid
+  causeId    String   @map("cause_id") @db.Uuid
+  pfmeaRow   PfmeaRow @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  cause      Cause    @relation(fields: [causeId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, causeId])
+  @@map("pfmea_row_cause")
+}
+
+model PfmeaRowControl {
+  pfmeaRowId String   @map("pfmea_row_id") @db.Uuid
+  controlId  String   @map("control_id") @db.Uuid
+  pfmeaRow   PfmeaRow @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  control    Control  @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, controlId])
+  @@map("pfmea_row_control")
+}
+
+model PfmeaRowCharacteristic {
+  pfmeaRowId       String         @map("pfmea_row_id") @db.Uuid
+  characteristicId String         @map("characteristic_id") @db.Uuid
+  pfmeaRow         PfmeaRow       @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+  characteristic   Characteristic @relation(fields: [characteristicId], references: [id], onDelete: Cascade)
+
+  @@id([pfmeaRowId, characteristicId])
+  @@map("pfmea_row_characteristic")
+}

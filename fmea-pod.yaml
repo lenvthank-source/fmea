@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fmea-pod
+  labels:
+    app: fmea
+spec:
+  containers:
+    - name: postgres
+      image: pgvector/pgvector:pg15
+      env:
+        - name: POSTGRES_DB
+          value: fmea_db
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+      ports:
+        - containerPort: 5432
+          hostPort: 5432
+      volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+    - name: redis
+      image: redis:7-alpine
+      ports:
+        - containerPort: 6379
+          hostPort: 6379
+      volumeMounts:
+        - name: redis-data
+          mountPath: /data
+  volumes:
+    - name: postgres-data
+      persistentVolumeClaim:
+        claimName: postgres-data-pvc
+    - name: redis-data
+      persistentVolumeClaim:
+        claimName: redis-data-pvc
