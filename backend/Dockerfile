@@ -1,15 +1,18 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
+
+# Install openssl for Prisma build compatibility
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Copy package configuration files
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for building)
+# Install all dependencies
 RUN npm ci
 
-# Copy Prisma schema first (for caching prisma client generation)
+# Copy Prisma schema first
 COPY prisma ./prisma/
 
 # Generate Prisma Client
@@ -27,9 +30,12 @@ RUN npm run build
 RUN npm prune --production
 
 # Stage 2: Production Run
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /usr/src/app
+
+# Install runtime openssl dependency
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files and runtime dependencies
 COPY package*.json ./
