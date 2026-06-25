@@ -3,6 +3,7 @@ import { Box, Typography, Button, Grid, Card, CardContent, Dialog, DialogTitle, 
 import { Add as AddIcon, Business as BusinessIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 interface Project {
   id: string;
@@ -34,7 +35,7 @@ export const ProjectList: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:3000/api/v1/projects', {
+      const response = await fetch(`${API_BASE_URL}/projects`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -76,7 +77,7 @@ export const ProjectList: React.FC = () => {
     setCreateError(null);
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/projects', {
+      const response = await fetch(`${API_BASE_URL}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

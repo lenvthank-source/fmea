@@ -21,7 +21,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const API_URL = 'http://localhost:3000/api/v1';
+import { API_BASE_URL } from '../../config';
+
+const API_URL = API_BASE_URL;
 
 function parseJwt(token: string): any {
   try {

@@ -35,6 +35,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { calculateAP } from './utils/apCalculator';
+import { API_BASE_URL } from '../../config';
 
 interface WorkElement {
   id: string;
@@ -102,7 +103,7 @@ export const PfmeaWorkspace: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:3000/api/v1/projects/${projectId}/documents`, {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error('Failed to resolve project document schemas.');
@@ -136,7 +137,7 @@ export const PfmeaWorkspace: React.FC = () => {
     if (!pfmeaRevisionId || !pfdRevisionId) return;
     try {
       // 1. Fetch Process Steps (from PFD revision)
-      const stepsResponse = await fetch(`http://localhost:3000/api/v1/revisions/${pfdRevisionId}/pfd-steps`, {
+      const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdRevisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!stepsResponse.ok) throw new Error('Failed to load Process Steps');
@@ -144,7 +145,7 @@ export const PfmeaWorkspace: React.FC = () => {
       setSteps(stepsData);
 
       // 2. Fetch PFMEA rows
-      const rowsResponse = await fetch(`http://localhost:3000/api/v1/revisions/${pfmeaRevisionId}/pfmea-rows`, {
+      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!rowsResponse.ok) throw new Error('Failed to load PFMEA analysis rows');
@@ -171,7 +172,7 @@ export const PfmeaWorkspace: React.FC = () => {
     try {
       const nextRowNumber = rows.length > 0 ? Math.max(...rows.map((r) => r.rowNumber)) + 1 : 1;
 
-      const response = await fetch(`http://localhost:3000/api/v1/revisions/${pfmeaRevisionId}/pfmea-rows`, {
+      const response = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +202,7 @@ export const PfmeaWorkspace: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this analysis row? This action is permanent.')) return;
     setError(null);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/pfmea-rows/${rowId}`, {
+      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -235,7 +236,7 @@ export const PfmeaWorkspace: React.FC = () => {
     );
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/pfmea-rows/${rowId}`, {
+      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export const PfmeaWorkspace: React.FC = () => {
   // Detail panel save handler
   const handleSaveRowDetails = async (updatedData: any) => {
     if (!activeRow) return;
-    const response = await fetch(`http://localhost:3000/api/v1/pfmea-rows/${activeRow.id}`, {
+    const response = await fetch(`${API_BASE_URL}/pfmea-rows/${activeRow.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container } from '@mui/material';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -23,7 +24,7 @@ export const Login: React.FC = () => {
     try {
       if (isSignup) {
         // Sign up logic
-        const response = await fetch('http://localhost:3000/api/v1/auth/signup', {
+        const response = await fetch(`${API_BASE_URL}/auth/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name, subdomain, tenantName }),

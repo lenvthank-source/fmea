@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Alert, CircularProgress, Collapse, Link } from '@mui/material';
 import { Add as AddIcon, ArrowUpward as UpIcon, ArrowDownward as DownIcon, Delete as DeleteIcon, Edit as EditIcon, KeyboardArrowDown as ExpandIcon, KeyboardArrowUp as CollapseIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
+import { API_BASE_URL } from '../../config';
 import { StepFormDialog } from './components/StepFormDialog';
 import { WorkElementDialog } from './components/WorkElementDialog';
 
@@ -48,7 +49,7 @@ export const PfdWorkspace: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:3000/api/v1/projects/${projectId}/documents`, {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error('Failed to fetch project documents');
@@ -74,7 +75,7 @@ export const PfdWorkspace: React.FC = () => {
   const fetchSteps = async () => {
     if (!revisionId) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/revisions/${revisionId}/pfd-steps`, {
+      const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to load PFD steps');
@@ -124,7 +125,7 @@ export const PfdWorkspace: React.FC = () => {
       let response;
       if (stepToEdit) {
         // Edit step
-        response = await fetch(`http://localhost:3000/api/v1/pfd-steps/${stepToEdit.id}`, {
+        response = await fetch(`${API_BASE_URL}/pfd-steps/${stepToEdit.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -134,7 +135,7 @@ export const PfdWorkspace: React.FC = () => {
         });
       } else {
         // Create step
-        response = await fetch(`http://localhost:3000/api/v1/revisions/${revisionId}/pfd-steps`, {
+        response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -159,7 +160,7 @@ export const PfdWorkspace: React.FC = () => {
   const handleDeleteStep = async (stepId: string) => {
     setError(null);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/pfd-steps/${stepId}`, {
+      const response = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -189,7 +190,7 @@ export const PfdWorkspace: React.FC = () => {
     setSteps(newSteps);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/revisions/${revisionId}/pfd-steps/reorder`, {
+      const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps/reorder`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +211,7 @@ export const PfdWorkspace: React.FC = () => {
   const handleSaveWorkElement = async (elementData: any) => {
     setError(null);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/pfd-steps/${activeStepIdForElement}/work-elements`, {
+      const response = await fetch(`${API_BASE_URL}/pfd-steps/${activeStepIdForElement}/work-elements`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +234,7 @@ export const PfdWorkspace: React.FC = () => {
   const handleDeleteWorkElement = async (elementId: string) => {
     setError(null);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/work-elements/${elementId}`, {
+      const response = await fetch(`${API_BASE_URL}/work-elements/${elementId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
