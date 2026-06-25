@@ -80,15 +80,14 @@ export class AuthService {
         },
       });
 
-      // Seed core permissions (upsert to avoid duplication if already seeded)
-      const dbPermissions = [];
-      for (const p of PERMISSIONS) {
-        const perm = await tx.permission.upsert({
-          where: { code: p.code },
-          update: {},
-          create: p,
+      // Seed core permissions in bulk to minimize DB roundtrips
+      let dbPermissions = await tx.permission.findMany();
+      if (dbPermissions.length < PERMISSIONS.length) {
+        await tx.permission.createMany({
+          data: PERMISSIONS,
+          skipDuplicates: true,
         });
-        dbPermissions.push(perm);
+        dbPermissions = await tx.permission.findMany();
       }
 
       // Seed roles for this tenant
@@ -221,6 +220,9 @@ export class AuthService {
         },
         ...tokens,
       };
+    }, {
+      maxWait: 15000,
+      timeout: 30000,
     });
   }
 
