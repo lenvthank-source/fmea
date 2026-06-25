@@ -32,3 +32,12 @@ Thumbs.db
 
 # Private Credentials
 FMEA Credentials.txt
+
+# Ignore all markdown files except README.md
+*.md
+**/*.md
+!README.md
+!**/README.md
+
+# Ignore specific non-markdown guides
+deplopyment guide
