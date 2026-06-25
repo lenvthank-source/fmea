@@ -10,6 +10,7 @@ Because we are deploying under the **Cloudflare Free Plan**:
 *   **Frontend**: Deployed to **Cloudflare Pages** (100% Free, high-performance Edge hosting, unlimited bandwidth).
 *   **Backend API**: Deployed to **Render** (Free tier Web Service) as a Docker container. This bypasses Cloudflare Workers' 10ms CPU limit and handles NestJS/Prisma reflections seamlessly.
 *   **Database**: Deployed to **Neon Postgres** (Free tier Serverless PostgreSQL).
+*   **Storage (Action Evidence)**: Supports **Cloudflare R2 Bucket** (Edge Object Storage) or **Render Persistent Disks** as a local folder fallback.
 *   **Routing & Security**: Cloudflare DNS manages your domain, provides WAF protection, and proxies HTTP traffic to the backend.
 
 ```mermaid
@@ -18,6 +19,7 @@ graph TD
     Client -->|HTTPS / API| CFProxy[Cloudflare DNS Proxy<br/>SSL & Security]
     CFProxy -->|Proxy Pass| NodeCompute[Render Web Service<br/>NestJS Docker Container]
     NodeCompute -->|PostgreSQL Protocol| Neon[Neon Serverless Postgres]
+    NodeCompute -->|Object Storage| R2[Cloudflare R2 Bucket / Render Disk]
 ```
 
 ---
@@ -38,7 +40,7 @@ graph TD
     # 1. Set the database connection URL in your environment (with a 30s timeout to allow Neon to wake up)
     $env:DATABASE_URL="postgresql://neondb_owner:npg_VndmZP2yzX4L@ep-lingering-block-aipth776.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&connect_timeout=30"
     
-    # 2. Push the Prisma schema to Neon
+    # 2. Push the Prisma schema to Neon (includes Sprint 4 Control Plan & Actions models)
     npx.cmd prisma db push
     
     # 3. Seed default roles/users
@@ -61,13 +63,24 @@ git push -u origin main
 4.  Set the following configuration details:
     *   **Name**: `fmea-backend-api`
     *   **Root Directory**: `backend`
-    *   **Runtime**: `Docker` (Render automatically builds the backend using `backend/Dockerfile`)
+    *   **Runtime**: `Docker` (Render automatically builds the backend using `backend/Dockerfile` with the `node:20-slim` base image)
     *   **Instance Type**: `Free`
 5.  Under **Advanced -> Environment Variables**, add the following settings:
     *   `DATABASE_URL` = `<Your Neon Connection String>` (Make sure to append `&connect_timeout=30` to avoid cold-start timeouts)
     *   `JWT_SECRET` = `<Generate a secure random string>`
     *   `JWT_REFRESH_SECRET` = `<Generate a secure random string>`
     *   `PORT` = `3000`
+    
+    **Action Evidence Storage Configuration (Choose Option 1 or 2):**
+    *   **Option 1: Cloudflare R2 Storage (Recommended)**
+        *   `R2_ACCESS_KEY_ID` = `<Your R2 Access Key ID>`
+        *   `R2_SECRET_ACCESS_KEY` = `<Your R2 Secret Access Key>`
+        *   `R2_BUCKET_NAME` = `<Your R2 Bucket Name>`
+        *   `R2_ENDPOINT` = `https://<your-cloudflare-account-id>.r2.cloudflarestorage.com`
+    *   **Option 2: Local Storage Fallback**
+        *   Do not define the R2 variables. The application will fall back to local disk storage.
+        *   **Crucial Setup**: Go to your Render Web Service dashboard, select **Disks**, click **Add Disk**, set the **Mount Path** to `/usr/src/app/uploads`, and specify a size (e.g. 1 GiB). This ensures uploaded files persist across redeployments and container restarts.
+
 6.  Click **Deploy Web Service**.
 7.  Once the deployment is complete, note down your backend service URL (e.g., `https://fmea-backend-api.onrender.com`).
 
