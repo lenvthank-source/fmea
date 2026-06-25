@@ -6,7 +6,9 @@ import { AppShell } from '../components/Layout/AppShell';
 import { ProjectList } from '../features/projects/ProjectList';
 import { PfdWorkspace } from '../features/pfd/PfdWorkspace';
 import { PfmeaWorkspace } from '../features/pfmea/PfmeaWorkspace';
-import { Box, CircularProgress } from '@mui/material';
+import { ControlPlanWorkspace } from '../features/control-plan/ControlPlanWorkspace';
+import { ActionsDashboard } from '../features/actions/ActionsDashboard';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useAuth();
@@ -43,15 +45,8 @@ export const AppRouter: React.FC = () => {
         <Route path="projects" element={<ProjectList />} />
         <Route path="projects/:projectId/pfd" element={<PfdWorkspace />} />
         <Route path="projects/:projectId/pfmea" element={<PfmeaWorkspace />} />
-        <Route
-          path="actions"
-          element={
-            <Box>
-              <Typography variant="h5" sx={{ mb: 2 }}>Actions Dashboard</Typography>
-              <Typography color="text.secondary">Corrective actions workflow is deferred to Sprint 3.</Typography>
-            </Box>
-          }
-        />
+        <Route path="projects/:projectId/control-plan" element={<ControlPlanWorkspace />} />
+        <Route path="actions" element={<ActionsDashboard />} />
         <Route
           path="admin"
           element={
@@ -67,6 +62,3 @@ export const AppRouter: React.FC = () => {
     </Routes>
   );
 };
-
-// Temp imports for placeholders
-import { Typography } from '@mui/material';

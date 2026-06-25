@@ -33,4 +33,9 @@ export class AuthController {
   async getProfile(@Request() req: RequestWithUser) {
     return req.user;
   }
+
+  @Get('users')
+  async getUsers(@Request() req: RequestWithUser) {
+    return this.authService.findAllTenantUsers(req.user.tenantId);
+  }
 }

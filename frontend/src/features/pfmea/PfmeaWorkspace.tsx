@@ -26,11 +26,13 @@ import {
   InputLabel,
   Stack,
   Tooltip,
+  TextField,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  PlaylistAdd as PlaylistAddIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
@@ -96,6 +98,73 @@ export const PfmeaWorkspace: React.FC = () => {
   // Add row form state
   const [selectedStepId, setSelectedStepId] = useState('');
   const [selectedElementId, setSelectedElementId] = useState('');
+
+  // Corrective action creation state
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [selectedRowForAction, setSelectedRowForAction] = useState<PfmeaRow | null>(null);
+  const [actionDescription, setActionDescription] = useState('');
+  const [actionPriority, setActionPriority] = useState('medium');
+  const [actionOwnerId, setActionOwnerId] = useState('');
+  const [actionDueDate, setActionDueDate] = useState('');
+  const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+
+  // Load tenant users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data);
+        }
+      } catch (err) {
+        console.error('Failed to load tenant users', err);
+      }
+    };
+    if (token) {
+      fetchUsers();
+    }
+  }, [token]);
+
+  const handleCreateAction = async () => {
+    if (!selectedRowForAction || !actionDescription || !actionOwnerId || !actionDueDate) return;
+    setError(null);
+    setActionDialogOpen(false);
+    try {
+      const response = await fetch(`${API_BASE_URL}/actions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          description: actionDescription,
+          ownerId: actionOwnerId,
+          dueDate: actionDueDate,
+          priority: actionPriority,
+          fmeaRowId: selectedRowForAction.id,
+          fmeaType: 'PFMEA',
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to create corrective action.');
+      }
+
+      setActionDescription('');
+      setActionPriority('medium');
+      setActionOwnerId('');
+      setActionDueDate('');
+      setSelectedRowForAction(null);
+      await fetchData(); // Reload to reflect updated risk scores if any sync occurred
+    } catch (err: any) {
+      setError(err.message || 'Could not create corrective action.');
+    }
+  };
 
   // Load project revisions context
   useEffect(() => {
@@ -519,6 +588,18 @@ export const PfmeaWorkspace: React.FC = () => {
 
                   {/* Actions */}
                   <TableCell align="center">
+                    <Tooltip title="Create Corrective Action">
+                      <IconButton
+                        size="small"
+                        color="secondary"
+                        onClick={() => {
+                          setSelectedRowForAction(row);
+                          setActionDialogOpen(true);
+                        }}
+                      >
+                        <PlaylistAddIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <IconButton
                       size="small"
                       color="primary"
@@ -600,6 +681,84 @@ export const PfmeaWorkspace: React.FC = () => {
           </Button>
           <Button onClick={handleAddRow} variant="contained" disabled={!selectedStepId}>
             Add Row
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Corrective Action Dialog */}
+      <Dialog open={actionDialogOpen} onClose={() => setActionDialogOpen(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Create Corrective Action</DialogTitle>
+        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Step 6 Optimization: Define preventive or corrective tasks to reduce S/O/D ratings.
+            </Typography>
+
+            <TextField
+              label="Action Description / Task"
+              multiline
+              rows={3}
+              value={actionDescription}
+              onChange={(e: any) => setActionDescription(e.target.value)}
+              placeholder="Define action to reduce occurrence or improve detection..."
+              fullWidth
+              size="small"
+              required
+            />
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Assigned Owner</InputLabel>
+              <Select
+                value={actionOwnerId}
+                label="Assigned Owner"
+                onChange={(e: any) => setActionOwnerId(e.target.value as string)}
+                required
+              >
+                {users.map((u) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.name} ({u.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Priority</InputLabel>
+              <Select
+                value={actionPriority}
+                label="Priority"
+                onChange={(e: any) => setActionPriority(e.target.value as string)}
+              >
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              {...({
+                label: "Due Date",
+                type: "date",
+                value: actionDueDate,
+                onChange: (e: any) => setActionDueDate(e.target.value),
+                InputLabelProps: { shrink: true },
+                fullWidth: true,
+                size: "small",
+                required: true
+              } as any)}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActionDialogOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateAction}
+            variant="contained"
+            disabled={!actionDescription || !actionOwnerId || !actionDueDate}
+          >
+            Create Action
           </Button>
         </DialogActions>
       </Dialog>

@@ -28,6 +28,7 @@ model Tenant {
   causes          Cause[]
   controls        Control[]
   characteristics Characteristic[]
+  actions         Action[]
 
   @@map("tenant")
 }
@@ -52,6 +53,9 @@ model User {
   createdRevs  DocumentRevision[] @relation("RevisionCreator")
   approvals    Approval[]
   pfmeaRows    PfmeaRow[]
+  ownedActions   Action[]           @relation("ActionOwner")
+  createdActions Action[]           @relation("ActionCreator")
+  uploadedEvidences ActionEvidence[]
 
   @@unique([tenantId, email])
   @@map("user")
@@ -122,6 +126,7 @@ model Project {
   creator         User          @relation("ProjectCreator", fields: [createdById], references: [id])
   documents       Document[]
   processItems    ProcessItem[]
+  actions         Action[]
 
   @@index([tenantId])
   @@index([tenantId, status])
@@ -168,6 +173,7 @@ model DocumentRevision {
   approvals         Approval[]
   processSteps      ProcessStep[]
   pfmeaRows         PfmeaRow[]
+  controlPlanRows   ControlPlanRow[]
 
   @@unique([documentId, revisionNumber])
   @@index([documentId])
@@ -366,6 +372,7 @@ model Characteristic {
 
   tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   pfmeaRows      PfmeaRowCharacteristic[]
+  controlPlanRows ControlPlanRow[]
 
   @@map("characteristic")
 }
@@ -399,6 +406,8 @@ model PfmeaRow {
   causes          PfmeaRowCause[]
   controls        PfmeaRowControl[]
   characteristics PfmeaRowCharacteristic[]
+  controlPlanLinks ControlPlanPfmeaLink[]
+  actionLinks      ActionFmeaLink[]
 
   @@index([revisionId])
   @@index([processStepId])
@@ -407,11 +416,109 @@ model PfmeaRow {
 }
 
 model ControlPlanRow {
-  id            String      @id @default(uuid()) @db.Uuid
-  processStepId String      @map("process_step_id") @db.Uuid
-  processStep   ProcessStep @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+  id                 String      @id @default(uuid()) @db.Uuid
+  revisionId         String      @map("revision_id") @db.Uuid
+  processStepId      String      @map("process_step_id") @db.Uuid
+  characteristicId   String?     @map("characteristic_id") @db.Uuid
+  rowNumber          Int         @map("row_number")
+  specTolerance      String?     @map("spec_tolerance") @db.VarChar(255)
+  measurementMethod  String?     @map("measurement_method") @db.VarChar(255)
+  sampleSize         String?     @map("sample_size") @db.VarChar(100)
+  frequency          String?     @db.VarChar(100)
+  controlType        String      @map("control_type") @db.VarChar(20) // 'prevention','detection'
+  controlMethod      String?     @map("control_method") @db.VarChar(255)
+  reactionPlan       String?     @map("reaction_plan") @db.Text
+  responsible        String?     @db.VarChar(255)
+  notes              String?     @db.Text
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz
 
+  revision           DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  processStep        ProcessStep      @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+  characteristic     Characteristic?  @relation(fields: [characteristicId], references: [id], onDelete: SetNull)
+  pfmeaRows          ControlPlanPfmeaLink[]
+
+  @@index([revisionId])
   @@map("control_plan_row")
+}
+
+// Junction for Control Plan ↔ PFMEA Link
+model ControlPlanPfmeaLink {
+  controlPlanRowId String         @map("control_plan_row_id") @db.Uuid
+  pfmeaRowId       String         @map("pfmea_row_id") @db.Uuid
+  controlPlanRow   ControlPlanRow @relation(fields: [controlPlanRowId], references: [id], onDelete: Cascade)
+  pfmeaRow         PfmeaRow       @relation(fields: [pfmeaRowId], references: [id], onDelete: Cascade)
+
+  @@id([controlPlanRowId, pfmeaRowId])
+  @@map("control_plan_pfmea_link")
+}
+
+// Action Model
+model Action {
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  projectId       String           @map("project_id") @db.Uuid
+  description     String           @db.Text
+  actionType      String           @default("corrective") @map("action_type") @db.VarChar(30) // 'corrective','preventive','improvement'
+  ownerId         String           @map("owner_id") @db.Uuid
+  dueDate         DateTime         @map("due_date") @db.Date
+  status          String           @default("open") @db.VarChar(20) // 'open','in_progress','completed','verified','closed','cancelled'
+  priority        String           @default("medium") @db.VarChar(10) // 'high','medium','low'
+  completionNotes String?          @map("completion_notes") @db.Text
+  createdById     String           @map("created_by") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  closedAt        DateTime?        @map("closed_at") @db.Timestamptz
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner           User             @relation("ActionOwner", fields: [ownerId], references: [id])
+  creator         User             @relation("ActionCreator", fields: [createdById], references: [id])
+  fmeaLinks       ActionFmeaLink[]
+  evidences       ActionEvidence[]
+
+  @@index([tenantId, status])
+  @@index([ownerId, status])
+  @@map("action")
+}
+
+// Action FMEA Link Model (Before/After rating tracker)
+model ActionFmeaLink {
+  id               String   @id @default(uuid()) @db.Uuid
+  actionId         String   @map("action_id") @db.Uuid
+  fmeaType         String   @map("fmea_type") @db.VarChar(10) // 'PFMEA' or 'DFMEA'
+  fmeaRowId        String   @map("fmea_row_id") @db.Uuid
+  beforeSeverity   Int?     @map("before_severity") @db.SmallInt
+  beforeOccurrence Int?     @map("before_occurrence") @db.SmallInt
+  beforeDetection  Int?     @map("before_detection") @db.SmallInt
+  beforeAp         String?  @map("before_ap") @db.Char(1)
+  afterSeverity    Int?     @map("after_severity") @db.SmallInt
+  afterOccurrence  Int?     @map("after_occurrence") @db.SmallInt
+  afterDetection   Int?     @map("after_detection") @db.SmallInt
+  afterAp          String?  @map("after_ap") @db.Char(1)
+
+  action           Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  pfmeaRow         PfmeaRow @relation(fields: [fmeaRowId], references: [id], onDelete: Cascade)
+
+  @@map("action_fmea_link")
+}
+
+// Action Evidence Model (Attachments)
+model ActionEvidence {
+  id           String   @id @default(uuid()) @db.Uuid
+  actionId     String   @map("action_id") @db.Uuid
+  fileUrl      String   @map("file_url") @db.VarChar(1000)
+  fileName     String   @map("file_name") @db.VarChar(255)
+  fileType     String?  @map("file_type") @db.VarChar(50)
+  fileSize     BigInt?  @map("file_size")
+  description  String?  @db.Text
+  uploadedById String   @map("uploaded_by") @db.Uuid
+  uploadedAt   DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  action       Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  uploader     User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("action_evidence")
 }
 
 // Junction Models

@@ -10,6 +10,8 @@ import { PermissionGuard } from './modules/auth/guards/permission.guard';
 import { ProjectModule } from './modules/project/project.module';
 import { PfdModule } from './modules/pfd/pfd.module';
 import { PfmeaModule } from './modules/pfmea/pfmea.module';
+import { ControlPlanModule } from './modules/control-plan/control-plan.module';
+import { ActionModule } from './modules/action/action.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { PfmeaModule } from './modules/pfmea/pfmea.module';
     ProjectModule,
     PfdModule,
     PfmeaModule,
+    ControlPlanModule,
+    ActionModule,
   ],
   controllers: [AppController],
   providers: [

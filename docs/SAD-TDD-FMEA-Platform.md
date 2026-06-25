@@ -271,30 +271,17 @@ graph TB
     end
 
     subgraph "Data Tier"
-        PG["PostgreSQL 15+<br/>(pgvector extension)"]
-        REDIS["Redis 7+<br/>(Cache + Job Queue)"]
-        S3["Object Storage<br/>(S3 / Azure Blob)"]
-        ES["Elasticsearch 8+<br/>(Full-text Search)"]
+        PG["Neon Serverless Postgres<br/>(with pgvector)"]
+        REDIS["Render Redis<br/>(Cache + Job Queue)"]
+        R2["Cloudflare R2<br/>(Object Storage)"]
     end
 
-    subgraph "Monitoring"
-        PROM["Prometheus"]
-        GRAF["Grafana"]
-        LOKI["Loki / ELK"]
-    end
-
-    SPA -->|"HTTPS/WSS"| GW
-    GW --> CORE
-    GW --> AI_SVC
+    SPA -->|"HTTPS"| CORE
     CORE --> PG
     CORE --> REDIS
-    CORE --> S3
-    CORE --> ES
-    AI_SVC --> PG
-    AI_SVC --> REDIS
-    NOTIFY --> REDIS
+    CORE --> R2
     EXPORT --> PG
-    EXPORT --> S3
+    EXPORT --> R2
     CORE --> PROM
     AI_SVC --> PROM
     PROM --> GRAF
@@ -371,69 +358,38 @@ graph TB
     DFMEA_S --> AUDIT_S
 ```
 
-### 4.4 Deployment View
-
 ```mermaid
 graph TB
-    subgraph "Cloud Provider (AWS / Azure / GCP)"
-        subgraph "CDN & Edge"
-            CDN["CloudFront / Azure CDN"]
-            WAF["Web Application Firewall"]
-        end
-
-        subgraph "Kubernetes Cluster (EKS/AKS/GKE)"
-            subgraph "Ingress"
-                ING["Nginx Ingress Controller"]
-            end
-
-            subgraph "Application Pods"
-                CORE_POD["FMEA Core<br/>2-8 replicas<br/>HPA: CPU 70%"]
-                AI_POD["AI Service<br/>2-4 replicas<br/>HPA: CPU 60%"]
-                NOTIFY_POD["Notification Worker<br/>1-2 replicas"]
-                EXPORT_POD["Export Worker<br/>1-3 replicas"]
-            end
-
-            subgraph "Supporting Pods"
-                REDIS_POD["Redis Sentinel<br/>3 nodes"]
-            end
-        end
-
-        subgraph "Managed Services"
-            RDS["RDS PostgreSQL<br/>Multi-AZ<br/>r6g.xlarge"]
-            S3_SVC["S3 Bucket<br/>(attachments)"]
-            ES_SVC["OpenSearch<br/>(full-text search)"]
-            SES_SVC["SES / SendGrid"]
-        end
-
-        subgraph "Monitoring"
-            CW["CloudWatch / Azure Monitor"]
-            PROM_S["Prometheus + Grafana"]
-        end
+    subgraph "Cloudflare Edge"
+        CF_PAGES["Cloudflare Pages<br/>(Frontend React SPA)"]
+        CF_R2["Cloudflare R2<br/>(Object Storage - attachments)"]
     end
 
-    CDN --> WAF --> ING
-    ING --> CORE_POD
-    ING --> AI_POD
-    CORE_POD --> RDS
-    CORE_POD --> REDIS_POD
-    CORE_POD --> S3_SVC
-    CORE_POD --> ES_SVC
-    AI_POD --> RDS
-    NOTIFY_POD --> SES_SVC
-    EXPORT_POD --> S3_SVC
+    subgraph "Render PaaS"
+        RENDER_API["Render Web Service<br/>(NestJS FMEA Backend API)"]
+        RENDER_REDIS["Render Redis<br/>(Cache & Job Queue)"]
+    end
+
+    subgraph "Serverless Database"
+        NEON_DB["Neon Serverless Postgres<br/>(Transactional & pgvector)"]
+    end
+
+    User -->|"HTTPS"| CF_PAGES
+    User -->|"API Requests"| RENDER_API
+    RENDER_API --> NEON_DB
+    RENDER_API --> RENDER_REDIS
+    RENDER_API --> CF_R2
 ```
 
-**Resource Sizing (MVP):**
+**Resource Sizing (Render / Neon / R2):**
 
-| Component | CPU | Memory | Storage | Replicas |
+| Component | Provider / Plan | CPU / Memory | Storage | Purpose |
 |---|---|---|---|---|
-| FMEA Core Service | 1 vCPU | 2 GB | — | 2–8 (HPA) |
-| AI Service | 2 vCPU | 4 GB | — | 2–4 (HPA) |
-| Notification Worker | 0.5 vCPU | 512 MB | — | 1–2 |
-| Export Worker | 1 vCPU | 2 GB | — | 1–3 |
-| PostgreSQL (RDS) | 4 vCPU | 16 GB | 500 GB gp3 | 1 primary + 1 standby |
-| Redis | 2 vCPU | 4 GB | — | 3 (Sentinel) |
-| Elasticsearch | 2 vCPU | 8 GB | 200 GB | 3 nodes |
+| Frontend React SPA | Cloudflare Pages | Edge Network | — | Web static asset hosting |
+| FMEA Backend API | Render Web Service | 1 vCPU / 2 GB | — | NestJS application logic |
+| Redis Cache & Queue | Render Redis | Shared | — | Job queue & session cache |
+| PostgreSQL Database | Neon Serverless | Dynamic (Autoscale) | Autoscale | Postgres 15 database + pgvector |
+| Attachment Storage | Cloudflare R2 | S3-Compatible Edge | Unlimited | Action evidence & exports |
 
 ---
 
@@ -2723,7 +2679,7 @@ async createPfmeaRow(@Body() dto: CreatePfmeaRowDto) { ... }
 
 | Area | Implementation |
 |---|---|
-| **Encryption at rest** | AES-256 (AWS RDS encryption, S3 SSE-S3) |
+| **Encryption at rest** | AES-256 (Neon storage encryption, Cloudflare R2 SSE) |
 | **Encryption in transit** | TLS 1.3 for all connections |
 | **PII handling** | Email/name in user table; minimized in audit logs |
 | **Password storage** | bcrypt with cost factor 12 |

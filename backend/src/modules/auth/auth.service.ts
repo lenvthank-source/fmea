@@ -381,4 +381,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
+
+  async findAllTenantUsers(tenantId: string) {
+    return this.prisma.user.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+  }
 }
