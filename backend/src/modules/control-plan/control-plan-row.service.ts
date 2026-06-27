@@ -88,9 +88,9 @@ export class ControlPlanRowService {
   async createRow(tenantId: string, revisionId: string, dto: CreateCpRowDto) {
     const revision = await this.verifyRevisionAccess(tenantId, revisionId);
 
-    // Verify step belongs to project
-    const step = await this.prisma.processStep.findFirst({
-      where: { id: dto.processStepId, revisionId: { not: '' } }, // Step is in PFD revision
+    // Verify step exists
+    const step = await this.prisma.processStep.findUnique({
+      where: { id: dto.processStepId },
     });
 
     if (!step) {
