@@ -6,7 +6,6 @@ export class CreateStepDto {
   stepNumber: string;
 
   @IsString()
-  @IsNotEmpty()
   name: string;
 
   @IsString()
