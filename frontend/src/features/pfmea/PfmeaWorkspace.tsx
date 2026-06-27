@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Link,
   Select,
   MenuItem,
   Dialog,
@@ -40,23 +39,16 @@ import { calculateAP } from './utils/apCalculator';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 
-interface WorkElement {
-  id: string;
-  name: string;
-}
-
 interface ProcessStep {
   id: string;
   stepNumber: string;
   name: string;
   stepType: string;
-  workElements: WorkElement[];
 }
 
 interface PfmeaRow {
   id: string;
   processStepId: string;
-  workElementId: string | null;
   rowNumber: number;
   severity: number | null;
   occurrence: number | null;
@@ -66,7 +58,6 @@ interface PfmeaRow {
   status: string;
   accessLevel: string;
   processStep: { name: string; stepNumber: string };
-  workElement: { name: string } | null;
   functions: { name: string }[];
   requirements: { name: string }[];
   failureModes: { name: string }[];
@@ -79,7 +70,6 @@ interface PfmeaRow {
 export const PfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
-  const navigate = useNavigate();
 
   // Project Document Revisions
   const [pfmeaRevisionId, setPfmeaRevisionId] = useState<string | null>(null);
@@ -98,7 +88,6 @@ export const PfmeaWorkspace: React.FC = () => {
 
   // Add row form state
   const [selectedStepId, setSelectedStepId] = useState('');
-  const [selectedElementId, setSelectedElementId] = useState('');
 
   // Corrective action creation state
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -250,7 +239,6 @@ export const PfmeaWorkspace: React.FC = () => {
         },
         body: JSON.stringify({
           processStepId: selectedStepId,
-          workElementId: selectedElementId || undefined,
           rowNumber: nextRowNumber,
         }),
       });
@@ -261,7 +249,6 @@ export const PfmeaWorkspace: React.FC = () => {
 
       await fetchData();
       setSelectedStepId('');
-      setSelectedElementId('');
     } catch (err: any) {
       setError(err.message || 'Error occurred while appending FMEA row.');
     }
@@ -375,21 +362,12 @@ export const PfmeaWorkspace: React.FC = () => {
     );
   }
 
-  // Filter elements when step is selected in "Add Row" dialog
-  const selectedStep = steps.find((s) => s.id === selectedStepId);
-  const elementsForSelectedStep = selectedStep ? selectedStep.workElements : [];
+
 
   return (
     <Box>
       {/* Title Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link
-          component="button"
-          onClick={() => navigate('/projects')}
-          sx={{ color: 'text.secondary', textDecoration: 'none' }}
-        >
-          &larr; Back to Projects
-        </Link>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
           Add Analysis Row
         </Button>
@@ -410,7 +388,6 @@ export const PfmeaWorkspace: React.FC = () => {
             <TableRow sx={{ bgcolor: '#1b1b21' }}>
               <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
               <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Process Step</TableCell>
-              <TableCell sx={{ minWidth: 110, fontWeight: 'bold' }}>Work Element (4M)</TableCell>
               <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Functions / Requirements</TableCell>
               <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Modes</TableCell>
               <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Effects</TableCell>
@@ -427,7 +404,7 @@ export const PfmeaWorkspace: React.FC = () => {
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={14} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                <TableCell colSpan={13} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                   No PFMEA analysis rows added yet. Click "Add Analysis Row" to begin.
                 </TableCell>
               </TableRow>
@@ -445,15 +422,6 @@ export const PfmeaWorkspace: React.FC = () => {
                     <Typography variant="caption" color="text.secondary">
                       {row.processStep.name}
                     </Typography>
-                  </TableCell>
-
-                  {/* Work Element */}
-                  <TableCell color="text.secondary">
-                    {row.workElement ? (
-                      <Chip label={row.workElement.name} size="small" variant="outlined" />
-                    ) : (
-                      '—'
-                    )}
                   </TableCell>
 
                   {/* Functions & Requirements */}
@@ -636,32 +604,11 @@ export const PfmeaWorkspace: React.FC = () => {
               <Select
                 value={selectedStepId}
                 label="Process Step"
-                onChange={(e) => {
-                  setSelectedStepId(e.target.value);
-                  setSelectedElementId('');
-                }}
+                onChange={(e) => setSelectedStepId(e.target.value)}
               >
                 {steps.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
                     {s.stepNumber} - {s.name} ({s.stepType})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth size="small" disabled={!selectedStepId}>
-              <InputLabel>Work Element (4M)</InputLabel>
-              <Select
-                value={selectedElementId}
-                label="Work Element (4M)"
-                onChange={(e) => setSelectedElementId(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {elementsForSelectedStep.map((we) => (
-                  <MenuItem key={we.id} value={we.id}>
-                    {we.name}
                   </MenuItem>
                 ))}
               </Select>

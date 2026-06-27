@@ -26,22 +26,15 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 
-interface WorkElement {
-  id: string;
-  name: string;
-}
-
 interface ProcessStep {
   id: string;
   stepNumber: string;
   name: string;
-  workElements: WorkElement[];
 }
 
 interface PfmeaRow {
   id: string;
   processStepId: string;
-  workElementId: string | null;
   rowNumber: number;
   severity: number | null;
   occurrence: number | null;
@@ -81,7 +74,6 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   const [notes, setNotes] = useState('');
   const [accessLevel, setAccessLevel] = useState('public');
   const [status, setStatus] = useState('draft');
-  const [workElementId, setWorkElementId] = useState<string>('');
 
   // Many-to-many list states
   const [functions, setFunctions] = useState<string[]>([]);
@@ -123,7 +115,6 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
       setNotes(row.notes || '');
       setAccessLevel(row.accessLevel || 'public');
       setStatus(row.status || 'draft');
-      setWorkElementId(row.workElementId || '');
       setFunctions(row.functions.map((f) => f.name));
       setRequirements(row.requirements.map((r) => r.name));
       setFailureModes(row.failureModes.map((fm) => fm.name));
@@ -144,7 +135,6 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   if (!row) return null;
 
   const currentStep = steps.find((s) => s.id === row.processStepId);
-  const availableWorkElements = currentStep ? currentStep.workElements : [];
 
   const handleAddControl = () => {
     if (!newControlName.trim()) return;
@@ -249,7 +239,6 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
     setError(null);
     try {
       await onSave({
-        workElementId: workElementId || null,
         notes,
         accessLevel,
         status,
@@ -327,26 +316,6 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
 
         {/* Form Controls */}
         <Stack spacing={3}>
-          {/* Work Element */}
-          <FormControl fullWidth size="small">
-            <InputLabel id="work-element-label">Work Element (4M)</InputLabel>
-            <Select
-              labelId="work-element-label"
-              value={workElementId}
-              label="Work Element (4M)"
-              onChange={(e) => setWorkElementId(e.target.value)}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {availableWorkElements.map((we) => (
-                <MenuItem key={we.id} value={we.id}>
-                  {we.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
           {/* Step 3: Functions */}
           <Stack spacing={1}>
             <TextField

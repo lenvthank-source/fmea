@@ -276,34 +276,21 @@ model ProcessStep {
   updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
   // Detailed PFD Columns
-  incomingVariation      String?  @map("incoming_variation") @db.Text
+  incomingVariation      Json?    @map("incoming_variation")
   specialCharacteristics String?  @map("special_characteristics") @db.VarChar(100)
   flowIcons              Json?    @map("flow_icons")
-  machinesEquipmentDocs  String?  @map("machines_equipment_documents") @db.Text
+  machinesEquipmentDocs  Json?    @map("machines_equipment_documents")
   desiredOutcome         String?  @map("desired_outcome") @db.Text
   processCharacteristics String?  @map("process_characteristics") @db.Text
   
   revision        DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   processItem     ProcessItem      @relation(fields: [processItemId], references: [id], onDelete: Cascade)
-  workElements    WorkElement[]
   pfmeaRows       PfmeaRow[]
   controlPlanRows ControlPlanRow[]
 
   @@index([revisionId])
   @@index([revisionId, sequenceOrder])
   @@map("process_step")
-}
-
-model WorkElement {
-  id            String      @id @default(uuid()) @db.Uuid
-  processStepId String      @map("process_step_id") @db.Uuid
-  name          String      @db.VarChar(255)
-  description   String?
-  sequenceOrder Int         @map("sequence_order")
-  processStep   ProcessStep @relation(fields: [processStepId], references: [id], onDelete: Cascade)
-  pfmeaRows     PfmeaRow[]
-
-  @@map("work_element")
 }
 
 model Function {
@@ -417,7 +404,6 @@ model PfmeaRow {
   id            String            @id @default(uuid()) @db.Uuid
   revisionId    String            @map("revision_id") @db.Uuid
   processStepId String            @map("process_step_id") @db.Uuid
-  workElementId String?           @map("work_element_id") @db.Uuid
   rowNumber     Int               @map("row_number")
   severity      Int?              @db.SmallInt
   occurrence    Int?              @db.SmallInt
@@ -432,7 +418,6 @@ model PfmeaRow {
 
   revision      DocumentRevision  @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   processStep   ProcessStep       @relation(fields: [processStepId], references: [id], onDelete: Cascade)
-  workElement   WorkElement?      @relation(fields: [workElementId], references: [id], onDelete: SetNull)
   createdBy     User              @relation(fields: [createdById], references: [id])
 
   functions       PfmeaRowFunction[]

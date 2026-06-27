@@ -53,7 +53,6 @@ export class PfmeaRowService {
       where: { revisionId },
       include: {
         processStep: true,
-        workElement: true,
         functions: {
           include: { function: true },
         },
@@ -84,7 +83,6 @@ export class PfmeaRowService {
       id: r.id,
       revisionId: r.revisionId,
       processStepId: r.processStepId,
-      workElementId: r.workElementId,
       rowNumber: r.rowNumber,
       severity: r.severity,
       occurrence: r.occurrence,
@@ -96,7 +94,6 @@ export class PfmeaRowService {
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       processStep: r.processStep,
-      workElement: r.workElement,
       functions: r.functions.map((f) => f.function),
       requirements: r.requirements.map((req) => req.requirement),
       failureModes: r.failureModes.map((fm) => fm.failureMode),
@@ -108,9 +105,9 @@ export class PfmeaRowService {
   }
 
   async createRow(tenantId: string, userId: string, revisionId: string, dto: CreatePfmeaRowDto) {
-    const revision = await this.verifyRevisionAccess(tenantId, revisionId);
+    await this.verifyRevisionAccess(tenantId, revisionId);
 
-    // Verify step exists and belongs to the revision
+    // Verify process step belongs to revision
     const step = await this.prisma.processStep.findFirst({
       where: { id: dto.processStepId, revisionId },
     });
@@ -118,21 +115,10 @@ export class PfmeaRowService {
       throw new BadRequestException('Process step not found in the target revision');
     }
 
-    // Verify work element matches step
-    if (dto.workElementId) {
-      const element = await this.prisma.workElement.findFirst({
-        where: { id: dto.workElementId, processStepId: dto.processStepId },
-      });
-      if (!element) {
-        throw new BadRequestException('Work element does not belong to the selected process step');
-      }
-    }
-
     return this.prisma.pfmeaRow.create({
       data: {
         revisionId,
         processStepId: dto.processStepId,
-        workElementId: dto.workElementId,
         rowNumber: dto.rowNumber,
         severity: null,
         occurrence: null,
@@ -148,16 +134,6 @@ export class PfmeaRowService {
 
   async updateRow(tenantId: string, rowId: string, dto: UpdatePfmeaRowDto) {
     const row = await this.verifyRowAccess(tenantId, rowId);
-
-    // Validate work element ownership
-    if (dto.workElementId) {
-      const element = await this.prisma.workElement.findFirst({
-        where: { id: dto.workElementId, processStepId: row.processStepId },
-      });
-      if (!element) {
-        throw new BadRequestException('Work element does not belong to the process step of this row');
-      }
-    }
 
     // Recalculate AP
     const S = dto.severity !== undefined ? dto.severity : row.severity;
@@ -337,7 +313,6 @@ export class PfmeaRowService {
       return tx.pfmeaRow.update({
         where: { id: rowId },
         data: {
-          workElementId: dto.workElementId !== undefined ? dto.workElementId : row.workElementId,
           severity: S,
           occurrence: O,
           detection: D,

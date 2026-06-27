@@ -2,7 +2,6 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Request } from '@nes
 import { PfdService } from './pfd.service';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
-import { CreateWorkElementDto } from './dto/create-work-element.dto';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
@@ -52,22 +51,4 @@ export class PfdController {
     return this.pfdService.reorderSteps(req.user.tenantId, revisionId, orderedStepIds);
   }
 
-  @Post('pfd-steps/:stepId/work-elements')
-  @Permissions('pfmea.edit')
-  async createWorkElement(
-    @Request() req: RequestWithUser,
-    @Param('stepId') stepId: string,
-    @Body() dto: CreateWorkElementDto,
-  ) {
-    return this.pfdService.createWorkElement(req.user.tenantId, stepId, dto);
-  }
-
-  @Delete('work-elements/:elementId')
-  @Permissions('pfmea.edit')
-  async removeWorkElement(
-    @Request() req: RequestWithUser,
-    @Param('elementId') elementId: string,
-  ) {
-    return this.pfdService.removeWorkElement(req.user.tenantId, elementId);
-  }
 }

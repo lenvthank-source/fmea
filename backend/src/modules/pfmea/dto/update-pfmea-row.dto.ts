@@ -26,10 +26,6 @@ class CharacteristicDto {
 }
 
 export class UpdatePfmeaRowDto {
-  @IsUUID()
-  @IsOptional()
-  workElementId?: string | null;
-
   @IsInt()
   @Min(1)
   @Max(10)

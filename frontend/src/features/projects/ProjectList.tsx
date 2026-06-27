@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Grid, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Alert, CircularProgress, CardActionArea, Checkbox, FormControlLabel, Chip, Radio, RadioGroup,
+  TextField, Alert, CircularProgress, CardActionArea, FormControlLabel, Chip, Radio, RadioGroup,
   Stepper, Step, StepLabel
 } from '@mui/material';
 import { Add as AddIcon, Business as BusinessIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
@@ -149,13 +149,6 @@ export const ProjectList: React.FC = () => {
     setOtherApprovalDate2('');
   };
 
-  const handleDocTypeToggle = (type: string) => {
-    if (documentTypes.includes(type)) {
-      setDocumentTypes(documentTypes.filter((t) => t !== type));
-    } else {
-      setDocumentTypes([...documentTypes, type]);
-    }
-  };
 
   const validateStep = () => {
     if (step === 1) {
@@ -386,20 +379,21 @@ export const ProjectList: React.FC = () => {
                   </Grid>
                   <Grid size={6} sx={{ mt: 1 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary' }}>
-                      Document Types *
+                      Document Type *
                     </Typography>
-                    {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
-                      <FormControlLabel
-                        key={type}
-                        control={
-                          <Checkbox
-                            checked={documentTypes.includes(type)}
-                            onChange={() => handleDocTypeToggle(type)}
-                          />
-                        }
-                        label={type}
-                      />
-                    ))}
+                    <RadioGroup
+                      value={documentTypes[0] || 'Prototype'}
+                      onChange={(e) => setDocumentTypes([e.target.value])}
+                    >
+                      {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
+                        <FormControlLabel
+                          key={type}
+                          value={type}
+                          control={<Radio />}
+                          label={type}
+                        />
+                      ))}
+                    </RadioGroup>
                   </Grid>
                 </Grid>
               </Box>

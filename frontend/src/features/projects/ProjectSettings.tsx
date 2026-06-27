@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField, Alert, CircularProgress, Grid, Card, CardContent,
-  Checkbox, FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab
+  FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
@@ -114,13 +114,6 @@ export const ProjectSettings: React.FC = () => {
     }
   }, [projectId, token]);
 
-  const handleDocTypeToggle = (type: string) => {
-    if (documentTypes.includes(type)) {
-      setDocumentTypes(documentTypes.filter((t) => t !== type));
-    } else {
-      setDocumentTypes([...documentTypes, type]);
-    }
-  };
 
   const addCftMember = () => {
     if (newCftMember.trim() && !cftMembers.includes(newCftMember.trim())) {
@@ -322,20 +315,21 @@ export const ProjectSettings: React.FC = () => {
                 </Grid>
                 <Grid size={12}>
                   <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary', fontWeight: 'bold' }}>
-                    Document Types *
+                    Document Type *
                   </Typography>
-                  {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
-                    <FormControlLabel
-                      key={type}
-                      control={
-                        <Checkbox
-                          checked={documentTypes.includes(type)}
-                          onChange={() => handleDocTypeToggle(type)}
-                        />
-                      }
-                      label={type}
-                    />
-                  ))}
+                  <RadioGroup
+                    value={documentTypes[0] || 'Prototype'}
+                    onChange={(e) => setDocumentTypes([e.target.value])}
+                  >
+                    {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
+                      <FormControlLabel
+                        key={type}
+                        value={type}
+                        control={<Radio />}
+                        label={type}
+                      />
+                    ))}
+                  </RadioGroup>
                 </Grid>
               </Grid>
             )}

@@ -29,9 +29,8 @@ export class CreateStepDto {
   @IsOptional()
   processItemId?: string;
 
-  @IsString()
   @IsOptional()
-  incomingVariation?: string;
+  incomingVariation?: any;
 
   @IsString()
   @IsOptional()
@@ -41,9 +40,8 @@ export class CreateStepDto {
   @IsOptional()
   flowIcons?: any;
 
-  @IsString()
   @IsOptional()
-  machinesEquipmentDocs?: string;
+  machinesEquipmentDocs?: any;
 
   @IsString()
   @IsOptional()

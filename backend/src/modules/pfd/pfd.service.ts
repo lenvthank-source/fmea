@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
-import { CreateWorkElementDto } from './dto/create-work-element.dto';
 
 @Injectable()
 export class PfdService {
@@ -51,11 +50,6 @@ export class PfdService {
 
     return this.prisma.processStep.findMany({
       where: { revisionId },
-      include: {
-        workElements: {
-          orderBy: { sequenceOrder: 'asc' },
-        },
-      },
       orderBy: { sequenceOrder: 'asc' },
     });
   }
@@ -88,7 +82,38 @@ export class PfdService {
       where: { revisionId },
     });
 
-    const calculatedStepNumber = dto.stepNumber || `OP${(stepCount + 1) * 10}`;
+    // Get all step numbers in this revision to compute a unique auto-incrementing stepNumber
+    const existingSteps = await this.prisma.processStep.findMany({
+      where: { revisionId },
+      select: { stepNumber: true },
+    });
+    const stepNumbers = existingSteps.map((s) => s.stepNumber);
+
+    let calculatedStepNumber = dto.stepNumber;
+    if (!calculatedStepNumber) {
+      let maxVal = 0;
+      let prefix = 'OP';
+      for (const num of stepNumbers) {
+        const match = num.match(/(\D*)(\d+)/);
+        if (match) {
+          const p = match[1];
+          const val = parseInt(match[2], 10);
+          if (val > maxVal) {
+            maxVal = val;
+            if (p) prefix = p;
+          }
+        }
+      }
+      let nextVal = maxVal + 10;
+      if (nextVal === 10 && maxVal === 0 && stepNumbers.length > 0) {
+        nextVal = (stepNumbers.length + 1) * 10;
+      }
+      calculatedStepNumber = `${prefix}${nextVal}`;
+      while (stepNumbers.includes(calculatedStepNumber)) {
+        nextVal += 10;
+        calculatedStepNumber = `${prefix}${nextVal}`;
+      }
+    }
 
     return this.prisma.processStep.create({
       data: {
@@ -102,10 +127,10 @@ export class PfdService {
         resources: dto.resources,
         sequenceOrder: stepCount + 1,
 
-        incomingVariation: dto.incomingVariation,
+        incomingVariation: dto.incomingVariation || [],
         specialCharacteristics: dto.specialCharacteristics,
         flowIcons: dto.flowIcons || {},
-        machinesEquipmentDocs: dto.machinesEquipmentDocs || dto.resources,
+        machinesEquipmentDocs: dto.machinesEquipmentDocs || [],
         desiredOutcome: dto.desiredOutcome || dto.outputs,
         processCharacteristics: dto.processCharacteristics,
       },
@@ -113,7 +138,20 @@ export class PfdService {
   }
 
   async updateStep(tenantId: string, stepId: string, dto: UpdateStepDto) {
-    await this.verifyStepAccess(tenantId, stepId);
+    const step = await this.verifyStepAccess(tenantId, stepId);
+
+    if (dto.stepNumber && dto.stepNumber !== step.stepNumber) {
+      const existing = await this.prisma.processStep.findFirst({
+        where: {
+          revisionId: step.revisionId,
+          stepNumber: dto.stepNumber,
+          id: { not: stepId },
+        },
+      });
+      if (existing) {
+        throw new BadRequestException(`Step number '${dto.stepNumber}' already exists in this process flow.`);
+      }
+    }
 
     return this.prisma.processStep.update({
       where: { id: stepId },
@@ -135,10 +173,9 @@ export class PfdService {
   }
 
   async removeStep(tenantId: string, stepId: string) {
-    const step = await this.verifyStepAccess(tenantId, stepId);
+    await this.verifyStepAccess(tenantId, stepId);
 
     // Safety check: Prevent deletion if FMEA rows or Control Plan rows are linked
-    // Note: Since FMEA is not fully populated yet, we will check if the relations exist in DB.
     const fmeaCount = await this.prisma.pfmeaRow.count({
       where: { processStepId: stepId },
     });
@@ -170,49 +207,5 @@ export class PfdService {
         }),
       ),
     );
-  }
-
-  async createWorkElement(tenantId: string, stepId: string, dto: CreateWorkElementDto) {
-    await this.verifyStepAccess(tenantId, stepId);
-
-    const elementCount = await this.prisma.workElement.count({
-      where: { processStepId: stepId },
-    });
-
-    return this.prisma.workElement.create({
-      data: {
-        processStepId: stepId,
-        name: dto.name,
-        description: dto.description,
-        sequenceOrder: elementCount + 1,
-      },
-    });
-  }
-
-  async removeWorkElement(tenantId: string, elementId: string) {
-    const element = await this.prisma.workElement.findUnique({
-      where: { id: elementId },
-      include: {
-        processStep: {
-          include: {
-            revision: {
-              include: { document: true },
-            },
-          },
-        },
-      },
-    });
-
-    if (!element) {
-      throw new NotFoundException('Work element not found');
-    }
-
-    if (element.processStep.revision.document.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have access to this work element');
-    }
-
-    return this.prisma.workElement.delete({
-      where: { id: elementId },
-    });
   }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Link,
   TextField,
   Dialog,
   DialogTitle,
@@ -70,7 +69,6 @@ interface ControlPlanRow {
 export const ControlPlanWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
-  const navigate = useNavigate();
 
   // Project Document Revisions
   const [cpRevisionId, setCpRevisionId] = useState<string | null>(null);
@@ -284,14 +282,7 @@ export const ControlPlanWorkspace: React.FC = () => {
   return (
     <Box>
       {/* Title Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link
-          component="button"
-          onClick={() => navigate('/projects')}
-          sx={{ color: 'text.secondary', textDecoration: 'none' }}
-        >
-          &larr; Back to Projects
-        </Link>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"

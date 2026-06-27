@@ -5,10 +5,6 @@ export class CreatePfmeaRowDto {
   @IsNotEmpty()
   processStepId: string;
 
-  @IsUUID()
-  @IsOptional()
-  workElementId?: string;
-
   @IsInt()
   @IsNotEmpty()
   rowNumber: number;

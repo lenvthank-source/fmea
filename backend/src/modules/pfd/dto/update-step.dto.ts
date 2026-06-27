@@ -26,9 +26,8 @@ export class UpdateStepDto {
   @IsOptional()
   resources?: string;
 
-  @IsString()
   @IsOptional()
-  incomingVariation?: string;
+  incomingVariation?: any;
 
   @IsString()
   @IsOptional()
@@ -38,9 +37,8 @@ export class UpdateStepDto {
   @IsOptional()
   flowIcons?: any;
 
-  @IsString()
   @IsOptional()
-  machinesEquipmentDocs?: string;
+  machinesEquipmentDocs?: any;
 
   @IsString()
   @IsOptional()
