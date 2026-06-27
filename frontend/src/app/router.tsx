@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
-import { Login } from '../features/auth/Login';
 import { AppShell } from '../components/Layout/AppShell';
 import { ProjectList } from '../features/projects/ProjectList';
+import { ProjectSettings } from '../features/projects/ProjectSettings';
 import { PfdWorkspace } from '../features/pfd/PfdWorkspace';
 import { PfmeaWorkspace } from '../features/pfmea/PfmeaWorkspace';
 import { ControlPlanWorkspace } from '../features/control-plan/ControlPlanWorkspace';
@@ -31,7 +31,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Navigate to="/" replace />} />
       
       <Route
         path="/"
@@ -46,6 +46,7 @@ export const AppRouter: React.FC = () => {
         <Route path="projects/:projectId/pfd" element={<PfdWorkspace />} />
         <Route path="projects/:projectId/pfmea" element={<PfmeaWorkspace />} />
         <Route path="projects/:projectId/control-plan" element={<ControlPlanWorkspace />} />
+        <Route path="projects/:projectId/settings" element={<ProjectSettings />} />
         <Route path="actions" element={<ActionsDashboard />} />
         <Route
           path="admin"

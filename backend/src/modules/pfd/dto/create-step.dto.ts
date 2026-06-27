@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validator';
 
 export class CreateStepDto {
   @IsString()
@@ -29,4 +29,28 @@ export class CreateStepDto {
   @IsString()
   @IsOptional()
   processItemId?: string;
+
+  @IsString()
+  @IsOptional()
+  incomingVariation?: string;
+
+  @IsString()
+  @IsOptional()
+  specialCharacteristics?: string;
+
+  @IsObject()
+  @IsOptional()
+  flowIcons?: any;
+
+  @IsString()
+  @IsOptional()
+  machinesEquipmentDocs?: string;
+
+  @IsString()
+  @IsOptional()
+  desiredOutcome?: string;
+
+  @IsString()
+  @IsOptional()
+  processCharacteristics?: string;
 }

@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsObject } from 'class-validator';
 
 export class UpdateStepDto {
   @IsString()
@@ -25,4 +25,28 @@ export class UpdateStepDto {
   @IsString()
   @IsOptional()
   resources?: string;
+
+  @IsString()
+  @IsOptional()
+  incomingVariation?: string;
+
+  @IsString()
+  @IsOptional()
+  specialCharacteristics?: string;
+
+  @IsObject()
+  @IsOptional()
+  flowIcons?: any;
+
+  @IsString()
+  @IsOptional()
+  machinesEquipmentDocs?: string;
+
+  @IsString()
+  @IsOptional()
+  desiredOutcome?: string;
+
+  @IsString()
+  @IsOptional()
+  processCharacteristics?: string;
 }

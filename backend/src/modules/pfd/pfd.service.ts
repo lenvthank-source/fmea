@@ -88,17 +88,26 @@ export class PfdService {
       where: { revisionId },
     });
 
+    const calculatedStepNumber = dto.stepNumber || `OP${(stepCount + 1) * 10}`;
+
     return this.prisma.processStep.create({
       data: {
         revisionId,
         processItemId,
-        stepNumber: dto.stepNumber,
-        name: dto.name,
-        stepType: dto.stepType,
+        stepNumber: calculatedStepNumber,
+        name: dto.name || '',
+        stepType: dto.stepType || 'operation',
         inputs: dto.inputs,
         outputs: dto.outputs,
         resources: dto.resources,
         sequenceOrder: stepCount + 1,
+
+        incomingVariation: dto.incomingVariation,
+        specialCharacteristics: dto.specialCharacteristics,
+        flowIcons: dto.flowIcons || {},
+        machinesEquipmentDocs: dto.machinesEquipmentDocs || dto.resources,
+        desiredOutcome: dto.desiredOutcome || dto.outputs,
+        processCharacteristics: dto.processCharacteristics,
       },
     });
   }
@@ -115,6 +124,12 @@ export class PfdService {
         inputs: dto.inputs,
         outputs: dto.outputs,
         resources: dto.resources,
+        incomingVariation: dto.incomingVariation,
+        specialCharacteristics: dto.specialCharacteristics,
+        flowIcons: dto.flowIcons,
+        machinesEquipmentDocs: dto.machinesEquipmentDocs,
+        desiredOutcome: dto.desiredOutcome,
+        processCharacteristics: dto.processCharacteristics,
       },
     });
   }

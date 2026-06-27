@@ -35,6 +35,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { DocumentHeader } from '../../components/DocumentHeader';
 
 interface ProcessStep {
   id: string;
@@ -316,6 +317,8 @@ export const ControlPlanWorkspace: React.FC = () => {
           </Stack>
         </Box>
       </Box>
+
+      <DocumentHeader projectId={projectId!} docType="CONTROL_PLAN" />
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>

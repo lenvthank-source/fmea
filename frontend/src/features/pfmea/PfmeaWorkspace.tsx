@@ -38,6 +38,7 @@ import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { calculateAP } from './utils/apCalculator';
 import { API_BASE_URL } from '../../config';
+import { DocumentHeader } from '../../components/DocumentHeader';
 
 interface WorkElement {
   id: string;
@@ -403,6 +404,8 @@ export const PfmeaWorkspace: React.FC = () => {
           </Button>
         </Box>
       </Box>
+
+      <DocumentHeader projectId={projectId!} docType="PFMEA" />
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>

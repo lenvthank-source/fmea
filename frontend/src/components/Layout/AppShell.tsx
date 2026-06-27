@@ -1,16 +1,26 @@
-import React from 'react';
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem, Divider } from '@mui/material';
-import { Folder as FolderIcon, Assignment as AssignmentIcon, AdminPanelSettings as AdminIcon, Logout as LogoutIcon, AccountTree as PfdIcon, Assessment as PfmeaIcon, ListAlt as CpIcon, ArrowBack as BackIcon } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem } from '@mui/material';
+import {
+  Folder as FolderIcon,
+  Assignment as AssignmentIcon,
+  AdminPanelSettings as AdminIcon,
+  AccountTree as PfdIcon,
+  Assessment as PfmeaIcon,
+  ListAlt as CpIcon,
+  ArrowBack as BackIcon,
+  Settings as SettingsIcon,
+  Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../../features/auth/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
-const drawerWidth = 240;
-
 export const AppShell: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState<boolean>(false);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -18,12 +28,6 @@ export const AppShell: React.FC = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    handleClose();
-    logout();
-    navigate('/login');
   };
 
   // Extract projectId if inside a project workspace path
@@ -41,9 +45,11 @@ export const AppShell: React.FC = () => {
     { text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` },
     { text: 'Process FMEA', icon: <PfmeaIcon />, path: `/projects/${projectId}/pfmea` },
     { text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` },
+    { text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` },
   ];
 
   const menuItems = projectId ? projectMenuItems : globalMenuItems;
+  const drawerWidth = collapsed ? 72 : 240;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -52,11 +58,18 @@ export const AppShell: React.FC = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           bgcolor: 'background.paper',
-          borderBottom: '1px solid #2e2e36',
+          borderBottom: '1px solid #e2e8f0',
           boxShadow: 'none',
         }}
       >
         <Toolbar>
+          <IconButton
+            onClick={() => setCollapsed(!collapsed)}
+            edge="start"
+            sx={{ mr: 2, color: 'text.secondary' }}
+          >
+            {collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
+          </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
             APEX FMEA Workspace
           </Typography>
@@ -64,7 +77,7 @@ export const AppShell: React.FC = () => {
           {user && (
             <div>
               <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ bgcolor: 'secondary.main', color: 'background.default', fontWeight: 'bold' }}>
+                <Avatar sx={{ bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold' }}>
                   {user.name[0].toUpperCase()}
                 </Avatar>
               </IconButton>
@@ -89,13 +102,6 @@ export const AppShell: React.FC = () => {
                     <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                   </Box>
                 </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" />
-                  </ListItemIcon>
-                  Logout
-                </MenuItem>
               </Menu>
             </div>
           )}
@@ -110,7 +116,9 @@ export const AppShell: React.FC = () => {
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: 'background.paper',
-            borderRight: '1px solid #2e2e36',
+            borderRight: '1px solid #e2e8f0',
+            transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflowX: 'hidden',
           },
         }}
       >
@@ -123,24 +131,48 @@ export const AppShell: React.FC = () => {
                   onClick={() => navigate(item.path)}
                   selected={location.pathname === item.path}
                   sx={{
-                    mx: 1,
-                    borderRadius: 2,
+                    mx: collapsed ? 1 : 1.5,
+                    borderRadius: collapsed ? '50%' : 3,
                     mb: 0.5,
+                    aspectRatio: collapsed ? '1/1' : 'auto',
+                    justifyContent: collapsed ? 'center' : 'initial',
+                    p: collapsed ? '10px' : '8px 16px',
+                    transition: 'all 0.15s ease-in-out',
                     '&.Mui-selected': {
-                      bgcolor: 'primary.dark',
-                      '&:hover': {
-                        bgcolor: 'primary.main',
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.contrastText',
                       },
+                      '&:hover': {
+                        bgcolor: 'primary.dark',
+                      },
+                    },
+                    '&:hover': {
+                      transform: 'scale(1.03)',
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.contrastText' : 'text.secondary' }}>
+                  <ListItemIcon sx={{
+                    color: location.pathname === item.path ? 'primary.contrastText' : 'text.secondary',
+                    minWidth: collapsed ? 0 : 36,
+                    justifyContent: 'center',
+                  }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    sx={{ color: location.pathname === item.path ? 'primary.contrastText' : 'text.primary' }}
-                  />
+                  {!collapsed && (
+                    <ListItemText
+                      primary={
+                        <Typography sx={{
+                          fontSize: '0.9rem',
+                          fontWeight: location.pathname === item.path ? 600 : 500,
+                          color: location.pathname === item.path ? 'primary.contrastText' : 'text.primary'
+                        }}>
+                          {item.text}
+                        </Typography>
+                      }
+                    />
+                  )}
                 </ListItemButton>
               </ListItem>
             ))}

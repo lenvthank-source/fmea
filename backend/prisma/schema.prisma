@@ -128,6 +128,34 @@ model Project {
   processItems    ProcessItem[]
   actions         Action[]
 
+  // Extended Quality Headers Metadata
+  organisationName          String?    @map("organisation_name") @db.VarChar(255)
+  organisationCode          String?    @map("organisation_code") @db.VarChar(100)
+  orgPartNumber            String?    @map("org_part_number") @db.VarChar(100)
+  organisationPlant        String?    @map("organisation_plant") @db.VarChar(255)
+  customerPartNumber       String?    @map("customer_part_number") @db.VarChar(100)
+  partName                  String?    @map("part_name") @db.VarChar(500)
+  keyContact                String?    @map("key_contact") @db.VarChar(255)
+  latestChangeLevel        String?    @map("latest_change_level") @db.VarChar(100)
+  drawingRevDate           DateTime?  @map("drawing_rev_date") @db.Date
+  documentNumber            String?    @map("document_number") @db.VarChar(100)
+  controlPlanNumber        String?    @map("control_plan_number") @db.VarChar(100)
+  assemblyLineNumber       String?    @map("assembly_line_number") @db.VarChar(100)
+  originationDate           DateTime?  @default(now()) @map("origination_date") @db.Date
+  supplierApprovalDate     DateTime?  @map("supplier_approval_date") @db.Date
+  otherApprovalDate        DateTime?  @map("other_approval_date") @db.Date
+  documentTypes             String[]   @map("document_types")
+  cftMembers                String[]   @map("cft_members")
+  customerEngApprover      String?    @map("customer_eng_approver") @db.VarChar(255)
+  customerEngApprovalDate   DateTime?  @map("customer_eng_approval_date") @db.Date
+  customerQualApprover     String?    @map("customer_qual_approver") @db.VarChar(255)
+  customerQualApprovalDate DateTime?  @map("customer_qual_approval_date") @db.Date
+  otherApprover             String?    @map("other_approver") @db.VarChar(255)
+  otherApprovalDate2       DateTime?  @map("other_approval_date2") @db.Date
+  dwgNumber                String?    @map("dwg_number") @db.VarChar(100)
+  dwgRevNoAndDate          String?    @map("dwg_rev_no_date") @db.VarChar(100)
+  preliminaryFinalFlag     String?    @default("preliminary") @map("preliminary_final_flag") @db.VarChar(20)
+
   @@index([tenantId])
   @@index([tenantId, status])
   @@map("project")
@@ -246,6 +274,14 @@ model ProcessStep {
   resources       String?
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Detailed PFD Columns
+  incomingVariation      String?  @map("incoming_variation") @db.Text
+  specialCharacteristics String?  @map("special_characteristics") @db.VarChar(100)
+  flowIcons              Json?    @map("flow_icons")
+  machinesEquipmentDocs  String?  @map("machines_equipment_documents") @db.Text
+  desiredOutcome         String?  @map("desired_outcome") @db.Text
+  processCharacteristics String?  @map("process_characteristics") @db.Text
   
   revision        DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   processItem     ProcessItem      @relation(fields: [processItemId], references: [id], onDelete: Cascade)
