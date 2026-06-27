@@ -284,38 +284,28 @@ export const ControlPlanWorkspace: React.FC = () => {
   return (
     <Box>
       {/* Title Header */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link
           component="button"
           onClick={() => navigate('/projects')}
-          sx={{ color: 'text.secondary', mb: 1, textDecoration: 'none' }}
+          sx={{ color: 'text.secondary', textDecoration: 'none' }}
         >
           &larr; Back to Projects
         </Link>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Process Control Plan (CP)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Step 6 of the Quality Workflow: Manage operational controls, specifications, tolerances, and reaction plans.
-            </Typography>
-          </Box>
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
-              onClick={handleSyncFromFmea}
-              disabled={syncing}
-            >
-              {syncing ? 'Syncing...' : 'Sync from FMEA'}
-            </Button>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-              Add Control Row
-            </Button>
-          </Stack>
-        </Box>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
+            onClick={handleSyncFromFmea}
+            disabled={syncing}
+          >
+            {syncing ? 'Syncing...' : 'Sync from FMEA'}
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+            Add Control Row
+          </Button>
+        </Stack>
       </Box>
 
       <DocumentHeader projectId={projectId!} docType="CONTROL_PLAN" />

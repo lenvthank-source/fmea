@@ -382,27 +382,17 @@ export const PfmeaWorkspace: React.FC = () => {
   return (
     <Box>
       {/* Title Header */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link
           component="button"
           onClick={() => navigate('/projects')}
-          sx={{ color: 'text.secondary', mb: 1, textDecoration: 'none' }}
+          sx={{ color: 'text.secondary', textDecoration: 'none' }}
         >
           &larr; Back to Projects
         </Link>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Process Failure Mode & Effects Analysis (PFMEA)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              7-Step Risk Analysis Grid (AIAG–VDA 2019 Standard). Auto-computes Action Priority (AP).
-            </Typography>
-          </Box>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-            Add Analysis Row
-          </Button>
-        </Box>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+          Add Analysis Row
+        </Button>
       </Box>
 
       <DocumentHeader projectId={projectId!} docType="PFMEA" />

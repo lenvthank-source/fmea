@@ -385,32 +385,22 @@ export const PfdWorkspace: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Link component="button" onClick={() => navigate('/projects')} sx={{ color: 'text.secondary', mb: 1, textDecoration: 'none' }}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link component="button" onClick={() => navigate('/projects')} sx={{ color: 'text.secondary', textDecoration: 'none' }}>
           &larr; Back to Projects
         </Link>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box>
-            <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Process Flow Diagram (PFD)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Bypass modals to edit cells inline. Build dynamic flow visualizations.
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
-              <Tab label="Table View" value="table" />
-              <Tab label="Flow Diagram" value="diagram" />
-            </Tabs>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddBlankRow}
-            >
-              Add Step
-            </Button>
-          </Box>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
+            <Tab label="Table View" value="table" />
+            <Tab label="Flow Diagram" value="diagram" />
+          </Tabs>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddBlankRow}
+          >
+            Add Step
+          </Button>
         </Box>
       </Box>
 
