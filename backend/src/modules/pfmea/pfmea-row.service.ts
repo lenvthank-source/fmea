@@ -83,6 +83,7 @@ export class PfmeaRowService {
       id: r.id,
       revisionId: r.revisionId,
       processStepId: r.processStepId,
+      workElementName: r.workElementName,
       rowNumber: r.rowNumber,
       severity: r.severity,
       occurrence: r.occurrence,
