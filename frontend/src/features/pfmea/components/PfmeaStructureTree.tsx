@@ -89,38 +89,41 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
       return { type: 'root', stepId: null };
     }
     
-    if (selectedNodeId.startsWith('root-func-')) {
-      const functionName = selectedNodeId.replace('root-func-', '');
+    if (selectedNodeId.startsWith('root-func::')) {
+      const functionName = selectedNodeId.replace('root-func::', '');
       return { type: 'root-function', stepId: null, functionName };
     }
 
-    if (selectedNodeId.startsWith('step-func-')) {
-      // step-func-${stepId}-${fnName}
-      const parts = selectedNodeId.replace('step-func-', '').split('-');
-      const stepId = parts[0];
-      const functionName = parts.slice(1).join('-');
+    if (selectedNodeId.startsWith('step-func::')) {
+      // step-func::${stepId}::${fnName}
+      const withoutPrefix = selectedNodeId.replace('step-func::', '');
+      const sepIdx = withoutPrefix.indexOf('::');
+      const stepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
+      const functionName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
       return { type: 'step-function', stepId, functionName };
     }
 
-    if (selectedNodeId.startsWith('step-')) {
-      const stepId = selectedNodeId.replace('step-', '');
+    if (selectedNodeId.startsWith('step::')) {
+      const stepId = selectedNodeId.replace('step::', '');
       return { type: 'step', stepId };
     }
 
-    if (selectedNodeId.startsWith('we-func-')) {
-      // we-func-${stepId}-${weName}-${fnName}
-      const parts = selectedNodeId.replace('we-func-', '').split('-');
+    if (selectedNodeId.startsWith('we-func::')) {
+      // we-func::${stepId}::${weName}::${fnName}
+      const withoutPrefix = selectedNodeId.replace('we-func::', '');
+      const parts = withoutPrefix.split('::');
       const stepId = parts[0];
       const weName = parts[1];
-      const functionName = parts.slice(2).join('-');
+      const functionName = parts.slice(2).join('::');
       return { type: 'we-function', stepId, workElementName: weName, functionName };
     }
 
-    if (selectedNodeId.startsWith('we-')) {
-      // we-${stepId}-${weName}
-      const parts = selectedNodeId.replace('we-', '').split('-');
-      const stepId = parts[0];
-      const weName = parts.slice(1).join('-');
+    if (selectedNodeId.startsWith('we::')) {
+      // we::${stepId}::${weName}
+      const withoutPrefix = selectedNodeId.replace('we::', '');
+      const sepIdx = withoutPrefix.indexOf('::');
+      const stepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
+      const weName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
       return { type: 'workElement', stepId, workElementName: weName };
     }
 
@@ -317,7 +320,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
             <Box sx={{ pl: 3 }}>
               {/* Root Functions */}
               {rootFunctions.map((fn, fIdx) => {
-                const nodeKey = `root-func-${fn}`;
+                const nodeKey = `root-func::${fn}`;
                 const isSelected = selectedNodeId === nodeKey;
                 const failures = Array.from(new Set(
                   rootRows
@@ -369,7 +372,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
               {/* Process Steps */}
               {filteredSteps.map((step) => {
-                const stepNodeId = `step-${step.id}`;
+                const stepNodeId = `step::${step.id}`;
                 const stepExpanded = !!expandedNodes[stepNodeId];
                 const stepSelected = selectedNodeId === stepNodeId;
 
@@ -429,7 +432,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                       <Box sx={{ pl: 3.5 }}>
                         {/* Step Functions List */}
                         {stepFunctions.map((fn, fIdx) => {
-                          const nodeKey = `step-func-${step.id}-${fn}`;
+                          const nodeKey = `step-func::${step.id}::${fn}`;
                           const isSelected = selectedNodeId === nodeKey;
                           const failures = Array.from(new Set(
                             stepOnlyRows
@@ -466,7 +469,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                       key={failIdx} 
                                       direction="row" 
                                       spacing={1} 
-                                      onClick={(e) => { e.stopPropagation(); handleSelectNode(`step-fail-${step.id}-${fn}-${fail}`); }}
+                                      onClick={(e) => { e.stopPropagation(); handleSelectNode(`step-fail::${step.id}::${fn}::${fail}`); }}
                                       sx={{ py: 0.25, px: 1, alignItems: 'center', cursor: 'pointer', borderRadius: 1 }}
                                     >
                                       <FailureIcon sx={{ color: '#A13544', fontSize: '0.9rem' }} />
@@ -481,7 +484,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                         {/* Work Elements List */}
                         {allWeNames.map((we, wIdx) => {
-                          const weNodeId = `we-${step.id}-${we}`;
+                          const weNodeId = `we::${step.id}::${we}`;
                           const isWeSelected = selectedNodeId === weNodeId;
                           const weExpanded = !!expandedNodes[weNodeId];
 
@@ -513,7 +516,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                               <Collapse in={weExpanded}>
                                 <Box sx={{ pl: 3.5 }}>
                                   {weFunctions.map((fn, wfIdx) => {
-                                    const weFuncKey = `we-func-${step.id}-${we}-${fn}`;
+                                    const weFuncKey = `we-func::${step.id}::${we}::${fn}`;
                                     const isWeFuncSelected = selectedNodeId === weFuncKey;
                                     const weFuncExpanded = !!expandedNodes[weFuncKey];
 
@@ -552,7 +555,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                 key={failIdx} 
                                                 direction="row" 
                                                 spacing={1} 
-                                                onClick={(e) => { e.stopPropagation(); handleSelectNode(`we-fail-${step.id}-${we}-${fn}-${fail}`); }}
+                                                onClick={(e) => { e.stopPropagation(); handleSelectNode(`we-fail::${step.id}::${we}::${fn}::${fail}`); }}
                                                 sx={{ py: 0.25, px: 1, alignItems: 'center', cursor: 'pointer', borderRadius: 1 }}
                                               >
                                                  <FailureIcon sx={{ color: '#A13544', fontSize: '0.9rem' }} />
