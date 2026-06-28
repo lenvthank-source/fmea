@@ -52,6 +52,10 @@ export class UpdatePfmeaRowDto {
   @IsOptional()
   filterCode?: string | null;
 
+  @IsString()
+  @IsOptional()
+  workElementName?: string | null;
+
   @IsIn(['draft', 'reviewed', 'approved', 'archived'])
   @IsOptional()
   status?: string;

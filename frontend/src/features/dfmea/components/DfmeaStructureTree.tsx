@@ -1,34 +1,61 @@
 import React, { useState } from 'react';
 import {
-  Box, Typography, Button, IconButton, Paper, Divider, TextField,
-  Collapse, Stack, Tooltip
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Paper,
+  Stack,
+  Collapse,
+  Tooltip,
+  TextField,
+  Divider
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Delete as DeleteIcon,
   Edit as EditIcon,
-  KeyboardArrowDown as ExpandIcon,
-  KeyboardArrowUp as CollapseIcon,
-  ArrowUpward as UpIcon,
-  ArrowDownward as DownIcon,
-  Warning as FailureIcon,
-  FolderOpen as RootIcon,
+  Delete as DeleteIcon,
+  ChevronRight as CollapseIcon,
+  ExpandMore as ExpandIcon,
+  AccountTree as RootIcon,
+  ViewWeek as StepIcon,
+  PrecisionManufacturing as WorkElementIcon,
   HelpOutlined as FunctionIcon,
-  Settings as ComponentIcon,
-  AccountTree as SystemElementIcon
+  Warning as FailureIcon
 } from '@mui/icons-material';
+
+interface ProcessStep {
+  id: string;
+  stepNumber: string;
+  name: string;
+  machinesEquipmentDocs?: any;
+  isOrphaned?: boolean;
+}
+
+interface PfmeaRow {
+  id: string;
+  processStepId: string | null;
+  workElementName: string | null;
+  rowNumber: number;
+  severity: number | null;
+  occurrence: number | null;
+  detection: number | null;
+  ap: string | null;
+  functions?: { name: string }[];
+  failureModes?: { name: string }[];
+}
 
 interface DfmeaStructureTreeProps {
   projectName: string;
-  steps: any[];
-  rows: any[];
+  steps: ProcessStep[];
+  rows: PfmeaRow[];
   onAddStep: () => void;
-  onEditStep: (step: any) => void;
+  onEditStep: (step: ProcessStep) => void;
   onDeleteStep: (stepId: string) => void;
   onMoveStep: (stepId: string, direction: 'up' | 'down') => void;
-  onAddFunction: (stepId: string) => void;
+  onAddFunction: (stepId: string | null, workElementName?: string | null) => void;
   onAddWorkElement: (stepId: string) => void;
-  onAddFailure: (stepId: string) => void;
+  onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
 }
 
 export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
@@ -38,7 +65,6 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
   onAddStep,
   onEditStep,
   onDeleteStep,
-  onMoveStep,
   onAddFunction,
   onAddWorkElement,
   onAddFailure
@@ -55,26 +81,105 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
     setSelectedNodeId(id);
   };
 
-  const getSelectedStepId = (): string | null => {
+  // Helper to extract step ID and other metadata from selectedNodeId
+  const getSelectedNodeInfo = () => {
     if (!selectedNodeId) return null;
-    if (selectedNodeId.startsWith('step-')) return selectedNodeId.replace('step-', '');
     
-    const foundStep = steps.find(s => 
-      selectedNodeId.endsWith(`-${s.id}`) || selectedNodeId.includes(`-${s.id}-`)
-    );
-    return foundStep ? foundStep.id : null;
+    if (selectedNodeId === 'root') {
+      return { type: 'root', stepId: null };
+    }
+    
+    if (selectedNodeId.startsWith('root-func-')) {
+      const functionName = selectedNodeId.replace('root-func-', '');
+      return { type: 'root-function', stepId: null, functionName };
+    }
+
+    if (selectedNodeId.startsWith('step-func-')) {
+      // step-func-${stepId}-${fnName}
+      const parts = selectedNodeId.replace('step-func-', '').split('-');
+      const stepId = parts[0];
+      const functionName = parts.slice(1).join('-');
+      return { type: 'step-function', stepId, functionName };
+    }
+
+    if (selectedNodeId.startsWith('step-')) {
+      const stepId = selectedNodeId.replace('step-', '');
+      return { type: 'step', stepId };
+    }
+
+    if (selectedNodeId.startsWith('we-func-')) {
+      // we-func-${stepId}-${weName}-${fnName}
+      const parts = selectedNodeId.replace('we-func-', '').split('-');
+      const stepId = parts[0];
+      const weName = parts[1];
+      const functionName = parts.slice(2).join('-');
+      return { type: 'we-function', stepId, workElementName: weName, functionName };
+    }
+
+    if (selectedNodeId.startsWith('we-')) {
+      // we-${stepId}-${weName}
+      const parts = selectedNodeId.replace('we-', '').split('-');
+      const stepId = parts[0];
+      const weName = parts.slice(1).join('-');
+      return { type: 'workElement', stepId, workElementName: weName };
+    }
+
+    return null;
   };
 
-  const selectedStepId = getSelectedStepId();
+  const nodeInfo = getSelectedNodeInfo();
+
+  // Enable/Disable rules based on user-agent spec
+  const isAddStepEnabled = true;
+  const isAddWorkElementEnabled = !!nodeInfo && nodeInfo.type === 'step';
+  const isAddFunctionEnabled = !!nodeInfo && (
+    nodeInfo.type === 'root' || 
+    nodeInfo.type === 'step' || 
+    nodeInfo.type === 'workElement'
+  );
+  const isAddFailureEnabled = !!nodeInfo && (
+    nodeInfo.type === 'root-function' || 
+    nodeInfo.type === 'step-function' || 
+    nodeInfo.type === 'we-function'
+  );
+
+  const handleAddFunctionClick = () => {
+    if (!nodeInfo) return;
+    if (nodeInfo.type === 'root') {
+      onAddFunction(null, null);
+    } else if (nodeInfo.type === 'step') {
+      onAddFunction(nodeInfo.stepId, null);
+    } else if (nodeInfo.type === 'workElement') {
+      onAddFunction(nodeInfo.stepId, nodeInfo.workElementName);
+    }
+  };
+
+  const handleAddFailureClick = () => {
+    if (!nodeInfo) return;
+    if (nodeInfo.type === 'root-function') {
+      onAddFailure(null, { functionName: nodeInfo.functionName! });
+    } else if (nodeInfo.type === 'step-function') {
+      onAddFailure(nodeInfo.stepId, { functionName: nodeInfo.functionName! });
+    } else if (nodeInfo.type === 'we-function') {
+      onAddFailure(nodeInfo.stepId, { 
+        workElementName: nodeInfo.workElementName, 
+        functionName: nodeInfo.functionName! 
+      });
+    }
+  };
 
   const filteredSteps = steps.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.stepNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Group root rows
+  const rootRows = rows.filter(r => !r.processStepId);
+  const rootFunctions = Array.from(new Set(rootRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      {/* Toolbar */}
+      {/* 1. Structure Tree Toolbar (FMEA Executive Alignment) */}
       <Paper
         sx={{
           p: 1.5,
@@ -93,30 +198,31 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onAddStep}
+              disabled={!isAddStepEnabled}
             >
               System Element
             </Button>
             <Button
               size="small"
               variant="outlined"
-              disabled={!selectedStepId}
-              onClick={() => selectedStepId && onAddWorkElement(selectedStepId)}
+              disabled={!isAddWorkElementEnabled}
+              onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
             >
               Component Element
             </Button>
             <Button
               size="small"
               variant="outlined"
-              disabled={!selectedStepId}
-              onClick={() => selectedStepId && onAddFunction(selectedStepId)}
+              disabled={!isAddFunctionEnabled}
+              onClick={handleAddFunctionClick}
             >
               Function
             </Button>
             <Button
               size="small"
               variant="outlined"
-              disabled={!selectedStepId}
-              onClick={() => selectedStepId && onAddFailure(selectedStepId)}
+              disabled={!isAddFailureEnabled}
+              onClick={handleAddFailureClick}
             >
               Failure
             </Button>
@@ -148,34 +254,12 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
-            <IconButton
-              size="small"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step-')}
-              onClick={() => {
-                const stepId = selectedNodeId?.replace('step-', '');
-                if (stepId) onMoveStep(stepId, 'up');
-              }}
-            >
-              <UpIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step-')}
-              onClick={() => {
-                const stepId = selectedNodeId?.replace('step-', '');
-                if (stepId) onMoveStep(stepId, 'down');
-              }}
-            >
-              <DownIcon fontSize="small" />
-            </IconButton>
           </Stack>
 
-          <Divider orientation="vertical" flexItem />
-
-          {/* Search bar */}
+          {/* Search Field */}
           <TextField
+            placeholder="Search elements..."
             size="small"
-            placeholder="Search DFMEA Tree..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
@@ -191,7 +275,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
         </Stack>
       </Paper>
 
-      {/* Tree Canvas */}
+      {/* 2. Interactive Tree Structure Canvas */}
       <Paper
         sx={{
           p: 3,
@@ -206,7 +290,19 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
       >
         <Box sx={{ pl: 0.5 }}>
           {/* Root node */}
-          <Stack direction="row" spacing={1} onClick={() => handleSelectNode('root')} sx={{ cursor: 'pointer', mb: 1, alignItems: 'center' }}>
+          <Stack 
+            direction="row" 
+            spacing={1} 
+            onClick={() => handleSelectNode('root')} 
+            sx={{ 
+              cursor: 'pointer', 
+              mb: 1, 
+              alignItems: 'center',
+              bgcolor: selectedNodeId === 'root' ? 'rgba(1, 105, 111, 0.06)' : 'transparent',
+              p: 0.5,
+              borderRadius: 1.5
+            }}
+          >
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand('root'); }} sx={{ p: 0.25 }}>
               {expandedNodes.root ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}
             </IconButton>
@@ -219,6 +315,59 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
           {/* Child nodes of root */}
           <Collapse in={expandedNodes.root}>
             <Box sx={{ pl: 3 }}>
+              {/* Root Functions */}
+              {rootFunctions.map((fn, fIdx) => {
+                const nodeKey = `root-func-${fn}`;
+                const isSelected = selectedNodeId === nodeKey;
+                const failures = Array.from(new Set(
+                  rootRows
+                    .filter(r => r.functions?.some(f => f.name === fn))
+                    .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
+                )).filter(Boolean);
+
+                return (
+                  <Box key={fIdx} sx={{ mb: 0.5 }}>
+                    <Stack 
+                      direction="row" 
+                      spacing={1} 
+                      onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
+                      sx={{ 
+                        cursor: 'pointer', 
+                        py: 0.25, 
+                        px: 1,
+                        alignItems: 'center',
+                        bgcolor: isSelected ? 'rgba(1, 105, 111, 0.06)' : 'transparent',
+                        borderRadius: 1
+                      }}
+                    >
+                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25 }}>
+                        {expandedNodes[nodeKey] ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
+                      </IconButton>
+                      <FunctionIcon sx={{ color: '#437A22', fontSize: '0.9rem' }} />
+                      <Typography variant="body2" sx={{ fontSize: '0.825rem', fontWeight: 500 }}>{fn}</Typography>
+                    </Stack>
+
+                    <Collapse in={!!expandedNodes[nodeKey]}>
+                      <Box sx={{ pl: 3 }}>
+                        {failures.map((fail, failIdx) => (
+                          <Stack 
+                            key={failIdx} 
+                            direction="row" 
+                            spacing={1} 
+                            onClick={(e) => { e.stopPropagation(); handleSelectNode(`root-fail-${fn}-${fail}`); }}
+                            sx={{ py: 0.25, px: 1, alignItems: 'center', cursor: 'pointer', borderRadius: 1 }}
+                          >
+                            <FailureIcon sx={{ color: '#A13544', fontSize: '0.85rem' }} />
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>{fail}</Typography>
+                          </Stack>
+                        ))}
+                      </Box>
+                    </Collapse>
+                  </Box>
+                );
+              })}
+
+              {/* System Elements */}
               {filteredSteps.map((step) => {
                 const stepNodeId = `step-${step.id}`;
                 const stepExpanded = !!expandedNodes[stepNodeId];
@@ -226,9 +375,11 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
 
                 const stepRows = rows.filter(r => r.processStepId === step.id);
                 
-                const uniqueFunctions = Array.from(new Set(stepRows.flatMap(r => r.functions?.map((f: any) => f.name) || []).filter(Boolean)));
-                const uniqueFailures = Array.from(new Set(stepRows.flatMap(r => r.failureModes?.map((fm: any) => fm.name) || []).filter(Boolean)));
-                
+                // Step functions (where workElementName is null)
+                const stepOnlyRows = stepRows.filter(r => !r.workElementName);
+                const stepFunctions = Array.from(new Set(stepOnlyRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
+
+                // Component Elements
                 let stepWorkElements: string[] = [];
                 if (Array.isArray(step.machinesEquipmentDocs)) {
                   stepWorkElements = step.machinesEquipmentDocs;
@@ -240,7 +391,8 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                     stepWorkElements = [step.machinesEquipmentDocs];
                   }
                 }
-                stepWorkElements = stepWorkElements.map(w => w.trim()).filter(Boolean);
+                const rowWeNames = stepRows.map(r => r.workElementName).filter(Boolean) as string[];
+                const allWeNames = Array.from(new Set([...stepWorkElements.map(w => w.trim()).filter(Boolean), ...rowWeNames]));
 
                 return (
                   <Box key={step.id} sx={{ mb: 1 }}>
@@ -262,11 +414,11 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(stepNodeId); }} sx={{ p: 0.25 }}>
                         {stepExpanded ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}
                       </IconButton>
-                      <SystemElementIcon sx={{ color: '#01696F', fontSize: '1.1rem' }} />
+                      <StepIcon sx={{ color: '#2563eb', fontSize: '1.1rem' }} />
                       <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: stepSelected ? 'primary.main' : 'text.primary', display: 'flex', alignItems: 'center' }}>
                         {step.stepNumber}: {step.name || 'Untitled System Element'}
                         {step.isOrphaned && (
-                          <Tooltip title="Linked PFD step has been deleted (Orphaned)">
+                          <Tooltip title="Linked PFD step has been deleted">
                             <FailureIcon sx={{ color: 'error.main', fontSize: '1rem', ml: 1 }} />
                           </Tooltip>
                         )}
@@ -275,71 +427,148 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
 
                     <Collapse in={stepExpanded}>
                       <Box sx={{ pl: 3.5 }}>
-                        {/* 1. Functions Group */}
-                        {uniqueFunctions.length > 0 && (
-                          <Box sx={{ mt: 0.5 }}>
-                            <Stack direction="row" spacing={1} onClick={() => toggleExpand(`func-group-${step.id}`)} sx={{ cursor: 'pointer', py: 0.25, alignItems: 'center' }}>
-                              {expandedNodes[`func-group-${step.id}`] ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>Functions</Typography>
-                            </Stack>
-                            <Collapse in={!!expandedNodes[`func-group-${step.id}`]}>
-                              <Box sx={{ pl: 2 }}>
-                                {uniqueFunctions.map((fn, fIdx) => (
-                                  <Stack key={fIdx} direction="row" spacing={1} sx={{ py: 0.25, alignItems: 'center' }}>
-                                    <FunctionIcon sx={{ color: '#437A22', fontSize: '0.9rem' }} />
-                                    <Typography variant="body2" sx={{ fontSize: '0.825rem', color: 'text.primary' }}>{fn}</Typography>
-                                  </Stack>
-                                ))}
-                              </Box>
-                            </Collapse>
-                          </Box>
-                        )}
+                        {/* Focus Element Functions */}
+                        {stepFunctions.map((fn, fIdx) => {
+                          const nodeKey = `step-func-${step.id}-${fn}`;
+                          const isSelected = selectedNodeId === nodeKey;
+                          const failures = Array.from(new Set(
+                            stepOnlyRows
+                              .filter(r => r.functions?.some(f => f.name === fn))
+                              .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
+                          )).filter(Boolean);
 
-                        {/* 2. Component Elements Group */}
-                        {stepWorkElements.length > 0 && (
-                          <Box sx={{ mt: 0.5 }}>
-                            <Stack direction="row" spacing={1} onClick={() => toggleExpand(`work-group-${step.id}`)} sx={{ cursor: 'pointer', py: 0.25, alignItems: 'center' }}>
-                              {expandedNodes[`work-group-${step.id}`] ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>Component Elements</Typography>
-                            </Stack>
-                            <Collapse in={!!expandedNodes[`work-group-${step.id}`]}>
-                              <Box sx={{ pl: 2 }}>
-                                {stepWorkElements.map((we, wIdx) => (
-                                  <Stack key={wIdx} direction="row" spacing={1} sx={{ py: 0.25, alignItems: 'center' }}>
-                                    <ComponentIcon sx={{ color: '#f97316', fontSize: '0.9rem' }} />
-                                    <Typography variant="body2" sx={{ fontSize: '0.825rem', color: 'text.primary' }}>{we}</Typography>
-                                  </Stack>
-                                ))}
-                              </Box>
-                            </Collapse>
-                          </Box>
-                        )}
+                          return (
+                            <Box key={fIdx} sx={{ mb: 0.5 }}>
+                              <Stack 
+                                direction="row" 
+                                spacing={1} 
+                                onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
+                                sx={{ 
+                                  cursor: 'pointer', 
+                                  py: 0.25, 
+                                  px: 1, 
+                                  alignItems: 'center',
+                                  bgcolor: isSelected ? 'rgba(1, 105, 111, 0.06)' : 'transparent',
+                                  borderRadius: 1
+                                }}
+                              >
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25 }}>
+                                  {expandedNodes[nodeKey] ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
+                                </IconButton>
+                                <FunctionIcon sx={{ color: '#437A22', fontSize: '0.9rem' }} />
+                                <Typography variant="body2" sx={{ fontSize: '0.825rem', fontWeight: 500 }}>{fn}</Typography>
+                              </Stack>
 
-                        {/* 3. Failures Group */}
-                        {uniqueFailures.length > 0 && (
-                          <Box sx={{ mt: 0.5 }}>
-                            <Stack direction="row" spacing={1} onClick={() => toggleExpand(`fail-group-${step.id}`)} sx={{ cursor: 'pointer', py: 0.25, alignItems: 'center' }}>
-                              {expandedNodes[`fail-group-${step.id}`] ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>Failures</Typography>
-                            </Stack>
-                            <Collapse in={!!expandedNodes[`fail-group-${step.id}`]}>
-                              <Box sx={{ pl: 2 }}>
-                                {uniqueFailures.map((fl, flIdx) => (
-                                  <Stack key={flIdx} direction="row" spacing={1} sx={{ py: 0.25, alignItems: 'center' }}>
-                                    <FailureIcon sx={{ color: '#dc2626', fontSize: '0.9rem' }} />
-                                    <Typography variant="body2" sx={{ fontSize: '0.825rem', color: 'text.primary' }}>{fl}</Typography>
-                                  </Stack>
-                                ))}
-                              </Box>
-                            </Collapse>
-                          </Box>
-                        )}
+                              <Collapse in={!!expandedNodes[nodeKey]}>
+                                <Box sx={{ pl: 3 }}>
+                                  {failures.map((fail, failIdx) => (
+                                    <Stack 
+                                      key={failIdx} 
+                                      direction="row" 
+                                      spacing={1} 
+                                      onClick={(e) => { e.stopPropagation(); handleSelectNode(`step-fail-${step.id}-${fn}-${fail}`); }}
+                                      sx={{ py: 0.25, px: 1, alignItems: 'center', cursor: 'pointer', borderRadius: 1 }}
+                                    >
+                                      <FailureIcon sx={{ color: '#A13544', fontSize: '0.85rem' }} />
+                                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{fail}</Typography>
+                                    </Stack>
+                                  ))}
+                                </Box>
+                              </Collapse>
+                            </Box>
+                          );
+                        })}
 
-                        {uniqueFunctions.length === 0 && stepWorkElements.length === 0 && uniqueFailures.length === 0 && (
-                          <Typography variant="caption" sx={{ display: 'block', pl: 2, py: 0.5, fontStyle: 'italic', color: 'text.secondary' }}>
-                            Empty element. Add items from toolbar.
-                          </Typography>
-                        )}
+                        {/* Component Elements */}
+                        {allWeNames.map((we, wIdx) => {
+                          const weNodeId = `we-${step.id}-${we}`;
+                          const isWeSelected = selectedNodeId === weNodeId;
+                          const weExpanded = !!expandedNodes[weNodeId];
+
+                          const weRows = stepRows.filter(r => r.workElementName === we);
+                          const weFunctions = Array.from(new Set(weRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
+
+                          return (
+                            <Box key={wIdx} sx={{ mb: 0.5 }}>
+                              <Stack 
+                                direction="row" 
+                                spacing={1} 
+                                onClick={(e) => { e.stopPropagation(); handleSelectNode(weNodeId); }}
+                                sx={{ 
+                                  cursor: 'pointer', 
+                                  py: 0.25, 
+                                  px: 1, 
+                                  alignItems: 'center',
+                                  bgcolor: isWeSelected ? 'rgba(1, 105, 111, 0.06)' : 'transparent',
+                                  borderRadius: 1
+                                }}
+                              >
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weNodeId); }} sx={{ p: 0.25 }}>
+                                  {weExpanded ? <ExpandIcon sx={{ fontSize: '0.9rem' }} /> : <CollapseIcon sx={{ fontSize: '0.9rem' }} />}
+                                </IconButton>
+                                <WorkElementIcon sx={{ color: '#f97316', fontSize: '0.9rem' }} />
+                                <Typography variant="body2" sx={{ fontSize: '0.825rem', fontWeight: 500 }}>{we}</Typography>
+                              </Stack>
+
+                              <Collapse in={weExpanded}>
+                                <Box sx={{ pl: 3.5 }}>
+                                  {weFunctions.map((fn, wfIdx) => {
+                                    const weFuncKey = `we-func-${step.id}-${we}-${fn}`;
+                                    const isWeFuncSelected = selectedNodeId === weFuncKey;
+                                    const weFuncExpanded = !!expandedNodes[weFuncKey];
+
+                                    const failures = Array.from(new Set(
+                                      weRows
+                                        .filter(r => r.functions?.some(f => f.name === fn))
+                                        .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
+                                    )).filter(Boolean);
+
+                                    return (
+                                      <Box key={wfIdx} sx={{ mb: 0.5 }}>
+                                        <Stack 
+                                          direction="row" 
+                                          spacing={1} 
+                                          onClick={(e) => { e.stopPropagation(); handleSelectNode(weFuncKey); }}
+                                          sx={{ 
+                                            cursor: 'pointer', 
+                                            py: 0.25, 
+                                            px: 1, 
+                                            alignItems: 'center',
+                                            bgcolor: isWeFuncSelected ? 'rgba(1, 105, 111, 0.06)' : 'transparent',
+                                            borderRadius: 1
+                                          }}
+                                        >
+                                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weFuncKey); }} sx={{ p: 0.25 }}>
+                                            {weFuncExpanded ? <ExpandIcon sx={{ fontSize: '0.85rem' }} /> : <CollapseIcon sx={{ fontSize: '0.85rem' }} />}
+                                          </IconButton>
+                                          <FunctionIcon sx={{ color: '#437A22', fontSize: '0.85rem' }} />
+                                          <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>{fn}</Typography>
+                                        </Stack>
+
+                                        <Collapse in={weFuncExpanded}>
+                                          <Box sx={{ pl: 3 }}>
+                                            {failures.map((fail, failIdx) => (
+                                              <Stack 
+                                                key={failIdx} 
+                                                direction="row" 
+                                                spacing={1} 
+                                                onClick={(e) => { e.stopPropagation(); handleSelectNode(`we-fail-${step.id}-${we}-${fn}-${fail}`); }}
+                                                sx={{ py: 0.25, px: 1, alignItems: 'center', cursor: 'pointer', borderRadius: 1 }}
+                                              >
+                                                <FailureIcon sx={{ color: '#A13544', fontSize: '0.8rem' }} />
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>{fail}</Typography>
+                                              </Stack>
+                                            ))}
+                                          </Box>
+                                        </Collapse>
+                                      </Box>
+                                    );
+                                  })}
+                                </Box>
+                              </Collapse>
+                            </Box>
+                          );
+                        })}
                       </Box>
                     </Collapse>
                   </Box>

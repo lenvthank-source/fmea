@@ -1,9 +1,13 @@
-import { IsNotEmpty, IsOptional, IsUUID, IsInt } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, IsInt, IsString } from 'class-validator';
 
 export class CreatePfmeaRowDto {
   @IsUUID()
-  @IsNotEmpty()
-  processStepId: string;
+  @IsOptional()
+  processStepId?: string;
+
+  @IsString()
+  @IsOptional()
+  workElementName?: string;
 
   @IsInt()
   @IsNotEmpty()

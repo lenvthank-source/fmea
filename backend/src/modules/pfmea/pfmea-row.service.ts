@@ -107,23 +107,24 @@ export class PfmeaRowService {
   async createRow(tenantId: string, userId: string, revisionId: string, dto: CreatePfmeaRowDto) {
     const pfmeaRevision = await this.verifyRevisionAccess(tenantId, revisionId);
 
-    // Process steps belong to the PFD revision (different from PFMEA revision).
-    // Verify the step exists and belongs to the same project via tenant check.
-    const step = await this.prisma.processStep.findUnique({
-      where: { id: dto.processStepId },
-      include: { revision: { include: { document: true } } },
-    });
-    if (!step) {
-      throw new BadRequestException('Process step not found');
-    }
-    if (step.revision.document.projectId !== pfmeaRevision.document.projectId) {
-      throw new BadRequestException('Process step does not belong to this project');
+    if (dto.processStepId) {
+      const step = await this.prisma.processStep.findUnique({
+        where: { id: dto.processStepId },
+        include: { revision: { include: { document: true } } },
+      });
+      if (!step) {
+        throw new BadRequestException('Process step not found');
+      }
+      if (step.revision.document.projectId !== pfmeaRevision.document.projectId) {
+        throw new BadRequestException('Process step does not belong to this project');
+      }
     }
 
     return this.prisma.pfmeaRow.create({
       data: {
         revisionId,
-        processStepId: dto.processStepId,
+        processStepId: dto.processStepId || null,
+        workElementName: dto.workElementName || null,
         rowNumber: dto.rowNumber,
         severity: null,
         occurrence: null,
@@ -389,6 +390,7 @@ export class PfmeaRowService {
           detection: D,
           ap: finalAp,
           filterCode: dto.filterCode !== undefined ? dto.filterCode : row.filterCode,
+          workElementName: dto.workElementName !== undefined ? dto.workElementName : row.workElementName,
           notes: dto.notes !== undefined ? dto.notes : row.notes,
           status: dto.status !== undefined ? dto.status : row.status,
           accessLevel: dto.accessLevel !== undefined ? dto.accessLevel : row.accessLevel,

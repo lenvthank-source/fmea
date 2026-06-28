@@ -34,7 +34,8 @@ interface ProcessStep {
 
 interface PfmeaRow {
   id: string;
-  processStepId: string;
+  processStepId: string | null;
+  workElementName: string | null;
   rowNumber: number;
   severity: number | null;
   occurrence: number | null;

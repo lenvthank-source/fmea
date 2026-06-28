@@ -405,9 +405,10 @@ model Characteristic {
 model PfmeaRow {
   id            String            @id @default(uuid()) @db.Uuid
   revisionId    String            @map("revision_id") @db.Uuid
-  processStepId String            @map("process_step_id") @db.Uuid
-  rowNumber     Int               @map("row_number")
-  severity      Int?              @db.SmallInt
+  processStepId   String?           @map("process_step_id") @db.Uuid
+  workElementName String?           @map("work_element_name") @db.VarChar(255)
+  rowNumber       Int               @map("row_number")
+  severity        Int?              @db.SmallInt
   occurrence    Int?              @db.SmallInt
   detection     Int?              @db.SmallInt
   ap            String?           @db.Char(1)
@@ -420,7 +421,7 @@ model PfmeaRow {
   updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
   revision      DocumentRevision  @relation(fields: [revisionId], references: [id], onDelete: Cascade)
-  processStep   ProcessStep       @relation(fields: [processStepId], references: [id], onDelete: Cascade)
+  processStep   ProcessStep?      @relation(fields: [processStepId], references: [id], onDelete: Cascade)
   createdBy     User              @relation(fields: [createdById], references: [id])
 
   functions       PfmeaRowFunction[]

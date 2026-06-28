@@ -215,6 +215,8 @@ export class ControlPlanRowService {
       const createdRows = [];
 
       for (const fmeaRow of fmeaRows) {
+        if (!fmeaRow.processStepId) continue;
+        
         // Find if this fmeaRow has controls
         const fmeaControls = fmeaRow.controls.map((c) => c.control);
         const fmeaChars = fmeaRow.characteristics.map((c) => c.characteristic);

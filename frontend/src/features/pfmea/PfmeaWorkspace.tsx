@@ -33,7 +33,8 @@ interface ProcessStep {
 
 interface PfmeaRow {
   id: string;
-  processStepId: string;
+  processStepId: string | null;
+  workElementName: string | null;
   rowNumber: number;
   severity: number | null;
   occurrence: number | null;
@@ -42,7 +43,7 @@ interface PfmeaRow {
   notes: string;
   status: string;
   accessLevel: string;
-  processStep: { name: string; stepNumber: string; isOrphaned?: boolean };
+  processStep: { name: string; stepNumber: string; isOrphaned?: boolean } | null;
   functions: { name: string }[];
   requirements: { name: string }[];
   failureModes: { name: string }[];
@@ -128,6 +129,8 @@ export const PfmeaWorkspace: React.FC = () => {
   // Generic Tree Element Add Dialog states
   const [treeAddType, setTreeAddType] = useState<'workElement' | 'function' | 'failure' | null>(null);
   const [treeAddTargetStepId, setTreeAddTargetStepId] = useState<string | null>(null);
+  const [treeAddWorkElementName, setTreeAddWorkElementName] = useState<string | null>(null);
+  const [treeAddFunctionName, setTreeAddFunctionName] = useState<string | null>(null);
   const [treeAddValue, setTreeAddValue] = useState('');
 
   // Exporter Dialog state
@@ -335,24 +338,33 @@ export const PfmeaWorkspace: React.FC = () => {
 
   const handleAddWorkElementFromTree = (stepId: string) => {
     setTreeAddTargetStepId(stepId);
+    setTreeAddWorkElementName(null);
+    setTreeAddFunctionName(null);
     setTreeAddType('workElement');
     setTreeAddValue('');
   };
 
-  const handleAddFunctionFromTree = (stepId: string) => {
+  const handleAddFunctionFromTree = (stepId: string | null, workElementName?: string | null) => {
     setTreeAddTargetStepId(stepId);
+    setTreeAddWorkElementName(workElementName || null);
+    setTreeAddFunctionName(null);
     setTreeAddType('function');
     setTreeAddValue('');
   };
 
-  const handleAddFailureFromTree = (stepId: string) => {
+  const handleAddFailureFromTree = (
+    stepId: string | null,
+    parentContext?: { workElementName?: string | null; functionName: string }
+  ) => {
     setTreeAddTargetStepId(stepId);
+    setTreeAddWorkElementName(parentContext?.workElementName || null);
+    setTreeAddFunctionName(parentContext?.functionName || null);
     setTreeAddType('failure');
     setTreeAddValue('');
   };
 
   const handleConfirmAddTreeElement = async () => {
-    if (!treeAddType || !treeAddTargetStepId || !treeAddValue.trim()) return;
+    if (!treeAddType || !treeAddValue.trim()) return;
     const value = treeAddValue.trim();
     setTreeAddType(null);
     setTreeAddValue('');
@@ -360,6 +372,7 @@ export const PfmeaWorkspace: React.FC = () => {
 
     try {
       if (treeAddType === 'workElement') {
+        if (!treeAddTargetStepId) throw new Error('Step target is required for Work Element');
         const step = steps.find(s => s.id === treeAddTargetStepId);
         if (!step) throw new Error('Step not found');
         
@@ -386,8 +399,16 @@ export const PfmeaWorkspace: React.FC = () => {
         });
         if (!response.ok) throw new Error('Failed to save Work Element to Process Step');
       } else {
-        // Find or create PFMEA Row
-        let row = rows.find(r => r.processStepId === treeAddTargetStepId);
+        // Find or create PFMEA Row matching:
+        // - processStepId === treeAddTargetStepId
+        // - workElementName === treeAddWorkElementName
+        // - (if adding failure, we also want the row to have the given function name!)
+        let row = rows.find(r => 
+          r.processStepId === treeAddTargetStepId && 
+          r.workElementName === treeAddWorkElementName &&
+          (treeAddType !== 'failure' || r.functions?.some(f => f.name === treeAddFunctionName))
+        );
+
         if (!row) {
           const nextRowNumber = rows.length > 0 ? Math.max(...rows.map((r) => r.rowNumber)) + 1 : 1;
           const createResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
@@ -397,11 +418,12 @@ export const PfmeaWorkspace: React.FC = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              processStepId: treeAddTargetStepId,
+              processStepId: treeAddTargetStepId || undefined,
+              workElementName: treeAddWorkElementName || undefined,
               rowNumber: nextRowNumber,
             }),
           });
-          if (!createResponse.ok) throw new Error('Failed to initialize analysis row for step.');
+          if (!createResponse.ok) throw new Error('Failed to initialize analysis row.');
           const newRow = await createResponse.json();
           row = {
             ...newRow,
@@ -413,6 +435,20 @@ export const PfmeaWorkspace: React.FC = () => {
             controls: [],
             characteristics: [],
           };
+          
+          // If we created a new row because we are adding a failure, we must copy the function name to it first!
+          if (treeAddType === 'failure' && treeAddFunctionName && row) {
+            await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ functions: [treeAddFunctionName] })
+            });
+            // Update local object
+            row.functions = [{ name: treeAddFunctionName }];
+          }
         }
 
         if (!row) throw new Error('Failed to resolve FMEA row');
