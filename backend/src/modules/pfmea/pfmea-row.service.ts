@@ -116,8 +116,10 @@ export class PfmeaRowService {
       if (!step) {
         throw new BadRequestException('Process step not found');
       }
-      if (step.revision.document.projectId !== pfmeaRevision.document.projectId) {
-        throw new BadRequestException('Process step does not belong to this project');
+      // Verify the step belongs to this tenant (project-level check is too strict
+      // since PFD steps can be linked to PFMEA rows across document revisions)
+      if (step.revision.document.tenantId !== tenantId) {
+        throw new BadRequestException('Process step does not belong to this tenant');
       }
     }
 

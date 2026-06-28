@@ -423,7 +423,14 @@ export const PfmeaWorkspace: React.FC = () => {
               rowNumber: nextRowNumber,
             }),
           });
-          if (!createResponse.ok) throw new Error('Failed to initialize analysis row.');
+          if (!createResponse.ok) {
+            let backendMsg = 'Failed to initialize analysis row.';
+            try {
+              const errBody = await createResponse.json();
+              backendMsg = errBody?.message || backendMsg;
+            } catch { /* ignore parse errors */ }
+            throw new Error(backendMsg);
+          }
           const newRow = await createResponse.json();
           row = {
             ...newRow,
