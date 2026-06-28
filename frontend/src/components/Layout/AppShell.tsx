@@ -24,15 +24,20 @@ import {
 import { useAuth } from '../../features/auth/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export const AppShell: React.FC = () => {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('sidebar-collapsed') === 'true';
-  });
+  const { isSmallScreen } = useResponsive();
+  const [collapsedState, setCollapsedState] = useState<boolean | null>(null);
+
+  const collapsed = collapsedState !== null 
+    ? collapsedState 
+    : (isSmallScreen || localStorage.getItem('sidebar-collapsed') === 'true');
+
   const [projectName, setProjectName] = useState<string>('');
   const [pfmeaOpen, setPfmeaOpen] = useState(true);
   const [dfmeaOpen, setDfmeaOpen] = useState(false);
@@ -47,8 +52,11 @@ export const AppShell: React.FC = () => {
 
   // Toggle collapse and persist
   const handleToggleCollapse = () => {
-    setCollapsed(prev => {
-      const next = !prev;
+    setCollapsedState(prev => {
+      const current = prev !== null 
+        ? prev 
+        : (isSmallScreen || localStorage.getItem('sidebar-collapsed') === 'true');
+      const next = !current;
       localStorage.setItem('sidebar-collapsed', String(next));
       return next;
     });

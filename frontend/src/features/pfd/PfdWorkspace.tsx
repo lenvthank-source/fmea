@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface ProcessStep {
   id: string;
@@ -68,11 +69,18 @@ export const PfdWorkspace: React.FC = () => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Zoom & Pan navigation states for Flow Diagram
-  const [zoom, setZoom] = useState(1);
+  // Zoom & Pan navigation states for Flow Diagram
+  const { isMobile, isTablet } = useResponsive();
+  const [zoom, setZoom] = useState(0.85);
   const [panX, setPanX] = useState(50);
   const [panY, setPanY] = useState(80);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    setZoom(isMobile ? 0.45 : isTablet ? 0.65 : 0.85);
+    setPanX(isMobile ? 10 : isTablet ? 30 : 50);
+  }, [isMobile, isTablet]);
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -547,7 +555,7 @@ export const PfdWorkspace: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
+      <Box sx={{ mb: 3, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 2, alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between' }}>
         <Tabs 
           value={activeTab} 
           onChange={(_, val) => setActiveTab(val)}

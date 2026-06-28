@@ -18,6 +18,7 @@ import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { calculateAP } from './utils/apCalculator';
+import { useResponsive } from '../../hooks/useResponsive';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 
@@ -92,6 +93,7 @@ const detectionCriteria: Record<number, string> = {
 export const PfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { isMobile } = useResponsive();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'tree';
 
@@ -121,6 +123,11 @@ export const PfmeaWorkspace: React.FC = () => {
   const [pfdSteps, setPfdSteps] = useState<any[]>([]);
   const [importPromptOpen, setImportPromptOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+
+  // Generic Tree Element Add Dialog states
+  const [treeAddType, setTreeAddType] = useState<'workElement' | 'function' | 'failure' | null>(null);
+  const [treeAddTargetStepId, setTreeAddTargetStepId] = useState<string | null>(null);
+  const [treeAddValue, setTreeAddValue] = useState('');
 
   // Corrective action creation state
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -322,6 +329,123 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
+  const handleAddWorkElementFromTree = (stepId: string) => {
+    setTreeAddTargetStepId(stepId);
+    setTreeAddType('workElement');
+    setTreeAddValue('');
+  };
+
+  const handleAddFunctionFromTree = (stepId: string) => {
+    setTreeAddTargetStepId(stepId);
+    setTreeAddType('function');
+    setTreeAddValue('');
+  };
+
+  const handleAddFailureFromTree = (stepId: string) => {
+    setTreeAddTargetStepId(stepId);
+    setTreeAddType('failure');
+    setTreeAddValue('');
+  };
+
+  const handleConfirmAddTreeElement = async () => {
+    if (!treeAddType || !treeAddTargetStepId || !treeAddValue.trim()) return;
+    const value = treeAddValue.trim();
+    setTreeAddType(null);
+    setTreeAddValue('');
+    setError(null);
+
+    try {
+      if (treeAddType === 'workElement') {
+        const step = steps.find(s => s.id === treeAddTargetStepId);
+        if (!step) throw new Error('Step not found');
+        
+        let existingWe: string[] = [];
+        if (Array.isArray(step.machinesEquipmentDocs)) {
+          existingWe = step.machinesEquipmentDocs;
+        } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
+          try {
+            const parsed = JSON.parse(step.machinesEquipmentDocs);
+            existingWe = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
+          } catch {
+            existingWe = [step.machinesEquipmentDocs];
+          }
+        }
+        const updatedWe = [...existingWe, value];
+
+        const response = await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ machinesEquipmentDocs: updatedWe })
+        });
+        if (!response.ok) throw new Error('Failed to save Work Element to Process Step');
+      } else {
+        // Find or create PFMEA Row
+        let row = rows.find(r => r.processStepId === treeAddTargetStepId);
+        if (!row) {
+          const nextRowNumber = rows.length > 0 ? Math.max(...rows.map((r) => r.rowNumber)) + 1 : 1;
+          const createResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              processStepId: treeAddTargetStepId,
+              rowNumber: nextRowNumber,
+            }),
+          });
+          if (!createResponse.ok) throw new Error('Failed to initialize analysis row for step.');
+          const newRow = await createResponse.json();
+          row = {
+            ...newRow,
+            functions: [],
+            requirements: [],
+            failureModes: [],
+            effects: [],
+            causes: [],
+            controls: [],
+            characteristics: [],
+          };
+        }
+
+        if (!row) throw new Error('Failed to resolve FMEA row');
+
+        if (treeAddType === 'function') {
+          const existingFuncs = row.functions?.map((f: any) => f.name) || [];
+          const updatedFuncs = [...existingFuncs, value];
+          const response = await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ functions: updatedFuncs })
+          });
+          if (!response.ok) throw new Error('Failed to save Function');
+        } else if (treeAddType === 'failure') {
+          const existingFms = row.failureModes?.map((fm: any) => fm.name) || [];
+          const updatedFms = [...existingFms, value];
+          const response = await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ failureModes: updatedFms })
+          });
+          if (!response.ok) throw new Error('Failed to save Failure Mode');
+        }
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Error occurred while adding tree element.');
+    }
+  };
+
   const handleDeleteRow = async (rowId: string) => {
     if (!window.confirm('Are you sure you want to delete this analysis row? This action is permanent.')) return;
     setError(null);
@@ -434,7 +558,7 @@ export const PfmeaWorkspace: React.FC = () => {
         onHeaderLoaded={(p) => setProjectName(p.name)}
       />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 2 : 0, justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center' }}>
         <Tabs
           value={activeTab}
           onChange={(_, val) => setSearchParams({ tab: val })}
@@ -475,9 +599,9 @@ export const PfmeaWorkspace: React.FC = () => {
           }}
           onDeleteStep={handleDeleteRow}
           onMoveStep={() => {}}
-          onAddFunction={() => {}}
-          onAddWorkElement={() => {}}
-          onAddFailure={() => {}}
+          onAddFunction={handleAddFunctionFromTree}
+          onAddWorkElement={handleAddWorkElementFromTree}
+          onAddFailure={handleAddFailureFromTree}
         />
       ) : activeTab === 'table' ? (
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
@@ -954,6 +1078,39 @@ export const PfmeaWorkspace: React.FC = () => {
             disabled={importing}
           >
             {importing ? 'Importing...' : 'Import Steps'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Generic Add Tree Element Dialog */}
+      <Dialog open={treeAddType !== null} onClose={() => setTreeAddType(null)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          Add {treeAddType === 'workElement' ? 'Work Element' : treeAddType === 'function' ? 'Function' : 'Failure'}
+        </DialogTitle>
+        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Description / Name"
+              value={treeAddValue}
+              onChange={(e) => setTreeAddValue(e.target.value)}
+              fullWidth
+              size="small"
+              required
+              autoFocus
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 0 }}>
+          <Button onClick={() => setTreeAddType(null)} variant="outlined">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmAddTreeElement} 
+            variant="contained" 
+            color="primary"
+            disabled={!treeAddValue.trim()}
+          >
+            Add Element
           </Button>
         </DialogActions>
       </Dialog>
