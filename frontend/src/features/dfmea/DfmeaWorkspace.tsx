@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from '../pfmea/components/PfmeaRowEditor';
 import { DfmeaStructureTree } from './components/DfmeaStructureTree';
+import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 
@@ -72,6 +73,9 @@ export const DfmeaWorkspace: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<PfmeaRow | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+
+  // Exporter Dialog state
+  const [exporterOpen, setExporterOpen] = useState(false);
 
   // Add row form state
   const [selectedStepId, setSelectedStepId] = useState('');
@@ -446,11 +450,16 @@ export const DfmeaWorkspace: React.FC = () => {
           <Tab value="table" label="Analysis Table" sx={{ fontWeight: 'bold' }} />
         </Tabs>
         
-        {activeTab === 'table' && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-            Add Analysis Row
+        <Stack direction="row" spacing={1.5}>
+          <Button variant="outlined" color="primary" onClick={() => setExporterOpen(true)}>
+            Export DFMEA
           </Button>
-        )}
+          {activeTab === 'table' && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+              Add Analysis Row
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       {error && (
@@ -929,6 +938,15 @@ export const DfmeaWorkspace: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReportExporter
+        open={exporterOpen}
+        onClose={() => setExporterOpen(false)}
+        docType="DFMEA"
+        projectName={projectName}
+        data={rows}
+        steps={steps}
+      />
     </Box>
   );
 };

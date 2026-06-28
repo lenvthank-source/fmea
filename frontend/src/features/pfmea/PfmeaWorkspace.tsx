@@ -19,6 +19,7 @@ import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { calculateAP } from './utils/apCalculator';
 import { useResponsive } from '../../hooks/useResponsive';
+import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 
@@ -128,6 +129,9 @@ export const PfmeaWorkspace: React.FC = () => {
   const [treeAddType, setTreeAddType] = useState<'workElement' | 'function' | 'failure' | null>(null);
   const [treeAddTargetStepId, setTreeAddTargetStepId] = useState<string | null>(null);
   const [treeAddValue, setTreeAddValue] = useState('');
+
+  // Exporter Dialog state
+  const [exporterOpen, setExporterOpen] = useState(false);
 
   // Corrective action creation state
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -570,11 +574,16 @@ export const PfmeaWorkspace: React.FC = () => {
           <Tab value="chains" label="Func/Fail Chains" sx={{ fontWeight: 'bold' }} />
         </Tabs>
         
-        {activeTab === 'table' && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-            Add Analysis Row
+        <Stack direction="row" spacing={1.5} sx={{ mt: isMobile ? 1.5 : 0 }}>
+          <Button variant="outlined" color="primary" onClick={() => setExporterOpen(true)}>
+            Export FMEA
           </Button>
-        )}
+          {activeTab === 'table' && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+              Add Analysis Row
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       {error && (
@@ -1114,6 +1123,15 @@ export const PfmeaWorkspace: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReportExporter
+        open={exporterOpen}
+        onClose={() => setExporterOpen(false)}
+        docType="PFMEA"
+        projectName={projectName}
+        data={rows}
+        steps={steps}
+      />
     </Box>
   );
 };

@@ -37,6 +37,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
+import { ReportExporter } from '../reports/ReportExporter';
 
 interface ProcessStep {
   id: string;
@@ -76,6 +77,7 @@ export const ControlPlanWorkspace: React.FC = () => {
 
   // Project Document Revisions
   const [cpRevisionId, setCpRevisionId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>('');
 
   // Data states
   const [rows, setRows] = useState<ControlPlanRow[]>([]);
@@ -96,12 +98,23 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [controlType, setControlType] = useState('detection');
   const [controlMethod, setControlMethod] = useState('');
 
+  // Exporter Dialog state
+  const [exporterOpen, setExporterOpen] = useState(false);
+
   // Load project Control Plan revision
   useEffect(() => {
     const resolveContext = async () => {
       setLoading(true);
       setError(null);
       try {
+        const projResponse = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (projResponse.ok) {
+          const projData = await projResponse.json();
+          setProjectName(projData.name);
+        }
+
         const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -352,6 +365,13 @@ export const ControlPlanWorkspace: React.FC = () => {
             color={showSplitScreen ? 'primary' : 'inherit'}
           >
             {showSplitScreen ? 'Hide FMEA Linkage' : 'Show FMEA Linkage'}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => setExporterOpen(true)}
+            color="primary"
+          >
+            Export Document
           </Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
             Add Control Row
@@ -678,6 +698,15 @@ export const ControlPlanWorkspace: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReportExporter
+        open={exporterOpen}
+        onClose={() => setExporterOpen(false)}
+        docType="CONTROL_PLAN"
+        projectName={projectName}
+        data={rows}
+        steps={steps}
+      />
     </Box>
   );
 };

@@ -314,14 +314,80 @@ export class PfmeaRowService {
         }
       }
 
-      // 8. Update main PfmeaRow fields
+      // 8. Inherit Severity from matching effects if not explicitly provided
+      let finalSeverity = S;
+      let finalAp = calculatedAp;
+      if (dto.severity === undefined && dto.effects && dto.effects.length > 0) {
+        const matchingOtherRow = await tx.pfmeaRow.findFirst({
+          where: {
+            id: { not: rowId },
+            severity: { not: null },
+            effects: {
+              some: {
+                effect: {
+                  name: { in: dto.effects, mode: 'insensitive' }
+                }
+              }
+            }
+          },
+          orderBy: { severity: 'desc' }
+        });
+        if (matchingOtherRow && matchingOtherRow.severity) {
+          finalSeverity = matchingOtherRow.severity;
+          finalAp = calculateAP(finalSeverity, O, D);
+        }
+      }
+
+      // 9. Propagate Severity to other rows with matching effects (DFMEA <-> PFMEA Severity Linkage)
+      if (finalSeverity !== null && finalSeverity !== undefined) {
+        let effectNames: string[] = [];
+        if (dto.effects) {
+          effectNames = dto.effects;
+        } else {
+          const rowEffects = await tx.pfmeaRowEffect.findMany({
+            where: { pfmeaRowId: rowId },
+            include: { effect: true },
+          });
+          effectNames = rowEffects.map(re => re.effect.name);
+        }
+
+        if (effectNames.length > 0) {
+          const otherRowsWithSameEffects = await tx.pfmeaRow.findMany({
+            where: {
+              id: { not: rowId },
+              effects: {
+                some: {
+                  effect: {
+                    name: { in: effectNames, mode: 'insensitive' }
+                  }
+                }
+              }
+            }
+          });
+
+          for (const otherRow of otherRowsWithSameEffects) {
+            if (otherRow.severity !== finalSeverity) {
+              const otherCalculatedAp = calculateAP(finalSeverity, otherRow.occurrence, otherRow.detection);
+              await tx.pfmeaRow.update({
+                where: { id: otherRow.id },
+                data: {
+                  severity: finalSeverity,
+                  ap: otherCalculatedAp
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // 10. Update main PfmeaRow fields
       return tx.pfmeaRow.update({
         where: { id: rowId },
         data: {
-          severity: S,
+          severity: finalSeverity,
           occurrence: O,
           detection: D,
-          ap: calculatedAp,
+          ap: finalAp,
           filterCode: dto.filterCode !== undefined ? dto.filterCode : row.filterCode,
           notes: dto.notes !== undefined ? dto.notes : row.notes,
           status: dto.status !== undefined ? dto.status : row.status,
