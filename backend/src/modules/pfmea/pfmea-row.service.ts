@@ -322,6 +322,7 @@ export class PfmeaRowService {
           occurrence: O,
           detection: D,
           ap: calculatedAp,
+          filterCode: dto.filterCode !== undefined ? dto.filterCode : row.filterCode,
           notes: dto.notes !== undefined ? dto.notes : row.notes,
           status: dto.status !== undefined ? dto.status : row.status,
           accessLevel: dto.accessLevel !== undefined ? dto.accessLevel : row.accessLevel,

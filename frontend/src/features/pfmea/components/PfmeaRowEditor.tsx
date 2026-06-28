@@ -41,6 +41,7 @@ interface PfmeaRow {
   detection: number | null;
   ap: string | null;
   notes: string;
+  filterCode?: string | null;
   status: string;
   accessLevel: string;
   functions: { name: string }[];
@@ -58,6 +59,7 @@ interface PfmeaRowEditorProps {
   row: PfmeaRow | null;
   steps: ProcessStep[];
   onSave: (updatedRowData: any) => Promise<void>;
+  fmeaType?: 'PFMEA' | 'DFMEA';
 }
 
 export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
@@ -66,12 +68,14 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   row,
   steps,
   onSave,
+  fmeaType = 'PFMEA',
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form states
   const [notes, setNotes] = useState('');
+  const [filterCode, setFilterCode] = useState('');
   const [accessLevel, setAccessLevel] = useState('public');
   const [status, setStatus] = useState('draft');
 
@@ -113,6 +117,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   useEffect(() => {
     if (row) {
       setNotes(row.notes || '');
+      setFilterCode(row.filterCode || '');
       setAccessLevel(row.accessLevel || 'public');
       setStatus(row.status || 'draft');
       setFunctions(row.functions.map((f) => f.name));
@@ -240,6 +245,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
     try {
       await onSave({
         notes,
+        filterCode,
         accessLevel,
         status,
         functions,
@@ -535,6 +541,17 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
               </Select>
             </FormControl>
           </Stack>
+
+          {fmeaType === 'DFMEA' && (
+            <TextField
+              label="Filter Code"
+              value={filterCode}
+              onChange={(e) => setFilterCode(e.target.value)}
+              placeholder="e.g. F01, FC-Critical"
+              fullWidth
+              size="small"
+            />
+          )}
 
           <TextField
             label="Engineering Notes"

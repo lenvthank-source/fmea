@@ -48,6 +48,10 @@ export class UpdatePfmeaRowDto {
   @IsOptional()
   notes?: string | null;
 
+  @IsString()
+  @IsOptional()
+  filterCode?: string | null;
+
   @IsIn(['draft', 'reviewed', 'approved', 'archived'])
   @IsOptional()
   status?: string;

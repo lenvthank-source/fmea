@@ -411,6 +411,7 @@ model PfmeaRow {
   occurrence    Int?              @db.SmallInt
   detection     Int?              @db.SmallInt
   ap            String?           @db.Char(1)
+  filterCode    String?           @map("filter_code") @db.VarChar(50)
   status        String            @default("draft") @db.VarChar(20)
   accessLevel   String            @default("public") @map("access_level") @db.VarChar(20)
   notes         String?           @db.Text
