@@ -271,4 +271,60 @@ export class ControlPlanRowService {
       };
     });
   }
+
+  async syncFromPfd(tenantId: string, cpRevisionId: string) {
+    const cpRevision = await this.verifyRevisionAccess(tenantId, cpRevisionId);
+    const projectId = cpRevision.document.projectId;
+
+    // Find the active PFD document for this project
+    const pfdDoc = await this.prisma.document.findFirst({
+      where: { projectId, type: 'PFD', tenantId },
+    });
+    if (!pfdDoc || !pfdDoc.currentRevisionId) {
+      throw new BadRequestException('Active PFD document or revision not found for this project.');
+    }
+
+    // Fetch all PFD process steps
+    const pfdSteps = await this.prisma.processStep.findMany({
+      where: { revisionId: pfdDoc.currentRevisionId },
+      orderBy: { sequenceOrder: 'asc' },
+    });
+
+    return this.prisma.$transaction(async (tx) => {
+      let rowCounter = await tx.controlPlanRow.count({ where: { revisionId: cpRevisionId } });
+      const createdRows = [];
+
+      for (const step of pfdSteps) {
+        // Check if a ControlPlanRow already exists for this step in this revision
+        const existing = await tx.controlPlanRow.findFirst({
+          where: { revisionId: cpRevisionId, processStepId: step.id },
+        });
+
+        if (!existing) {
+          rowCounter++;
+          const cpRow = await tx.controlPlanRow.create({
+            data: {
+              revisionId: cpRevisionId,
+              processStepId: step.id,
+              rowNumber: rowCounter,
+              specTolerance: step.desiredOutcome || '—',
+              measurementMethod: 'Visual Inspection',
+              sampleSize: '5 pcs',
+              frequency: '1 per shift',
+              controlType: 'prevention',
+              controlMethod: step.processCharacteristics || 'Process Monitoring',
+              reactionPlan: 'Notify Supervisor and adjust process',
+              responsible: 'Operator',
+            },
+          });
+          createdRows.push(cpRow);
+        }
+      }
+
+      return {
+        message: `Successfully synchronized ${createdRows.length} rows from PFD.`,
+        syncedRowsCount: createdRows.length,
+      };
+    });
+  }
 }

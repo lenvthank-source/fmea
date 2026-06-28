@@ -282,6 +282,8 @@ model ProcessStep {
   machinesEquipmentDocs  Json?    @map("machines_equipment_documents")
   desiredOutcome         String?  @map("desired_outcome") @db.Text
   processCharacteristics String?  @map("process_characteristics") @db.Text
+  linkedPfdStepId        String?  @map("linked_pfd_step_id") @db.Uuid
+  isOrphaned             Boolean  @default(false) @map("is_orphaned")
   
   revision        DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   processItem     ProcessItem      @relation(fields: [processItemId], references: [id], onDelete: Cascade)

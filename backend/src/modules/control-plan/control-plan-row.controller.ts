@@ -46,4 +46,10 @@ export class ControlPlanRowController {
   async syncFromPfmea(@Request() req: RequestWithUser, @Param('id') revisionId: string) {
     return this.cpRowService.syncFromPfmea(req.user.tenantId, revisionId);
   }
+
+  @Post('revisions/:id/control-plan-rows/sync-pfd')
+  @Permissions('pfmea.edit')
+  async syncFromPfd(@Request() req: RequestWithUser, @Param('id') revisionId: string) {
+    return this.cpRowService.syncFromPfd(req.user.tenantId, revisionId);
+  }
 }

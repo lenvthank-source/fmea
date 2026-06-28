@@ -40,7 +40,7 @@ interface PfmeaRow {
   notes: string;
   status: string;
   accessLevel: string;
-  processStep: { name: string; stepNumber: string };
+  processStep: { name: string; stepNumber: string; isOrphaned?: boolean };
   functions: { name: string }[];
   requirements: { name: string }[];
   failureModes: { name: string }[];
@@ -116,6 +116,11 @@ export const PfmeaWorkspace: React.FC = () => {
 
   // Add row form state
   const [selectedStepId, setSelectedStepId] = useState('');
+
+  // PFD steps and import dialog states
+  const [pfdSteps, setPfdSteps] = useState<any[]>([]);
+  const [importPromptOpen, setImportPromptOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Corrective action creation state
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -222,12 +227,27 @@ export const PfmeaWorkspace: React.FC = () => {
   const fetchData = async () => {
     if (!pfmeaRevisionId || !pfdRevisionId) return;
     try {
-      const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdRevisionId}/pfd-steps`, {
+      // 1. Fetch PFMEA process steps
+      const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!stepsResponse.ok) throw new Error('Failed to load Process Steps');
       const stepsData = await stepsResponse.json();
       setSteps(stepsData);
+
+      // 2. Fetch PFD process steps for reference/import check
+      const pfdStepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdRevisionId}/pfd-steps`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (pfdStepsResponse.ok) {
+        const pfdStepsData = await pfdStepsResponse.json();
+        setPfdSteps(pfdStepsData);
+        
+        // Show import prompt if PFMEA is empty but PFD has steps
+        if (stepsData.length === 0 && pfdStepsData.length > 0) {
+          setImportPromptOpen(true);
+        }
+      }
 
       const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -239,6 +259,30 @@ export const PfmeaWorkspace: React.FC = () => {
       setError(err.message || 'Could not load FMEA workspace data.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImportPfdSteps = async () => {
+    if (!pfmeaRevisionId || !pfdRevisionId) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/import-pfd-steps`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ sourceRevisionId: pfdRevisionId }),
+      });
+      if (!res.ok) throw new Error('Failed to import process steps from PFD.');
+      
+      await fetchData();
+      setImportPromptOpen(false);
+    } catch (err: any) {
+      setError(err.message || 'Could not import steps.');
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -498,9 +542,20 @@ export const PfmeaWorkspace: React.FC = () => {
 
                         {/* Process Step */}
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {row.processStep?.stepNumber}
-                          </Typography>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {row.processStep?.stepNumber}
+                            </Typography>
+                            {row.processStep?.isOrphaned && (
+                              <Chip 
+                                label="Orphaned" 
+                                size="small" 
+                                color="error" 
+                                variant="outlined" 
+                                sx={{ height: 18, fontSize: '0.65rem', px: 0.5 }} 
+                              />
+                            )}
+                          </Stack>
                           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                             {row.processStep?.name}
                           </Typography>
@@ -875,6 +930,30 @@ export const PfmeaWorkspace: React.FC = () => {
             disabled={!actionDescription || !actionOwnerId || !actionDueDate}
           >
             Create Action
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PFD Step Import Prompt Dialog */}
+      <Dialog open={importPromptOpen} onClose={() => setImportPromptOpen(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Import Process Flow Steps?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            We found {pfdSteps.length} process steps in your Process Flow Diagram (PFD). 
+            Importing them will automatically create the initial Process Steps structure in your PFMEA.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 0 }}>
+          <Button onClick={() => setImportPromptOpen(false)} variant="outlined">
+            Skip
+          </Button>
+          <Button 
+            onClick={handleImportPfdSteps} 
+            variant="contained" 
+            color="primary"
+            disabled={importing}
+          >
+            {importing ? 'Importing...' : 'Import Steps'}
           </Button>
         </DialogActions>
       </Dialog>

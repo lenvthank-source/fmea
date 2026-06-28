@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box, Typography, Button, IconButton, Paper, Divider, TextField,
-  Collapse, Stack
+  Collapse, Stack, Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -264,8 +264,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         {stepExpanded ? <ExpandIcon fontSize="small" /> : <CollapseIcon fontSize="small" />}
                       </IconButton>
                       <StepIcon sx={{ color: '#2563eb', fontSize: '1.1rem' }} />
-                      <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: stepSelected ? 'primary.main' : 'text.primary' }}>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: stepSelected ? 'primary.main' : 'text.primary', display: 'flex', alignItems: 'center' }}>
                         {step.stepNumber}: {step.name || 'Untitled Step'}
+                        {step.isOrphaned && (
+                          <Tooltip title="Linked PFD step has been deleted (Orphaned)">
+                            <FailureIcon sx={{ color: 'error.main', fontSize: '1rem', ml: 1 }} />
+                          </Tooltip>
+                        )}
                       </Typography>
                     </Stack>
 

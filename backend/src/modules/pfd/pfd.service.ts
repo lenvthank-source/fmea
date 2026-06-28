@@ -153,7 +153,7 @@ export class PfdService {
       }
     }
 
-    return this.prisma.processStep.update({
+    const updatedStep = await this.prisma.processStep.update({
       where: { id: stepId },
       data: {
         stepNumber: dto.stepNumber,
@@ -170,12 +170,34 @@ export class PfdService {
         processCharacteristics: dto.processCharacteristics,
       },
     });
+
+    // If this is a master PFD step, sync the updates to downstream PFMEA / Control Plan steps
+    if (!updatedStep.linkedPfdStepId) {
+      await this.prisma.processStep.updateMany({
+        where: { linkedPfdStepId: stepId },
+        data: {
+          stepNumber: updatedStep.stepNumber,
+          name: updatedStep.name,
+          machinesEquipmentDocs: updatedStep.machinesEquipmentDocs || [],
+        },
+      });
+    }
+
+    return updatedStep;
   }
 
   async removeStep(tenantId: string, stepId: string) {
-    await this.verifyStepAccess(tenantId, stepId);
+    const step = await this.verifyStepAccess(tenantId, stepId);
 
-    // Safety check: Prevent deletion if FMEA rows or Control Plan rows are linked
+    // If it's a master PFD step, mark downstream steps as orphaned instead of cascade deleting them
+    if (!step.linkedPfdStepId) {
+      await this.prisma.processStep.updateMany({
+        where: { linkedPfdStepId: stepId },
+        data: { isOrphaned: true },
+      });
+    }
+
+    // Safety check: Prevent deletion if FMEA rows or Control Plan rows are linked to this specific step record
     const fmeaCount = await this.prisma.pfmeaRow.count({
       where: { processStepId: stepId },
     });
@@ -195,10 +217,73 @@ export class PfdService {
     });
   }
 
+  async importSteps(tenantId: string, targetRevisionId: string, sourceRevisionId: string) {
+    await this.verifyRevisionAccess(tenantId, targetRevisionId);
+    await this.verifyRevisionAccess(tenantId, sourceRevisionId);
+
+    const sourceSteps = await this.prisma.processStep.findMany({
+      where: { revisionId: sourceRevisionId },
+      orderBy: { sequenceOrder: 'asc' },
+    });
+
+    const targetRevision = await this.prisma.documentRevision.findUnique({
+      where: { id: targetRevisionId },
+      include: { document: true },
+    });
+
+    let processItem = await this.prisma.processItem.findFirst({
+      where: { projectId: targetRevision!.document.projectId, tenantId },
+    });
+
+    if (!processItem) {
+      processItem = await this.prisma.processItem.create({
+        data: {
+          tenantId,
+          projectId: targetRevision!.document.projectId,
+          name: 'Process Flow Items',
+          description: 'Default process flow structure container',
+        },
+      });
+    }
+
+    let importedCount = 0;
+    for (const src of sourceSteps) {
+      const existing = await this.prisma.processStep.findFirst({
+        where: { revisionId: targetRevisionId, linkedPfdStepId: src.id },
+      });
+
+      if (!existing) {
+        await this.prisma.processStep.create({
+          data: {
+            revisionId: targetRevisionId,
+            processItemId: processItem.id,
+            stepNumber: src.stepNumber,
+            name: src.name,
+            stepType: src.stepType,
+            sequenceOrder: src.sequenceOrder,
+            inputs: src.inputs,
+            outputs: src.outputs,
+            resources: src.resources,
+            incomingVariation: src.incomingVariation || [],
+            specialCharacteristics: src.specialCharacteristics,
+            flowIcons: src.flowIcons || {},
+            machinesEquipmentDocs: src.machinesEquipmentDocs || [],
+            desiredOutcome: src.desiredOutcome,
+            processCharacteristics: src.processCharacteristics,
+            linkedPfdStepId: src.id,
+            isOrphaned: false,
+          },
+        });
+        importedCount++;
+      }
+    }
+
+    return { importedCount };
+  }
+
   async reorderSteps(tenantId: string, revisionId: string, orderedStepIds: string[]) {
     await this.verifyRevisionAccess(tenantId, revisionId);
 
-    // Perform reorder within transaction
     return this.prisma.$transaction(
       orderedStepIds.map((id, index) =>
         this.prisma.processStep.update({

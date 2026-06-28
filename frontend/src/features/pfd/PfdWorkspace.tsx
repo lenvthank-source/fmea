@@ -3,14 +3,15 @@ import { useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, IconButton, Alert, CircularProgress, Tab, Tabs, Input, Drawer,
-  Divider, Stack, TextField, Tooltip
+  Divider, Stack, TextField, Tooltip, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   ContentCopy as DuplicateIcon,
   DragIndicator as DragIcon,
-  Info as DetailsIcon
+  Info as DetailsIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -50,6 +51,18 @@ export const PfdWorkspace: React.FC = () => {
   // Drawer for Detail Editing
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
+  const [hoveredStepId, setHoveredStepId] = useState<string | null>(null);
+
+  // Drawer for Adding a Step
+  const [addOpen, setAddOpen] = useState(false);
+  const [addStepNumber, setAddStepNumber] = useState('');
+  const [addName, setAddName] = useState('');
+  const [addStepType, setAddStepType] = useState('operation');
+  const [addIncomingVariation, setAddIncomingVariation] = useState('');
+  const [addMachinesEquipmentDocs, setAddMachinesEquipmentDocs] = useState('');
+  const [addSpecialCharacteristics, setAddSpecialCharacteristics] = useState('');
+  const [addDesiredOutcome, setAddDesiredOutcome] = useState('');
+  const [addProcessCharacteristics, setAddProcessCharacteristics] = useState('');
 
   // Drag and Drop States
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -359,12 +372,36 @@ export const PfdWorkspace: React.FC = () => {
     }
   };
 
-  // Add Blank Row
-  const handleAddBlankRow = async () => {
+  // Add Step Drawer Handlers
+  const handleOpenAddDrawer = () => {
+    setError(null);
+    const nextSequence = steps.length + 1;
+    setAddStepNumber(`OP${nextSequence * 10}`);
+    setAddName('');
+    setAddStepType('operation');
+    setAddIncomingVariation('');
+    setAddMachinesEquipmentDocs('');
+    setAddSpecialCharacteristics('');
+    setAddDesiredOutcome('');
+    setAddProcessCharacteristics('');
+    setAddOpen(true);
+  };
+
+  const handleCreateStep = async () => {
     setError(null);
     try {
-      const nextSequence = steps.length + 1;
-      const stepNumber = `OP${nextSequence * 10}`;
+      const variationList = addIncomingVariation.split('\n').map(v => v.trim()).filter(Boolean);
+      const machinesList = addMachinesEquipmentDocs.split('\n').map(m => m.trim()).filter(Boolean);
+
+      const flowIcons: Record<string, boolean> = {};
+      if (addStepType === 'operation') flowIcons.oper = true;
+      else if (addStepType === 'inspection') flowIcons.insp = true;
+      else if (addStepType === 'transport') flowIcons.trans = true;
+      else if (addStepType === 'storage') flowIcons.store = true;
+      else if (addStepType === 'delay') flowIcons.wip = true;
+      else if (addStepType === 'rework') flowIcons.rework = true;
+      else if (addStepType === 'decision') flowIcons.decs = true;
+
       const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
         method: 'POST',
         headers: {
@@ -372,27 +409,26 @@ export const PfdWorkspace: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          stepNumber,
-          name: '',
-          stepType: 'operation',
-          flowIcons: { oper: true }
+          stepNumber: addStepNumber,
+          name: addName,
+          stepType: addStepType,
+          incomingVariation: variationList,
+          machinesEquipmentDocs: machinesList,
+          specialCharacteristics: addSpecialCharacteristics || null,
+          desiredOutcome: addDesiredOutcome || null,
+          processCharacteristics: addProcessCharacteristics || null,
+          flowIcons
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to insert new process step');
+        throw new Error('Failed to create new process step');
       }
 
-      const newStep = await response.json();
-      setSteps([...steps, newStep]);
-
-      // Focus the new input
-      setTimeout(() => {
-        const input = document.getElementById(`name-input-${newStep.id}`);
-        if (input) input.focus();
-      }, 80);
+      await fetchSteps();
+      setAddOpen(false);
     } catch (err: any) {
-      setError(err.message || 'Could not insert new step');
+      setError(err.message || 'Could not create process step');
     }
   };
 
@@ -512,14 +548,47 @@ export const PfdWorkspace: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
-        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
-          <Tab label="Table View" value="table" />
-          <Tab label="Flow Diagram" value="diagram" />
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, val) => setActiveTab(val)}
+          sx={{
+            minHeight: 40,
+            '& .MuiTabs-indicator': {
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+              backgroundColor: 'primary.main',
+            }
+          }}
+        >
+          <Tab 
+            label="Table View" 
+            value="table" 
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              minHeight: 40,
+              color: 'text.secondary',
+              '&.Mui-selected': { color: 'primary.main' }
+            }}
+          />
+          <Tab 
+            label="Flow Diagram" 
+            value="diagram" 
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              minHeight: 40,
+              color: 'text.secondary',
+              '&.Mui-selected': { color: 'primary.main' }
+            }}
+          />
         </Tabs>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={handleAddBlankRow}
+          onClick={handleOpenAddDrawer}
         >
           Add Step
         </Button>
@@ -652,15 +721,16 @@ export const PfdWorkspace: React.FC = () => {
                                   width: 28,
                                   height: 28,
                                   borderRadius: '50%',
-                                  bgcolor: isActive ? 'primary.main' : 'transparent',
-                                  color: isActive ? 'white' : '#475569',
+                                  bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
+                                  color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
                                   fontWeight: 'bold',
-                                  border: isActive ? '1px solid transparent' : '1px solid #cbd5e1',
-                                  boxShadow: isActive ? '0 2px 4px rgba(99, 102, 241, 0.4)' : 'none',
-                                  transition: 'all 0.2s',
+                                  border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
+                                  boxShadow: isActive ? `0 4px 8px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
+                                  transition: 'all 0.15s ease-in-out',
                                   '&:hover': {
-                                    transform: 'scale(1.1)',
-                                    bgcolor: isActive ? 'primary.dark' : '#f1f5f9'
+                                    transform: 'scale(1.15)',
+                                    bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
+                                    border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.3)',
                                   }
                                 }}
                               >
@@ -933,18 +1003,32 @@ export const PfdWorkspace: React.FC = () => {
                       const minHeight = 120 + s.nodes.length * 120;
                       
                       return (
-                        <g key={s.stepId}>
+                        <g 
+                          key={s.stepId}
+                          onMouseEnter={() => setHoveredStepId(s.stepId)}
+                          onMouseLeave={() => setHoveredStepId(null)}
+                          onClick={() => {
+                            const actualStep = steps.find(st => st.id === s.stepId);
+                            if (actualStep) openDetails(actualStep);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <rect
                             x={s.nodes[0].x - stepWidth / 2}
                             y="60"
                             width={stepWidth}
                             height={minHeight}
                             rx="12"
-                            fill="rgba(255, 255, 255, 0.85)"
-                            stroke="#e2e8f0"
-                            strokeWidth="1.5"
-                            strokeDasharray="4 4"
-                            style={{ filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.02))' }}
+                            fill={hoveredStepId === s.stepId ? "rgba(1, 105, 111, 0.04)" : "rgba(255, 255, 255, 0.85)"}
+                            stroke={hoveredStepId === s.stepId ? "#01696F" : "#e2e8f0"}
+                            strokeWidth={hoveredStepId === s.stepId ? 2.5 : 1.5}
+                            strokeDasharray={hoveredStepId === s.stepId ? "0" : "4 4"}
+                            style={{ 
+                              filter: hoveredStepId === s.stepId 
+                                ? 'drop-shadow(0px 6px 12px rgba(1, 105, 111, 0.15))' 
+                                : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.02))',
+                              transition: 'all 0.2s ease-in-out'
+                            }}
                           />
                           
                           <text
@@ -953,7 +1037,7 @@ export const PfdWorkspace: React.FC = () => {
                             textAnchor="middle"
                             fontWeight="bold"
                             fontSize="14"
-                            fill="#1e293b"
+                            fill={hoveredStepId === s.stepId ? "#01696F" : "#1e293b"}
                           >
                             {s.stepNumber}
                           </text>
@@ -962,7 +1046,7 @@ export const PfdWorkspace: React.FC = () => {
                             y="118"
                             textAnchor="middle"
                             fontSize="11"
-                            fill="#64748b"
+                            fill={hoveredStepId === s.stepId ? "#01696F" : "#64748b"}
                             fontWeight="600"
                           >
                             {s.name.length > 25 ? `${s.name.substring(0, 22)}...` : (s.name || 'Untitled Step')}
@@ -976,8 +1060,11 @@ export const PfdWorkspace: React.FC = () => {
                                 r="28"
                                 fill="#ffffff"
                                 stroke={node.color}
-                                strokeWidth="2"
-                                style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }}
+                                strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2}
+                                style={{ 
+                                  filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))',
+                                  transition: 'all 0.2s ease-in-out'
+                                }}
                               />
                               <text
                                 x={node.x}
@@ -1025,85 +1112,340 @@ export const PfdWorkspace: React.FC = () => {
         anchor="right"
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
-        slotProps={{ paper: { sx: { width: 450, p: 3, borderLeft: '1px solid #e2e8f0' } } }}
+        slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
       >
         {selectedStep && (
-          <Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                 Step {selectedStep.stepNumber} Details
               </Typography>
-              <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+              <IconButton onClick={() => setDetailsOpen(false)}>
+                <CloseIcon />
+              </IconButton>
             </Box>
             <Divider sx={{ mb: 3 }} />
 
-            <Stack spacing={3}>
-              <TextField
-                fullWidth
-                label="Process Description"
-                value={selectedStep.name || ''}
-                onChange={(e) => {
-                  handleFieldChange(selectedStep.id, 'name', e.target.value);
-                  setSelectedStep({ ...selectedStep, name: e.target.value });
-                }}
-              />
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Incoming Source of Variation (one per line)"
-                value={Array.isArray(selectedStep.incomingVariation) ? selectedStep.incomingVariation.join('\n') : (selectedStep.incomingVariation || '')}
-                onChange={(e) => {
-                  const lines = e.target.value.split('\n');
-                  handleFieldChange(selectedStep.id, 'incomingVariation', lines as any);
-                  setSelectedStep({ ...selectedStep, incomingVariation: lines });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Special Characteristics Code"
-                value={selectedStep.specialCharacteristics || ''}
-                onChange={(e) => {
-                  handleFieldChange(selectedStep.id, 'specialCharacteristics', e.target.value);
-                  setSelectedStep({ ...selectedStep, specialCharacteristics: e.target.value });
-                }}
-              />
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Machines / Equipment / Documents Used (one per line)"
-                value={Array.isArray(selectedStep.machinesEquipmentDocs) ? selectedStep.machinesEquipmentDocs.join('\n') : (selectedStep.machinesEquipmentDocs || '')}
-                onChange={(e) => {
-                  const lines = e.target.value.split('\n');
-                  handleFieldChange(selectedStep.id, 'machinesEquipmentDocs', lines as any);
-                  setSelectedStep({ ...selectedStep, machinesEquipmentDocs: lines });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Desired Outcome / Product Characteristics"
-                value={selectedStep.desiredOutcome || ''}
-                onChange={(e) => {
-                  handleFieldChange(selectedStep.id, 'desiredOutcome', e.target.value);
-                  setSelectedStep({ ...selectedStep, desiredOutcome: e.target.value });
-                }}
-              />
-              <TextField
-                fullWidth
-                label="Process Characteristics"
-                value={selectedStep.processCharacteristics || ''}
-                onChange={(e) => {
-                  handleFieldChange(selectedStep.id, 'processCharacteristics', e.target.value);
-                  setSelectedStep({ ...selectedStep, processCharacteristics: e.target.value });
-                }}
-              />
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
+              <Stack spacing={3}>
+                {/* Identity Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    1. Identity
+                  </Typography>
+                  <Stack spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Step Number"
+                      value={selectedStep.stepNumber || ''}
+                      onChange={(e) => {
+                        handleFieldChange(selectedStep.id, 'stepNumber', e.target.value);
+                        setSelectedStep({ ...selectedStep, stepNumber: e.target.value });
+                      }}
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Process Description"
+                      value={selectedStep.name || ''}
+                      onChange={(e) => {
+                        handleFieldChange(selectedStep.id, 'name', e.target.value);
+                        setSelectedStep({ ...selectedStep, name: e.target.value });
+                      }}
+                      size="small"
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Inputs Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    2. Inputs
+                  </Typography>
+                  <Stack spacing={2}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Incoming Source of Variation (one per line)"
+                      value={Array.isArray(selectedStep.incomingVariation) ? selectedStep.incomingVariation.join('\n') : (selectedStep.incomingVariation || '')}
+                      onChange={(e) => {
+                        const lines = e.target.value.split('\n');
+                        handleFieldChange(selectedStep.id, 'incomingVariation', lines as any);
+                        setSelectedStep({ ...selectedStep, incomingVariation: lines });
+                      }}
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Machines / Equipment / Documents Used (one per line)"
+                      value={Array.isArray(selectedStep.machinesEquipmentDocs) ? selectedStep.machinesEquipmentDocs.join('\n') : (selectedStep.machinesEquipmentDocs || '')}
+                      onChange={(e) => {
+                        const lines = e.target.value.split('\n');
+                        handleFieldChange(selectedStep.id, 'machinesEquipmentDocs', lines as any);
+                        setSelectedStep({ ...selectedStep, machinesEquipmentDocs: lines });
+                      }}
+                      size="small"
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Classification Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    3. Classification
+                  </Typography>
+                  <Stack spacing={2}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel id="edit-step-type-label">Step Type</InputLabel>
+                      <Select
+                        labelId="edit-step-type-label"
+                        value={selectedStep.stepType || 'operation'}
+                        label="Step Type"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleFieldChange(selectedStep.id, 'stepType', val);
+                          
+                          // Also sync selected flow icon
+                          const newIcons: Record<string, boolean> = {};
+                          if (val === 'operation') newIcons.oper = true;
+                          else if (val === 'inspection') newIcons.insp = true;
+                          else if (val === 'transport') newIcons.trans = true;
+                          else if (val === 'storage') newIcons.store = true;
+                          else if (val === 'delay') newIcons.wip = true;
+                          else if (val === 'rework') newIcons.rework = true;
+                          else if (val === 'decision') newIcons.decs = true;
+                          
+                          handleFieldChange(selectedStep.id, 'flowIcons', newIcons as any);
+                          setSelectedStep({ ...selectedStep, stepType: val, flowIcons: newIcons });
+                        }}
+                      >
+                        <MenuItem value="operation">Operation (◯)</MenuItem>
+                        <MenuItem value="inspection">Inspection (□)</MenuItem>
+                        <MenuItem value="transport">Transport (⇨)</MenuItem>
+                        <MenuItem value="storage">Storage (▽)</MenuItem>
+                        <MenuItem value="delay">Delay (☉)</MenuItem>
+                        <MenuItem value="rework">Rework (Ⓡ)</MenuItem>
+                        <MenuItem value="decision">Decision (◇)</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      fullWidth
+                      label="Special Characteristics Code"
+                      value={selectedStep.specialCharacteristics || ''}
+                      onChange={(e) => {
+                        handleFieldChange(selectedStep.id, 'specialCharacteristics', e.target.value);
+                        setSelectedStep({ ...selectedStep, specialCharacteristics: e.target.value });
+                      }}
+                      size="small"
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Outputs Section */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                    4. Outputs
+                  </Typography>
+                  <Stack spacing={2}>
+                    <TextField
+                      fullWidth
+                      label="Desired Outcome / Product Characteristics"
+                      value={selectedStep.desiredOutcome || ''}
+                      onChange={(e) => {
+                        handleFieldChange(selectedStep.id, 'desiredOutcome', e.target.value);
+                        setSelectedStep({ ...selectedStep, desiredOutcome: e.target.value });
+                      }}
+                      size="small"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Process Characteristics"
+                      value={selectedStep.processCharacteristics || ''}
+                      onChange={(e) => {
+                        handleFieldChange(selectedStep.id, 'processCharacteristics', e.target.value);
+                        setSelectedStep({ ...selectedStep, processCharacteristics: e.target.value });
+                      }}
+                      size="small"
+                    />
+                  </Stack>
+                </Box>
+              </Stack>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+            <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+              <Button variant="contained" onClick={() => setDetailsOpen(false)} color="primary">
+                Done
+              </Button>
             </Stack>
           </Box>
         )}
       </Drawer>
+
+      {/* Add Step Right-Side Drawer */}
+      <Drawer
+        anchor="right"
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              Add Process Step
+            </Typography>
+            <IconButton onClick={() => setAddOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Divider sx={{ mb: 3 }} />
+
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
+            <Stack spacing={3}>
+              {/* Identity Section */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  1. Identity
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Step Number"
+                    value={addStepNumber}
+                    onChange={(e) => setAddStepNumber(e.target.value)}
+                    placeholder="e.g. OP10"
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Step Description / Name"
+                    value={addName}
+                    onChange={(e) => setAddName(e.target.value)}
+                    placeholder="e.g. Assemble front bracket"
+                    size="small"
+                  />
+                </Stack>
+              </Box>
+
+              {/* Inputs Section */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  2. Inputs
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Incoming Source of Variation (one per line)"
+                    value={addIncomingVariation}
+                    onChange={(e) => setAddIncomingVariation(e.target.value)}
+                    placeholder="Raw material thickness variation..."
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Machines / Equipment / Docs (one per line)"
+                    value={addMachinesEquipmentDocs}
+                    onChange={(e) => setAddMachinesEquipmentDocs(e.target.value)}
+                    placeholder="Hydraulic Press HP-01..."
+                    size="small"
+                  />
+                </Stack>
+              </Box>
+
+              {/* Classification Section */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  3. Classification
+                </Typography>
+                <Stack spacing={2}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="add-step-type-label">Step Type</InputLabel>
+                    <Select
+                      labelId="add-step-type-label"
+                      value={addStepType}
+                      label="Step Type"
+                      onChange={(e) => setAddStepType(e.target.value)}
+                    >
+                      <MenuItem value="operation">Operation (◯)</MenuItem>
+                      <MenuItem value="inspection">Inspection (□)</MenuItem>
+                      <MenuItem value="transport">Transport (⇨)</MenuItem>
+                      <MenuItem value="storage">Storage (▽)</MenuItem>
+                      <MenuItem value="delay">Delay (☉)</MenuItem>
+                      <MenuItem value="rework">Rework (Ⓡ)</MenuItem>
+                      <MenuItem value="decision">Decision (◇)</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="Special Characteristics Code"
+                    value={addSpecialCharacteristics}
+                    onChange={(e) => setAddSpecialCharacteristics(e.target.value)}
+                    placeholder="e.g. SC / CC / OS"
+                    size="small"
+                  />
+                </Stack>
+              </Box>
+
+              {/* Outputs Section */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                  4. Outputs
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Desired Outcome / Product Characteristics"
+                    value={addDesiredOutcome}
+                    onChange={(e) => setAddDesiredOutcome(e.target.value)}
+                    placeholder="Hole diameter 12.0 +/- 0.2mm..."
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Process Characteristics"
+                    value={addProcessCharacteristics}
+                    onChange={(e) => setAddProcessCharacteristics(e.target.value)}
+                    placeholder="Clamping pressure 5.2 bar..."
+                    size="small"
+                  />
+                </Stack>
+              </Box>
+            </Stack>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
+            <Button variant="outlined" onClick={() => setAddOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleCreateStep} color="primary">
+              Create Step
+            </Button>
+          </Stack>
+        </Box>
+      </Drawer>
     </Box>
   );
+};
+
+// Symbol color themes
+const SYMBOL_COLORS: Record<string, { bg: string; text: string; shadow: string }> = {
+  trans: { bg: '#10b981', text: '#ffffff', shadow: 'rgba(16, 185, 129, 0.25)' },
+  recArea: { bg: '#6366f1', text: '#ffffff', shadow: 'rgba(99, 102, 241, 0.25)' },
+  store: { bg: '#8b5cf6', text: '#ffffff', shadow: 'rgba(139, 92, 246, 0.25)' },
+  wip: { bg: '#3b82f6', text: '#ffffff', shadow: 'rgba(59, 130, 246, 0.25)' },
+  oper: { bg: '#01696F', text: '#ffffff', shadow: 'rgba(1, 105, 111, 0.25)' },
+  insp: { bg: '#ca8a04', text: '#ffffff', shadow: 'rgba(202, 138, 4, 0.25)' },
+  decs: { bg: '#06b6d4', text: '#ffffff', shadow: 'rgba(6, 182, 212, 0.25)' },
+  rework: { bg: '#f97316', text: '#ffffff', shadow: 'rgba(249, 115, 22, 0.25)' },
+  reject: { bg: '#dc2626', text: '#ffffff', shadow: 'rgba(220, 38, 38, 0.25)' },
 };
 
 // Flow Icons column definitions

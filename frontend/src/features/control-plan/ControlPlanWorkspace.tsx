@@ -26,6 +26,8 @@ import {
   MenuItem,
   Stack,
   Input,
+  Grid,
+  Divider,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -40,6 +42,7 @@ interface ProcessStep {
   id: string;
   stepNumber: string;
   name: string;
+  isOrphaned?: boolean;
 }
 
 interface Characteristic {
@@ -64,6 +67,7 @@ interface ControlPlanRow {
   notes: string | null;
   processStep: ProcessStep;
   characteristic: Characteristic | null;
+  linkedPfmeaRows?: any[];
 }
 
 export const ControlPlanWorkspace: React.FC = () => {
@@ -80,6 +84,10 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // FMEA reference states for split screen
+  const [showSplitScreen, setShowSplitScreen] = useState(false);
+  const [pfmeaRows, setPfmeaRows] = useState<any[]>([]);
 
   // Dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -129,12 +137,12 @@ export const ControlPlanWorkspace: React.FC = () => {
       const rowsData = await rowsResponse.json();
       setRows(rowsData);
 
-      // 2. Fetch Process Steps (to populate dropdowns for manual addition)
-      // We resolve the PFD revision by fetching project docs first, but let's grab from project document listing
+      // 2. Fetch Process Steps and FMEA Rows
       const docsResponse = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const docs = await docsResponse.json();
+      
       const pfdDoc = docs.find((d: any) => d.type === 'PFD');
       if (pfdDoc && pfdDoc.currentRevisionId) {
         const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdDoc.currentRevisionId}/pfd-steps`, {
@@ -143,6 +151,17 @@ export const ControlPlanWorkspace: React.FC = () => {
         if (stepsResponse.ok) {
           const stepsData = await stepsResponse.json();
           setSteps(stepsData);
+        }
+      }
+
+      const pfmeaDoc = docs.find((d: any) => d.type === 'PFMEA');
+      if (pfmeaDoc && pfmeaDoc.currentRevisionId) {
+        const pfmeaResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaDoc.currentRevisionId}/pfmea-rows`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (pfmeaResponse.ok) {
+          const pfmeaData = await pfmeaResponse.json();
+          setPfmeaRows(pfmeaData);
         }
       }
     } catch (err: any) {
@@ -180,6 +199,32 @@ export const ControlPlanWorkspace: React.FC = () => {
       await fetchData();
     } catch (err: any) {
       setError(err.message || 'FMEA Control Plan synchronization failed.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSyncFromPfd = async () => {
+    if (!cpRevisionId) return;
+    setSyncing(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows/sync-pfd`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Synchronization failed.');
+      }
+
+      const result = await response.json();
+      setSuccess(result.message || 'Successfully synchronized Control Plan with PFD.');
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'PFD Control Plan synchronization failed.');
     } finally {
       setSyncing(false);
     }
@@ -286,12 +331,27 @@ export const ControlPlanWorkspace: React.FC = () => {
         <Stack direction="row" spacing={2}>
           <Button
             variant="outlined"
+            startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
+            onClick={handleSyncFromPfd}
+            disabled={syncing}
+          >
+            {syncing ? 'Syncing...' : 'Sync from PFD'}
+          </Button>
+          <Button
+            variant="outlined"
             color="secondary"
             startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
             onClick={handleSyncFromFmea}
             disabled={syncing}
           >
             {syncing ? 'Syncing...' : 'Sync from FMEA'}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => setShowSplitScreen(!showSplitScreen)}
+            color={showSplitScreen ? 'primary' : 'inherit'}
+          >
+            {showSplitScreen ? 'Hide FMEA Linkage' : 'Show FMEA Linkage'}
           </Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
             Add Control Row
@@ -313,11 +373,86 @@ export const ControlPlanWorkspace: React.FC = () => {
         </Alert>
       )}
 
-      {/* Main Grid */}
-      <TableContainer component={Paper} sx={{ border: '1px solid #2e2e36', backgroundImage: 'none', overflowX: 'auto' }}>
+      {/* Main Grid Wrapper */}
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        {showSplitScreen && (
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Paper sx={{ p: 2, border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, boxShadow: 'none', bgcolor: 'background.paper' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                PFMEA Risk Controls Reference
+              </Typography>
+              <Stack spacing={2} sx={{ maxHeight: 600, overflowY: 'auto', pr: 1 }}>
+                {pfmeaRows.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    No active PFMEA rows found. Create rows in PFMEA to see them here.
+                  </Typography>
+                ) : (
+                  pfmeaRows.map((fmeaRow: any) => (
+                    <Paper 
+                      key={fmeaRow.id} 
+                      sx={{ 
+                        p: 1.5, 
+                        border: '1px solid rgba(40, 37, 29, 0.08)', 
+                        bgcolor: '#F7F6F2', 
+                        borderRadius: 2,
+                        boxShadow: 'none'
+                      }}
+                    >
+                      <Stack direction="row" sx={{ mb: 1, alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'primary.contrastText', px: 1, py: 0.25, borderRadius: 1 }}>
+                          Step {fmeaRow.processStep?.stepNumber}
+                        </Typography>
+                        {fmeaRow.ap && (
+                          <Chip 
+                            label={`AP: ${fmeaRow.ap}`} 
+                            size="small" 
+                            color={fmeaRow.ap === 'H' ? 'error' : fmeaRow.ap === 'M' ? 'warning' : 'success'} 
+                            sx={{ height: 18, fontSize: '0.65rem', fontWeight: 'bold' }}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        {fmeaRow.processStep?.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                        Failure Mode: {fmeaRow.failureModes?.[0]?.name || '—'}
+                      </Typography>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
+                        Controls (Prevention / Detection):
+                      </Typography>
+                      <Stack spacing={0.5}>
+                        {fmeaRow.controls?.map((ctrl: any, idx: number) => (
+                          <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'background.paper', p: 0.75, borderRadius: 1, border: '1px solid rgba(40, 37, 29, 0.04)' }}>
+                            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                              {ctrl.control?.name}
+                            </Typography>
+                            <Chip 
+                              label={ctrl.control?.type?.toUpperCase()} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ height: 14, fontSize: '0.55rem', px: 0.5 }} 
+                            />
+                          </Box>
+                        ))}
+                        {(!fmeaRow.controls || fmeaRow.controls.length === 0) && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            No controls defined
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Paper>
+                  ))
+                )}
+              </Stack>
+            </Paper>
+          </Grid>
+        )}
+        <Grid size={{ xs: 12, md: showSplitScreen ? 7 : 12 }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
         <Table aria-label="Control Plan grid" size="small">
           <TableHead>
-            <TableRow sx={{ bgcolor: '#1b1b21' }}>
+            <TableRow sx={{ bgcolor: '#F7F6F2' }}>
               <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
               <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Process Step</TableCell>
               <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Characteristic</TableCell>
@@ -341,17 +476,45 @@ export const ControlPlanWorkspace: React.FC = () => {
               </TableRow>
             ) : (
               rows.map((row) => (
-                <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.01)' } }}>
+                <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
                   {/* Row Number */}
                   <TableCell sx={{ fontWeight: 'bold' }}>{row.rowNumber}</TableCell>
 
                   {/* Process Step */}
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {row.processStep.stepNumber}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {row.processStep.name}
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {row.processStep?.stepNumber}
+                      </Typography>
+                      {row.linkedPfmeaRows && row.linkedPfmeaRows.length > 0 ? (
+                        <Chip
+                          label="FMEA"
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
+                        />
+                      ) : (
+                        <Chip
+                          label="PFD"
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
+                        />
+                      )}
+                      {row.processStep?.isOrphaned && (
+                        <Chip
+                          label="Orphaned"
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
+                        />
+                      )}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      {row.processStep?.name}
                     </Typography>
                   </TableCell>
 
@@ -461,6 +624,8 @@ export const ControlPlanWorkspace: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
+        </Grid>
+      </Grid>
 
       {/* Add Row Dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
