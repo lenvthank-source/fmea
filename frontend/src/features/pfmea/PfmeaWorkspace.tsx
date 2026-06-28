@@ -1,40 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
-  Box,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Alert,
-  CircularProgress,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Stack,
-  Tooltip,
-  TextField,
+  Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Chip, IconButton, Alert, CircularProgress, Select, MenuItem, Dialog, DialogTitle,
+  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
+  Collapse, Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
+  KeyboardArrowDown as ExpandMoreIcon,
+  KeyboardArrowUp as ExpandLessIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
+import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { calculateAP } from './utils/apCalculator';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
@@ -44,6 +26,7 @@ interface ProcessStep {
   stepNumber: string;
   name: string;
   stepType: string;
+  machinesEquipmentDocs?: any;
 }
 
 interface PfmeaRow {
@@ -67,19 +50,64 @@ interface PfmeaRow {
   characteristics: { name: string; classification: string; unitOfMeasure?: string }[];
 }
 
+const severityCriteria: Record<number, string> = {
+  10: "10 - Safety/regulatory (without warning)",
+  9: "9 - Safety/regulatory (with warning)",
+  8: "8 - Loss of primary function / disruption",
+  7: "7 - Reduced primary function / minor disruption",
+  6: "6 - Loss of secondary function",
+  5: "5 - Reduced secondary function",
+  4: "4 - Minor defect (noticed by user)",
+  3: "3 - Defect noticed by expert/inspector",
+  2: "2 - Very minor defect noticed",
+  1: "1 - No effect"
+};
+
+const occurrenceCriteria: Record<number, string> = {
+  10: "10 - Extremely high, no controls",
+  9: "9 - Very high, basic controls",
+  8: "8 - High, prevention control is low effectiveness",
+  7: "7 - Moderately high, prevention control has moderate effectiveness",
+  6: "6 - Moderate, prevention control is moderately effective",
+  5: "5 - Moderately low, prevention control is effective",
+  4: "4 - Low, prevention control is highly effective",
+  3: "3 - Very low, prevention control is extremely effective",
+  2: "2 - Extremely low, prevention control is outstanding",
+  1: "1 - Failure is eliminated through design/process"
+};
+
+const detectionCriteria: Record<number, string> = {
+  10: "10 - Cannot detect, no method",
+  9: "9 - Very low, purely visual",
+  8: "8 - Low, visual or double inspection",
+  7: "7 - Moderately low, attribute gauge",
+  6: "6 - Moderate, variable gauge or test",
+  5: "5 - Moderately high, double variable inspection",
+  4: "4 - High, automated attribute inspection",
+  3: "3 - Very high, automated variable inspection",
+  2: "2 - Extremely high, automated variable + prevention loop",
+  1: "1 - Failure is prevented from occurrence"
+};
+
 export const PfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'tree';
 
   // Project Document Revisions
   const [pfmeaRevisionId, setPfmeaRevisionId] = useState<string | null>(null);
   const [pfdRevisionId, setPfdRevisionId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>('');
 
   // Data states
   const [rows, setRows] = useState<PfmeaRow[]>([]);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Expanded Optimization Rows state
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Dialog and Drawer states
   const [editorOpen, setEditorOpen] = useState(false);
@@ -150,7 +178,7 @@ export const PfmeaWorkspace: React.FC = () => {
       setActionOwnerId('');
       setActionDueDate('');
       setSelectedRowForAction(null);
-      await fetchData(); // Reload to reflect updated risk scores if any sync occurred
+      await fetchData();
     } catch (err: any) {
       setError(err.message || 'Could not create corrective action.');
     }
@@ -191,11 +219,9 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   }, [projectId, token]);
 
-  // Load process steps and FMEA rows
   const fetchData = async () => {
     if (!pfmeaRevisionId || !pfdRevisionId) return;
     try {
-      // 1. Fetch Process Steps (from PFD revision)
       const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdRevisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -203,7 +229,6 @@ export const PfmeaWorkspace: React.FC = () => {
       const stepsData = await stepsResponse.json();
       setSteps(stepsData);
 
-      // 2. Fetch PFMEA rows
       const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -223,7 +248,6 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   }, [pfmeaRevisionId, pfdRevisionId]);
 
-  // Add a new row
   const handleAddRow = async () => {
     if (!selectedStepId) return;
     setError(null);
@@ -254,7 +278,6 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  // Delete a row
   const handleDeleteRow = async (rowId: string) => {
     if (!window.confirm('Are you sure you want to delete this analysis row? This action is permanent.')) return;
     setError(null);
@@ -274,20 +297,16 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  // Inline Rating update (S, O, D)
   const handleRatingChange = async (rowId: string, field: 'severity' | 'occurrence' | 'detection', value: number) => {
     setError(null);
-    // Find target row
     const targetRow = rows.find((r) => r.id === rowId);
     if (!targetRow) return;
 
-    // Speculate AP locally for instant feedback
     const S = field === 'severity' ? value : targetRow.severity;
     const O = field === 'occurrence' ? value : targetRow.occurrence;
     const D = field === 'detection' ? value : targetRow.detection;
     const localAp = calculateAP(S, O, D);
 
-    // Update state locally first
     setRows((prev) =>
       prev.map((r) => (r.id === rowId ? { ...r, [field]: value, ap: localAp } : r))
     );
@@ -306,18 +325,16 @@ export const PfmeaWorkspace: React.FC = () => {
         throw new Error('Failed to persist rating update.');
       }
 
-      // Sync official returned state
       const updatedRow = await response.json();
       setRows((prev) =>
         prev.map((r) => (r.id === rowId ? { ...r, severity: updatedRow.severity, occurrence: updatedRow.occurrence, detection: updatedRow.detection, ap: updatedRow.ap } : r))
       );
     } catch (err: any) {
       setError(err.message || 'Failed to update rating. Reverting...');
-      fetchData(); // Rollback to server state
+      fetchData();
     }
   };
 
-  // Detail panel save handler
   const handleSaveRowDetails = async (updatedData: any) => {
     if (!activeRow) return;
     const response = await fetch(`${API_BASE_URL}/pfmea-rows/${activeRow.id}`, {
@@ -351,7 +368,10 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  // Options for S/O/D ratings
+  const toggleRowExpansion = (rowId: string) => {
+    setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
+  };
+
   const ratingOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
   if (loading && !pfmeaRevisionId) {
@@ -362,18 +382,32 @@ export const PfmeaWorkspace: React.FC = () => {
     );
   }
 
-
-
   return (
     <Box>
-      {/* Title Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-          Add Analysis Row
-        </Button>
-      </Box>
+      <DocumentHeader
+        projectId={projectId!}
+        docType="PFMEA"
+        onHeaderLoaded={(p) => setProjectName(p.name)}
+      />
 
-      <DocumentHeader projectId={projectId!} docType="PFMEA" />
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, val) => setSearchParams({ tab: val })}
+          indicatorColor="primary"
+          textColor="primary"
+        >
+          <Tab value="tree" label="Structure Tree" sx={{ fontWeight: 'bold' }} />
+          <Tab value="table" label="Analysis Table" sx={{ fontWeight: 'bold' }} />
+          <Tab value="chains" label="Func/Fail Chains" sx={{ fontWeight: 'bold' }} />
+        </Tabs>
+        
+        {activeTab === 'table' && (
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+            Add Analysis Row
+          </Button>
+        )}
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -381,206 +415,348 @@ export const PfmeaWorkspace: React.FC = () => {
         </Alert>
       )}
 
-      {/* Main Grid */}
-      <TableContainer component={Paper} sx={{ border: '1px solid #2e2e36', backgroundImage: 'none', overflowX: 'auto' }}>
-        <Table aria-label="PFMEA rows grid" size="small">
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#1b1b21' }}>
-              <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
-              <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Process Step</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Functions / Requirements</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Modes</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Effects</TableCell>
-              <TableCell sx={{ minWidth: 60, fontWeight: 'bold', textAlign: 'center' }}>S</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Causes</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Prevention Controls</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Detection Controls</TableCell>
-              <TableCell sx={{ minWidth: 60, fontWeight: 'bold', textAlign: 'center' }}>O</TableCell>
-              <TableCell sx={{ minWidth: 60, fontWeight: 'bold', textAlign: 'center' }}>D</TableCell>
-              <TableCell sx={{ minWidth: 70, fontWeight: 'bold', textAlign: 'center' }}>AP</TableCell>
-              <TableCell sx={{ minWidth: 90, fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.length === 0 ? (
+      {/* RENDER ACTIVE TAB VIEW */}
+      {activeTab === 'tree' ? (
+        <PfmeaStructureTree
+          projectName={projectName}
+          steps={steps}
+          rows={rows}
+          onAddStep={() => setAddDialogOpen(true)}
+          onEditStep={(step) => {
+            const row = rows.find(r => r.processStepId === step.id);
+            if (row) {
+              setActiveRow(row);
+              setEditorOpen(true);
+            }
+          }}
+          onDeleteStep={handleDeleteRow}
+          onMoveStep={() => {}}
+          onAddFunction={() => {}}
+          onAddWorkElement={() => {}}
+          onAddFailure={() => {}}
+        />
+      ) : activeTab === 'table' ? (
+        <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
+          <Table aria-label="PFMEA rows grid" size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={13} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  No PFMEA analysis rows added yet. Click "Add Analysis Row" to begin.
-                </TableCell>
+                <TableCell />
+                <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
+                <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Process Step</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Work Element (4M)</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Functions / Requirements</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Effects (FE)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>S</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Modes (FM)</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Causes (FC)</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Prevention Controls</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>O</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Detection Controls</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>D</TableCell>
+                <TableCell sx={{ minWidth: 70, fontWeight: 'bold', textAlign: 'center' }}>AP</TableCell>
+                <TableCell sx={{ minWidth: 90, fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
               </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.01)' } }}>
-                  {/* Row Number */}
-                  <TableCell sx={{ fontWeight: 'bold' }}>{row.rowNumber}</TableCell>
-
-                  {/* Process Step */}
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {row.processStep.stepNumber}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {row.processStep.name}
-                    </Typography>
-                  </TableCell>
-
-                  {/* Functions & Requirements */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.functions.map((f, i) => (
-                        <Chip key={i} label={`F: ${f.name}`} size="small" color="primary" variant="outlined" />
-                      ))}
-                      {row.requirements.map((req, i) => (
-                        <Chip key={i} label={`R: ${req.name}`} size="small" color="info" variant="outlined" />
-                      ))}
-                      {row.functions.length === 0 && row.requirements.length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Failure Modes */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.failureModes.map((fm, i) => (
-                        <Chip key={i} label={fm.name} size="small" color="error" variant="outlined" />
-                      ))}
-                      {row.failureModes.length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Effects */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.effects.map((e, i) => (
-                        <Chip key={i} label={e.name} size="small" color="error" />
-                      ))}
-                      {row.effects.length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Severity (S) */}
-                  <TableCell align="center">
-                    <Select
-                      value={row.severity || ''}
-                      onChange={(e) => handleRatingChange(row.id, 'severity', Number(e.target.value))}
-                      size="small"
-                      sx={{ minWidth: 55, '& .MuiSelect-select': { py: 0.5, px: 1 } }}
-                    >
-                      <MenuItem value="">—</MenuItem>
-                      {ratingOptions.map((v) => (
-                        <MenuItem key={v} value={v}>
-                          {v}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </TableCell>
-
-                  {/* Causes */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.causes.map((c, i) => (
-                        <Chip key={i} label={c.name} size="small" color="warning" variant="outlined" />
-                      ))}
-                      {row.causes.length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Prevention Controls */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.controls
-                        .filter((c) => c.type === 'prevention')
-                        .map((c, i) => (
-                          <Chip key={i} label={c.name} size="small" color="primary" variant="outlined" />
-                        ))}
-                      {row.controls.filter((c) => c.type === 'prevention').length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Detection Controls */}
-                  <TableCell>
-                    <Stack spacing={0.5}>
-                      {row.controls
-                        .filter((c) => c.type === 'detection')
-                        .map((c, i) => (
-                          <Tooltip title={c.detectionMethod || ''} key={i}>
-                            <Chip label={c.name} size="small" color="success" variant="outlined" />
-                          </Tooltip>
-                        ))}
-                      {row.controls.filter((c) => c.type === 'detection').length === 0 && '—'}
-                    </Stack>
-                  </TableCell>
-
-                  {/* Occurrence (O) */}
-                  <TableCell align="center">
-                    <Select
-                      value={row.occurrence || ''}
-                      onChange={(e) => handleRatingChange(row.id, 'occurrence', Number(e.target.value))}
-                      size="small"
-                      sx={{ minWidth: 55, '& .MuiSelect-select': { py: 0.5, px: 1 } }}
-                    >
-                      <MenuItem value="">—</MenuItem>
-                      {ratingOptions.map((v) => (
-                        <MenuItem key={v} value={v}>
-                          {v}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </TableCell>
-
-                  {/* Detection (D) */}
-                  <TableCell align="center">
-                    <Select
-                      value={row.detection || ''}
-                      onChange={(e) => handleRatingChange(row.id, 'detection', Number(e.target.value))}
-                      size="small"
-                      sx={{ minWidth: 55, '& .MuiSelect-select': { py: 0.5, px: 1 } }}
-                    >
-                      <MenuItem value="">—</MenuItem>
-                      {ratingOptions.map((v) => (
-                        <MenuItem key={v} value={v}>
-                          {v}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </TableCell>
-
-                  {/* AP Badge */}
-                  <TableCell align="center">{getApBadge(row.ap)}</TableCell>
-
-                  {/* Actions */}
-                  <TableCell align="center">
-                    <Tooltip title="Create Corrective Action">
-                      <IconButton
-                        size="small"
-                        color="secondary"
-                        onClick={() => {
-                          setSelectedRowForAction(row);
-                          setActionDialogOpen(true);
-                        }}
-                      >
-                        <PlaylistAddIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => {
-                        setActiveRow(row);
-                        setEditorOpen(true);
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+            </TableHead>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={15} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                    No PFMEA analysis rows added yet. Click "Add Analysis Row" to begin.
                   </TableCell>
                 </TableRow>
+              ) : (
+                rows.map((row) => {
+                  const step = steps.find(s => s.id === row.processStepId);
+                  let workElements: string[] = [];
+                  if (step) {
+                    if (Array.isArray(step.machinesEquipmentDocs)) {
+                      workElements = step.machinesEquipmentDocs;
+                    } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
+                      try {
+                        const parsed = JSON.parse(step.machinesEquipmentDocs);
+                        workElements = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
+                      } catch {
+                        workElements = [step.machinesEquipmentDocs];
+                      }
+                    }
+                  }
+
+                  const isExpanded = !!expandedRows[row.id];
+
+                  return (
+                    <React.Fragment key={row.id}>
+                      <TableRow sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
+                        {/* Expansion trigger */}
+                        <TableCell sx={{ width: 40, p: 0.5 }}>
+                          <IconButton size="small" onClick={() => toggleRowExpansion(row.id)}>
+                            {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                          </IconButton>
+                        </TableCell>
+
+                        {/* Row Number */}
+                        <TableCell sx={{ fontWeight: 'bold' }}>{row.rowNumber}</TableCell>
+
+                        {/* Process Step */}
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {row.processStep?.stepNumber}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            {row.processStep?.name}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Work Element (4M) */}
+                        <TableCell>
+                          <Stack spacing={0.5} direction="row" sx={{ flexWrap: 'wrap' }}>
+                            {workElements.map((we, weIdx) => (
+                              <Chip key={weIdx} label={we} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.75rem', borderColor: '#f97316', color: '#f97316' }} />
+                            ))}
+                            {workElements.length === 0 && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Functions & Requirements */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.functions?.map((f, i) => (
+                              <Chip key={i} label={`F: ${f.name}`} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                            ))}
+                            {row.requirements?.map((req, i) => (
+                              <Chip key={i} label={`R: ${req.name}`} size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                            ))}
+                            {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Failure Effects (FE) */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.effects?.map((e, i) => (
+                              <Chip key={i} label={e.name} size="small" color="error" sx={{ height: 20, fontSize: '0.75rem' }} />
+                            ))}
+                            {(!row.effects || row.effects.length === 0) && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Severity (S) with Tooltip guide */}
+                        <TableCell align="center">
+                          <Tooltip title={row.severity ? severityCriteria[row.severity] : "Select severity rating"} arrow>
+                            <Select
+                              value={row.severity || ''}
+                              onChange={(e) => handleRatingChange(row.id, 'severity', Number(e.target.value))}
+                              size="small"
+                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
+                            >
+                              <MenuItem value="">—</MenuItem>
+                              {ratingOptions.map((v) => (
+                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
+                                  {severityCriteria[v]}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* Failure Modes (FM) */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.failureModes?.map((fm, i) => (
+                              <Chip key={i} label={fm.name} size="small" color="error" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                            ))}
+                            {(!row.failureModes || row.failureModes.length === 0) && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Failure Causes (FC) */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.causes?.map((c, i) => (
+                              <Chip key={i} label={c.name} size="small" color="warning" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                            ))}
+                            {(!row.causes || row.causes.length === 0) && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Prevention Controls */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.controls
+                              ?.filter((c) => c.type === 'prevention')
+                              .map((c, i) => (
+                                <Chip key={i} label={c.name} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                              ))}
+                            {row.controls?.filter((c) => c.type === 'prevention').length === 0 && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Occurrence (O) with Tooltip guide */}
+                        <TableCell align="center">
+                          <Tooltip title={row.occurrence ? occurrenceCriteria[row.occurrence] : "Select occurrence rating"} arrow>
+                            <Select
+                              value={row.occurrence || ''}
+                              onChange={(e) => handleRatingChange(row.id, 'occurrence', Number(e.target.value))}
+                              size="small"
+                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
+                            >
+                              <MenuItem value="">—</MenuItem>
+                              {ratingOptions.map((v) => (
+                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
+                                  {occurrenceCriteria[v]}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* Detection Controls */}
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {row.controls
+                              ?.filter((c) => c.type === 'detection')
+                              .map((c, i) => (
+                                <Tooltip title={c.detectionMethod || ''} key={i}>
+                                  <Chip label={c.name} size="small" color="success" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
+                                </Tooltip>
+                              ))}
+                            {row.controls?.filter((c) => c.type === 'detection').length === 0 && '—'}
+                          </Stack>
+                        </TableCell>
+
+                        {/* Detection (D) with Tooltip guide */}
+                        <TableCell align="center">
+                          <Tooltip title={row.detection ? detectionCriteria[row.detection] : "Select detection rating"} arrow>
+                            <Select
+                              value={row.detection || ''}
+                              onChange={(e) => handleRatingChange(row.id, 'detection', Number(e.target.value))}
+                              size="small"
+                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
+                            >
+                              <MenuItem value="">—</MenuItem>
+                              {ratingOptions.map((v) => (
+                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
+                                  {detectionCriteria[v]}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* AP Badge */}
+                        <TableCell align="center">{getApBadge(row.ap)}</TableCell>
+
+                        {/* Actions */}
+                        <TableCell align="center">
+                          <Tooltip title="Create Corrective Action">
+                            <IconButton
+                              size="small"
+                              color="secondary"
+                              onClick={() => {
+                                setSelectedRowForAction(row);
+                                setActionDialogOpen(true);
+                              }}
+                            >
+                              <PlaylistAddIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              setActiveRow(row);
+                              setEditorOpen(true);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expandable Step 6 Optimization Sub-Panel */}
+                      <TableRow>
+                        <TableCell colSpan={15} sx={{ p: 0, bgcolor: '#fafafa' }}>
+                          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                            <Box sx={{ p: 3, borderLeft: '3px solid #01696F', m: 1.5, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid rgba(40,37,29,0.06)' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
+                                Step 6 Optimization (Action Plan)
+                              </Typography>
+                              <Grid container spacing={3} sx={{ fontSize: '0.85rem' }}>
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Prevention Action</Typography>
+                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>Implement tool wear sensor feedback loop</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Detection Action</Typography>
+                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>Perform 100% laser caliper test</Typography>
+                                </Grid>
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Responsible Person & Target Date</Typography>
+                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>John Doe • Oct 15, 2026</Typography>
+                                </Grid>
+                              </Grid>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        /* Func/Fail Chains View */
+        <Paper sx={{ p: 4, border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', boxShadow: 'none' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
+            Function & Failure Traceability Chain
+          </Typography>
+          <Stack spacing={3}>
+            {rows.length === 0 ? (
+              <Typography color="text.secondary">No FMEA rows added to visualize linkages.</Typography>
+            ) : (
+              rows.map((row) => (
+                <Box key={row.id} sx={{ p: 2.5, border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, bgcolor: '#fafafa' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
+                    Row #{row.rowNumber} Linkages ({row.processStep?.stepNumber})
+                  </Typography>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Function */}
+                    <Box sx={{ p: 1.5, bgcolor: '#eefcf4', border: '1px solid #437A22', borderRadius: 2, minWidth: 150 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#437A22', display: 'block' }}>FUNCTION</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.functions?.[0]?.name || '—'}</Typography>
+                    </Box>
+                    <Typography color="text.secondary">➔</Typography>
+
+                    {/* Failure Effect */}
+                    <Box sx={{ p: 1.5, bgcolor: '#fdf2f2', border: '1px solid #A13544', borderRadius: 2, minWidth: 150 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#A13544', display: 'block' }}>FAILURE EFFECT</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.effects?.[0]?.name || '—'}</Typography>
+                    </Box>
+                    <Typography color="text.secondary">➔</Typography>
+
+                    {/* Failure Mode */}
+                    <Box sx={{ p: 1.5, bgcolor: '#fffbeb', border: '1px solid #D19900', borderRadius: 2, minWidth: 150 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#D19900', display: 'block' }}>FAILURE MODE</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.failureModes?.[0]?.name || '—'}</Typography>
+                    </Box>
+                    <Typography color="text.secondary">➔</Typography>
+
+                    {/* Failure Cause */}
+                    <Box sx={{ p: 1.5, bgcolor: '#f0f9ff', border: '1px solid #006494', borderRadius: 2, minWidth: 150 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#006494', display: 'block' }}>FAILURE CAUSE</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.causes?.[0]?.name || '—'}</Typography>
+                    </Box>
+                  </Stack>
+                </Box>
               ))
             )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </Stack>
+        </Paper>
+      )}
 
       {/* Row Editor Drawer */}
       <PfmeaRowEditor

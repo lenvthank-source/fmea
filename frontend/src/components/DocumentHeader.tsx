@@ -76,9 +76,6 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
     }
   };
 
-  // Get preliminary/final checkboxes
-  const isFinal = project.preliminaryFinalFlag === 'final';
-
   return (
     <Card sx={{ mb: 3, border: '1px solid #e2e8f0', borderRadius: 4, bgcolor: 'background.paper', overflow: 'hidden' }}>
       {/* Header bar always visible */}
@@ -122,68 +119,65 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
       {/* Expanded Grid */}
       <Collapse in={expanded}>
         <CardContent sx={{ px: 3, py: 2.5 }}>
-          <Grid container spacing={2} sx={{ fontSize: '0.85rem' }}>
-            {/* Row 1 */}
-            <Grid size={3}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Organisation Name</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.organisationName || '—'}</Typography>
+          <Grid container spacing={3} sx={{ fontSize: '0.85rem' }}>
+            {/* Col 1 */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Company Name</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.organisationName || '—'}</Typography>
             </Grid>
-            <Grid size={3}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Customer</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.customer || '—'}</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Manufacturing Location</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.organisationPlant || '—'}</Typography>
             </Grid>
-            <Grid size={3}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Part Description</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.partName || '—'}</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Customer Name</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.customer || '—'}</Typography>
             </Grid>
-            <Grid size={3}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Organisation Part No.</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.orgPartNumber || '—'}</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Model Year / Platform</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.modelYear || '—'}</Typography>
             </Grid>
 
-            {/* Row 2 */}
-            <Grid size={3}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>CFT Members</Typography>
+            {/* Col 2 */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Subject (Part Name)</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.partName || '—'}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>FMEA ID / Document Number</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.documentNumber || '—'}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Start Date</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{formatDate(project.originationDate)}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Revision Date</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{formatDate(project.drawingRevDate || project.updatedAt)}</Typography>
+            </Grid>
+
+            {/* Col 3 */}
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Process Responsibility</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.keyContact || '—'}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Confidentiality Level</Typography>
+              <Chip
+                label={(project.preliminaryFinalFlag || 'Internal').toUpperCase()}
+                color="primary"
+                variant="outlined"
+                size="small"
+                sx={{ mt: 0.5, fontWeight: 'bold', height: 22, fontSize: '0.75rem' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Cross-Functional Team (CFT)</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                 {project.cftMembers && project.cftMembers.map((member: string) => (
                   <Chip key={member} label={member} size="small" sx={{ height: 20, fontSize: '0.75rem' }} />
                 ))}
-                {(!project.cftMembers || project.cftMembers.length === 0) && <Typography variant="body2">—</Typography>}
-              </Box>
-            </Grid>
-            <Grid size={2}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Dwg No.</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.dwgNumber || '—'}</Typography>
-            </Grid>
-            <Grid size={2}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Dwg Rev No / Date</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.dwgRevNoAndDate || '—'}</Typography>
-            </Grid>
-            <Grid size={2}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Document Origin Date</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatDate(project.originationDate)}</Typography>
-            </Grid>
-            <Grid size={1.5}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Assy. Line No.</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{project.assemblyLineNumber || '—'}</Typography>
-            </Grid>
-            <Grid size={1.5} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', width: '100%', textAlign: 'right' }}>Status</Typography>
-              <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                <Chip
-                  label="PRELIMINARY"
-                  color={!isFinal ? 'primary' : 'default'}
-                  variant={!isFinal ? 'filled' : 'outlined'}
-                  size="small"
-                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 'bold' }}
-                />
-                <Chip
-                  label="FINAL"
-                  color={isFinal ? 'success' : 'default'}
-                  variant={isFinal ? 'filled' : 'outlined'}
-                  size="small"
-                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 'bold' }}
-                />
+                {(!project.cftMembers || project.cftMembers.length === 0) && <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>None assigned</Typography>}
               </Box>
             </Grid>
           </Grid>

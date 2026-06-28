@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton,
+  ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem, Tooltip, Collapse, Divider
+} from '@mui/material';
 import {
   Folder as FolderIcon,
   Assignment as AssignmentIcon,
@@ -9,18 +12,30 @@ import {
   ListAlt as CpIcon,
   ArrowBack as BackIcon,
   Settings as SettingsIcon,
-  Menu as MenuIcon,
   ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Build as DfmeaIcon,
+  Link as LinkageIcon,
+  AssignmentTurnedIn as ActionsIcon,
+  ExpandLess,
+  ExpandMore,
+  FiberManualRecord as BulletIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../features/auth/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export const AppShell: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
+  const [projectName, setProjectName] = useState<string>('');
+  const [pfmeaOpen, setPfmeaOpen] = useState(true);
+  const [dfmeaOpen, setDfmeaOpen] = useState(false);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -30,9 +45,40 @@ export const AppShell: React.FC = () => {
     setAnchorEl(null);
   };
 
+  // Toggle collapse and persist
+  const handleToggleCollapse = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebar-collapsed', String(next));
+      return next;
+    });
+  };
+
   // Extract projectId if inside a project workspace path
   const match = location.pathname.match(/\/projects\/([^/]+)/);
   const projectId = match && match[1] !== 'projects' ? match[1] : null;
+
+  // Fetch project details when inside a project
+  useEffect(() => {
+    const fetchProject = async () => {
+      if (!projectId || !token) {
+        setProjectName('');
+        return;
+      }
+      try {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProjectName(data.name);
+        }
+      } catch (err) {
+        console.error('Failed to load project details', err);
+      }
+    };
+    fetchProject();
+  }, [projectId, token]);
 
   const globalMenuItems = [
     { text: 'Projects', icon: <FolderIcon />, path: '/projects' },
@@ -40,16 +86,91 @@ export const AppShell: React.FC = () => {
     { text: 'Administration', icon: <AdminIcon />, path: '/admin', permission: 'admin.users' },
   ];
 
-  const projectMenuItems = [
-    { text: 'Back to Projects', icon: <BackIcon />, path: '/projects' },
-    { text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` },
-    { text: 'Process FMEA', icon: <PfmeaIcon />, path: `/projects/${projectId}/pfmea` },
-    { text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` },
-    { text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` },
-  ];
+  const drawerWidth = collapsed ? 64 : 240;
 
-  const menuItems = projectId ? projectMenuItems : globalMenuItems;
-  const drawerWidth = collapsed ? 72 : 240;
+  const isActive = (path: string) => {
+    return location.pathname === path || (path.includes('?') && `${location.pathname}${location.search}`.startsWith(path));
+  };
+
+  const renderListItem = (item: { text: string; icon: React.ReactNode; path: string; isChild?: boolean }) => {
+    const active = isActive(item.path);
+    const content = (
+      <ListItemButton
+        onClick={() => navigate(item.path)}
+        selected={active}
+        sx={{
+          mx: collapsed ? 0.5 : 1,
+          borderRadius: 2,
+          mb: 0.5,
+          pl: item.isChild ? (collapsed ? 1.5 : 4) : 2,
+          pr: 2,
+          py: 1,
+          minHeight: 40,
+          position: 'relative',
+          justifyContent: collapsed ? 'center' : 'initial',
+          '&.Mui-selected': {
+            bgcolor: 'rgba(1, 105, 111, 0.08)',
+            '& .MuiListItemIcon-root': {
+              color: 'primary.main',
+            },
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              left: 0,
+              top: '15%',
+              bottom: '15%',
+              width: 3,
+              borderRadius: '0 4px 4px 0',
+              backgroundColor: 'primary.main',
+            },
+            '&:hover': {
+              bgcolor: 'rgba(1, 105, 111, 0.12)',
+            },
+          },
+          '&:hover': {
+            bgcolor: 'rgba(40, 37, 29, 0.04)',
+          },
+        }}
+      >
+        <ListItemIcon sx={{
+          color: active ? 'primary.main' : 'text.secondary',
+          minWidth: collapsed ? 0 : 32,
+          justifyContent: 'center',
+        }}>
+          {item.icon}
+        </ListItemIcon>
+        {!collapsed && (
+          <ListItemText
+            primary={
+              <Typography sx={{
+                fontSize: item.isChild ? '0.825rem' : '0.875rem',
+                fontWeight: active ? 600 : 500,
+                color: active ? 'primary.main' : 'text.primary',
+              }}>
+                {item.text}
+              </Typography>
+            }
+          />
+        )}
+      </ListItemButton>
+    );
+
+    if (collapsed) {
+      return (
+        <Tooltip title={item.text} placement="right" arrow key={item.text}>
+          <ListItem disablePadding sx={{ display: 'block' }}>
+            {content}
+          </ListItem>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <ListItem disablePadding key={item.text} sx={{ display: 'block' }}>
+        {content}
+      </ListItem>
+    );
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -58,26 +179,26 @@ export const AppShell: React.FC = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           bgcolor: 'background.paper',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: '1px solid rgba(40, 37, 29, 0.1)',
           boxShadow: 'none',
         }}
       >
         <Toolbar>
           <IconButton
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={handleToggleCollapse}
             edge="start"
             sx={{ mr: 2, color: 'text.secondary' }}
           >
-            {collapsed ? <MenuIcon /> : <ChevronLeftIcon />}
+            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
-            APEX FMEA Workspace
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>APEX FMEA Workspace</span>
           </Typography>
 
           {user && (
             <div>
               <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold' }}>
+                <Avatar sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', width: 32, height: 32, fontSize: '0.875rem' }}>
                   {user.name[0].toUpperCase()}
                 </Avatar>
               </IconButton>
@@ -96,9 +217,9 @@ export const AppShell: React.FC = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem disabled>
+                <MenuItem disabled sx={{ py: 1.5 }}>
                   <Box>
-                    <Typography variant="subtitle2">{user.name}</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{user.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                   </Box>
                 </MenuItem>
@@ -116,67 +237,128 @@ export const AppShell: React.FC = () => {
             width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: 'background.paper',
-            borderRight: '1px solid #e2e8f0',
+            borderRight: '1px solid rgba(40, 37, 29, 0.1)',
             transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             overflowX: 'hidden',
           },
         }}
       >
         <Toolbar />
-        <Box sx={{ overflow: 'auto', mt: 2 }}>
-          <List>
-            {menuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton
-                  onClick={() => navigate(item.path)}
-                  selected={location.pathname === item.path}
-                  sx={{
-                    mx: collapsed ? 1 : 1.5,
-                    borderRadius: collapsed ? '50%' : 3,
-                    mb: 0.5,
-                    aspectRatio: collapsed ? '1/1' : 'auto',
-                    justifyContent: collapsed ? 'center' : 'initial',
-                    p: collapsed ? '10px' : '8px 16px',
-                    transition: 'all 0.15s ease-in-out',
-                    '&.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'primary.contrastText',
-                      '& .MuiListItemIcon-root': {
-                        color: 'primary.contrastText',
-                      },
-                      '&:hover': {
-                        bgcolor: 'primary.dark',
-                      },
-                    },
-                    '&:hover': {
-                      transform: 'scale(1.03)',
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{
-                    color: location.pathname === item.path ? 'primary.contrastText' : 'text.secondary',
-                    minWidth: collapsed ? 0 : 36,
-                    justifyContent: 'center',
-                  }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  {!collapsed && (
-                    <ListItemText
-                      primary={
-                        <Typography sx={{
-                          fontSize: '0.9rem',
-                          fontWeight: location.pathname === item.path ? 600 : 500,
-                          color: location.pathname === item.path ? 'primary.contrastText' : 'text.primary'
-                        }}>
-                          {item.text}
-                        </Typography>
-                      }
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
+        <Box sx={{ overflow: 'auto', mt: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+          <Box>
+            {/* Project Header section */}
+            {projectId && projectName && !collapsed && (
+              <Box sx={{ px: 2, py: 1.5, mb: 1 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Current Project
+                </Typography>
+                <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: 'text.primary', mt: 0.5 }}>
+                  {projectName}
+                </Typography>
+              </Box>
+            )}
+
+            <List>
+              {projectId ? (
+                <>
+                  {renderListItem({ text: 'Back to Projects', icon: <BackIcon />, path: '/projects' })}
+                  <Divider sx={{ my: 1, mx: 1.5 }} />
+                  
+                  {renderListItem({ text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` })}
+                  
+                  {/* PFMEA collapsible item */}
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <ListItemButton
+                      onClick={() => setPfmeaOpen(!pfmeaOpen)}
+                      sx={{
+                        mx: collapsed ? 0.5 : 1,
+                        borderRadius: 2,
+                        mb: 0.5,
+                        pl: 2,
+                        pr: 2,
+                        py: 1,
+                        minHeight: 40,
+                        justifyContent: collapsed ? 'center' : 'space-between',
+                        '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                          <PfmeaIcon />
+                        </ListItemIcon>
+                        {!collapsed && (
+                          <ListItemText
+                            primary={
+                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                PFMEA
+                              </Typography>
+                            }
+                          />
+                        )}
+                      </Box>
+                      {!collapsed && (pfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                    </ListItemButton>
+                    
+                    <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
+                        {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=table`, isChild: true })}
+                        {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
+                      </List>
+                    </Collapse>
+                  </ListItem>
+
+                  {/* DFMEA collapsible item */}
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <ListItemButton
+                      onClick={() => setDfmeaOpen(!dfmeaOpen)}
+                      sx={{
+                        mx: collapsed ? 0.5 : 1,
+                        borderRadius: 2,
+                        mb: 0.5,
+                        pl: 2,
+                        pr: 2,
+                        py: 1,
+                        minHeight: 40,
+                        justifyContent: collapsed ? 'center' : 'space-between',
+                        '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                          <DfmeaIcon />
+                        </ListItemIcon>
+                        {!collapsed && (
+                          <ListItemText
+                            primary={
+                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                DFMEA
+                              </Typography>
+                            }
+                          />
+                        )}
+                      </Box>
+                      {!collapsed && (dfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                    </ListItemButton>
+                    
+                    <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
+                        {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=table`, isChild: true })}
+                      </List>
+                    </Collapse>
+                  </ListItem>
+
+                  {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` })}
+                  {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/actions?projectId=${projectId}` })}
+                  {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/projects/${projectId}/linkage` })}
+                  {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` })}
+                </>
+              ) : (
+                globalMenuItems.map((item) => renderListItem(item))
+              )}
+            </List>
+          </Box>
         </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>

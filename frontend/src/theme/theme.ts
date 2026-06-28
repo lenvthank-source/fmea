@@ -4,38 +4,39 @@ export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2563eb',      // Slate/Royal blue
-      light: '#60a5fa',
-      dark: '#1d4ed8',
+      main: '#01696F',      // Teal primary accent
+      light: '#028087',
+      dark: '#004F53',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#0d9488',      // Teal accent
-      light: '#2dd4bf',
-      dark: '#0f766e',
+      main: '#006494',      // Special Characteristics Blue
+      light: '#0083c2',
+      dark: '#004769',
     },
     background: {
-      default: '#f8fafc',   // Soft Slate 50 background
-      paper: '#ffffff',     // Card / container white background
+      default: '#F7F6F2',   // Warm off-white
+      paper: '#ffffff',
     },
     text: {
-      primary: '#0f172a',   // Slate 900
-      secondary: '#475569', // Slate 600
+      primary: '#28251D',   // Dark warm text
+      secondary: '#7A7974', // Muted text
+      disabled: '#BAB9B4',  // Faint text
     },
     error: {
-      main: '#ef4444',      // Red indicator
+      main: '#A13544',      // Semantic Red (High AP)
     },
     warning: {
-      main: '#f59e0b',      // Orange indicator
+      main: '#D19900',      // Semantic Amber (Medium AP)
     },
     success: {
-      main: '#10b981',      // Green indicator
+      main: '#437A22',      // Semantic Green (Low AP)
     },
-    divider: '#e2e8f0',     // Slate 200 border
+    divider: 'rgba(40, 37, 29, 0.1)', // Alpha-blended dark border
   },
   typography: {
     fontFamily: [
       'Inter',
-      'Outfit',
       '-apple-system',
       'BlinkMacSystemFont',
       '"Segoe UI"',
@@ -45,42 +46,40 @@ export const theme = createTheme({
       'sans-serif',
     ].join(','),
     h5: {
-      fontWeight: 700,
-      letterSpacing: '-0.5px',
-      color: '#0f172a',
+      fontWeight: 600,
+      letterSpacing: '-0.3px',
+      color: '#28251D',
     },
     h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.2px',
-      color: '#0f172a',
+      fontWeight: 600,
+      letterSpacing: '-0.1px',
+      color: '#28251D',
     },
     button: {
       textTransform: 'none',
-      fontWeight: 600,
-      borderRadius: 999,    // Make buttons pill/circle-styled by default
+      fontWeight: 500,
+      borderRadius: 8,
     },
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 999, // Circular bubble style buttons
-          padding: '8px 20px',
-          transition: 'all 0.2s ease-in-out',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)',
+          borderRadius: 8,
+          padding: '8px 16px',
+          height: 36,
+          fontSize: '0.875rem',
+          transition: 'all 0.15s ease-in-out',
+          boxShadow: 'none',
           '&:hover': {
-            transform: 'scale(1.04)', // Bubble hover animation
-            boxShadow: '0 10px 15px -3px rgba(37,99,235,0.15), 0 4px 6px -4px rgba(37,99,235,0.15)',
-          },
-          '&:active': {
-            transform: 'scale(0.98)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            transform: 'none',
           },
         },
         outlined: {
           borderWidth: '1.5px',
           '&:hover': {
             borderWidth: '1.5px',
-            transform: 'scale(1.04)',
           },
         },
       },
@@ -88,13 +87,13 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 20, // Highly rounded boxes
-          boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.02)',
-          border: '1px solid #e2e8f0',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          borderRadius: 12,
+          boxShadow: '0 1px 2px rgba(40, 37, 29, 0.06), 0 4px 12px rgba(40, 37, 29, 0.08)',
+          border: '1px solid rgba(40, 37, 29, 0.1)',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
           '&:hover': {
-            transform: 'translateY(-2px) scale(1.01)', // Micro-animation on hover
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.04), 0 8px 10px -6px rgba(0,0,0,0.04)',
+            boxShadow: '0 1px 3px rgba(40, 37, 29, 0.08), 0 8px 16px rgba(40, 37, 29, 0.1)',
+            transform: 'none',
           },
         },
       },
@@ -102,36 +101,45 @@ export const theme = createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 24, // Highly rounded dialog/modal popups
+          borderRadius: 16,
           padding: 8,
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
         },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 14, // Highly rounded input fields
+          borderRadius: 8,
+          height: 40,
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#01696F',
+            borderWidth: '2px',
+          },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          fontWeight: 500,
+          borderRadius: 6,
+          fontWeight: 600,
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          padding: '10px 16px',
-          borderColor: '#e2e8f0', // Clean light border
+          padding: '12px 16px',
+          borderColor: 'rgba(40, 37, 29, 0.08)',
         },
         head: {
-          fontWeight: 700,
-          backgroundColor: '#f1f5f9', // Slate 100 header
-          color: '#334155',
+          fontWeight: 600,
+          backgroundColor: '#F7F6F2',
+          color: '#28251D',
+          fontSize: '0.85rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
         },
       },
     },

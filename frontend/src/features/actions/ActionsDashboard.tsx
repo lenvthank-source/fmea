@@ -14,7 +14,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Link,
   TextField,
   Drawer,
   FormControl,
@@ -24,6 +23,12 @@ import {
   Stack,
   Divider,
   Tooltip,
+  Grid,
+  Card,
+  CardContent,
+  ToggleButton,
+  ToggleButtonGroup,
+  Avatar
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -32,6 +37,9 @@ import {
   Delete as DeleteIcon,
   GetApp as GetAppIcon,
   Launch as LaunchIcon,
+  ViewWeek as KanbanIcon,
+  TableChart as TableIcon,
+  CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { calculateAP } from '../pfmea/utils/apCalculator';
@@ -116,6 +124,7 @@ export const ActionsDashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [tabFilter, setTabFilter] = useState<'assigned' | 'all-project'>('assigned');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban' | 'calendar'>('table');
   
   // Status filtering state
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -461,6 +470,30 @@ export const ActionsDashboard: React.FC = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          {/* View mode toggle */}
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, val) => val && setViewMode(val)}
+            size="small"
+          >
+            <Tooltip title="Table View">
+              <ToggleButton value="table">
+                <TableIcon fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip title="Kanban View">
+              <ToggleButton value="kanban">
+                <KanbanIcon fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+            <Tooltip title="Calendar View">
+              <ToggleButton value="calendar">
+                <CalendarIcon fontSize="small" />
+              </ToggleButton>
+            </Tooltip>
+          </ToggleButtonGroup>
+
           {/* Project selector filter */}
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Filter by Project</InputLabel>
@@ -477,7 +510,7 @@ export const ActionsDashboard: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <IconButton onClick={fetchActions} disabled={loading} color="primary" sx={{ border: '1px solid #2e2e36' }}>
+          <IconButton onClick={fetchActions} disabled={loading} color="primary" sx={{ border: '1px solid rgba(40, 37, 29, 0.1)' }}>
             <RefreshIcon />
           </IconButton>
         </Stack>
@@ -538,11 +571,11 @@ export const ActionsDashboard: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
           <CircularProgress />
         </Box>
-      ) : (
-        <TableContainer component={Paper} sx={{ border: '1px solid #2e2e36', backgroundImage: 'none' }}>
+      ) : viewMode === 'table' ? (
+        <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', boxShadow: 'none' }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#1b1b21' }}>
+              <TableRow sx={{ bgcolor: '#F7F6F2' }}>
                 <TableCell sx={{ fontWeight: 'bold' }}>Action Description</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Project</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Priority</TableCell>
@@ -565,24 +598,18 @@ export const ActionsDashboard: React.FC = () => {
                 filteredActions.map((action) => {
                   const mainLink = action.fmeaLinks[0];
                   return (
-                    <TableRow key={action.id} sx={{ '&:hover': { bgcolor: 'rgba(255,255,255,0.01)' } }}>
-                      {/* Description */}
+                    <TableRow key={action.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
+                      {/* Action Description */}
                       <TableCell sx={{ maxWidth: 280 }}>
-                        <Link
-                          component="button"
-                          variant="body2"
-                          onClick={() => handleOpenDrawer(action)}
-                          sx={{ textAlign: 'left', fontWeight: 500, textDecoration: 'none', color: 'primary.light' }}
-                        >
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {action.description}
-                        </Link>
-                        {action.evidences.length > 0 && (
+                        </Typography>
+                        {action.actionType && (
                           <Chip
-                            label={`${action.evidences.length} Doc(s)`}
+                            label={action.actionType.toUpperCase()}
                             size="small"
                             variant="outlined"
-                            color="secondary"
-                            sx={{ ml: 1, height: 18, fontSize: '0.65rem' }}
+                            sx={{ mt: 0.5, fontSize: '0.65rem', height: 18 }}
                           />
                         )}
                       </TableCell>
@@ -598,25 +625,19 @@ export const ActionsDashboard: React.FC = () => {
 
                       {/* Due Date */}
                       <TableCell>
-                        <Typography variant="body2" sx={{
-                          color: new Date(action.dueDate) < new Date() && !['verified', 'closed', 'cancelled'].includes(action.status)
-                            ? 'error.main'
-                            : 'inherit',
-                          fontWeight: new Date(action.dueDate) < new Date() && !['verified', 'closed', 'cancelled'].includes(action.status)
-                            ? 'bold'
-                            : 'normal'
-                        }}>
+                        <Typography variant="body2">
                           {new Date(action.dueDate).toLocaleDateString()}
                         </Typography>
                       </TableCell>
 
-                      {/* Assigned Owner */}
-                      <TableCell>
-                        <Tooltip title={action.owner.email}>
-                          <Typography variant="body2">
-                            {action.owner.name}
-                          </Typography>
-                        </Tooltip>
+                      {/* Assigned To */}
+                      <TableCell sx={{ minWidth: 140 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {action.owner.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {action.owner.email}
+                        </Typography>
                       </TableCell>
 
                       {/* FMEA Before */}
@@ -658,6 +679,97 @@ export const ActionsDashboard: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      ) : viewMode === 'kanban' ? (
+        <Grid container spacing={2}>
+          {['open', 'in_progress', 'completed', 'verified', 'closed'].map((status) => {
+            const colActions = filteredActions.filter((a) => a.status === status);
+            return (
+              <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={status}>
+                <Paper sx={{ p: 2, bgcolor: '#F7F6F2', border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, minHeight: 500, boxShadow: 'none' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: 'uppercase', color: 'text.secondary', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{status.replace('_', ' ')}</span>
+                    <Chip label={colActions.length} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+                  </Typography>
+                  <Stack spacing={1.5}>
+                    {colActions.map((action) => (
+                      <Card key={action.id} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 2, boxShadow: 'none', bgcolor: 'background.paper' }}>
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', height: 40 }}>
+                            {action.description}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                            Project: {action.project.name}
+                          </Typography>
+                          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: 'primary.main', color: 'white' }}>
+                              {action.owner.name[0].toUpperCase()}
+                            </Avatar>
+                            <IconButton size="small" onClick={() => handleOpenDrawer(action)} color="primary">
+                              <LaunchIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {colActions.length === 0 && (
+                      <Typography variant="caption" color="text.secondary" align="center" sx={{ display: 'block', py: 4 }}>
+                        No items
+                      </Typography>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+      ) : (
+        /* Calendar Schedule View */
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {filteredActions.length === 0 ? (
+            <Paper sx={{ p: 4, textAlign: 'center', border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, boxShadow: 'none' }}>
+              <Typography color="text.secondary">No actions scheduled.</Typography>
+            </Paper>
+          ) : (
+            Object.entries(
+              filteredActions.reduce<Record<string, any[]>>((acc, action) => {
+                const dateStr = new Date(action.dueDate).toLocaleDateString(undefined, {
+                  weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+                });
+                if (!acc[dateStr]) acc[dateStr] = [];
+                acc[dateStr].push(action);
+                return acc;
+              }, {})
+            ).map(([dateLabel, dateActions]) => (
+              <Paper key={dateLabel} sx={{ p: 2.5, border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+                  {dateLabel}
+                </Typography>
+                <Grid container spacing={2}>
+                  {dateActions.map((action) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={action.id}>
+                      <Card sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 2, boxShadow: 'none' }}>
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            {action.description}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                            Project: {action.project.name}
+                          </Typography>
+                          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Chip label={action.status.toUpperCase()} size="small" variant="outlined" />
+                            <IconButton size="small" onClick={() => handleOpenDrawer(action)} color="primary">
+                              <LaunchIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            ))
+          )}
+        </Box>
       )}
 
       {/* Details & Verification Drawer */}
@@ -667,11 +779,11 @@ export const ActionsDashboard: React.FC = () => {
         onClose={handleCloseDrawer}
       >
         {selectedAction && (
-          <Box sx={{ width: { xs: '100%', sm: 600 }, p: 3, bgcolor: '#1e1e24', borderLeft: '1px solid #2e2e36', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ width: { xs: '100%', sm: 600 }, p: 3, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Drawer Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.light' }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                   Action Item Details
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -693,7 +805,7 @@ export const ActionsDashboard: React.FC = () => {
                   <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
                     Action Task / Description
                   </Typography>
-                  <Typography variant="body2" sx={{ p: 2, bgcolor: '#121214', borderRadius: 1.5, border: '1px solid #2e2e36' }}>
+                  <Typography variant="body2" sx={{ p: 2, bgcolor: '#F7F6F2', borderRadius: 1.5, border: '1px solid rgba(40, 37, 29, 0.08)' }}>
                     {selectedAction.description}
                   </Typography>
                 </Box>
@@ -789,7 +901,7 @@ export const ActionsDashboard: React.FC = () => {
 
                 {/* Verification & Risk Optimization section (S/O/D Reduction) */}
                 {['completed', 'verified', 'closed'].includes(editStatus) && (
-                  <Box sx={{ p: 2, bgcolor: '#121214', borderRadius: 2, border: '1px solid #2e2e36' }}>
+                  <Box sx={{ p: 2, bgcolor: '#F7F6F2', borderRadius: 2, border: '1px solid rgba(40, 37, 29, 0.08)' }}>
                     <Typography variant="subtitle2" color="warning.main" sx={{ fontWeight: 'bold', mb: 2 }}>
                       Risk Optimization & After-Ratings
                     </Typography>
@@ -897,9 +1009,9 @@ export const ActionsDashboard: React.FC = () => {
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             p: 1.5,
-                            bgcolor: '#121214',
+                            bgcolor: '#F7F6F2',
                             borderRadius: 1,
-                            border: '1px solid #2e2e36',
+                            border: '1px solid rgba(40, 37, 29, 0.08)',
                           }}
                         >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
