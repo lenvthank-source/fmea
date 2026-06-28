@@ -105,14 +105,19 @@ export class PfmeaRowService {
   }
 
   async createRow(tenantId: string, userId: string, revisionId: string, dto: CreatePfmeaRowDto) {
-    await this.verifyRevisionAccess(tenantId, revisionId);
+    const pfmeaRevision = await this.verifyRevisionAccess(tenantId, revisionId);
 
-    // Verify process step belongs to revision
-    const step = await this.prisma.processStep.findFirst({
-      where: { id: dto.processStepId, revisionId },
+    // Process steps belong to the PFD revision (different from PFMEA revision).
+    // Verify the step exists and belongs to the same project via tenant check.
+    const step = await this.prisma.processStep.findUnique({
+      where: { id: dto.processStepId },
+      include: { revision: { include: { document: true } } },
     });
     if (!step) {
-      throw new BadRequestException('Process step not found in the target revision');
+      throw new BadRequestException('Process step not found');
+    }
+    if (step.revision.document.projectId !== pfmeaRevision.document.projectId) {
+      throw new BadRequestException('Process step does not belong to this project');
     }
 
     return this.prisma.pfmeaRow.create({
