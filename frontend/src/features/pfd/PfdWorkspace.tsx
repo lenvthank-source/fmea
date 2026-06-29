@@ -702,9 +702,9 @@ export const PfdWorkspace: React.FC = () => {
                         />
                       </TableCell>
 
-                      {/* Floating Flow Icons - visible on row hover */}
-                      <TableCell sx={{ position: 'relative', width: 40, p: 0 }}>
-                        {hoveredStepId === step.id && (
+                      {/* Floating Flow Icons - visible on row hover, showing active ones otherwise */}
+                      <TableCell sx={{ position: 'relative', minWidth: 60, p: 0.5 }}>
+                        {hoveredStepId === step.id ? (
                           <Box
                             sx={{
                               position: 'absolute',
@@ -757,6 +757,36 @@ export const PfdWorkspace: React.FC = () => {
                                     }}
                                   >
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
+                                      {iconMeta.sym}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'nowrap', justifyContent: 'center' }}>
+                            {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
+                              const isActive = !!icons[key];
+                              if (!isActive) return null;
+                              const iconMeta = FLOW_ICON_COLUMNS[key];
+                              return (
+                                <Tooltip key={key} title={iconMeta.name} arrow>
+                                  <Box
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: '50%',
+                                      bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
+                                      color: SYMBOL_COLORS[key]?.text || '#ffffff',
+                                      fontWeight: 'bold',
+                                      boxShadow: `0 2px 4px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.05)'}`
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', userSelect: 'none' }}>
                                       {iconMeta.sym}
                                     </Typography>
                                   </Box>
