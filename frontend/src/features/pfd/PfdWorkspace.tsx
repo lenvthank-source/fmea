@@ -622,12 +622,7 @@ export const PfdWorkspace: React.FC = () => {
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Incoming Source of Variation</TableCell>
                 <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
                 
-                {/* 9 Flow Icons Columns */}
-                {Object.entries(FLOW_ICON_COLUMNS).map(([key, label]) => (
-                  <TableCell key={key} align="center" style={{ width: 40, padding: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                    {label.short}
-                  </TableCell>
-                ))}
+                {/* Flow Icons - floating on hover, no header columns */}
 
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Machines/Equipment/Docs</TableCell>
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Desired Outcome</TableCell>
@@ -652,10 +647,13 @@ export const PfdWorkspace: React.FC = () => {
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={handleDragOver}
                       onDrop={() => handleDrop(index)}
+                      onMouseEnter={() => setHoveredStepId(step.id)}
+                      onMouseLeave={() => setHoveredStepId(null)}
                       sx={{
                         '&:hover': { bgcolor: '#f8fafc' },
                         opacity: draggedIndex === index ? 0.5 : 1,
-                        cursor: 'grab'
+                        cursor: 'grab',
+                        position: 'relative'
                       }}
                     >
                       {/* Drag Handle */}
@@ -704,52 +702,70 @@ export const PfdWorkspace: React.FC = () => {
                         />
                       </TableCell>
 
-                      {/* 9 Flow Icons column toggle cells */}
-                      {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
-                        const isActive = !!icons[key];
-                        const iconMeta = FLOW_ICON_COLUMNS[key];
-                        return (
-                          <TableCell
-                            key={key}
-                            align="center"
-                            onClick={() => handleToggleFlowIcon(step.id, key, isActive)}
+                      {/* Floating Flow Icons - visible on row hover */}
+                      <TableCell sx={{ position: 'relative', width: 40, p: 0 }}>
+                        {hoveredStepId === step.id && (
+                          <Box
                             sx={{
-                              cursor: 'pointer',
-                              padding: '4px',
-                              transition: 'all 0.2s',
-                              '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' }
+                              position: 'absolute',
+                              right: 0,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              display: 'flex',
+                              gap: 0.5,
+                              bgcolor: 'rgba(255,255,255,0.97)',
+                              border: '1px solid rgba(40, 37, 29, 0.12)',
+                              borderRadius: 3,
+                              px: 1,
+                              py: 0.5,
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              zIndex: 10,
+                              animation: 'fadeIn 0.15s ease-in-out',
+                              '@keyframes fadeIn': {
+                                from: { opacity: 0, transform: 'translateY(-50%) scale(0.95)' },
+                                to: { opacity: 1, transform: 'translateY(-50%) scale(1)' }
+                              }
                             }}
+                            onMouseEnter={() => setHoveredStepId(step.id)}
                           >
-                            <Tooltip title={iconMeta.name} arrow>
-                              <Box
-                                sx={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: '50%',
-                                  bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
-                                  color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
-                                  fontWeight: 'bold',
-                                  border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
-                                  boxShadow: isActive ? `0 4px 8px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
-                                  transition: 'all 0.15s ease-in-out',
-                                  '&:hover': {
-                                    transform: 'scale(1.15)',
-                                    bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
-                                    border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.3)',
-                                  }
-                                }}
-                              >
-                                <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
-                                  {iconMeta.sym}
-                                </Typography>
-                              </Box>
-                            </Tooltip>
-                          </TableCell>
-                        );
-                      })}
+                            {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
+                              const isActive = !!icons[key];
+                              const iconMeta = FLOW_ICON_COLUMNS[key];
+                              return (
+                                <Tooltip key={key} title={iconMeta.name} arrow>
+                                  <Box
+                                    onClick={(e) => { e.stopPropagation(); handleToggleFlowIcon(step.id, key, isActive); }}
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: '50%',
+                                      cursor: 'pointer',
+                                      bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
+                                      color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
+                                      fontWeight: 'bold',
+                                      border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
+                                      boxShadow: isActive ? `0 4px 8px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
+                                      transition: 'all 0.15s ease-in-out',
+                                      '&:hover': {
+                                        transform: 'scale(1.15)',
+                                        bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
+                                        border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.3)',
+                                      }
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
+                                      {iconMeta.sym}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </TableCell>
 
                       {/* Machines / Machinery / Docs */}
                       <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>

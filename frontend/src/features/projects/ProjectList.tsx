@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Grid, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Alert, CircularProgress, CardActionArea, FormControlLabel, Chip, Radio, RadioGroup,
-  Stepper, Step, StepLabel
+  Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText
 } from '@mui/material';
-import { Add as AddIcon, Business as BusinessIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
+import { Add as AddIcon, Business as BusinessIcon, AccessTime as AccessTimeIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
@@ -72,6 +72,13 @@ export const ProjectList: React.FC = () => {
   const [otherApprover, setOtherApprover] = useState('');
   const [otherApprovalDate2, setOtherApprovalDate2] = useState('');
 
+  // Delete project state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [menuProjectId, setMenuProjectId] = useState<string | null>(null);
+
   // Auto-suggest Document Number when step 3 is reached
   useEffect(() => {
     if (step === 3 && !documentNumber) {
@@ -107,6 +114,25 @@ export const ProjectList: React.FC = () => {
       fetchProjects();
     }
   }, [token]);
+
+  const handleDeleteProject = async () => {
+    if (!deleteTargetId) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${deleteTargetId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete project');
+      setProjects(prev => prev.filter(p => p.id !== deleteTargetId));
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete project');
+    } finally {
+      setDeleteLoading(false);
+      setDeleteConfirmOpen(false);
+      setDeleteTargetId(null);
+    }
+  };
 
   const handleOpen = () => {
     setOpen(true);
@@ -293,13 +319,20 @@ export const ProjectList: React.FC = () => {
         <Grid container spacing={3}>
           {projects.map((project) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project.id}>
-              <Card sx={{ height: '100%' }}>
+              <Card sx={{ height: '100%', position: 'relative' }}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuProjectId(project.id); }}
+                  sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
                 <CardActionArea
                   sx={{ height: '100%', p: 1 }}
                   onClick={() => navigate(`/projects/${project.id}/pfd`)}
                 >
                   <CardContent>
-                    <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold', pr: 3 }}>
                       {project.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: 40 }}>
@@ -322,6 +355,41 @@ export const ProjectList: React.FC = () => {
           ))}
         </Grid>
       )}
+
+      {/* Project Context Menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={() => { setMenuAnchor(null); setMenuProjectId(null); }}
+        sx={{ '& .MuiPaper-root': { borderRadius: 2, minWidth: 160, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } }}
+      >
+        <MenuItem
+          onClick={() => {
+            setDeleteTargetId(menuProjectId);
+            setDeleteConfirmOpen(true);
+            setMenuAnchor(null);
+            setMenuProjectId(null);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon><DeleteIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
+          <ListItemText>Delete Project</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Delete Project?</DialogTitle>
+        <DialogContent>
+          <Typography>This action is permanent and will delete all associated documents, process steps, FMEA rows, and control plans. This cannot be undone.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteLoading}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteProject} disabled={deleteLoading}>
+            {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 3-Step Create Project Modal */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
