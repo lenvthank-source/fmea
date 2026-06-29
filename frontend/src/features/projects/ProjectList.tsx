@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Typography, Button, Grid, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Alert, CircularProgress, CardActionArea, FormControlLabel, Chip, Radio, RadioGroup,
-  Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText
+  Box, Typography, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Alert, CircularProgress, FormControlLabel, Chip, Radio, RadioGroup,
+  Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
+  TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper
 } from '@mui/material';
-import { Add as AddIcon, Business as BusinessIcon, AccessTime as AccessTimeIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
@@ -17,6 +18,31 @@ interface Project {
   modelYear?: string;
   status: string;
   createdAt: string;
+  documentTypes?: string[];
+  organisationName?: string;
+  organisationCode?: string;
+  orgPartNumber?: string;
+  organisationPlant?: string;
+  customerPartNumber?: string;
+  partName?: string;
+  keyContact?: string;
+  latestChangeLevel?: string;
+  drawingRevDate?: string;
+  dwgNumber?: string;
+  dwgRevNoAndDate?: string;
+  preliminaryFinalFlag?: string;
+  documentNumber?: string;
+  controlPlanNumber?: string;
+  assemblyLineNumber?: string;
+  originationDate?: string;
+  supplierApprovalDate?: string;
+  cftMembers?: string[];
+  customerEngApprover?: string;
+  customerEngApprovalDate?: string;
+  customerQualApprover?: string;
+  customerQualApprovalDate?: string;
+  otherApprover?: string;
+  otherApprovalDate2?: string;
 }
 
 export const ProjectList: React.FC = () => {
@@ -79,6 +105,10 @@ export const ProjectList: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [menuProjectId, setMenuProjectId] = useState<string | null>(null);
 
+  // Edit project state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+
   // Auto-suggest Document Number when step 3 is reached
   useEffect(() => {
     if (step === 3 && !documentNumber) {
@@ -136,12 +166,120 @@ export const ProjectList: React.FC = () => {
 
   const handleOpen = () => {
     setOpen(true);
+    setIsEditing(false);
+    setEditingProjectId(null);
     setStep(1);
     setCreateError(null);
   };
 
+  const handleEditClick = (project: Project) => {
+    setIsEditing(true);
+    setEditingProjectId(project.id);
+    setName(project.name || '');
+    setDescription(project.description || '');
+    setCustomer(project.customer || '');
+    setModelYear(project.modelYear || '');
+    setDocumentTypes(project.documentTypes || ['Prototype']);
+    setOrganisationName(project.organisationName || '');
+    setOrganisationCode(project.organisationCode || '');
+    setOrgPartNumber(project.orgPartNumber || '');
+    setOrganisationPlant(project.organisationPlant || '');
+    setCustomerPartNumber(project.customerPartNumber || '');
+    setPartName(project.partName || '');
+    setKeyContact(project.keyContact || '');
+    setLatestChangeLevel(project.latestChangeLevel || '');
+    setDrawingRevDate(project.drawingRevDate ? new Date(project.drawingRevDate).toISOString().split('T')[0] : '');
+    setDwgNumber(project.dwgNumber || '');
+    setDwgRevNoAndDate(project.dwgRevNoAndDate || '');
+    setPreliminaryFinalFlag(project.preliminaryFinalFlag || 'preliminary');
+    setDocumentNumber(project.documentNumber || '');
+    setControlPlanNumber(project.controlPlanNumber || '');
+    setAssemblyLineNumber(project.assemblyLineNumber || '');
+    setOriginationDate(project.originationDate ? new Date(project.originationDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    setSupplierApprovalDate(project.supplierApprovalDate ? new Date(project.supplierApprovalDate).toISOString().split('T')[0] : '');
+    setCftMembers(project.cftMembers || []);
+    setCustomerEngApprover(project.customerEngApprover || '');
+    setCustomerEngApprovalDate(project.customerEngApprovalDate ? new Date(project.customerEngApprovalDate).toISOString().split('T')[0] : '');
+    setCustomerQualApprover(project.customerQualApprover || '');
+    setCustomerQualApprovalDate(project.customerQualApprovalDate ? new Date(project.customerQualApprovalDate).toISOString().split('T')[0] : '');
+    setOtherApprover(project.otherApprover || '');
+    setOtherApprovalDate2(project.otherApprovalDate2 ? new Date(project.otherApprovalDate2).toISOString().split('T')[0] : '');
+    
+    setOpen(true);
+    setStep(1);
+    setCreateError(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step < 3) {
+      handleNext();
+      return;
+    }
+
+    setCreateLoading(true);
+    setCreateError(null);
+
+    const projectPayload = {
+      name,
+      description,
+      customer,
+      modelYear,
+      documentTypes,
+      organisationName,
+      organisationCode: organisationCode || null,
+      orgPartNumber: orgPartNumber || null,
+      organisationPlant: organisationPlant || null,
+      customerPartNumber: customerPartNumber || null,
+      partName,
+      keyContact: keyContact || null,
+      latestChangeLevel: latestChangeLevel || null,
+      drawingRevDate: drawingRevDate || null,
+      documentNumber: documentNumber || null,
+      controlPlanNumber: controlPlanNumber || null,
+      assemblyLineNumber: assemblyLineNumber || null,
+      originationDate: originationDate || null,
+      supplierApprovalDate: supplierApprovalDate || null,
+      cftMembers,
+      customerEngApprover: customerEngApprover || null,
+      customerEngApprovalDate: customerEngApprovalDate || null,
+      customerQualApprover: customerQualApprover || null,
+      customerQualApprovalDate: customerQualApprovalDate || null,
+      otherApprover: otherApprover || null,
+      otherApprovalDate2: otherApprovalDate2 || null,
+      dwgNumber: dwgNumber || null,
+      dwgRevNoAndDate: dwgRevNoAndDate || null,
+      preliminaryFinalFlag,
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/${editingProjectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(projectPayload),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to update project');
+      }
+
+      await fetchProjects();
+      handleClose();
+    } catch (err: any) {
+      setCreateError(err.message || 'Could not update project');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const handleClose = () => {
     setOpen(false);
+    setIsEditing(false);
+    setEditingProjectId(null);
     // Reset all fields
     setName('');
     setDescription('');
@@ -316,44 +454,64 @@ export const ProjectList: React.FC = () => {
           </Button>
         </Box>
       ) : (
-        <Grid container spacing={3}>
-          {projects.map((project) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project.id}>
-              <Card sx={{ height: '100%', position: 'relative' }}>
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuProjectId(project.id); }}
-                  sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.06)' } }}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-                <CardActionArea
-                  sx={{ height: '100%', p: 1 }}
-                  onClick={() => navigate(`/projects/${project.id}/pfd`)}
-                >
-                  <CardContent>
-                    <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold', pr: 3 }}>
+        <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f8fafc' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Project Name</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Customer</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Model Year</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Created At</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 80 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {projects.map((project) => (
+                <TableRow key={project.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                  <TableCell>
+                    <Typography
+                      onClick={() => navigate(`/projects/${project.id}/pfd`)}
+                      sx={{ 
+                        fontWeight: 'bold', 
+                        color: 'primary.main', 
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        '&:hover': { textDecoration: 'underline' }
+                      }}
+                    >
                       {project.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: 40 }}>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
                       {project.description || 'No description provided.'}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <BusinessIcon fontSize="small" />
-                        <Typography variant="caption">{project.customer || 'Internal'}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <AccessTimeIcon fontSize="small" />
-                        <Typography variant="caption">{project.modelYear || 'N/A'}</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{project.customer || 'Internal'}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{project.modelYear || 'N/A'}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                      {new Date(project.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuProjectId(project.id); }}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {/* Project Context Menu */}
@@ -363,6 +521,19 @@ export const ProjectList: React.FC = () => {
         onClose={() => { setMenuAnchor(null); setMenuProjectId(null); }}
         sx={{ '& .MuiPaper-root': { borderRadius: 2, minWidth: 160, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } }}
       >
+        <MenuItem
+          onClick={() => {
+            const selectedProj = projects.find(p => p.id === menuProjectId);
+            if (selectedProj) {
+              handleEditClick(selectedProj);
+            }
+            setMenuAnchor(null);
+            setMenuProjectId(null);
+          }}
+        >
+          <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Edit Project</ListItemText>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setDeleteTargetId(menuProjectId);
@@ -391,10 +562,10 @@ export const ProjectList: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 3-Step Create Project Modal */}
+      {/* 3-Step Create/Edit Project Modal */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold', px: 3, pt: 3 }}>
-          Create Quality Project
+          {isEditing ? 'Edit Quality Project' : 'Create Quality Project'}
         </DialogTitle>
         <Box sx={{ px: 3, mb: 2 }}>
           <Stepper activeStep={step - 1} alternativeLabel>
@@ -404,7 +575,7 @@ export const ProjectList: React.FC = () => {
           </Stepper>
         </Box>
 
-        <Box component="form" onSubmit={handleCreate}>
+        <Box component="form" onSubmit={isEditing ? handleUpdate : handleCreate}>
           <DialogContent sx={{ p: 3 }}>
             {createError && (
               <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
@@ -772,7 +943,7 @@ export const ProjectList: React.FC = () => {
               <Button onClick={handleNext} variant="contained">Next</Button>
             ) : (
               <Button type="submit" variant="contained" disabled={createLoading}>
-                {createLoading ? 'Creating...' : 'Create Project'}
+                {createLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Project')}
               </Button>
             )}
           </DialogActions>
