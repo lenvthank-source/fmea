@@ -1,4 +1,4 @@
-# AI-Powered FMEA Platform
+# AI-Powered FMEA Platform.
 
 An enterprise SaaS modular monolith system designed for quality engineering, implementing the complete **AIAG–VDA FMEA Handbook (2019)** methodology (DFMEA, PFMEA, Control Plans, Process Flow Diagrams, Action Priorities, and AI Copilot with RAG support).
 
