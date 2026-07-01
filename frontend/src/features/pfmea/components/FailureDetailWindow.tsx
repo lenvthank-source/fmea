@@ -142,9 +142,9 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { height: '80vh' } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: { height: '80vh' } } }}>
       <DialogTitle sx={{ bgcolor: '#b71c1c', color: 'white', py: 1.5 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Failure Mode Detail</Typography>
             {data && (
@@ -153,7 +153,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
               </Typography>
             )}
           </Box>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             {data && data.highestSeverity > 0 && (
               <Chip
                 label={`Highest Severity: ${data.highestSeverity}`}
@@ -239,9 +239,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                       {/* Cause header row */}
                       <Stack
                         direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        sx={{ p: 1.5, bgcolor: '#fff3e0', borderBottom: '1px solid rgba(0,0,0,0.08)' }}
+                        sx={{ p: 1.5, bgcolor: '#fff3e0', borderBottom: '1px solid rgba(0,0,0,0.08)', justifyContent: 'space-between', alignItems: 'flex-start' }}
                       >
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>{entry.failure.narration}</Typography>
@@ -316,7 +314,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                                 sx={{ flex: 2 }}
                               />
                             </Stack>
-                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                               <Button size="small" onClick={() => setAddActionLinkId(null)} color="inherit">Cancel</Button>
                               <Button
                                 size="small"
@@ -338,7 +336,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                           key={action.id}
                           sx={{ p: 1.5, pl: 3, borderBottom: '1px dashed rgba(0,0,0,0.06)', bgcolor: '#fffde7' }}
                         >
-                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ flex: 1 }}>
                               <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 500 }}>
                                 {action.description}

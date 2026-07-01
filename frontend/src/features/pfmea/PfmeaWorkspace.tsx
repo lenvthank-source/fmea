@@ -47,7 +47,7 @@ interface PfmeaRow {
   notes: string;
   status: string;
   accessLevel: string;
-  processStep: { name: string; stepNumber: string; isOrphaned?: boolean } | null;
+  processStep?: { name: string; stepNumber: string; isOrphaned?: boolean } | null;
   functions: { name: string }[];
   requirements: { name: string }[];
   failureModes: { name: string }[];

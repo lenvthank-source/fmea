@@ -98,9 +98,9 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   const selectedCauses = data?.causes.filter(c => selectedCauseIds.includes(c.id)) || [];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { height: '85vh' } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth slotProps={{ paper: { sx: { height: '85vh' } } }}>
       <DialogTitle sx={{ bgcolor: '#b71c1c', color: 'white', fontWeight: 'bold' }}>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <LinkIcon />
           <span>Failure Linkage — Effects / Mode / Causes</span>
         </Stack>
@@ -138,7 +138,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                     }}
                     onClick={() => toggleEffect(effect.id)}
                   >
-                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                       <Checkbox
                         checked={selectedEffectIds.includes(effect.id)}
                         size="small"
@@ -166,7 +166,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 FAILURE MODE (Selected)
               </Typography>
               <Box sx={{ p: 2, bgcolor: '#fff3e0', border: '2px solid #ff6d00', borderRadius: 2, mb: 2 }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 0.5, alignItems: 'center' }}>
                   <ModeIcon sx={{ color: '#e65100', fontSize: '1rem' }} />
                   <Typography variant="body2" sx={{ fontWeight: 700, color: '#e65100', fontSize: '0.8rem' }}>MODE</Typography>
                 </Stack>
@@ -231,7 +231,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                     }}
                     onClick={() => toggleCause(cause.id)}
                   >
-                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                       <Checkbox
                         checked={selectedCauseIds.includes(cause.id)}
                         size="small"
