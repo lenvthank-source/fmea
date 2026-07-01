@@ -1,32 +1,45 @@
-# React + TypeScript + Vite
+# FMEA Platform Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This is the frontend single page application (SPA) for the AI-Powered FMEA Platform, built using **React 18**, **TypeScript**, **Vite**, and **Material-UI (MUI)**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🗺️ Frontend Directory Structure
 
-## React Compiler
+For ease of navigation and context optimization, each subdirectory contains its own `README.md` index file:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 📂 **[`public/`](./public/README.md)**: Static assets (logos, manifest files).
+- 📂 **[`src/`](./src/README.md)**: React source code folder.
+  - 📂 **[`src/app/`](./src/app/README.md)**: Application router and global navigation config.
+  - 📂 **[`src/assets/`](./src/assets/README.md)**: Local images, vector icons, and styling assets.
+  - 📂 **[`src/components/`](./src/components/README.md)**: Shared visual components (e.g. `DocumentHeader`, Layouts).
+  - 📂 **[`src/features/`](./src/features/README.md)**: Core features (Auth, Projects, PFD, PFMEA, Control Plans, Actions, Reports).
+  - 📂 **[`src/hooks/`](./src/hooks/README.md)**: Custom React hooks (responsive utilities, fetch hooks).
+  - 📂 **[`src/theme/`](./src/theme/README.md)**: Color definitions, spacing, and styling tokens.
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## 🛠️ Project Setup & Commands
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### Prerequisites
+- Node.js (v18+)
+
+### Install Dependencies
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Start Development Server
+```bash
+npm run dev
+```
+
+### Build for Production
+```bash
+npm run build
+```
+
+### Code Linting
+```bash
+npx oxlint
+```

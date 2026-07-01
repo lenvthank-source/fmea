@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../../config';
 import {
   Drawer,
   Box,
@@ -61,6 +62,9 @@ interface PfmeaRowEditorProps {
   steps: ProcessStep[];
   onSave: (updatedRowData: any) => Promise<void>;
   fmeaType?: 'PFMEA' | 'DFMEA';
+  projectId?: string;
+  token?: string;
+  onCreateAction?: (row: PfmeaRow) => void;
 }
 
 export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
@@ -70,6 +74,9 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   steps,
   onSave,
   fmeaType = 'PFMEA',
+  projectId,
+  token,
+  onCreateAction,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +121,10 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuccess, setAiSuccess] = useState(false);
 
+  // Linked Actions state
+  const [linkedActions, setLinkedActions] = useState<any[]>([]);
+  const [linkedActionsLoading, setLinkedActionsLoading] = useState(false);
+
   // Sync state with row prop
   useEffect(() => {
     if (row) {
@@ -137,6 +148,24 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
       setAiSuccess(false);
     }
   }, [row]);
+
+  // Fetch linked actions whenever the row / project changes
+  useEffect(() => {
+    if (!row || !projectId || !token) return;
+    setLinkedActionsLoading(true);
+    fetch(`${API_BASE_URL}/projects/${projectId}/actions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const linked = (data || []).filter((a: any) =>
+          a.fmeaLinks?.some((l: any) => l.fmeaRowId === row.id)
+        );
+        setLinkedActions(linked);
+      })
+      .catch(() => setLinkedActions([]))
+      .finally(() => setLinkedActionsLoading(false));
+  }, [row?.id, projectId, token]);
 
   if (!row) return null;
 
@@ -564,6 +593,109 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
             fullWidth
             size="small"
           />
+
+          {/* Linked Actions Section */}
+          <Divider />
+          <Box>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                Linked Actions ({linkedActions.length})
+              </Typography>
+              {onCreateAction && row && (
+                <Button
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => onCreateAction(row)}
+                  variant="outlined"
+                  color="warning"
+                >
+                  Add Action
+                </Button>
+              )}
+            </Stack>
+            {linkedActionsLoading ? (
+              <CircularProgress size={20} />
+            ) : linkedActions.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                No corrective actions linked to this row.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {linkedActions.map((action: any) => {
+                  const mainLink = action.fmeaLinks?.[0];
+                  const beforeAp = mainLink?.beforeAp || '—';
+                  const afterAp = mainLink?.afterAp || '—';
+                  const apColor = (ap: string) =>
+                    ap === 'H' ? '#d32f2f' : ap === 'M' ? '#ed6c02' : ap === 'L' ? '#2e7d32' : '#757575';
+                  return (
+                    <Box
+                      key={action.id}
+                      sx={{ p: 1.5, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 2, bgcolor: '#fafafa' }}
+                    >
+                      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.82rem', flex: 1, pr: 1 }}>
+                          {action.description.length > 50
+                            ? action.description.slice(0, 50) + '...'
+                            : action.description}
+                        </Typography>
+                        <Chip
+                          label={action.status.replace('_', ' ').toUpperCase()}
+                          size="small"
+                          sx={{
+                            fontSize: '0.6rem',
+                            height: 18,
+                            bgcolor:
+                              action.status === 'completed' ? '#2e7d32' :
+                              action.status === 'verified'  ? '#006064' :
+                              action.status === 'in_progress' ? '#1565c0' :
+                              action.status === 'closed' ? '#616161' : '#e65100',
+                            color: 'white',
+                            fontWeight: 'bold',
+                          }}
+                        />
+                      </Stack>
+                      {mainLink && (
+                        <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, alignItems: 'center' }}>
+                          <Typography variant="caption" color="text.secondary">AP:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 'bold', color: apColor(beforeAp) }}>
+                            {beforeAp}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">→</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 'bold', color: apColor(afterAp) }}>
+                            {afterAp}
+                          </Typography>
+                          {mainLink.afterAp && beforeAp !== '—' && afterAp !== '—' && beforeAp !== afterAp && (
+                            <Chip
+                              label={
+                                beforeAp === 'H' && (afterAp === 'M' || afterAp === 'L')
+                                  ? '↓ Improved'
+                                  : afterAp === 'H'
+                                  ? '↑ Escalated'
+                                  : 'Changed'
+                              }
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.6rem',
+                                bgcolor:
+                                  beforeAp === 'H' && (afterAp === 'M' || afterAp === 'L')
+                                    ? '#e8f5e9'
+                                    : '#fce4ec',
+                                color:
+                                  beforeAp === 'H' && (afterAp === 'M' || afterAp === 'L')
+                                    ? '#2e7d32'
+                                    : '#c62828',
+                              }}
+                            />
+                          )}
+                        </Stack>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Stack>
+            )}
+          </Box>
 
           {/* Save & Cancel */}
           <Stack direction="row" spacing={2} sx={{ mt: 3, pb: 4 }}>

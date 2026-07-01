@@ -616,3 +616,83 @@ model PfmeaRowCharacteristic {
   @@id([pfmeaRowId, characteristicId])
   @@map("pfmea_row_characteristic")
 }
+
+// === STRUCTURE-LEVEL FUNCTIONS (attachable to Project, Step, or WorkElement) ===
+model StructureFunction {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  parentType  String   @map("parent_type") @db.VarChar(20)
+  parentId    String   @map("parent_id") @db.Uuid
+  narration   String   @db.Text
+  location    String?  @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  failures    StructureFailure[]
+
+  @@index([tenantId, projectId])
+  @@index([tenantId, parentType, parentId])
+  @@map("structure_function")
+}
+
+// === STRUCTURE-LEVEL FAILURES (attached to a StructureFunction) ===
+model StructureFailure {
+  id                        String   @id @default(uuid()) @db.Uuid
+  functionId                String   @map("function_id") @db.Uuid
+  role                      String   @db.VarChar(10)
+  narration                 String   @db.Text
+  severityRating            Int?     @map("severity_rating") @db.SmallInt
+  occurrenceRating          Int?     @map("occurrence_rating") @db.SmallInt
+  detectionRating           Int?     @map("detection_rating") @db.SmallInt
+  currentControlPrevention  String?  @map("current_control_prevention") @db.Text
+  currentControlDetection   String?  @map("current_control_detection") @db.Text
+  filterCode                String?  @map("filter_code") @db.VarChar(50)
+  isLinked                  Boolean  @default(false) @map("is_linked")
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  function        StructureFunction @relation(fields: [functionId], references: [id], onDelete: Cascade)
+  modeEffectLinks FailureLink[]     @relation("FailureModeEffects")
+  linkedAsEffect  FailureLink[]     @relation("LinkedEffect")
+
+  @@index([functionId])
+  @@index([role])
+  @@map("structure_failure")
+}
+
+// === FAILURE LINKS (connecting Modes to Effects and Causes) ===
+model FailureLink {
+  id              String   @id @default(uuid()) @db.Uuid
+  failureModeId   String   @map("failure_mode_id") @db.Uuid
+  linkedFailureId String   @map("linked_failure_id") @db.Uuid
+  linkType        String   @map("link_type") @db.VarChar(10)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  failureMode   StructureFailure @relation("FailureModeEffects", fields: [failureModeId], references: [id], onDelete: Cascade)
+  linkedFailure StructureFailure @relation("LinkedEffect", fields: [linkedFailureId], references: [id], onDelete: Cascade)
+  linkActions   LinkAction[]
+
+  @@unique([failureModeId, linkedFailureId, linkType])
+  @@map("failure_link")
+}
+
+// === ACTIONS ON LINKED FAILURES ===
+model LinkAction {
+  id                String    @id @default(uuid()) @db.Uuid
+  failureLinkId     String    @map("failure_link_id") @db.Uuid
+  description       String    @db.Text
+  targetDate        DateTime? @map("target_date") @db.Date
+  revisedSeverity   Int?      @map("revised_severity") @db.SmallInt
+  revisedOccurrence Int?      @map("revised_occurrence") @db.SmallInt
+  revisedDetection  Int?      @map("revised_detection") @db.SmallInt
+  remarks           String?   @db.Text
+  status            String    @default("open") @db.VarChar(20)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  failureLink FailureLink @relation(fields: [failureLinkId], references: [id], onDelete: Cascade)
+
+  @@index([failureLinkId])
+  @@map("link_action")
+}

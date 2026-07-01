@@ -21,7 +21,8 @@ import {
   ViewWeek as StepIcon,
   PrecisionManufacturing as WorkElementIcon,
   HelpOutlined as FunctionIcon,
-  Warning as FailureIcon
+  Warning as FailureIcon,
+  Link as LinkIcon
 } from '@mui/icons-material';
 
 interface ProcessStep {
@@ -56,6 +57,9 @@ interface PfmeaStructureTreeProps {
   onAddFunction: (stepId: string | null, workElementName?: string | null) => void;
   onAddWorkElement: (stepId: string) => void;
   onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
+  onOpenLinkageModal?: (failureModeId: string) => void;
+  onOpenDetailWindow?: (failureModeId: string) => void;
+  structureFunctions?: any[];
 }
 
 export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
@@ -67,7 +71,10 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onDeleteStep,
   onAddFunction,
   onAddWorkElement,
-  onAddFailure
+  onAddFailure,
+  onOpenLinkageModal,
+  onOpenDetailWindow,
+  structureFunctions: _structureFunctions,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -193,6 +200,33 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
         }}
       >
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Linkage Section */}
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mr: 1 }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>LINKAGE</Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<LinkIcon />}
+              disabled={!selectedNodeId?.startsWith('struct-mode::')}
+              onClick={() => {
+                if (selectedNodeId?.startsWith('struct-mode::') && onOpenLinkageModal) {
+                  const modeId = selectedNodeId.replace('struct-mode::', '');
+                  onOpenLinkageModal(modeId);
+                }
+              }}
+              sx={{
+                borderColor: '#b71c1c',
+                color: '#b71c1c',
+                '&:hover': { bgcolor: '#fce4ec' },
+                '&.Mui-disabled': { borderColor: 'rgba(0,0,0,0.2)', color: 'rgba(0,0,0,0.3)' }
+              }}
+            >
+              Link Failures
+            </Button>
+          </Stack>
+
+          <Divider orientation="vertical" flexItem />
+
           {/* Add Group */}
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}>ADD</Typography>

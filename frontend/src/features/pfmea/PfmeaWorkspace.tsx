@@ -17,6 +17,10 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
+import { AddFunctionDialog } from './components/AddFunctionDialog';
+import { AddFailureDialog } from './components/AddFailureDialog';
+import { FailureLinkageModal } from './components/FailureLinkageModal';
+import { FailureDetailWindow } from './components/FailureDetailWindow';
 import { calculateAP } from './utils/apCalculator';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
@@ -144,6 +148,21 @@ export const PfmeaWorkspace: React.FC = () => {
   const [actionOwnerId, setActionOwnerId] = useState('');
   const [actionDueDate, setActionDueDate] = useState('');
   const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+
+  // Linkage dialogs state
+  const [linkageModalOpen, setLinkageModalOpen] = useState(false);
+  const [linkageModalFailureModeId, setLinkageModalFailureModeId] = useState<string | null>(null);
+  const [detailWindowOpen, setDetailWindowOpen] = useState(false);
+  const [detailWindowFailureModeId, setDetailWindowFailureModeId] = useState<string | null>(null);
+
+  // Structure-level function/failure dialog state
+  const [structFuncDialogOpen, setStructFuncDialogOpen] = useState(false);
+  const [structFuncParentType, setStructFuncParentType] = useState<'project' | 'process_step' | 'work_element' | null>(null);
+  const [structFuncParentId, setStructFuncParentId] = useState<string | null>(null);
+  const [structFailDialogOpen, setStructFailDialogOpen] = useState(false);
+  const [structFailRole, setStructFailRole] = useState<'effect' | 'mode' | 'cause' | null>(null);
+  const [structFailFunctionId, setStructFailFunctionId] = useState<string | null>(null);
+  const [structFailFunctionNarration, setStructFailFunctionNarration] = useState('');
 
   // Load tenant users
   useEffect(() => {
@@ -654,6 +673,14 @@ export const PfmeaWorkspace: React.FC = () => {
           onAddFunction={handleAddFunctionFromTree}
           onAddWorkElement={handleAddWorkElementFromTree}
           onAddFailure={handleAddFailureFromTree}
+          onOpenLinkageModal={(modeId) => {
+            setLinkageModalFailureModeId(modeId);
+            setLinkageModalOpen(true);
+          }}
+          onOpenDetailWindow={(modeId) => {
+            setDetailWindowFailureModeId(modeId);
+            setDetailWindowOpen(true);
+          }}
         />
       ) : activeTab === 'table' ? (
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
@@ -999,6 +1026,12 @@ export const PfmeaWorkspace: React.FC = () => {
         row={activeRow}
         steps={steps}
         onSave={handleSaveRowDetails}
+        projectId={projectId}
+        token={token ?? undefined}
+        onCreateAction={(row) => {
+          setSelectedRowForAction(row);
+          setActionDialogOpen(true);
+        }}
       />
 
       {/* Add Row Dialog */}
@@ -1175,6 +1208,54 @@ export const PfmeaWorkspace: React.FC = () => {
         data={rows}
         steps={steps}
       />
+
+      {/* Failure Linkage Modal (3-pane: Effects | Mode | Causes) */}
+      {token && (
+        <FailureLinkageModal
+          open={linkageModalOpen}
+          onClose={() => { setLinkageModalOpen(false); setLinkageModalFailureModeId(null); }}
+          failureModeId={linkageModalFailureModeId}
+          token={token}
+          onSuccess={() => fetchData()}
+        />
+      )}
+
+      {/* Failure Detail Window (Effects/Causes tabs + inline actions) */}
+      {token && (
+        <FailureDetailWindow
+          open={detailWindowOpen}
+          onClose={() => { setDetailWindowOpen(false); setDetailWindowFailureModeId(null); }}
+          failureModeId={detailWindowFailureModeId}
+          token={token}
+          onRefresh={() => fetchData()}
+        />
+      )}
+
+      {/* Add Structure Function Dialog (Windows 1/3/6) */}
+      {token && projectId && (
+        <AddFunctionDialog
+          open={structFuncDialogOpen}
+          onClose={() => { setStructFuncDialogOpen(false); setStructFuncParentType(null); setStructFuncParentId(null); }}
+          parentType={structFuncParentType}
+          parentId={structFuncParentId}
+          projectId={projectId}
+          token={token}
+          onSuccess={() => fetchData()}
+        />
+      )}
+
+      {/* Add Structure Failure Dialog (Windows 2/4/7) */}
+      {token && (
+        <AddFailureDialog
+          open={structFailDialogOpen}
+          onClose={() => { setStructFailDialogOpen(false); setStructFailRole(null); setStructFailFunctionId(null); setStructFailFunctionNarration(''); }}
+          role={structFailRole}
+          functionId={structFailFunctionId}
+          functionNarration={structFailFunctionNarration}
+          token={token}
+          onSuccess={() => fetchData()}
+        />
+      )}
     </Box>
   );
 };
