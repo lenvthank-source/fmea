@@ -374,22 +374,57 @@ export const PfmeaWorkspace: React.FC = () => {
   };
 
   const handleAddFunctionFromTree = (stepId: string | null, workElementName?: string | null) => {
-    setTreeAddTargetStepId(stepId);
-    setTreeAddWorkElementName(workElementName || null);
-    setTreeAddFunctionName(null);
-    setTreeAddType('function');
-    setTreeAddValue('');
+    if (!stepId && !workElementName) {
+      setStructFuncParentType('project');
+      setStructFuncParentId(projectId!);
+    } else if (stepId && !workElementName) {
+      setStructFuncParentType('process_step');
+      setStructFuncParentId(stepId);
+    } else if (stepId && workElementName) {
+      setStructFuncParentType('work_element');
+      setStructFuncParentId(`${stepId}::${workElementName}`);
+    }
+    setStructFuncDialogOpen(true);
   };
 
   const handleAddFailureFromTree = (
     stepId: string | null,
     parentContext?: { workElementName?: string | null; functionName: string }
   ) => {
-    setTreeAddTargetStepId(stepId);
-    setTreeAddWorkElementName(parentContext?.workElementName || null);
-    setTreeAddFunctionName(parentContext?.functionName || null);
-    setTreeAddType('failure');
-    setTreeAddValue('');
+    if (!parentContext) return;
+    const { workElementName, functionName } = parentContext;
+
+    let fnNode = null;
+    if (!stepId && !workElementName) {
+      fnNode = structureFunctions.find(
+        (f) => f.parentType === 'project' && f.narration === functionName
+      );
+    } else if (stepId && !workElementName) {
+      fnNode = structureFunctions.find(
+        (f) => f.parentType === 'process_step' && f.parentId === stepId && f.narration === functionName
+      );
+    } else if (stepId && workElementName) {
+      fnNode = structureFunctions.find(
+        (f) => f.parentType === 'work_element' && f.parentId === `${stepId}::${workElementName}` && f.narration === functionName
+      );
+    }
+
+    if (!fnNode) {
+      setError('Cannot add structure failure: Parent structure function not found in DB.');
+      return;
+    }
+
+    const roleMap: Record<string, 'effect' | 'mode' | 'cause'> = {
+      project: 'effect',
+      process_step: 'mode',
+      work_element: 'cause',
+    };
+    const role = roleMap[fnNode.parentType];
+
+    setStructFailRole(role);
+    setStructFailFunctionId(fnNode.id);
+    setStructFailFunctionNarration(fnNode.narration);
+    setStructFailDialogOpen(true);
   };
 
   const handleConfirmAddTreeElement = async () => {
