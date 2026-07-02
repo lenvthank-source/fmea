@@ -73,8 +73,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onAddWorkElement,
   onAddFailure,
   onOpenLinkageModal,
-  onOpenDetailWindow: _onOpenDetailWindow,
-  structureFunctions: _structureFunctions,
+  onOpenDetailWindow,
+  structureFunctions,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -86,6 +86,18 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
   const handleSelectNode = (id: string) => {
     setSelectedNodeId(id);
+  };
+
+  const getFailureModeLinkInfo = (stepId: string, fnName: string, failName: string) => {
+    if (!structureFunctions) return null;
+    const fnNode = structureFunctions.find(
+      (f) => f.parentType === 'process_step' && f.parentId === stepId && f.narration === fnName
+    );
+    if (!fnNode) return null;
+    const failNode = fnNode.failures?.find(
+      (failObj: any) => failObj.narration === failName && failObj.role === 'mode'
+    );
+    return failNode || null;
   };
 
   // Helper to extract step ID and other metadata from selectedNodeId
@@ -532,32 +544,54 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                               <Collapse in={!!expandedNodes[nodeKey]}>
                                 <Box sx={{ pl: 4 }}>
-                                  {failures.map((fail, failIdx) => (
-                                    <Box key={failIdx} sx={{ mb: 0.5 }}>
-                                      <Stack 
-                                        key={failIdx} 
-                                        direction="row" 
-                                        spacing={1} 
-                                        onClick={(e) => { e.stopPropagation(); handleSelectNode(`step-fail::${step.id}::${fn}::${fail}`); }}
-                                        sx={{ 
-                                          py: 0.5, 
-                                          px: 1.5, 
-                                          alignItems: 'center', 
-                                          cursor: 'pointer', 
-                                          borderRadius: 2, 
-                                          display: 'inline-flex',
-                                          width: 'fit-content',
-                                          bgcolor: selectedNodeId === `step-fail::${step.id}::${fn}::${fail}` ? '#fee2e2' : '#fef2f2', 
-                                          border: selectedNodeId === `step-fail::${step.id}::${fn}::${fail}` ? '2px solid #ef4444' : '2px solid #fecaca', 
-                                          '&:hover': { bgcolor: '#fee2e2' }, 
-                                          transition: 'all 0.15s ease' 
-                                        }}
-                                      >
-                                        <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                                        <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
-                                      </Stack>
-                                    </Box>
-                                  ))}
+                                  {failures.map((fail, failIdx) => {
+                                    const failNode = getFailureModeLinkInfo(step.id, fn, fail);
+                                    const isLinked = failNode?.isLinked ?? false;
+                                    const failNodeId = failNode ? `struct-mode::${failNode.id}` : `step-fail::${step.id}::${fn}::${fail}`;
+                                    const isFailSelected = selectedNodeId === failNodeId;
+
+                                    let bgcolor = '#fef2f2';
+                                    let border = '2px solid #fecaca';
+                                    let textColor = '#7f1d1d';
+
+                                    if (isLinked) {
+                                      bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
+                                      border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
+                                      textColor = '#0284c7';
+                                    } else {
+                                      bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
+                                      border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
+                                      textColor = '#7f1d1d';
+                                    }
+
+                                    return (
+                                      <Box key={failIdx} sx={{ mb: 0.5 }}>
+                                        <Stack 
+                                          key={failIdx} 
+                                          direction="row" 
+                                          spacing={1} 
+                                          onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
+                                          sx={{ 
+                                            py: 0.5, 
+                                            px: 1.5, 
+                                            alignItems: 'center', 
+                                            cursor: 'pointer', 
+                                            borderRadius: 2, 
+                                            display: 'inline-flex',
+                                            width: 'fit-content',
+                                            bgcolor: bgcolor, 
+                                            border: border, 
+                                            '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
+                                            transition: 'all 0.15s ease' 
+                                          }}
+                                        >
+                                          <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
+                                          {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                          <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                        </Stack>
+                                      </Box>
+                                    );
+                                  })}
                                 </Box>
                               </Collapse>
                             </Box>

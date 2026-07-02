@@ -68,7 +68,12 @@ export class StructureLinkageService {
       include: {
         failures: {
           include: {
-            modeEffectLinks: { include: { linkActions: true } },
+            modeEffectLinks: {
+              include: {
+                linkedFailure: { include: { function: true } },
+                linkActions: true,
+              },
+            },
             linkedAsEffect: true,
           },
         },

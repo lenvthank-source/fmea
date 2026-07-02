@@ -62,6 +62,7 @@ export const LinkageMap: React.FC = () => {
   const [cpRows, setCpRows] = useState<ControlPlanRow[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [projectName, setProjectName] = useState('');
+  const [structureFunctions, setStructureFunctions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchLinkageData = async () => {
@@ -112,10 +113,17 @@ export const LinkageMap: React.FC = () => {
         });
         const actionsData = actionsRes.ok ? await actionsRes.json() : [];
 
+        // 6. Fetch structure functions
+        const structRes = await fetch(`${API_BASE_URL}/structure-functions/project/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const structData = structRes.ok ? await structRes.json() : [];
+
         setSteps(stepsData);
         setFmeaRows(fmeaData);
         setCpRows(cpData);
         setActions(actionsData);
+        setStructureFunctions(structData);
       } catch (err: any) {
         setError(err.message || 'An error occurred while loading linkage map.');
       } finally {
@@ -127,6 +135,40 @@ export const LinkageMap: React.FC = () => {
       fetchLinkageData();
     }
   }, [projectId, token]);
+
+  const getLinkedFailures = (row: PfmeaRow) => {
+    const fnName = row.functions?.[0]?.name;
+    const fmName = row.failureModes?.[0]?.name;
+    if (!fnName || !fmName || !structureFunctions) return { effects: [], causes: [] };
+
+    // Find the function node matching process step and function name
+    const fnNode = structureFunctions.find(
+      (f) => f.parentType === 'process_step' && f.parentId === row.processStepId && f.narration === fnName
+    );
+    if (!fnNode) return { effects: [], causes: [] };
+
+    // Find the failure mode matching failure name
+    const fmNode = fnNode.failures?.find(
+      (fail: any) => fail.narration === fmName && fail.role === 'mode'
+    );
+    if (!fmNode) return { effects: [], causes: [] };
+
+    const effects = fmNode.modeEffectLinks
+      ?.filter((l: any) => l.linkType === 'effect')
+      ?.map((l: any) => ({
+        narration: l.linkedFailure?.narration,
+        function: l.linkedFailure?.function?.narration
+      })) || [];
+
+    const causes = fmNode.modeEffectLinks
+      ?.filter((l: any) => l.linkType === 'cause')
+      ?.map((l: any) => ({
+        narration: l.linkedFailure?.narration,
+        function: l.linkedFailure?.function?.narration
+      })) || [];
+
+    return { effects, causes };
+  };
 
   if (loading) {
     return (
@@ -212,6 +254,7 @@ export const LinkageMap: React.FC = () => {
                           const rowActions = actions.filter(act => 
                             act.fmeaLinks?.some(link => link.fmeaRowId === row.id)
                           );
+                          const linkedFailures = getLinkedFailures(row);
 
                           return (
                             <Box 
@@ -314,6 +357,33 @@ export const LinkageMap: React.FC = () => {
                                   </Box>
                                 </Grid>
                               </Grid>
+
+                              {/* Structure Failure Linkage Chain */}
+                              {(linkedFailures.effects.length > 0 || linkedFailures.causes.length > 0) && (
+                                <Box sx={{ mt: 2.5, pl: 2, borderLeft: '3px solid #b71c1c', py: 0.5 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#b71c1c', display: 'block', mb: 1 }}>
+                                    STRUCTURE FAILURE LINKAGE CHAIN
+                                  </Typography>
+                                  <Stack spacing={1} sx={{ mt: 1 }}>
+                                    {linkedFailures.effects.map((eff: any, idx: number) => (
+                                      <Stack key={idx} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                        <Chip label="EFFECT" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#b71c1c', color: 'white', fontWeight: 'bold' }} />
+                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                          {eff.narration} <span style={{ color: '#666', fontWeight: 400 }}>({eff.function})</span>
+                                        </Typography>
+                                      </Stack>
+                                    ))}
+                                    {linkedFailures.causes.map((cause: any, idx: number) => (
+                                      <Stack key={idx} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                        <Chip label="CAUSE" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#e65100', color: 'white', fontWeight: 'bold' }} />
+                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                          {cause.narration} <span style={{ color: '#666', fontWeight: 400 }}>({cause.function})</span>
+                                        </Typography>
+                                      </Stack>
+                                    ))}
+                                  </Stack>
+                                </Box>
+                              )}
                             </Box>
                           );
                         })}

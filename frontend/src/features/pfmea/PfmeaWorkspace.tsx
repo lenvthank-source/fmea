@@ -163,6 +163,7 @@ export const PfmeaWorkspace: React.FC = () => {
   const [structFailRole, setStructFailRole] = useState<'effect' | 'mode' | 'cause' | null>(null);
   const [structFailFunctionId, setStructFailFunctionId] = useState<string | null>(null);
   const [structFailFunctionNarration, setStructFailFunctionNarration] = useState('');
+  const [structureFunctions, setStructureFunctions] = useState<any[]>([]);
 
   // Load tenant users
   useEffect(() => {
@@ -288,6 +289,15 @@ export const PfmeaWorkspace: React.FC = () => {
       if (!rowsResponse.ok) throw new Error('Failed to load PFMEA analysis rows');
       const rowsData = await rowsResponse.json();
       setRows(rowsData);
+
+      // Fetch structure functions
+      const structRes = await fetch(`${API_BASE_URL}/structure-functions/project/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (structRes.ok) {
+        const structData = await structRes.json();
+        setStructureFunctions(structData);
+      }
     } catch (err: any) {
       setError(err.message || 'Could not load FMEA workspace data.');
     } finally {
@@ -681,6 +691,7 @@ export const PfmeaWorkspace: React.FC = () => {
             setDetailWindowFailureModeId(modeId);
             setDetailWindowOpen(true);
           }}
+          structureFunctions={structureFunctions}
         />
       ) : activeTab === 'table' ? (
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
