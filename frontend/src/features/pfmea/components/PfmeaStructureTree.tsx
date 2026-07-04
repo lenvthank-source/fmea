@@ -73,6 +73,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onAddWorkElement,
   onAddFailure,
   onOpenLinkageModal,
+  onOpenDetailWindow,
   structureFunctions,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });

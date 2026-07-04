@@ -58,44 +58,7 @@ interface PfmeaRow {
   characteristics: { name: string; classification: string; unitOfMeasure?: string }[];
 }
 
-const severityCriteria: Record<number, string> = {
-  10: "10 - Safety/regulatory (without warning)",
-  9: "9 - Safety/regulatory (with warning)",
-  8: "8 - Loss of primary function / disruption",
-  7: "7 - Reduced primary function / minor disruption",
-  6: "6 - Loss of secondary function",
-  5: "5 - Reduced secondary function",
-  4: "4 - Minor defect (noticed by user)",
-  3: "3 - Defect noticed by expert/inspector",
-  2: "2 - Very minor defect noticed",
-  1: "1 - No effect"
-};
 
-const occurrenceCriteria: Record<number, string> = {
-  10: "10 - Extremely high, no controls",
-  9: "9 - Very high, basic controls",
-  8: "8 - High, prevention control is low effectiveness",
-  7: "7 - Moderately high, prevention control has moderate effectiveness",
-  6: "6 - Moderate, prevention control is moderately effective",
-  5: "5 - Moderately low, prevention control is effective",
-  4: "4 - Low, prevention control is highly effective",
-  3: "3 - Very low, prevention control is extremely effective",
-  2: "2 - Extremely low, prevention control is outstanding",
-  1: "1 - Failure is eliminated through design/process"
-};
-
-const detectionCriteria: Record<number, string> = {
-  10: "10 - Cannot detect, no method",
-  9: "9 - Very low, purely visual",
-  8: "8 - Low, visual or double inspection",
-  7: "7 - Moderately low, attribute gauge",
-  6: "6 - Moderate, variable gauge or test",
-  5: "5 - Moderately high, double variable inspection",
-  4: "4 - High, automated attribute inspection",
-  3: "3 - Very high, automated variable inspection",
-  2: "2 - Extremely high, automated variable + prevention loop",
-  1: "1 - Failure is prevented from occurrence"
-};
 
 export const PfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -652,7 +615,7 @@ export const PfmeaWorkspace: React.FC = () => {
     setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
   };
 
-  const ratingOptions = Array.from({ length: 10 }, (_, i) => i + 1);
+
 
   const getFailureModeDbId = (row: PfmeaRow) => {
     const fnName = row.functions?.[0]?.name;

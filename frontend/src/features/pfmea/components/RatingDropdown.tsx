@@ -77,7 +77,7 @@ export const RatingDropdown: React.FC<RatingDropdownProps> = ({
         value={value ?? ''}
         label={hideLabel ? undefined : (label || defaultLabel)}
         onChange={(e) => {
-          const val = e.target.value;
+          const val = e.target.value as any;
           onChange(val === '' ? null : Number(val));
         }}
       >
