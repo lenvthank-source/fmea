@@ -623,7 +623,7 @@ model StructureFunction {
   tenantId    String   @map("tenant_id") @db.Uuid
   projectId   String   @map("project_id") @db.Uuid
   parentType  String   @map("parent_type") @db.VarChar(20)
-  parentId    String   @map("parent_id") @db.Uuid
+  parentId    String   @map("parent_id") @db.VarChar(100)
   narration   String   @db.Text
   location    String?  @db.VarChar(20)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz

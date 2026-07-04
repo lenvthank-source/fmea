@@ -8,7 +8,7 @@ export class CreateStructureFunctionDto {
   @IsIn(['project', 'process_step', 'work_element'])
   parentType: string;
 
-  @IsUUID()
+  @IsString()
   parentId: string;
 
   @IsString()
