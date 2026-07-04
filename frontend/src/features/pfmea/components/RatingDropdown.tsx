@@ -43,11 +43,12 @@ const detectionCriteria: Record<number, string> = {
 interface RatingDropdownProps {
   ratingType: 'severity' | 'occurrence' | 'detection';
   value: number | null | undefined;
-  onChange: (value: number) => void;
+  onChange: (value: number | null) => void;
   label?: string;
   size?: 'small' | 'medium';
   fullWidth?: boolean;
   required?: boolean;
+  hideLabel?: boolean;
 }
 
 export const RatingDropdown: React.FC<RatingDropdownProps> = ({
@@ -58,6 +59,7 @@ export const RatingDropdown: React.FC<RatingDropdownProps> = ({
   size = 'small',
   fullWidth = true,
   required = false,
+  hideLabel = false,
 }) => {
   const criteriaMap = {
     severity: severityCriteria,
@@ -70,12 +72,18 @@ export const RatingDropdown: React.FC<RatingDropdownProps> = ({
 
   return (
     <FormControl size={size} fullWidth={fullWidth} required={required}>
-      <InputLabel>{label || defaultLabel}</InputLabel>
+      {!hideLabel && <InputLabel>{label || defaultLabel}</InputLabel>}
       <Select
         value={value ?? ''}
-        label={label || defaultLabel}
-        onChange={(e) => onChange(Number(e.target.value))}
+        label={hideLabel ? undefined : (label || defaultLabel)}
+        onChange={(e) => {
+          const val = e.target.value;
+          onChange(val === '' ? null : Number(val));
+        }}
       >
+        <MenuItem value="">
+          <em>—</em>
+        </MenuItem>
         {Array.from({ length: 10 }, (_, i) => 10 - i).map((rating) => (
           <MenuItem key={rating} value={rating}>
             <Box>

@@ -21,6 +21,7 @@ import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
 import { FailureLinkageModal } from './components/FailureLinkageModal';
 import { FailureDetailWindow } from './components/FailureDetailWindow';
+import { RatingDropdown } from './components/RatingDropdown';
 import { calculateAP } from './utils/apCalculator';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
@@ -653,6 +654,22 @@ export const PfmeaWorkspace: React.FC = () => {
 
   const ratingOptions = Array.from({ length: 10 }, (_, i) => i + 1);
 
+  const getFailureModeDbId = (row: PfmeaRow) => {
+    const fnName = row.functions?.[0]?.name;
+    const fmName = row.failureModes?.[0]?.name;
+    if (!fnName || !fmName || !structureFunctions) return null;
+
+    const fnNode = structureFunctions.find(
+      (f) => f.parentType === 'process_step' && f.parentId === row.processStepId && f.narration === fnName
+    );
+    if (!fnNode) return null;
+
+    const fmNode = fnNode.failures?.find(
+      (fail: any) => fail.narration === fmName && fail.role === 'mode'
+    );
+    return fmNode?.id || null;
+  };
+
   if (loading && !pfmeaRevisionId) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
@@ -845,21 +862,13 @@ export const PfmeaWorkspace: React.FC = () => {
 
                         {/* Severity (S) with Tooltip guide */}
                         <TableCell align="center">
-                          <Tooltip title={row.severity ? severityCriteria[row.severity] : "Select severity rating"} arrow>
-                            <Select
-                              value={row.severity || ''}
-                              onChange={(e) => handleRatingChange(row.id, 'severity', Number(e.target.value))}
-                              size="small"
-                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
-                            >
-                              <MenuItem value="">—</MenuItem>
-                              {ratingOptions.map((v) => (
-                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
-                                  {severityCriteria[v]}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Tooltip>
+                          <RatingDropdown
+                            ratingType="severity"
+                            value={row.severity}
+                            onChange={(val) => handleRatingChange(row.id, 'severity', val || 0)}
+                            hideLabel
+                            size="small"
+                          />
                         </TableCell>
 
                         {/* Failure Modes (FM) */}
@@ -896,21 +905,13 @@ export const PfmeaWorkspace: React.FC = () => {
 
                         {/* Occurrence (O) with Tooltip guide */}
                         <TableCell align="center">
-                          <Tooltip title={row.occurrence ? occurrenceCriteria[row.occurrence] : "Select occurrence rating"} arrow>
-                            <Select
-                              value={row.occurrence || ''}
-                              onChange={(e) => handleRatingChange(row.id, 'occurrence', Number(e.target.value))}
-                              size="small"
-                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
-                            >
-                              <MenuItem value="">—</MenuItem>
-                              {ratingOptions.map((v) => (
-                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
-                                  {occurrenceCriteria[v]}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Tooltip>
+                          <RatingDropdown
+                            ratingType="occurrence"
+                            value={row.occurrence}
+                            onChange={(val) => handleRatingChange(row.id, 'occurrence', val || 0)}
+                            hideLabel
+                            size="small"
+                          />
                         </TableCell>
 
                         {/* Detection Controls */}
@@ -929,21 +930,13 @@ export const PfmeaWorkspace: React.FC = () => {
 
                         {/* Detection (D) with Tooltip guide */}
                         <TableCell align="center">
-                          <Tooltip title={row.detection ? detectionCriteria[row.detection] : "Select detection rating"} arrow>
-                            <Select
-                              value={row.detection || ''}
-                              onChange={(e) => handleRatingChange(row.id, 'detection', Number(e.target.value))}
-                              size="small"
-                              sx={{ minWidth: 60, '& .MuiSelect-select': { py: 0.5, px: 1, fontSize: '0.85rem' } }}
-                            >
-                              <MenuItem value="">—</MenuItem>
-                              {ratingOptions.map((v) => (
-                                <MenuItem key={v} value={v} sx={{ fontSize: '0.85rem' }}>
-                                  {detectionCriteria[v]}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </Tooltip>
+                          <RatingDropdown
+                            ratingType="detection"
+                            value={row.detection}
+                            onChange={(val) => handleRatingChange(row.id, 'detection', val || 0)}
+                            hideLabel
+                            size="small"
+                          />
                         </TableCell>
 
                         {/* AP Badge */}
@@ -1078,6 +1071,7 @@ export const PfmeaWorkspace: React.FC = () => {
           setSelectedRowForAction(row);
           setActionDialogOpen(true);
         }}
+        failureModeId={activeRow ? getFailureModeDbId(activeRow) : null}
       />
 
       {/* Add Row Dialog */}

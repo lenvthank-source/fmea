@@ -354,7 +354,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 borderRadius: 2,
                 border: selectedNodeId === 'root' ? '2px solid #0f172a' : '2px solid #cbd5e1',
                 transition: 'all 0.15s ease',
-                '&:hover': { bgcolor: '#f1f5f9' }
+                '&:hover': { bgcolor: '#f1f5f9' },
+                '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
               }}
             >
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand('root'); }} sx={{ p: 0.25, color: '#0f172a' }}>
@@ -364,6 +366,18 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
               <Typography sx={{ fontWeight: 900, fontSize: '1.05rem', color: '#0f172a', fontFamily: 'inherit', letterSpacing: '-0.01em' }}>
                 {projectName || 'Process Item (Root)'}
               </Typography>
+              <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                <Tooltip title="Add Step">
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddStep(); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #cbd5e1', '&:hover': { bgcolor: '#f1f5f9' } }}>
+                    <AddIcon sx={{ fontSize: '0.9rem', color: '#0f172a' }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Add Project Function">
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(null, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #cbd5e1', '&:hover': { bgcolor: '#f1f5f9' } }}>
+                    <FunctionIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Stack>
           </Box>
 
@@ -397,7 +411,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         borderRadius: 2,
                         border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
                         transition: 'all 0.15s ease',
-                        '&:hover': { bgcolor: '#dcfce7' }
+                        '&:hover': { bgcolor: '#dcfce7' },
+                        '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                        '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                       }}
                     >
                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
@@ -405,6 +421,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                       </IconButton>
                       <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
                       <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                      <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="Add Failure (Effect)">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                            <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Stack>
 
                     <Collapse in={!!expandedNodes[nodeKey]}>
@@ -485,7 +508,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         bgcolor: stepSelected ? '#fef9c3' : '#fefce8',
                         border: stepSelected ? '2px solid #eab308' : '2px solid #fef08a',
                         '&:hover': { bgcolor: '#fef9c3' },
-                        transition: 'all 0.15s ease'
+                        transition: 'all 0.15s ease',
+                        '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                        '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                       }}
                     >
                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(stepNodeId); }} sx={{ p: 0.25, color: '#854d0e' }}>
@@ -500,6 +525,28 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                           </Tooltip>
                         )}
                       </Typography>
+                      <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                        <Tooltip title="Add Work Element">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddWorkElement(step.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                            <WorkElementIcon sx={{ fontSize: '0.9rem', color: '#1e3a8a' }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Add Step Function">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                            <FunctionIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit Step">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditStep(step); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                            <EditIcon sx={{ fontSize: '0.9rem', color: '#854d0e' }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Step">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteStep(step.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                            <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Stack>
 
                     <Collapse in={stepExpanded}>
@@ -531,7 +578,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   borderRadius: 2,
                                   border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
                                   transition: 'all 0.15s ease',
-                                  '&:hover': { bgcolor: '#dcfce7' }
+                                  '&:hover': { bgcolor: '#dcfce7' },
+                                  '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                  '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                 }}
                               >
                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
@@ -539,6 +588,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                 </IconButton>
                                 <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
                                 <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                  <Tooltip title="Add Failure (Mode)">
+                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                      <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
                               </Stack>
 
                               <Collapse in={!!expandedNodes[nodeKey]}>
@@ -566,7 +622,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                     return (
                                       <Box key={failIdx} sx={{ mb: 0.5 }}>
                                         <Stack 
-                                          key={failIdx} 
                                           direction="row" 
                                           spacing={1} 
                                           onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
@@ -581,12 +636,30 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             bgcolor: bgcolor, 
                                             border: border, 
                                             '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
-                                            transition: 'all 0.15s ease' 
+                                            transition: 'all 0.15s ease',
+                                            '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                            '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                           }}
                                         >
                                           <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
                                           {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
                                           <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                          <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                            {failNode && onOpenLinkageModal && (
+                                              <Tooltip title="Link Effects / Causes">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenLinkageModal(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                  <LinkIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                            )}
+                                            {failNode && onOpenDetailWindow && (
+                                              <Tooltip title="View Linkage & Action Details">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                  <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                            )}
+                                          </Box>
                                         </Stack>
                                       </Box>
                                     );
@@ -622,7 +695,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   borderRadius: 2,
                                   border: isWeSelected ? '2px solid #3b82f6' : '2px solid #bfdbfe',
                                   transition: 'all 0.15s ease',
-                                  '&:hover': { bgcolor: '#dbeafe' }
+                                  '&:hover': { bgcolor: '#dbeafe' },
+                                  '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                  '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                 }}
                               >
                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weNodeId); }} sx={{ p: 0.25, color: '#1e3a8a' }}>
@@ -630,6 +705,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                 </IconButton>
                                 <WorkElementIcon sx={{ color: '#1e3a8a', fontSize: '1.1rem' }} />
                                 <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#1e3a8a', fontFamily: 'inherit' }}>{we}</Typography>
+                                <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                  <Tooltip title="Add Work Element Function">
+                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>
+                                      <AddIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
                               </Stack>
 
                               <Collapse in={weExpanded}>
@@ -662,7 +744,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             borderRadius: 2,
                                             border: isWeFuncSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
                                             transition: 'all 0.15s ease',
-                                            '&:hover': { bgcolor: '#dcfce7' }
+                                            '&:hover': { bgcolor: '#dcfce7' },
+                                            '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                            '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                           }}
                                         >
                                           <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weFuncKey); }} sx={{ p: 0.25, color: '#14532d' }}>
@@ -670,6 +754,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                           </IconButton>
                                            <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
                                            <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                          <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                            <Tooltip title="Add Failure (Cause)">
+                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                                <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                              </IconButton>
+                                            </Tooltip>
+                                          </Box>
                                         </Stack>
 
                                         <Collapse in={weFuncExpanded}>

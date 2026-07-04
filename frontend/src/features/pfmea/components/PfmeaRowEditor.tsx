@@ -65,6 +65,7 @@ interface PfmeaRowEditorProps {
   projectId?: string;
   token?: string;
   onCreateAction?: (row: PfmeaRow) => void;
+  failureModeId?: string | null;
 }
 
 export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
@@ -77,6 +78,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   projectId,
   token,
   onCreateAction,
+  failureModeId,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,21 +153,77 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
 
   // Fetch linked actions whenever the row / project changes
   useEffect(() => {
-    if (!row || !projectId || !token) return;
+    if (!row || !projectId || !token) {
+      setLinkedActions([]);
+      return;
+    }
     setLinkedActionsLoading(true);
-    fetch(`${API_BASE_URL}/projects/${projectId}/actions`, {
+
+    // Fetch standard FMEA actions
+    const standardPromise = fetch(`${API_BASE_URL}/projects/${projectId}/actions`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then((data) => {
-        const linked = (data || []).filter((a: any) =>
+        return (data || []).filter((a: any) =>
           a.fmeaLinks?.some((l: any) => l.fmeaRowId === row.id)
         );
-        setLinkedActions(linked);
+      })
+      .catch(() => []);
+
+    // Fetch structure failure actions if failureModeId is provided
+    const structurePromise = failureModeId
+      ? fetch(`${API_BASE_URL}/failure-modes/${failureModeId}/links`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            const actionsList: any[] = [];
+            if (data?.effects) {
+              data.effects.forEach((eff: any) => {
+                if (eff.actions) {
+                  eff.actions.forEach((act: any) => {
+                    actionsList.push({
+                      ...act,
+                      fmeaLinks: [{ beforeAp: '—', afterAp: '—' }]
+                    });
+                  });
+                }
+              });
+            }
+            if (data?.causes) {
+              data.causes.forEach((cause: any) => {
+                if (cause.actions) {
+                  cause.actions.forEach((act: any) => {
+                    actionsList.push({
+                      ...act,
+                      fmeaLinks: [{
+                        beforeAp: data.highestSeverity ? 'H' : '—',
+                        afterAp: act.status === 'completed' ? 'L' : '—'
+                      }]
+                    });
+                  });
+                }
+              });
+            }
+            return actionsList;
+          })
+          .catch(() => [])
+      : Promise.resolve([]);
+
+    Promise.all([standardPromise, structurePromise])
+      .then(([stdActions, structActions]) => {
+        const merged: any[] = [...stdActions];
+        structActions.forEach((act) => {
+          if (!merged.some((m) => m.id === act.id)) {
+            merged.push(act);
+          }
+        });
+        setLinkedActions(merged);
       })
       .catch(() => setLinkedActions([]))
       .finally(() => setLinkedActionsLoading(false));
-  }, [row?.id, projectId, token]);
+  }, [row?.id, failureModeId, projectId, token]);
 
   if (!row) return null;
 
