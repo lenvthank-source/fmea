@@ -284,9 +284,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}>EDIT</Typography>
             <IconButton
               size="small"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step-')}
+              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
               onClick={() => {
-                const step = steps.find(s => `step-${s.id}` === selectedNodeId);
+                const step = steps.find(s => `step::${s.id}` === selectedNodeId);
                 if (step) onEditStep(step);
               }}
             >
@@ -295,9 +295,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
             <IconButton
               size="small"
               color="error"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step-')}
+              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
               onClick={() => {
-                const stepId = selectedNodeId?.replace('step-', '');
+                const stepId = selectedNodeId?.replace('step::', '');
                 if (stepId) onDeleteStep(stepId);
               }}
             >
