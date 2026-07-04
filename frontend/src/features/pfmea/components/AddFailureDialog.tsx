@@ -56,6 +56,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   token,
   onSuccess,
 }) => {
+  const TextFieldAny = TextField as any;
   const [narration, setNarration] = useState('');
   const [severityRating, setSeverityRating] = useState<number | null>(null);
   const [occurrenceRating, setOccurrenceRating] = useState<number | null>(null);
@@ -163,10 +164,10 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           </Box>
         )}
 
-        <TextField
+        <TextFieldAny
           label="Failure Narration"
           value={narration}
-          onChange={(e) => setNarration(e.target.value)}
+          onChange={(e: any) => setNarration(e.target.value)}
           multiline
           rows={3}
           fullWidth
@@ -174,6 +175,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           placeholder={`Describe the ${role}...`}
           sx={{ mb: 2 }}
           autoFocus
+          InputLabelProps={{ shrink: true }}
         />
 
         {/* Window 2 (Effect): Severity rating only */}

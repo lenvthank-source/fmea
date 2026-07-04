@@ -439,6 +439,102 @@ export const PfmeaWorkspace: React.FC = () => {
     setStructFailDialogOpen(true);
   };
 
+  const handleEditNodeFromTree = (nodeId: string) => {
+    if (!nodeId) return;
+
+    // 1. Process Step
+    if (nodeId.startsWith('step::')) {
+      const stepId = nodeId.replace('step::', '');
+      const row = rows.find(r => r.processStepId === stepId);
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+
+    // 2. Project Function
+    if (nodeId.startsWith('root-func::')) {
+      const fnName = nodeId.replace('root-func::', '');
+      const row = rows.find(r => !r.processStepId && r.functions?.some(f => f.name === fnName));
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+
+    // 3. Step Function
+    if (nodeId.startsWith('step-func::')) {
+      const withoutPrefix = nodeId.replace('step-func::', '');
+      const sepIdx = withoutPrefix.indexOf('::');
+      const stepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
+      const fnName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
+      const row = rows.find(r => r.processStepId === stepId && r.functions?.some(f => f.name === fnName));
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+
+    // 4. Work Element Function
+    if (nodeId.startsWith('we-func::')) {
+      const withoutPrefix = nodeId.replace('we-func::', '');
+      const parts = withoutPrefix.split('::');
+      const stepId = parts[0];
+      const weName = parts[1];
+      const fnName = parts.slice(2).join('::');
+      const row = rows.find(
+        r => r.processStepId === stepId && 
+        r.workElementName === weName && 
+        r.functions?.some(f => f.name === fnName)
+      );
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+
+    // 5. Failure Mode (linked struct-mode)
+    if (nodeId.startsWith('struct-mode::')) {
+      const failId = nodeId.replace('struct-mode::', '');
+      setDetailWindowFailureModeId(failId);
+      setDetailWindowOpen(true);
+      return;
+    }
+
+    // 6. Failure Mode (unlinked step-fail)
+    if (nodeId.startsWith('step-fail::')) {
+      const withoutPrefix = nodeId.replace('step-fail::', '');
+      const parts = withoutPrefix.split('::');
+      const stepId = parts[0];
+      const fnName = parts[1];
+      const failName = parts[2];
+      const row = rows.find(
+        r => r.processStepId === stepId && 
+        r.functions?.some(f => f.name === fnName) &&
+        r.failureModes?.some(fm => fm.name === failName)
+      );
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+
+    // 7. Failure Mode (unlinked root-fail)
+    if (nodeId.startsWith('root-fail-')) {
+      const row = rows.find(r => !r.processStepId && r.failureModes && r.failureModes.length > 0);
+      if (row) {
+        setActiveRow(row);
+        setEditorOpen(true);
+      }
+      return;
+    }
+  };
+
   const handleConfirmAddTreeElement = async () => {
     if (!treeAddType || !treeAddValue.trim()) return;
     const value = treeAddValue.trim();
@@ -754,6 +850,7 @@ export const PfmeaWorkspace: React.FC = () => {
             setDetailWindowFailureModeId(modeId);
             setDetailWindowOpen(true);
           }}
+          onEditNode={handleEditNodeFromTree}
           structureFunctions={structureFunctions}
         />
       ) : activeTab === 'table' ? (

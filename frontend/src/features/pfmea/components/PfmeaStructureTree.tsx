@@ -59,6 +59,7 @@ interface PfmeaStructureTreeProps {
   onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
   onOpenLinkageModal?: (failureModeId: string) => void;
   onOpenDetailWindow?: (failureModeId: string) => void;
+  onEditNode?: (nodeId: string) => void;
   structureFunctions?: any[];
 }
 
@@ -74,6 +75,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onAddFailure,
   onOpenLinkageModal,
   onOpenDetailWindow,
+  onEditNode,
   structureFunctions,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
@@ -284,10 +286,15 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}>EDIT</Typography>
             <IconButton
               size="small"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
+              disabled={!selectedNodeId || selectedNodeId === 'root'}
               onClick={() => {
-                const step = steps.find(s => `step::${s.id}` === selectedNodeId);
-                if (step) onEditStep(step);
+                if (!selectedNodeId) return;
+                if (onEditNode) {
+                  onEditNode(selectedNodeId);
+                } else if (selectedNodeId.startsWith('step::')) {
+                  const step = steps.find(s => `step::${s.id}` === selectedNodeId);
+                  if (step) onEditStep(step);
+                }
               }}
             >
               <EditIcon fontSize="small" />
@@ -426,6 +433,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         <Tooltip title="Add Failure (Effect)">
                           <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                             <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit Function">
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                            <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
                           </IconButton>
                         </Tooltip>
                       </Box>
@@ -595,6 +607,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                       <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                     </IconButton>
                                   </Tooltip>
+                                  <Tooltip title="Edit Function">
+                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                      <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                    </IconButton>
+                                  </Tooltip>
                                 </Box>
                               </Stack>
 
@@ -759,6 +776,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             <Tooltip title="Add Failure (Cause)">
                                               <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                                                 <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                              </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Edit Function">
+                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(weFuncKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                                <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
                                               </IconButton>
                                             </Tooltip>
                                           </Box>

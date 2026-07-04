@@ -42,6 +42,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   token,
   onSuccess,
 }) => {
+  const TextFieldAny = TextField as any;
   const [narration, setNarration] = useState('');
   const [location, setLocation] = useState<'your_plant' | 'ship_to' | 'end_user'>('your_plant');
   const [loading, setLoading] = useState(false);
@@ -111,10 +112,10 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
             </Typography>
           </Box>
         )}
-        <TextField
+        <TextFieldAny
           label="Function / Requirement Narration"
           value={narration}
-          onChange={(e) => setNarration(e.target.value)}
+          onChange={(e: any) => setNarration(e.target.value)}
           multiline
           rows={3}
           fullWidth
@@ -122,6 +123,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
           placeholder="Describe what this element should accomplish..."
           sx={{ mb: 2 }}
           autoFocus
+          InputLabelProps={{ shrink: true }}
         />
         {parentType === 'project' && (
           <FormControl component="fieldset" sx={{ mt: 1 }}>
