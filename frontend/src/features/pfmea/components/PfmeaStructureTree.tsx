@@ -393,88 +393,107 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
           <Collapse in={expandedNodes.root}>
             <Box sx={{ pl: 2 }}>
               {/* Root Functions */}
-              {rootFunctions.map((fn, fIdx) => {
-                const nodeKey = `root-func::${fn}`;
-                const isSelected = selectedNodeId === nodeKey;
-                const failures = Array.from(new Set(
-                  rootRows
-                    .filter(r => r.functions?.some(f => f.name === fn))
-                    .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
-                )).filter(Boolean);
-
-                return (
-                  <Box key={fIdx} sx={{ mb: 1 }}>
-                    <Stack 
-                      direction="row" 
-                      spacing={1} 
-                      onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
-                      sx={{ 
-                        cursor: 'pointer', 
-                        py: 0.5, 
-                        px: 1.5,
-                        alignItems: 'center',
-                        display: 'inline-flex',
-                        width: 'fit-content',
-                        bgcolor: isSelected ? '#dcfce7' : '#f0fdf4',
-                        borderRadius: 2,
-                        border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
-                        transition: 'all 0.15s ease',
-                        '&:hover': { bgcolor: '#dcfce7' },
-                        '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
-                        '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
-                      }}
-                    >
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
-                        {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
-                      </IconButton>
-                      <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                      <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
-                      <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
-                        <Tooltip title="Add Failure (Effect)">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                            <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Function">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                            <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </Stack>
-
-                    <Collapse in={!!expandedNodes[nodeKey]}>
-                      <Box sx={{ pl: 4 }}>
-                        {failures.map((fail, failIdx) => (
-                          <Box key={failIdx} sx={{ mb: 0.5 }}>
-                            <Stack 
-                              direction="row" 
-                              spacing={1} 
-                              onClick={(e) => { e.stopPropagation(); handleSelectNode(`root-fail-${fn}-${fail}`); }}
-                              sx={{ 
-                                py: 0.5, 
-                                px: 1.5, 
-                                alignItems: 'center', 
-                                cursor: 'pointer', 
-                                borderRadius: 2, 
-                                display: 'inline-flex',
-                                width: 'fit-content',
-                                bgcolor: selectedNodeId === `root-fail-${fn}-${fail}` ? '#fee2e2' : '#fef2f2', 
-                                border: selectedNodeId === `root-fail-${fn}-${fail}` ? '2px solid #ef4444' : '2px solid #fecaca', 
-                                '&:hover': { bgcolor: '#fee2e2' }, 
-                                transition: 'all 0.15s ease' 
-                              }}
-                            >
-                               <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                               <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
-                            </Stack>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Collapse>
-                  </Box>
+              {/* Root Functions */}
+              {(() => {
+                const projectStructFuncs = (structureFunctions || []).filter(
+                  (f) => f.parentType === 'project'
                 );
-              })}
+                const allRootFunctions = Array.from(new Set([
+                  ...rootFunctions,
+                  ...projectStructFuncs.map((f) => f.narration)
+                ])).filter(Boolean);
+
+                return allRootFunctions.map((fn, fIdx) => {
+                  const nodeKey = `root-func::${fn}`;
+                  const isSelected = selectedNodeId === nodeKey;
+                  
+                  const matchingStructFunc = projectStructFuncs.find(sf => sf.narration === fn);
+                  const dbFailures = matchingStructFunc?.failures?.map((failObj: any) => failObj.narration) || [];
+                  const rowFailures = rootRows
+                    .filter(r => r.functions?.some(f => f.name === fn))
+                    .flatMap(r => r.failureModes?.map(fm => fm.name) || []);
+                  const failures = Array.from(new Set([...rowFailures, ...dbFailures])).filter(Boolean);
+
+                  return (
+                    <Box key={fIdx} sx={{ mb: 1 }}>
+                      <Stack 
+                        direction="row" 
+                        spacing={1} 
+                        onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
+                        sx={{ 
+                          cursor: 'pointer', 
+                          py: 0.5, 
+                          px: 1.5,
+                          alignItems: 'center',
+                          display: 'inline-flex',
+                          width: 'fit-content',
+                          bgcolor: isSelected ? '#dcfce7' : '#f0fdf4',
+                          borderRadius: 2,
+                          border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
+                          transition: 'all 0.15s ease',
+                          '&:hover': { bgcolor: '#dcfce7' },
+                          '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                          '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
+                        }}
+                      >
+                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
+                          {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
+                        </IconButton>
+                        <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
+                        <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                        <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                          <Tooltip title="Add Failure (Effect)">
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                              <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Function">
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                              <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Stack>
+
+                      <Collapse in={!!expandedNodes[nodeKey]}>
+                        <Box sx={{ pl: 4 }}>
+                          {failures.map((fail, failIdx) => {
+                            const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail);
+                            const isLinked = failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0;
+                            const failNodeId = failNode ? `struct-mode::${failNode.id}` : `root-fail-${fn}-${fail}`;
+                            return (
+                              <Box key={failIdx} sx={{ mb: 0.5 }}>
+                                <Stack 
+                                  direction="row" 
+                                  spacing={1} 
+                                  onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
+                                  sx={{ 
+                                    py: 0.5, 
+                                    px: 1.5, 
+                                    alignItems: 'center', 
+                                    cursor: 'pointer', 
+                                    borderRadius: 2, 
+                                    display: 'inline-flex',
+                                    width: 'fit-content',
+                                    bgcolor: selectedNodeId === failNodeId ? '#fee2e2' : '#fef2f2', 
+                                    border: selectedNodeId === failNodeId ? '2px solid #ef4444' : '2px solid #fecaca', 
+                                    '&:hover': { bgcolor: '#fee2e2' }, 
+                                    transition: 'all 0.15s ease' 
+                                  }}
+                                >
+                                   <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
+                                   {isLinked && <LinkIcon sx={{ color: '#7f1d1d', fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                   <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
+                                </Stack>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  );
+                });
+              })()}
 
               {/* Process Steps */}
               {filteredSteps.map((step) => {
@@ -565,128 +584,138 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                     <Collapse in={stepExpanded}>
                       <Box sx={{ pl: 4 }}>
                         {/* Step Functions List */}
-                        {stepFunctions.map((fn, fIdx) => {
-                          const nodeKey = `step-func::${step.id}::${fn}`;
-                          const isSelected = selectedNodeId === nodeKey;
-                          const failures = Array.from(new Set(
-                            stepOnlyRows
-                              .filter(r => r.functions?.some(f => f.name === fn))
-                              .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
-                          )).filter(Boolean);
-
-                          return (
-                            <Box key={fIdx} sx={{ mb: 1 }}>
-                              <Stack 
-                                direction="row" 
-                                spacing={1} 
-                                onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
-                                sx={{ 
-                                  cursor: 'pointer', 
-                                  py: 0.5, 
-                                  px: 1.5, 
-                                  alignItems: 'center',
-                                  display: 'inline-flex',
-                                  width: 'fit-content',
-                                  bgcolor: isSelected ? '#dcfce7' : '#f0fdf4',
-                                  borderRadius: 2,
-                                  border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
-                                  transition: 'all 0.15s ease',
-                                  '&:hover': { bgcolor: '#dcfce7' },
-                                  '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
-                                  '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
-                                }}
-                              >
-                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
-                                  {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
-                                </IconButton>
-                                <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
-                                <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
-                                  <Tooltip title="Add Failure (Mode)">
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                                      <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Edit Function">
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                                      <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              </Stack>
-
-                              <Collapse in={!!expandedNodes[nodeKey]}>
-                                <Box sx={{ pl: 4 }}>
-                                  {failures.map((fail, failIdx) => {
-                                    const failNode = getFailureModeLinkInfo(step.id, fn, fail);
-                                    const isLinked = failNode?.isLinked ?? false;
-                                    const failNodeId = failNode ? `struct-mode::${failNode.id}` : `step-fail::${step.id}::${fn}::${fail}`;
-                                    const isFailSelected = selectedNodeId === failNodeId;
-
-                                    let bgcolor = '#fef2f2';
-                                    let border = '2px solid #fecaca';
-                                    let textColor = '#7f1d1d';
-
-                                    if (isLinked) {
-                                      bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
-                                      border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
-                                      textColor = '#0284c7';
-                                    } else {
-                                      bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
-                                      border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
-                                      textColor = '#7f1d1d';
-                                    }
-
-                                    return (
-                                      <Box key={failIdx} sx={{ mb: 0.5 }}>
-                                        <Stack 
-                                          direction="row" 
-                                          spacing={1} 
-                                          onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
-                                          sx={{ 
-                                            py: 0.5, 
-                                            px: 1.5, 
-                                            alignItems: 'center', 
-                                            cursor: 'pointer', 
-                                            borderRadius: 2, 
-                                            display: 'inline-flex',
-                                            width: 'fit-content',
-                                            bgcolor: bgcolor, 
-                                            border: border, 
-                                            '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
-                                            transition: 'all 0.15s ease',
-                                            '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
-                                            '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
-                                          }}
-                                        >
-                                          <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
-                                          {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                          <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
-                                          <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
-                                            {failNode && onOpenLinkageModal && (
-                                              <Tooltip title="Link Effects / Causes">
-                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenLinkageModal(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
-                                                  <LinkIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
-                                                </IconButton>
-                                              </Tooltip>
-                                            )}
-                                            {failNode && onOpenDetailWindow && (
-                                              <Tooltip title="View Linkage & Action Details">
-                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
-                                                  <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
-                                                </IconButton>
-                                              </Tooltip>
-                                            )}
-                                          </Box>
-                                        </Stack>
-                                      </Box>
-                                    );
-                                  })}
-                                </Box>
-                              </Collapse>
-                            </Box>
+                        {(() => {
+                          const stepStructFuncs = (structureFunctions || []).filter(
+                            (f) => f.parentType === 'process_step' && f.parentId === step.id
                           );
-                        })}
+                          const allStepFunctions = Array.from(new Set([
+                            ...stepFunctions,
+                            ...stepStructFuncs.map((f) => f.narration)
+                          ])).filter(Boolean);
+
+                          return allStepFunctions.map((fn, fIdx) => {
+                            const nodeKey = `step-func::${step.id}::${fn}`;
+                            const isSelected = selectedNodeId === nodeKey;
+                            
+                            const matchingStructFunc = stepStructFuncs.find(sf => sf.narration === fn);
+                            const dbFailures = matchingStructFunc?.failures?.map((failObj: any) => failObj.narration) || [];
+                            const rowFailures = stepOnlyRows
+                              .filter(r => r.functions?.some(f => f.name === fn))
+                              .flatMap(r => r.failureModes?.map(fm => fm.name) || []);
+                            const failures = Array.from(new Set([...rowFailures, ...dbFailures])).filter(Boolean);
+
+                            return (
+                              <Box key={fIdx} sx={{ mb: 1 }}>
+                                <Stack 
+                                  direction="row" 
+                                  spacing={1} 
+                                  onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
+                                  sx={{ 
+                                    cursor: 'pointer', 
+                                    py: 0.5, 
+                                    px: 1.5, 
+                                    alignItems: 'center',
+                                    display: 'inline-flex',
+                                    width: 'fit-content',
+                                    bgcolor: isSelected ? '#dcfce7' : '#f0fdf4',
+                                    borderRadius: 2,
+                                    border: isSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
+                                    transition: 'all 0.15s ease',
+                                    '&:hover': { bgcolor: '#dcfce7' },
+                                    '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                    '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
+                                  }}
+                                >
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#14532d' }}>
+                                    {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
+                                  </IconButton>
+                                  <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
+                                  <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                  <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                    <Tooltip title="Add Failure (Mode)">
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                        <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Edit Function">
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                        <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </Stack>
+
+                                <Collapse in={!!expandedNodes[nodeKey]}>
+                                  <Box sx={{ pl: 4 }}>
+                                    {failures.map((fail, failIdx) => {
+                                      const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail) || getFailureModeLinkInfo(step.id, fn, fail);
+                                      const isLinked = failNode?.isLinked ?? (failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0) ?? false;
+                                      const failNodeId = failNode ? `struct-mode::${failNode.id}` : `step-fail::${step.id}::${fn}::${fail}`;
+                                      const isFailSelected = selectedNodeId === failNodeId;
+
+                                      let bgcolor = '#fef2f2';
+                                      let border = '2px solid #fecaca';
+                                      let textColor = '#7f1d1d';
+
+                                      if (isLinked) {
+                                        bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
+                                        border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
+                                        textColor = '#0284c7';
+                                      } else {
+                                        bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
+                                        border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
+                                        textColor = '#7f1d1d';
+                                      }
+
+                                      return (
+                                        <Box key={failIdx} sx={{ mb: 0.5 }}>
+                                          <Stack 
+                                            direction="row" 
+                                            spacing={1} 
+                                            onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
+                                            sx={{ 
+                                              py: 0.5, 
+                                              px: 1.5, 
+                                              alignItems: 'center', 
+                                              cursor: 'pointer', 
+                                              borderRadius: 2, 
+                                              display: 'inline-flex',
+                                              width: 'fit-content',
+                                              bgcolor, 
+                                              border, 
+                                              '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
+                                              transition: 'all 0.15s ease' 
+                                            }}
+                                          >
+                                            <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
+                                            {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                            <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                            <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                              {failNode && onOpenLinkageModal && (
+                                                <Tooltip title="Link Effects / Causes">
+                                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenLinkageModal(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                    <LinkIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              )}
+                                              {failNode && onOpenDetailWindow && (
+                                                <Tooltip title="View Linkage & Action Details">
+                                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                    <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              )}
+                                            </Box>
+                                          </Stack>
+                                        </Box>
+                                      );
+                                    })}
+                                  </Box>
+                                </Collapse>
+                              </Box>
+                            );
+                          });
+                        })()}
 
                         {/* Work Elements List */}
                         {allWeNames.map((we, wIdx) => {
@@ -734,91 +763,123 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                               <Collapse in={weExpanded}>
                                 <Box sx={{ pl: 4.5 }}>
-                                  {weFunctions.map((fn, wfIdx) => {
-                                    const weFuncKey = `we-func::${step.id}::${we}::${fn}`;
-                                    const isWeFuncSelected = selectedNodeId === weFuncKey;
-                                    const weFuncExpanded = !!expandedNodes[weFuncKey];
-
-                                    const failures = Array.from(new Set(
-                                      weRows
-                                        .filter(r => r.functions?.some(f => f.name === fn))
-                                        .flatMap(r => r.failureModes?.map(fm => fm.name) || [])
-                                    )).filter(Boolean);
-
-                                    return (
-                                      <Box key={wfIdx} sx={{ mb: 1 }}>
-                                        <Stack 
-                                          direction="row" 
-                                          spacing={1} 
-                                          onClick={(e) => { e.stopPropagation(); handleSelectNode(weFuncKey); }}
-                                          sx={{ 
-                                            cursor: 'pointer', 
-                                            py: 0.5, 
-                                            px: 1.5, 
-                                            alignItems: 'center',
-                                            display: 'inline-flex',
-                                            width: 'fit-content',
-                                            bgcolor: isWeFuncSelected ? '#dcfce7' : '#f0fdf4',
-                                            borderRadius: 2,
-                                            border: isWeFuncSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
-                                            transition: 'all 0.15s ease',
-                                            '&:hover': { bgcolor: '#dcfce7' },
-                                            '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
-                                            '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
-                                          }}
-                                        >
-                                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weFuncKey); }} sx={{ p: 0.25, color: '#14532d' }}>
-                                            {weFuncExpanded ? <ExpandIcon /> : <CollapseIcon />}
-                                          </IconButton>
-                                           <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                           <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
-                                          <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
-                                            <Tooltip title="Add Failure (Cause)">
-                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                                                <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
-                                              </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Edit Function">
-                                              <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(weFuncKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
-                                                <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
-                                              </IconButton>
-                                            </Tooltip>
-                                          </Box>
-                                        </Stack>
-
-                                        <Collapse in={weFuncExpanded}>
-                                          <Box sx={{ pl: 4 }}>
-                                            {failures.map((fail, failIdx) => (
-                                              <Box key={failIdx} sx={{ mb: 0.5 }}>
-                                                <Stack 
-                                                  key={failIdx} 
-                                                  direction="row" 
-                                                  spacing={1} 
-                                                  onClick={(e) => { e.stopPropagation(); handleSelectNode(`we-fail::${step.id}::${we}::${fn}::${fail}`); }}
-                                                  sx={{ 
-                                                    py: 0.5, 
-                                                    px: 1.5, 
-                                                    alignItems: 'center', 
-                                                    cursor: 'pointer', 
-                                                    borderRadius: 2, 
-                                                    display: 'inline-flex',
-                                                    width: 'fit-content',
-                                                    bgcolor: selectedNodeId === `we-fail::${step.id}::${we}::${fn}::${fail}` ? '#fee2e2' : '#fef2f2', 
-                                                    border: selectedNodeId === `we-fail::${step.id}::${we}::${fn}::${fail}` ? '2px solid #ef4444' : '2px solid #fecaca', 
-                                                    '&:hover': { bgcolor: '#fee2e2' }, 
-                                                    transition: 'all 0.15s ease' 
-                                                  }}
-                                                >
-                                                   <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                                                   <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
-                                                </Stack>
-                                              </Box>
-                                            ))}
-                                          </Box>
-                                        </Collapse>
-                                      </Box>
+                                  {(() => {
+                                    const weStructFuncs = (structureFunctions || []).filter(
+                                      (f) => f.parentType === 'work_element' && f.parentId === `${step.id}::${we}`
                                     );
-                                  })}
+                                    const allWeFunctions = Array.from(new Set([
+                                      ...weFunctions,
+                                      ...weStructFuncs.map((f) => f.narration)
+                                    ])).filter(Boolean);
+
+                                    return allWeFunctions.map((fn, wfIdx) => {
+                                      const weFuncKey = `we-func::${step.id}::${we}::${fn}`;
+                                      const isWeFuncSelected = selectedNodeId === weFuncKey;
+                                      const weFuncExpanded = !!expandedNodes[weFuncKey];
+
+                                      const matchingStructFunc = weStructFuncs.find(sf => sf.narration === fn);
+                                      const dbFailures = matchingStructFunc?.failures?.map((failObj: any) => failObj.narration) || [];
+                                      const rowFailures = weRows
+                                        .filter(r => r.functions?.some(f => f.name === fn))
+                                        .flatMap(r => r.failureModes?.map(fm => fm.name) || []);
+                                      const failures = Array.from(new Set([...rowFailures, ...dbFailures])).filter(Boolean);
+
+                                      return (
+                                        <Box key={wfIdx} sx={{ mb: 1 }}>
+                                          <Stack 
+                                            direction="row" 
+                                            spacing={1} 
+                                            onClick={(e) => { e.stopPropagation(); handleSelectNode(weFuncKey); }}
+                                            sx={{ 
+                                              cursor: 'pointer', 
+                                              py: 0.5, 
+                                              px: 1.5, 
+                                              alignItems: 'center',
+                                              display: 'inline-flex',
+                                              width: 'fit-content',
+                                              bgcolor: isWeFuncSelected ? '#dcfce7' : '#f0fdf4',
+                                              borderRadius: 2,
+                                              border: isWeFuncSelected ? '2px solid #22c55e' : '2px solid #bbf7d0',
+                                              transition: 'all 0.15s ease',
+                                              '&:hover': { bgcolor: '#dcfce7' },
+                                              '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                              '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
+                                            }}
+                                          >
+                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weFuncKey); }} sx={{ p: 0.25, color: '#14532d' }}>
+                                              {weFuncExpanded ? <ExpandIcon /> : <CollapseIcon />}
+                                            </IconButton>
+                                             <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
+                                             <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                            <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                              <Tooltip title="Add Failure (Cause)">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                                  <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                              <Tooltip title="Edit Function">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(weFuncKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                                  <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                            </Box>
+                                          </Stack>
+
+                                          <Collapse in={weFuncExpanded}>
+                                            <Box sx={{ pl: 4 }}>
+                                              {failures.map((fail, failIdx) => {
+                                                const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail);
+                                                const isLinked = failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0;
+                                                const failNodeId = failNode ? `struct-mode::${failNode.id}` : `we-fail::${step.id}::${we}::${fn}::${fail}`;
+                                                const isFailSelected = selectedNodeId === failNodeId;
+
+                                                let bgcolor = '#fef2f2';
+                                                let border = '2px solid #fecaca';
+                                                let textColor = '#7f1d1d';
+
+                                                if (isLinked) {
+                                                  bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
+                                                  border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
+                                                  textColor = '#0284c7';
+                                                } else {
+                                                  bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
+                                                  border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
+                                                  textColor = '#7f1d1d';
+                                                }
+
+                                                return (
+                                                  <Box key={failIdx} sx={{ mb: 0.5 }}>
+                                                    <Stack 
+                                                      direction="row" 
+                                                      spacing={1} 
+                                                      onClick={(e) => { e.stopPropagation(); handleSelectNode(failNodeId); }}
+                                                      sx={{ 
+                                                        py: 0.5, 
+                                                        px: 1.5, 
+                                                        alignItems: 'center', 
+                                                        cursor: 'pointer', 
+                                                        borderRadius: 2, 
+                                                        display: 'inline-flex',
+                                                        width: 'fit-content',
+                                                        bgcolor, 
+                                                        border, 
+                                                        '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
+                                                        transition: 'all 0.15s ease' 
+                                                      }}
+                                                    >
+                                                       <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
+                                                       {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                                       <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                                    </Stack>
+                                                  </Box>
+                                                );
+                                              })}
+                                            </Box>
+                                          </Collapse>
+                                        </Box>
+                                      );
+                                    });
+                                  })()}
                                 </Box>
                               </Collapse>
                             </Box>
