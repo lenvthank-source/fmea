@@ -351,7 +351,7 @@ export const PfmeaWorkspace: React.FC = () => {
     setStructFuncDialogOpen(true);
   };
 
-  const handleAddFailureFromTree = (
+  const handleAddFailureFromTree = async (
     stepId: string | null,
     parentContext?: { workElementName?: string | null; functionName: string }
   ) => {
@@ -359,24 +359,65 @@ export const PfmeaWorkspace: React.FC = () => {
     const { workElementName, functionName } = parentContext;
 
     let fnNode = null;
+    let parentType: 'project' | 'process_step' | 'work_element' = 'project';
+    let parentId: string = projectId!;
+
     if (!stepId && !workElementName) {
+      parentType = 'project';
+      parentId = projectId!;
       fnNode = structureFunctions.find(
         (f) => f.parentType === 'project' && f.narration === functionName
       );
     } else if (stepId && !workElementName) {
+      parentType = 'process_step';
+      parentId = stepId;
       fnNode = structureFunctions.find(
         (f) => f.parentType === 'process_step' && f.parentId === stepId && f.narration === functionName
       );
     } else if (stepId && workElementName) {
+      parentType = 'work_element';
+      parentId = `${stepId}::${workElementName}`;
       fnNode = structureFunctions.find(
         (f) => f.parentType === 'work_element' && f.parentId === `${stepId}::${workElementName}` && f.narration === functionName
       );
     }
 
     if (!fnNode) {
-      setError('Cannot add structure failure: Parent structure function not found in DB.');
-      return;
+      try {
+        const response = await fetch(`${API_BASE_URL}/structure-functions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            projectId,
+            parentType,
+            parentId,
+            narration: functionName,
+            location: 'your_plant',
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to auto-create parent structure function');
+        }
+        const createdFunc = await response.json();
+        fnNode = createdFunc;
+
+        const structFuncsResponse = await fetch(`${API_BASE_URL}/structure-functions/project/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (structFuncsResponse.ok) {
+          const freshFuncs = await structFuncsResponse.json();
+          setStructureFunctions(freshFuncs);
+        }
+      } catch (err: any) {
+        setError('Cannot add structure failure: Parent structure function not found in DB and auto-creation failed.');
+        return;
+      }
     }
+
+    if (!fnNode) return;
 
     const roleMap: Record<string, 'effect' | 'mode' | 'cause'> = {
       project: 'effect',
