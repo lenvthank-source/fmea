@@ -15,7 +15,6 @@ import {
   KeyboardArrowUp as ExpandLessIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
-import { PfmeaRowEditor } from './components/PfmeaRowEditor';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
@@ -82,8 +81,6 @@ export const PfmeaWorkspace: React.FC = () => {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Dialog and Drawer states
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [activeRow, setActiveRow] = useState<PfmeaRow | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   // Add row form state
@@ -123,11 +120,29 @@ export const PfmeaWorkspace: React.FC = () => {
   const [structFuncDialogOpen, setStructFuncDialogOpen] = useState(false);
   const [structFuncParentType, setStructFuncParentType] = useState<'project' | 'process_step' | 'work_element' | null>(null);
   const [structFuncParentId, setStructFuncParentId] = useState<string | null>(null);
+  
+  // Reusable Edit States for Functions
+  const [structFuncEditMode, setStructFuncEditMode] = useState(false);
+  const [structFuncEditNodeId, setStructFuncEditNodeId] = useState<string | null>(null);
+  const [structFuncInitialNarration, setStructFuncInitialNarration] = useState('');
+  const [structFuncInitialLocation, setStructFuncInitialLocation] = useState<'your_plant' | 'ship_to' | 'end_user'>('your_plant');
+
   const [structFailDialogOpen, setStructFailDialogOpen] = useState(false);
   const [structFailRole, setStructFailRole] = useState<'effect' | 'mode' | 'cause' | null>(null);
   const [structFailFunctionId, setStructFailFunctionId] = useState<string | null>(null);
   const [structFailFunctionNarration, setStructFailFunctionNarration] = useState('');
   const [structureFunctions, setStructureFunctions] = useState<any[]>([]);
+
+  // Reusable Edit States for Failures
+  const [structFailEditMode, setStructFailEditMode] = useState(false);
+  const [structFailEditNodeId, setStructFailEditNodeId] = useState<string | null>(null);
+  const [structFailInitialNarration, setStructFailInitialNarration] = useState('');
+  const [structFailInitialSeverityRating, setStructFailInitialSeverityRating] = useState<number | null>(null);
+  const [structFailInitialOccurrenceRating, setStructFailInitialOccurrenceRating] = useState<number | null>(null);
+  const [structFailInitialDetectionRating, setStructFailInitialDetectionRating] = useState<number | null>(null);
+  const [structFailInitialControlPrevention, setStructFailInitialControlPrevention] = useState('');
+  const [structFailInitialControlDetection, setStructFailInitialControlDetection] = useState('');
+  const [structFailInitialFilterCode, setStructFailInitialFilterCode] = useState('');
 
   // Load tenant users
   useEffect(() => {
@@ -338,6 +353,11 @@ export const PfmeaWorkspace: React.FC = () => {
   };
 
   const handleAddFunctionFromTree = (stepId: string | null, workElementName?: string | null) => {
+    setStructFuncEditMode(false);
+    setStructFuncEditNodeId(null);
+    setStructFuncInitialNarration('');
+    setStructFuncInitialLocation('your_plant');
+
     if (!stepId && !workElementName) {
       setStructFuncParentType('project');
       setStructFuncParentId(projectId!);
@@ -433,6 +453,16 @@ export const PfmeaWorkspace: React.FC = () => {
     };
     const role = roleMap[fnNode.parentType];
 
+    setStructFailEditMode(false);
+    setStructFailEditNodeId(null);
+    setStructFailInitialNarration('');
+    setStructFailInitialSeverityRating(null);
+    setStructFailInitialOccurrenceRating(null);
+    setStructFailInitialDetectionRating(null);
+    setStructFailInitialControlPrevention('');
+    setStructFailInitialControlDetection('');
+    setStructFailInitialFilterCode('');
+
     setStructFailRole(role);
     setStructFailFunctionId(fnNode.id);
     setStructFailFunctionNarration(fnNode.narration);
@@ -442,24 +472,32 @@ export const PfmeaWorkspace: React.FC = () => {
   const handleEditNodeFromTree = (nodeId: string) => {
     if (!nodeId) return;
 
+    const findStructFunc = (parentType: string, parentId: string | null, name: string) => {
+      return structureFunctions.find(
+        (sf) => sf.parentType === parentType && 
+        (!parentId || sf.parentId === parentId) && 
+        sf.narration === name
+      );
+    };
+
     // 1. Process Step
     if (nodeId.startsWith('step::')) {
-      const stepId = nodeId.replace('step::', '');
-      const row = rows.find(r => r.processStepId === stepId);
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
-      }
+      // Step editing is handled directly in FMEA row table inline edits
       return;
     }
 
     // 2. Project Function
     if (nodeId.startsWith('root-func::')) {
       const fnName = nodeId.replace('root-func::', '');
-      const row = rows.find(r => !r.processStepId && r.functions?.some(f => f.name === fnName));
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
+      const sf = findStructFunc('project', projectId || null, fnName);
+      if (sf) {
+        setStructFuncEditMode(true);
+        setStructFuncEditNodeId(sf.id);
+        setStructFuncInitialNarration(sf.narration);
+        setStructFuncInitialLocation(sf.location || 'your_plant');
+        setStructFuncParentType('project');
+        setStructFuncParentId(projectId!);
+        setStructFuncDialogOpen(true);
       }
       return;
     }
@@ -470,10 +508,15 @@ export const PfmeaWorkspace: React.FC = () => {
       const sepIdx = withoutPrefix.indexOf('::');
       const stepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
       const fnName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
-      const row = rows.find(r => r.processStepId === stepId && r.functions?.some(f => f.name === fnName));
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
+      const sf = findStructFunc('process_step', stepId, fnName);
+      if (sf) {
+        setStructFuncEditMode(true);
+        setStructFuncEditNodeId(sf.id);
+        setStructFuncInitialNarration(sf.narration);
+        setStructFuncInitialLocation(sf.location || 'your_plant');
+        setStructFuncParentType('process_step');
+        setStructFuncParentId(stepId);
+        setStructFuncDialogOpen(true);
       }
       return;
     }
@@ -485,14 +528,15 @@ export const PfmeaWorkspace: React.FC = () => {
       const stepId = parts[0];
       const weName = parts[1];
       const fnName = parts.slice(2).join('::');
-      const row = rows.find(
-        r => r.processStepId === stepId && 
-        r.workElementName === weName && 
-        r.functions?.some(f => f.name === fnName)
-      );
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
+      const sf = findStructFunc('work_element', `${stepId}::${weName}`, fnName);
+      if (sf) {
+        setStructFuncEditMode(true);
+        setStructFuncEditNodeId(sf.id);
+        setStructFuncInitialNarration(sf.narration);
+        setStructFuncInitialLocation(sf.location || 'your_plant');
+        setStructFuncParentType('work_element');
+        setStructFuncParentId(`${stepId}::${weName}`);
+        setStructFuncDialogOpen(true);
       }
       return;
     }
@@ -500,8 +544,32 @@ export const PfmeaWorkspace: React.FC = () => {
     // 5. Failure Mode (linked struct-mode)
     if (nodeId.startsWith('struct-mode::')) {
       const failId = nodeId.replace('struct-mode::', '');
-      setDetailWindowFailureModeId(failId);
-      setDetailWindowOpen(true);
+      let foundFail: any = null;
+      let foundFunc: any = null;
+      for (const sf of structureFunctions) {
+        const f = sf.failures?.find((failObj: any) => failObj.id === failId);
+        if (f) {
+          foundFail = f;
+          foundFunc = sf;
+          break;
+        }
+      }
+      if (foundFail && foundFunc) {
+        setStructFailEditMode(true);
+        setStructFailEditNodeId(foundFail.id);
+        setStructFailInitialNarration(foundFail.narration);
+        setStructFailInitialSeverityRating(foundFail.severityRating);
+        setStructFailInitialOccurrenceRating(foundFail.occurrenceRating);
+        setStructFailInitialDetectionRating(foundFail.detectionRating);
+        setStructFailInitialControlPrevention(foundFail.currentControlPrevention || '');
+        setStructFailInitialControlDetection(foundFail.currentControlDetection || '');
+        setStructFailInitialFilterCode(foundFail.filterCode || '');
+        
+        setStructFailRole(foundFail.role);
+        setStructFailFunctionId(foundFunc.id);
+        setStructFailFunctionNarration(foundFunc.narration);
+        setStructFailDialogOpen(true);
+      }
       return;
     }
 
@@ -512,24 +580,59 @@ export const PfmeaWorkspace: React.FC = () => {
       const stepId = parts[0];
       const fnName = parts[1];
       const failName = parts[2];
-      const row = rows.find(
-        r => r.processStepId === stepId && 
-        r.functions?.some(f => f.name === fnName) &&
-        r.failureModes?.some(fm => fm.name === failName)
-      );
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
+      
+      const sf = findStructFunc('process_step', stepId, fnName);
+      const foundFail = sf?.failures?.find((failObj: any) => failObj.narration === failName);
+      if (foundFail && sf) {
+        setStructFailEditMode(true);
+        setStructFailEditNodeId(foundFail.id);
+        setStructFailInitialNarration(foundFail.narration);
+        setStructFailInitialSeverityRating(foundFail.severityRating);
+        setStructFailInitialOccurrenceRating(foundFail.occurrenceRating);
+        setStructFailInitialDetectionRating(foundFail.detectionRating);
+        setStructFailInitialControlPrevention(foundFail.currentControlPrevention || '');
+        setStructFailInitialControlDetection(foundFail.currentControlDetection || '');
+        setStructFailInitialFilterCode(foundFail.filterCode || '');
+        
+        setStructFailRole(foundFail.role);
+        setStructFailFunctionId(sf.id);
+        setStructFailFunctionNarration(sf.narration);
+        setStructFailDialogOpen(true);
       }
       return;
     }
 
     // 7. Failure Mode (unlinked root-fail)
     if (nodeId.startsWith('root-fail-')) {
-      const row = rows.find(r => !r.processStepId && r.failureModes && r.failureModes.length > 0);
-      if (row) {
-        setActiveRow(row);
-        setEditorOpen(true);
+      const withoutPrefix = nodeId.replace('root-fail-', '');
+      let foundFail: any = null;
+      let foundFunc: any = null;
+      for (const sf of structureFunctions.filter(f => f.parentType === 'project')) {
+        if (withoutPrefix.startsWith(sf.narration + '-')) {
+          const failName = withoutPrefix.replace(sf.narration + '-', '');
+          const f = sf.failures?.find((failObj: any) => failObj.narration === failName);
+          if (f) {
+            foundFail = f;
+            foundFunc = sf;
+            break;
+          }
+        }
+      }
+      if (foundFail && foundFunc) {
+        setStructFailEditMode(true);
+        setStructFailEditNodeId(foundFail.id);
+        setStructFailInitialNarration(foundFail.narration);
+        setStructFailInitialSeverityRating(foundFail.severityRating);
+        setStructFailInitialOccurrenceRating(foundFail.occurrenceRating);
+        setStructFailInitialDetectionRating(foundFail.detectionRating);
+        setStructFailInitialControlPrevention(foundFail.currentControlPrevention || '');
+        setStructFailInitialControlDetection(foundFail.currentControlDetection || '');
+        setStructFailInitialFilterCode(foundFail.filterCode || '');
+        
+        setStructFailRole(foundFail.role);
+        setStructFailFunctionId(foundFunc.id);
+        setStructFailFunctionNarration(foundFunc.narration);
+        setStructFailDialogOpen(true);
       }
       return;
     }
@@ -722,24 +825,7 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  const handleSaveRowDetails = async (updatedData: any) => {
-    if (!activeRow) return;
-    const response = await fetch(`${API_BASE_URL}/pfmea-rows/${activeRow.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updatedData),
-    });
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.message || 'Failed to save FMEA row modifications.');
-    }
-
-    await fetchData();
-  };
 
   const getApBadge = (ap: string | null) => {
     if (!ap) return <Chip label="—" size="small" variant="outlined" />;
@@ -830,13 +916,7 @@ export const PfmeaWorkspace: React.FC = () => {
           steps={steps}
           rows={rows}
           onAddStep={() => setAddDialogOpen(true)}
-          onEditStep={(step) => {
-            const row = rows.find(r => r.processStepId === step.id);
-            if (row) {
-              setActiveRow(row);
-              setEditorOpen(true);
-            }
-          }}
+          onEditStep={() => {}}
           onDeleteStep={handleDeleteRow}
           onMoveStep={() => {}}
           onAddFunction={handleAddFunctionFromTree}
@@ -1068,8 +1148,18 @@ export const PfmeaWorkspace: React.FC = () => {
                             size="small"
                             color="primary"
                             onClick={() => {
-                              setActiveRow(row);
-                              setEditorOpen(true);
+                              const failId = getFailureModeDbId(row);
+                              if (failId) {
+                                handleEditNodeFromTree(`struct-mode::${failId}`);
+                              } else {
+                                const failName = row.failureModes?.[0]?.name;
+                                const fnName = row.functions?.[0]?.name;
+                                if (row.processStepId && fnName && failName) {
+                                  handleEditNodeFromTree(`step-fail::${row.processStepId}::${fnName}::${failName}`);
+                                } else if (!row.processStepId && fnName && failName) {
+                                  handleEditNodeFromTree(`root-fail-${fnName}-${failName}`);
+                                }
+                              }
                             }}
                           >
                             <EditIcon fontSize="small" />
@@ -1163,24 +1253,7 @@ export const PfmeaWorkspace: React.FC = () => {
         </Paper>
       )}
 
-      {/* Row Editor Drawer */}
-      <PfmeaRowEditor
-        open={editorOpen}
-        onClose={() => {
-          setEditorOpen(false);
-          setActiveRow(null);
-        }}
-        row={activeRow}
-        steps={steps}
-        onSave={handleSaveRowDetails}
-        projectId={projectId}
-        token={token ?? undefined}
-        onCreateAction={(row) => {
-          setSelectedRowForAction(row);
-          setActionDialogOpen(true);
-        }}
-        failureModeId={activeRow ? getFailureModeDbId(activeRow) : null}
-      />
+      {/* Replaced slide drawer edit window */}
 
       {/* Add Row Dialog */}
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
@@ -1389,6 +1462,10 @@ export const PfmeaWorkspace: React.FC = () => {
           projectId={projectId}
           token={token}
           onSuccess={() => fetchData()}
+          editMode={structFuncEditMode}
+          editNodeId={structFuncEditNodeId}
+          initialNarration={structFuncInitialNarration}
+          initialLocation={structFuncInitialLocation}
         />
       )}
 
@@ -1402,6 +1479,15 @@ export const PfmeaWorkspace: React.FC = () => {
           functionNarration={structFailFunctionNarration}
           token={token}
           onSuccess={() => fetchData()}
+          editMode={structFailEditMode}
+          editNodeId={structFailEditNodeId}
+          initialNarration={structFailInitialNarration}
+          initialSeverityRating={structFailInitialSeverityRating}
+          initialOccurrenceRating={structFailInitialOccurrenceRating}
+          initialDetectionRating={structFailInitialDetectionRating}
+          initialControlPrevention={structFailInitialControlPrevention}
+          initialControlDetection={structFailInitialControlDetection}
+          initialFilterCode={structFailInitialFilterCode}
         />
       )}
     </Box>

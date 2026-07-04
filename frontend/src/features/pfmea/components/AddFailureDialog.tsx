@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,6 +23,15 @@ interface AddFailureDialogProps {
   functionNarration: string;
   token: string;
   onSuccess: () => void;
+  editMode?: boolean;
+  editNodeId?: string | null;
+  initialNarration?: string;
+  initialSeverityRating?: number | null;
+  initialOccurrenceRating?: number | null;
+  initialDetectionRating?: number | null;
+  initialControlPrevention?: string;
+  initialControlDetection?: string;
+  initialFilterCode?: string;
 }
 
 const ROLE_LABELS: Record<
@@ -55,6 +64,15 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   functionNarration,
   token,
   onSuccess,
+  editMode = false,
+  editNodeId = null,
+  initialNarration = '',
+  initialSeverityRating = null,
+  initialOccurrenceRating = null,
+  initialDetectionRating = null,
+  initialControlPrevention = '',
+  initialControlDetection = '',
+  initialFilterCode = '',
 }) => {
   const TextFieldAny = TextField as any;
   const [narration, setNarration] = useState('');
@@ -66,6 +84,39 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   const [filterCode, setFilterCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      if (editMode) {
+        setNarration(initialNarration);
+        setSeverityRating(initialSeverityRating);
+        setOccurrenceRating(initialOccurrenceRating);
+        setDetectionRating(initialDetectionRating);
+        setCurrentControlPrevention(initialControlPrevention);
+        setCurrentControlDetection(initialControlDetection);
+        setFilterCode(initialFilterCode);
+      } else {
+        setNarration('');
+        setSeverityRating(null);
+        setOccurrenceRating(null);
+        setDetectionRating(null);
+        setCurrentControlPrevention('');
+        setCurrentControlDetection('');
+        setFilterCode('');
+      }
+      setError(null);
+    }
+  }, [
+    open,
+    editMode,
+    initialNarration,
+    initialSeverityRating,
+    initialOccurrenceRating,
+    initialDetectionRating,
+    initialControlPrevention,
+    initialControlDetection,
+    initialFilterCode,
+  ]);
 
   const handleClose = () => {
     setNarration('');
@@ -80,23 +131,30 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!narration.trim() || !functionId || !role) return;
+    if (!narration.trim() || !role) return;
+    if (!editMode && !functionId) return;
     setLoading(true);
     setError(null);
     try {
-      const body: any = { functionId, narration: narration.trim() };
-      if (role === 'effect' && severityRating) body.severityRating = severityRating;
-      if (role === 'cause') {
-        if (occurrenceRating) body.occurrenceRating = occurrenceRating;
-        if (detectionRating) body.detectionRating = detectionRating;
-        if (currentControlPrevention.trim())
-          body.currentControlPrevention = currentControlPrevention.trim();
-        if (currentControlDetection.trim())
-          body.currentControlDetection = currentControlDetection.trim();
-        if (filterCode.trim()) body.filterCode = filterCode.trim();
+      const body: any = editMode ? { narration: narration.trim() } : { functionId, narration: narration.trim() };
+      if (role === 'effect') {
+        body.severityRating = severityRating;
       }
-      const res = await fetch(`${API_BASE_URL}/structure-failures`, {
-        method: 'POST',
+      if (role === 'cause') {
+        body.occurrenceRating = occurrenceRating;
+        body.detectionRating = detectionRating;
+        body.currentControlPrevention = currentControlPrevention.trim() || null;
+        body.currentControlDetection = currentControlDetection.trim() || null;
+        body.filterCode = filterCode.trim() || null;
+      }
+
+      const url = editMode
+        ? `${API_BASE_URL}/structure-failures/${editNodeId}`
+        : `${API_BASE_URL}/structure-failures`;
+      const method = editMode ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -105,12 +163,12 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
       });
       if (!res.ok) {
         const e = await res.json();
-        throw new Error(e.message || 'Failed to add failure');
+        throw new Error(e.message || `Failed to ${editMode ? 'edit' : 'add'} failure`);
       }
       handleClose();
       onSuccess();
     } catch (e: any) {
-      setError(e.message || 'Failed to add failure');
+      setError(e.message || `Failed to ${editMode ? 'edit' : 'add'} failure`);
     } finally {
       setLoading(false);
     }
@@ -124,7 +182,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
       <DialogTitle
         sx={{ bgcolor: meta.color, color: 'white', fontWeight: 'bold', py: 1.5 }}
       >
-        {meta.title}
+        {editMode ? 'Edit' : 'Add'} Failure {role === 'effect' ? 'Effect' : role === 'mode' ? 'Mode' : 'Cause'}
       </DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         {/* Green context line showing the parent function */}
@@ -245,7 +303,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           color="error"
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
-          {loading ? 'Adding...' : 'OK'}
+          {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}
         </Button>
       </DialogActions>
     </Dialog>

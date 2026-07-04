@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateStructureFunctionDto } from './dto/create-structure-function.dto';
+import { UpdateStructureFunctionDto } from './dto/update-structure-function.dto';
 import { CreateStructureFailureDto } from './dto/create-structure-failure.dto';
 import { UpdateStructureFailureDto } from './dto/update-structure-failure.dto';
 import { LinkFailuresDto } from './dto/link-failures.dto';
@@ -91,6 +92,26 @@ export class StructureLinkageService {
     return this.prisma.structureFunction.delete({ where: { id: functionId } });
   }
 
+  async updateFunction(
+    tenantId: string,
+    functionId: string,
+    dto: UpdateStructureFunctionDto,
+  ) {
+    const fn = await this.prisma.structureFunction.findUnique({
+      where: { id: functionId },
+    });
+    if (!fn) throw new NotFoundException('Function not found');
+    if (fn.tenantId !== tenantId) throw new ForbiddenException('Access denied');
+
+    return this.prisma.structureFunction.update({
+      where: { id: functionId },
+      data: {
+        narration: dto.narration,
+        location: dto.location,
+      },
+    });
+  }
+
   // ===== STRUCTURE FAILURES =====
 
   async createFailure(tenantId: string, dto: CreateStructureFailureDto) {
@@ -160,6 +181,7 @@ export class StructureLinkageService {
     return this.prisma.structureFailure.update({
       where: { id: failureId },
       data: {
+        narration: dto.narration,
         severityRating: dto.severityRating,
         occurrenceRating: dto.occurrenceRating,
         detectionRating: dto.detectionRating,

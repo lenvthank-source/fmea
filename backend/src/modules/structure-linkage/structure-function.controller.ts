@@ -5,11 +5,13 @@ import {
   Get,
   Param,
   Post,
+  Patch,
   Query,
   Request,
 } from '@nestjs/common';
 import { StructureLinkageService } from './structure-linkage.service';
 import { CreateStructureFunctionDto } from './dto/create-structure-function.dto';
+import { UpdateStructureFunctionDto } from './dto/update-structure-function.dto';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
@@ -43,6 +45,16 @@ export class StructureFunctionController {
     @Param('projectId') projectId: string,
   ) {
     return this.service.getProjectFunctions(req.user.tenantId, projectId);
+  }
+
+  @Patch(':id')
+  @Permissions('pfmea.edit')
+  update(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateStructureFunctionDto,
+  ) {
+    return this.service.updateFunction(req.user.tenantId, id, dto);
   }
 
   @Delete(':id')

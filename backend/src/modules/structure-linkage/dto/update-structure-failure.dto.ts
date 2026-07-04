@@ -21,6 +21,10 @@ export class UpdateStructureFailureDto {
 
   @IsOptional()
   @IsString()
+  narration?: string;
+
+  @IsOptional()
+  @IsString()
   currentControlPrevention?: string;
 
   @IsOptional()

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,6 +25,10 @@ interface AddFunctionDialogProps {
   projectId: string;
   token: string;
   onSuccess: () => void;
+  editMode?: boolean;
+  editNodeId?: string | null;
+  initialNarration?: string;
+  initialLocation?: 'your_plant' | 'ship_to' | 'end_user';
 }
 
 const PARENT_LABELS: Record<string, string> = {
@@ -41,12 +45,29 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   projectId,
   token,
   onSuccess,
+  editMode = false,
+  editNodeId = null,
+  initialNarration = '',
+  initialLocation = 'your_plant',
 }) => {
   const TextFieldAny = TextField as any;
   const [narration, setNarration] = useState('');
   const [location, setLocation] = useState<'your_plant' | 'ship_to' | 'end_user'>('your_plant');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      if (editMode) {
+        setNarration(initialNarration);
+        setLocation(initialLocation);
+      } else {
+        setNarration('');
+        setLocation('your_plant');
+      }
+      setError(null);
+    }
+  }, [open, editMode, initialNarration, initialLocation]);
 
   const handleClose = () => {
     setNarration('');
@@ -56,32 +77,41 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!narration.trim() || !parentType || !parentId) return;
+    if (!narration.trim() || !parentType) return;
+    if (!editMode && !parentId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/structure-functions`, {
-        method: 'POST',
+      const url = editMode
+        ? `${API_BASE_URL}/structure-functions/${editNodeId}`
+        : `${API_BASE_URL}/structure-functions`;
+      const method = editMode ? 'PATCH' : 'POST';
+      const bodyData = editMode
+        ? { narration: narration.trim(), location: parentType === 'project' ? location : undefined }
+        : {
+            projectId,
+            parentType,
+            parentId,
+            narration: narration.trim(),
+            location: parentType === 'project' ? location : 'your_plant',
+          };
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          projectId,
-          parentType,
-          parentId,
-          narration: narration.trim(),
-          location: parentType === 'project' ? location : 'your_plant',
-        }),
+        body: JSON.stringify(bodyData),
       });
       if (!res.ok) {
         const e = await res.json();
-        throw new Error(e.message || 'Failed to add function');
+        throw new Error(e.message || `Failed to ${editMode ? 'edit' : 'add'} function`);
       }
       handleClose();
       onSuccess();
     } catch (e: any) {
-      setError(e.message || 'Failed to add function');
+      setError(e.message || `Failed to ${editMode ? 'edit' : 'add'} function`);
     } finally {
       setLoading(false);
     }
@@ -94,7 +124,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
       <DialogTitle
         sx={{ bgcolor: '#1b5e20', color: 'white', fontWeight: 'bold', py: 1.5 }}
       >
-        Add Function / Requirement \u2014 {PARENT_LABELS[parentType]}
+        {editMode ? 'Edit' : 'Add'} Function / Requirement — {PARENT_LABELS[parentType]}
       </DialogTitle>
       <DialogContent sx={{ pt: 2.5 }}>
         {error && (
@@ -168,7 +198,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
           sx={{ bgcolor: '#1b5e20', '&:hover': { bgcolor: '#2e7d32' } }}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
-          {loading ? 'Adding...' : 'OK'}
+          {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}
         </Button>
       </DialogActions>
     </Dialog>
