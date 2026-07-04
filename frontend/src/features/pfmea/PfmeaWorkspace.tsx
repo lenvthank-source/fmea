@@ -903,6 +903,51 @@ export const PfmeaWorkspace: React.FC = () => {
         </Stack>
       </Box>
 
+      {/* Failure Modes & Linkage Status Bar */}
+      {(() => {
+        const allFailures = structureFunctions.flatMap(sf => sf.failures || []);
+        const totalFailureModes = allFailures.filter((f: any) => f.role === 'mode').length;
+        const linkedFailureModes = allFailures.filter((f: any) => f.role === 'mode' && f.isLinked).length;
+        const unlinkedFailureModes = totalFailureModes - linkedFailureModes;
+        return (
+          <Paper 
+            variant="outlined" 
+            sx={{ 
+              p: 1.5, 
+              mb: 3, 
+              bgcolor: '#fafafa', 
+              border: '1px solid rgba(40, 37, 29, 0.1)', 
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap'
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              📊 Failure Mode Linkages:
+            </Typography>
+            <Chip 
+              label={`${totalFailureModes} Total Modes`} 
+              size="small" 
+              sx={{ bgcolor: '#e0f7fa', color: '#006064', fontWeight: 'bold' }} 
+            />
+            <Chip 
+              label={`${linkedFailureModes} Linked`} 
+              size="small" 
+              color="success" 
+              sx={{ fontWeight: 'bold' }} 
+            />
+            <Chip 
+              label={`${unlinkedFailureModes} Unlinked`} 
+              size="small" 
+              color={unlinkedFailureModes > 0 ? "warning" : "default"} 
+              sx={{ fontWeight: 'bold' }} 
+            />
+          </Paper>
+        );
+      })()}
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}

@@ -22,7 +22,8 @@ import {
   PrecisionManufacturing as WorkElementIcon,
   HelpOutlined as FunctionIcon,
   Warning as FailureIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Info as DetailsIcon
 } from '@mui/icons-material';
 
 interface ProcessStep {
@@ -461,6 +462,22 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                             const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail);
                             const isLinked = failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0;
                             const failNodeId = failNode ? `struct-mode::${failNode.id}` : `root-fail-${fn}-${fail}`;
+                            const isFailSelected = selectedNodeId === failNodeId;
+                            
+                            let bgcolor = '#fef2f2';
+                            let border = '2px solid #fecaca';
+                            let textColor = '#7f1d1d';
+
+                            if (isLinked) {
+                              bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
+                              border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
+                              textColor = '#0284c7';
+                            } else {
+                              bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
+                              border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
+                              textColor = '#7f1d1d';
+                            }
+
                             return (
                               <Box key={failIdx} sx={{ mb: 0.5 }}>
                                 <Stack 
@@ -475,15 +492,41 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                     borderRadius: 2, 
                                     display: 'inline-flex',
                                     width: 'fit-content',
-                                    bgcolor: selectedNodeId === failNodeId ? '#fee2e2' : '#fef2f2', 
-                                    border: selectedNodeId === failNodeId ? '2px solid #ef4444' : '2px solid #fecaca', 
-                                    '&:hover': { bgcolor: '#fee2e2' }, 
-                                    transition: 'all 0.15s ease' 
+                                    bgcolor, 
+                                    border, 
+                                    '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
+                                    transition: 'all 0.15s ease',
+                                    '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                    '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                   }}
                                 >
-                                   <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                                   {isLinked && <LinkIcon sx={{ color: '#7f1d1d', fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                   <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
+                                  <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
+                                  {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                  <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                  
+                                  <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                    {failNode && onOpenLinkageModal && (
+                                      <Tooltip title="Link Effects / Causes">
+                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenLinkageModal(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                          <LinkIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                    {failNode && onEditNode && (
+                                      <Tooltip title="Edit Failure">
+                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                          <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                    {failNode && onOpenDetailWindow && (
+                                      <Tooltip title="View Linkage & Action Details">
+                                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                          <DetailsIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                  </Box>
                                 </Stack>
                               </Box>
                             );
@@ -684,7 +727,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                               bgcolor, 
                                               border, 
                                               '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
-                                              transition: 'all 0.15s ease' 
+                                              transition: 'all 0.15s ease',
+                                              '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                              '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                             }}
                                           >
                                             <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
@@ -698,10 +743,17 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                   </IconButton>
                                                 </Tooltip>
                                               )}
+                                              {failNode && onEditNode && (
+                                                <Tooltip title="Edit Failure">
+                                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                    <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              )}
                                               {failNode && onOpenDetailWindow && (
                                                 <Tooltip title="View Linkage & Action Details">
                                                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
-                                                    <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                    <DetailsIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
                                                   </IconButton>
                                                 </Tooltip>
                                               )}
@@ -864,12 +916,38 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                         bgcolor, 
                                                         border, 
                                                         '&:hover': { bgcolor: isLinked ? '#e0f2fe' : '#fee2e2' }, 
-                                                        transition: 'all 0.15s ease' 
+                                                        transition: 'all 0.15s ease',
+                                                        '& .inline-actions': { opacity: 0, pointerEvents: 'none', transition: 'opacity 0.15s ease' },
+                                                        '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                                       }}
                                                     >
-                                                       <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
-                                                       {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                                       <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                                      <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
+                                                      {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
+                                                      <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                                      
+                                                      <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
+                                                        {failNode && onOpenLinkageModal && (
+                                                          <Tooltip title="Link Effects / Causes">
+                                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenLinkageModal(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                              <LinkIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                            </IconButton>
+                                                          </Tooltip>
+                                                        )}
+                                                        {failNode && onEditNode && (
+                                                          <Tooltip title="Edit Failure">
+                                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                              <EditIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                            </IconButton>
+                                                          </Tooltip>
+                                                        )}
+                                                        {failNode && onOpenDetailWindow && (
+                                                          <Tooltip title="View Linkage & Action Details">
+                                                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onOpenDetailWindow(failNode.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid ' + (isLinked ? '#bae6fd' : '#fecaca'), '&:hover': { bgcolor: isLinked ? '#bae6fd' : '#fee2e2' } }}>
+                                                              <DetailsIcon sx={{ fontSize: '0.9rem', color: isLinked ? '#0284c7' : '#ef4444' }} />
+                                                            </IconButton>
+                                                          </Tooltip>
+                                                        )}
+                                                      </Box>
                                                     </Stack>
                                                   </Box>
                                                 );

@@ -184,7 +184,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
       >
         {editMode ? 'Edit' : 'Add'} Failure {role === 'effect' ? 'Effect' : role === 'mode' ? 'Mode' : 'Cause'}
       </DialogTitle>
-      <DialogContent sx={{ pt: 2 }}>
+      <DialogContent sx={{ pt: 3 }}>
         {/* Green context line showing the parent function */}
         <Box
           sx={{
@@ -253,41 +253,44 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                 Current Controls
               </Typography>
             </Divider>
-            <TextField
+            <TextFieldAny
               label="Current Control of Failure Prevention"
               value={currentControlPrevention}
-              onChange={(e) => setCurrentControlPrevention(e.target.value)}
+              onChange={(e: any) => setCurrentControlPrevention(e.target.value)}
               size="small"
               fullWidth
               multiline
               rows={2}
+              InputLabelProps={{ shrink: true }}
             />
             <RatingDropdown
               ratingType="occurrence"
               value={occurrenceRating}
               onChange={setOccurrenceRating}
             />
-            <TextField
+            <TextFieldAny
               label="Current Control of Failure Detection"
               value={currentControlDetection}
-              onChange={(e) => setCurrentControlDetection(e.target.value)}
+              onChange={(e: any) => setCurrentControlDetection(e.target.value)}
               size="small"
               fullWidth
               multiline
               rows={2}
+              InputLabelProps={{ shrink: true }}
             />
             <RatingDropdown
               ratingType="detection"
               value={detectionRating}
               onChange={setDetectionRating}
             />
-            <TextField
+            <TextFieldAny
               label="Filter Code"
               value={filterCode}
-              onChange={(e) => setFilterCode(e.target.value)}
+              onChange={(e: any) => setFilterCode(e.target.value)}
               size="small"
               fullWidth
               placeholder="e.g. FC-01"
+              InputLabelProps={{ shrink: true }}
             />
           </Stack>
         )}

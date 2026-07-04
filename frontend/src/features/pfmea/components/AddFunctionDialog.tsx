@@ -126,7 +126,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
       >
         {editMode ? 'Edit' : 'Add'} Function / Requirement — {PARENT_LABELS[parentType]}
       </DialogTitle>
-      <DialogContent sx={{ pt: 2.5 }}>
+      <DialogContent sx={{ pt: 3 }}>
         {error && (
           <Box
             sx={{

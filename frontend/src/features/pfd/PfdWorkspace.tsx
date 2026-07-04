@@ -33,11 +33,12 @@ interface ProcessStep {
   specialCharacteristics?: string;
   flowIcons?: any;
   machinesEquipmentDocs?: string[];
-  desiredOutcome?: string;
-  processCharacteristics?: string;
+  desiredOutcome?: string | string[];
+  processCharacteristics?: string | string[];
 }
 
 export const PfdWorkspace: React.FC = () => {
+  const TextFieldAny = TextField as any;
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
 
@@ -187,7 +188,11 @@ export const PfdWorkspace: React.FC = () => {
     }
   };
 
-  const renderMultiInputCell = (stepId: string, fieldName: 'incomingVariation' | 'machinesEquipmentDocs', placeholder: string) => {
+  const renderMultiInputCell = (
+    stepId: string,
+    fieldName: 'incomingVariation' | 'machinesEquipmentDocs' | 'desiredOutcome' | 'processCharacteristics',
+    placeholder: string
+  ) => {
     const step = steps.find(s => s.id === stepId);
     if (!step) return null;
 
@@ -196,11 +201,15 @@ export const PfdWorkspace: React.FC = () => {
     if (Array.isArray(val)) {
       items = val;
     } else if (typeof val === 'string' && val) {
-      try {
-        const parsed = JSON.parse(val);
-        items = Array.isArray(parsed) ? parsed : [val];
-      } catch {
-        items = [val];
+      if (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics') {
+        items = val.split('\n');
+      } else {
+        try {
+          const parsed = JSON.parse(val);
+          items = Array.isArray(parsed) ? parsed : [val];
+        } catch {
+          items = [val];
+        }
       }
     }
     if (items.length === 0) {
@@ -211,7 +220,11 @@ export const PfdWorkspace: React.FC = () => {
       const updated = [...items];
       updated[idx] = newVal;
       
-      setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: updated } : s));
+      const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
+        ? updated.join('\n')
+        : updated;
+
+      setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
       try {
         await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
@@ -220,7 +233,7 @@ export const PfdWorkspace: React.FC = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ [fieldName]: updated }),
+          body: JSON.stringify({ [fieldName]: valToSave }),
         });
       } catch (err) {
         console.error(err);
@@ -233,7 +246,11 @@ export const PfdWorkspace: React.FC = () => {
         const updated = [...items];
         updated.splice(idx + 1, 0, '');
         
-        setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: updated } : s));
+        const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
+          ? updated.join('\n')
+          : updated;
+
+        setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
         
         try {
           await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
@@ -242,7 +259,7 @@ export const PfdWorkspace: React.FC = () => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ [fieldName]: updated }),
+            body: JSON.stringify({ [fieldName]: valToSave }),
           });
         } catch (err) {
           console.error(err);
@@ -257,7 +274,11 @@ export const PfdWorkspace: React.FC = () => {
         const updated = [...items];
         updated.splice(idx, 1);
         
-        setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: updated } : s));
+        const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
+          ? updated.join('\n')
+          : updated;
+
+        setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
         try {
           await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
@@ -266,7 +287,7 @@ export const PfdWorkspace: React.FC = () => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ [fieldName]: updated }),
+            body: JSON.stringify({ [fieldName]: valToSave }),
           });
         } catch (err) {
           console.error(err);
@@ -284,7 +305,11 @@ export const PfdWorkspace: React.FC = () => {
       const updated = [...items];
       updated.splice(idx, 1);
       
-      setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: updated } : s));
+      const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
+        ? updated.join('\n')
+        : updated;
+
+      setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
       try {
         await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
@@ -293,7 +318,7 @@ export const PfdWorkspace: React.FC = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ [fieldName]: updated }),
+          body: JSON.stringify({ [fieldName]: valToSave }),
         });
       } catch (err) {
         console.error(err);
@@ -400,6 +425,8 @@ export const PfdWorkspace: React.FC = () => {
     try {
       const variationList = addIncomingVariation.split('\n').map(v => v.trim()).filter(Boolean);
       const machinesList = addMachinesEquipmentDocs.split('\n').map(m => m.trim()).filter(Boolean);
+      const desiredOutcomeStr = addDesiredOutcome.split('\n').map(d => d.trim()).filter(Boolean).join('\n');
+      const processCharStr = addProcessCharacteristics.split('\n').map(p => p.trim()).filter(Boolean).join('\n');
 
       const flowIcons: Record<string, boolean> = {};
       if (addStepType === 'operation') flowIcons.oper = true;
@@ -423,8 +450,8 @@ export const PfdWorkspace: React.FC = () => {
           incomingVariation: variationList,
           machinesEquipmentDocs: machinesList,
           specialCharacteristics: addSpecialCharacteristics || null,
-          desiredOutcome: addDesiredOutcome || null,
-          processCharacteristics: addProcessCharacteristics || null,
+          desiredOutcome: desiredOutcomeStr || null,
+          processCharacteristics: processCharStr || null,
           flowIcons
         }),
       });
@@ -621,11 +648,9 @@ export const PfdWorkspace: React.FC = () => {
                 <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Incoming Source of Variation</TableCell>
                 <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
-                
-                {/* Flow Icons - floating on hover, no header columns */}
-
+                <TableCell style={{ minWidth: 130, fontWeight: 'bold', textAlign: 'center' }}>Flow Symbols</TableCell>
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Machines/Equipment/Docs</TableCell>
-                <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Desired Outcome</TableCell>
+                <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Product Description / Desired Outcome</TableCell>
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Process Characteristics</TableCell>
                 <TableCell style={{ width: 120, fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
@@ -633,7 +658,7 @@ export const PfdWorkspace: React.FC = () => {
             <TableBody>
               {steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={22} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No steps added yet. Click "+ Add Step" to insert a blank row.
                   </TableCell>
                 </TableRow>
@@ -702,28 +727,28 @@ export const PfdWorkspace: React.FC = () => {
                         />
                       </TableCell>
 
-                      {/* Floating Flow Icons - visible on row hover, showing active ones otherwise */}
-                      <TableCell sx={{ position: 'relative', minWidth: 60, p: 0.5 }}>
+                      {/* Flow Symbols - Floating hover overlay + permanent visible active symbols */}
+                      <TableCell sx={{ position: 'relative', minWidth: 130, p: 0.5, bgcolor: 'rgba(1, 105, 111, 0.02)', borderLeft: '1px solid rgba(1, 105, 111, 0.06)', borderRight: '1px solid rgba(1, 105, 111, 0.06)' }}>
                         {hoveredStepId === step.id ? (
                           <Box
                             sx={{
                               position: 'absolute',
-                              right: 0,
+                              left: '50%',
                               top: '50%',
-                              transform: 'translateY(-50%)',
+                              transform: 'translate(-50%, -50%)',
                               display: 'flex',
                               gap: 0.5,
-                              bgcolor: 'rgba(255,255,255,0.97)',
-                              border: '1px solid rgba(40, 37, 29, 0.12)',
+                              bgcolor: 'rgba(255,255,255,0.98)',
+                              border: '1px solid rgba(40, 37, 29, 0.15)',
                               borderRadius: 3,
                               px: 1,
                               py: 0.5,
-                              boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                               zIndex: 10,
                               animation: 'fadeIn 0.15s ease-in-out',
                               '@keyframes fadeIn': {
-                                from: { opacity: 0, transform: 'translateY(-50%) scale(0.95)' },
-                                to: { opacity: 1, transform: 'translateY(-50%) scale(1)' }
+                                from: { opacity: 0, transform: 'translate(-50%, -50%) scale(0.95)' },
+                                to: { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
                               }
                             }}
                             onMouseEnter={() => setHoveredStepId(step.id)}
@@ -765,31 +790,36 @@ export const PfdWorkspace: React.FC = () => {
                             })}
                           </Box>
                         ) : (
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'nowrap', justifyContent: 'center' }}>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center' }}>
                             {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
                               const isActive = !!icons[key];
                               if (!isActive) return null;
                               const iconMeta = FLOW_ICON_COLUMNS[key];
                               return (
                                 <Tooltip key={key} title={iconMeta.name} arrow>
-                                  <Box
-                                    sx={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      width: 24,
-                                      height: 24,
-                                      borderRadius: '50%',
-                                      bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
-                                      color: SYMBOL_COLORS[key]?.text || '#ffffff',
-                                      fontWeight: 'bold',
-                                      boxShadow: `0 2px 4px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.05)'}`
-                                    }}
-                                  >
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem', userSelect: 'none' }}>
-                                      {iconMeta.sym}
+                                  <Stack spacing={0.25} sx={{ alignItems: 'center' }}>
+                                    <Box
+                                      sx={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: '50%',
+                                        bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
+                                        color: SYMBOL_COLORS[key]?.text || '#ffffff',
+                                        fontWeight: 'bold',
+                                        boxShadow: `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}`
+                                      }}
+                                    >
+                                      <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.9rem', userSelect: 'none' }}>
+                                        {iconMeta.sym}
+                                      </Typography>
+                                    </Box>
+                                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
+                                      {iconMeta.short}
                                     </Typography>
-                                  </Box>
+                                  </Stack>
                                 </Tooltip>
                               );
                             })}
@@ -803,27 +833,13 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Desired Outcome */}
-                      <TableCell>
-                        <Input
-                          value={step.desiredOutcome || step.outputs || ''}
-                          placeholder="Hole diameter ø12.05mm"
-                          onChange={(e) => handleFieldChange(step.id, 'desiredOutcome', e.target.value)}
-                          disableUnderline
-                          fullWidth
-                          sx={{ fontSize: '0.85rem' }}
-                        />
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
+                        {renderMultiInputCell(step.id, 'desiredOutcome', 'Hole diameter ø12.05mm')}
                       </TableCell>
 
                       {/* Process Characteristics */}
-                      <TableCell>
-                        <Input
-                          value={step.processCharacteristics || ''}
-                          placeholder="Drill spindle speed"
-                          onChange={(e) => handleFieldChange(step.id, 'processCharacteristics', e.target.value)}
-                          disableUnderline
-                          fullWidth
-                          sx={{ fontSize: '0.85rem' }}
-                        />
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
+                        {renderMultiInputCell(step.id, 'processCharacteristics', 'Drill spindle speed')}
                       </TableCell>
 
                       {/* Actions */}
@@ -1188,25 +1204,27 @@ export const PfdWorkspace: React.FC = () => {
                     1. Identity
                   </Typography>
                   <Stack spacing={2}>
-                    <TextField
+                    <TextFieldAny
                       fullWidth
                       label="Step Number"
                       value={selectedStep.stepNumber || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         handleFieldChange(selectedStep.id, 'stepNumber', e.target.value);
                         setSelectedStep({ ...selectedStep, stepNumber: e.target.value });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
-                    <TextField
+                    <TextFieldAny
                       fullWidth
                       label="Process Description"
                       value={selectedStep.name || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         handleFieldChange(selectedStep.id, 'name', e.target.value);
                         setSelectedStep({ ...selectedStep, name: e.target.value });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
                   </Stack>
                 </Box>
@@ -1217,31 +1235,33 @@ export const PfdWorkspace: React.FC = () => {
                     2. Inputs
                   </Typography>
                   <Stack spacing={2}>
-                    <TextField
+                    <TextFieldAny
                       fullWidth
                       multiline
-                      rows={3}
+                      minRows={2}
                       label="Incoming Source of Variation (one per line)"
                       value={Array.isArray(selectedStep.incomingVariation) ? selectedStep.incomingVariation.join('\n') : (selectedStep.incomingVariation || '')}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         const lines = e.target.value.split('\n');
                         handleFieldChange(selectedStep.id, 'incomingVariation', lines as any);
                         setSelectedStep({ ...selectedStep, incomingVariation: lines });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
-                    <TextField
+                    <TextFieldAny
                       fullWidth
                       multiline
-                      rows={3}
+                      minRows={2}
                       label="Machines / Equipment / Documents Used (one per line)"
                       value={Array.isArray(selectedStep.machinesEquipmentDocs) ? selectedStep.machinesEquipmentDocs.join('\n') : (selectedStep.machinesEquipmentDocs || '')}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         const lines = e.target.value.split('\n');
                         handleFieldChange(selectedStep.id, 'machinesEquipmentDocs', lines as any);
                         setSelectedStep({ ...selectedStep, machinesEquipmentDocs: lines });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
                   </Stack>
                 </Box>
@@ -1253,12 +1273,13 @@ export const PfdWorkspace: React.FC = () => {
                   </Typography>
                   <Stack spacing={2}>
                     <FormControl fullWidth size="small">
-                      <InputLabel id="edit-step-type-label">Step Type</InputLabel>
+                      <InputLabel id="edit-step-type-label" shrink>Step Type</InputLabel>
                       <Select
                         labelId="edit-step-type-label"
                         value={selectedStep.stepType || 'operation'}
                         label="Step Type"
-                        onChange={(e) => {
+                        notched
+                        onChange={(e: any) => {
                           const val = e.target.value;
                           handleFieldChange(selectedStep.id, 'stepType', val);
                           
@@ -1285,15 +1306,16 @@ export const PfdWorkspace: React.FC = () => {
                         <MenuItem value="decision">Decision (◇)</MenuItem>
                       </Select>
                     </FormControl>
-                    <TextField
+                    <TextFieldAny
                       fullWidth
                       label="Special Characteristics Code"
                       value={selectedStep.specialCharacteristics || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         handleFieldChange(selectedStep.id, 'specialCharacteristics', e.target.value);
                         setSelectedStep({ ...selectedStep, specialCharacteristics: e.target.value });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
                   </Stack>
                 </Box>
@@ -1304,25 +1326,31 @@ export const PfdWorkspace: React.FC = () => {
                     4. Outputs
                   </Typography>
                   <Stack spacing={2}>
-                    <TextField
+                    <TextFieldAny
                       fullWidth
-                      label="Desired Outcome / Product Characteristics"
+                      multiline
+                      minRows={2}
+                      label="Desired Outcome / Product Characteristics (one per line)"
                       value={selectedStep.desiredOutcome || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         handleFieldChange(selectedStep.id, 'desiredOutcome', e.target.value);
                         setSelectedStep({ ...selectedStep, desiredOutcome: e.target.value });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
-                    <TextField
+                    <TextFieldAny
                       fullWidth
-                      label="Process Characteristics"
+                      multiline
+                      minRows={2}
+                      label="Process Characteristics (one per line)"
                       value={selectedStep.processCharacteristics || ''}
-                      onChange={(e) => {
+                      onChange={(e: any) => {
                         handleFieldChange(selectedStep.id, 'processCharacteristics', e.target.value);
                         setSelectedStep({ ...selectedStep, processCharacteristics: e.target.value });
                       }}
                       size="small"
+                      InputLabelProps={{ shrink: true }}
                     />
                   </Stack>
                 </Box>
@@ -1365,21 +1393,23 @@ export const PfdWorkspace: React.FC = () => {
                   1. Identity
                 </Typography>
                 <Stack spacing={2}>
-                  <TextField
+                  <TextFieldAny
                     fullWidth
                     label="Step Number"
                     value={addStepNumber}
-                    onChange={(e) => setAddStepNumber(e.target.value)}
+                    onChange={(e: any) => setAddStepNumber(e.target.value)}
                     placeholder="e.g. OP10"
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
-                  <TextField
+                  <TextFieldAny
                     fullWidth
                     label="Step Description / Name"
                     value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
+                    onChange={(e: any) => setAddName(e.target.value)}
                     placeholder="e.g. Assemble front bracket"
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </Stack>
               </Box>
@@ -1390,25 +1420,27 @@ export const PfdWorkspace: React.FC = () => {
                   2. Inputs
                 </Typography>
                 <Stack spacing={2}>
-                  <TextField
+                  <TextFieldAny
                     fullWidth
                     multiline
-                    rows={3}
+                    minRows={2}
                     label="Incoming Source of Variation (one per line)"
                     value={addIncomingVariation}
-                    onChange={(e) => setAddIncomingVariation(e.target.value)}
+                    onChange={(e: any) => setAddIncomingVariation(e.target.value)}
                     placeholder="Raw material thickness variation..."
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
-                  <TextField
+                  <TextFieldAny
                     fullWidth
                     multiline
-                    rows={3}
+                    minRows={2}
                     label="Machines / Equipment / Docs (one per line)"
                     value={addMachinesEquipmentDocs}
-                    onChange={(e) => setAddMachinesEquipmentDocs(e.target.value)}
+                    onChange={(e: any) => setAddMachinesEquipmentDocs(e.target.value)}
                     placeholder="Hydraulic Press HP-01..."
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </Stack>
               </Box>
@@ -1420,12 +1452,13 @@ export const PfdWorkspace: React.FC = () => {
                 </Typography>
                 <Stack spacing={2}>
                   <FormControl fullWidth size="small">
-                    <InputLabel id="add-step-type-label">Step Type</InputLabel>
+                    <InputLabel id="add-step-type-label" shrink>Step Type</InputLabel>
                     <Select
                       labelId="add-step-type-label"
                       value={addStepType}
                       label="Step Type"
-                      onChange={(e) => setAddStepType(e.target.value)}
+                      notched
+                      onChange={(e: any) => setAddStepType(e.target.value)}
                     >
                       <MenuItem value="operation">Operation (◯)</MenuItem>
                       <MenuItem value="inspection">Inspection (□)</MenuItem>
@@ -1436,13 +1469,14 @@ export const PfdWorkspace: React.FC = () => {
                       <MenuItem value="decision">Decision (◇)</MenuItem>
                     </Select>
                   </FormControl>
-                  <TextField
+                  <TextFieldAny
                     fullWidth
                     label="Special Characteristics Code"
                     value={addSpecialCharacteristics}
-                    onChange={(e) => setAddSpecialCharacteristics(e.target.value)}
+                    onChange={(e: any) => setAddSpecialCharacteristics(e.target.value)}
                     placeholder="e.g. SC / CC / OS"
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </Stack>
               </Box>
@@ -1453,21 +1487,27 @@ export const PfdWorkspace: React.FC = () => {
                   4. Outputs
                 </Typography>
                 <Stack spacing={2}>
-                  <TextField
+                  <TextFieldAny
                     fullWidth
-                    label="Desired Outcome / Product Characteristics"
+                    multiline
+                    minRows={2}
+                    label="Desired Outcome / Product Characteristics (one per line)"
                     value={addDesiredOutcome}
-                    onChange={(e) => setAddDesiredOutcome(e.target.value)}
+                    onChange={(e: any) => setAddDesiredOutcome(e.target.value)}
                     placeholder="Hole diameter 12.0 +/- 0.2mm..."
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
-                  <TextField
+                  <TextFieldAny
                     fullWidth
-                    label="Process Characteristics"
+                    multiline
+                    minRows={2}
+                    label="Process Characteristics (one per line)"
                     value={addProcessCharacteristics}
-                    onChange={(e) => setAddProcessCharacteristics(e.target.value)}
+                    onChange={(e: any) => setAddProcessCharacteristics(e.target.value)}
                     placeholder="Clamping pressure 5.2 bar..."
                     size="small"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </Stack>
               </Box>
