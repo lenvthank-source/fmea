@@ -399,7 +399,14 @@ export const PfmeaWorkspace: React.FC = () => {
           }),
         });
         if (!response.ok) {
-          throw new Error('Failed to auto-create parent structure function');
+          let errMsg = 'API Error';
+          try {
+            const body = await response.json();
+            errMsg = body.message || JSON.stringify(body);
+          } catch {
+            errMsg = response.statusText || `${response.status}`;
+          }
+          throw new Error(errMsg);
         }
         const createdFunc = await response.json();
         fnNode = createdFunc;
@@ -412,7 +419,7 @@ export const PfmeaWorkspace: React.FC = () => {
           setStructureFunctions(freshFuncs);
         }
       } catch (err: any) {
-        setError('Cannot add structure failure: Parent structure function not found in DB and auto-creation failed.');
+        setError(`Cannot add structure failure: Parent structure function not found in DB and auto-creation failed. Details: ${err.message}`);
         return;
       }
     }
