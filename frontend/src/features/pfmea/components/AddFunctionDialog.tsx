@@ -120,13 +120,20 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   if (!parentType) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="sm" 
+      fullWidth
+      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #2e7d32' } }}
+    >
       <DialogTitle
-        sx={{ bgcolor: '#0F172A', color: 'white', fontWeight: 'bold', py: 1.5 }}
+        sx={{ color: '#2e7d32', fontWeight: 'bold', pt: 2.5, pb: 1 }}
       >
         {editMode ? 'Edit' : 'Add'} Function / Requirement — {PARENT_LABELS[parentType]}
       </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
+      <DialogContent>
+        <Box sx={{ pt: 1.5 }}>
         {error && (
           <Box
             sx={{
@@ -186,6 +193,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
             </RadioGroup>
           </FormControl>
         )}
+        </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={handleClose} disabled={loading} color="inherit">
@@ -195,7 +203,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
           onClick={handleSubmit}
           disabled={loading || !narration.trim()}
           variant="contained"
-          color="primary"
+          sx={{ bgcolor: '#2e7d32', '&:hover': { bgcolor: '#1b5e20' } }}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}

@@ -34,27 +34,7 @@ interface AddFailureDialogProps {
   initialFilterCode?: string;
 }
 
-const ROLE_LABELS: Record<
-  string,
-  { title: string; color: string; description: string }
-> = {
-  effect: {
-    title: 'Add Failure Effect',
-    color: '#0F172A',
-    description:
-      'Higher-level failure associated with a project-level function',
-  },
-  mode: {
-    title: 'Add Failure Mode',
-    color: '#0F172A',
-    description: 'The specific failure being analyzed at process step level',
-  },
-  cause: {
-    title: 'Add Failure Cause',
-    color: '#0F172A',
-    description: 'Root cause of failure at work element level',
-  },
-};
+
 
 export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   open,
@@ -175,16 +155,22 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   };
 
   if (!role) return null;
-  const meta = ROLE_LABELS[role];
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="sm" 
+      fullWidth
+      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #d32f2f' } }}
+    >
       <DialogTitle
-        sx={{ bgcolor: meta.color, color: 'white', fontWeight: 'bold', py: 1.5 }}
+        sx={{ color: '#d32f2f', fontWeight: 'bold', pt: 2.5, pb: 1 }}
       >
         {editMode ? 'Edit' : 'Add'} Failure {role === 'effect' ? 'Effect' : role === 'mode' ? 'Mode' : 'Cause'}
       </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
+      <DialogContent>
+        <Box sx={{ pt: 1.5 }}>
         {/* Green context line showing the parent function */}
         <Box
           sx={{
@@ -294,6 +280,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
             />
           </Stack>
         )}
+        </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={handleClose} disabled={loading} color="inherit">
@@ -303,7 +290,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           onClick={handleSubmit}
           disabled={loading || !narration.trim()}
           variant="contained"
-          color="primary"
+          sx={{ bgcolor: '#d32f2f', '&:hover': { bgcolor: '#b71c1c' } }}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}
