@@ -1,37 +1,108 @@
-import React, { useState } from 'react';
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container, Divider } from '@mui/material';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+
+  // Check username availability when typing or on blur
+  const checkUsernameAvailability = async (nameVal: string) => {
+    if (!nameVal.trim()) {
+      setIsUsernameAvailable(null);
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/check-username?username=${encodeURIComponent(nameVal.trim())}`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsUsernameAvailable(data.available);
+      }
+    } catch (err) {
+      console.error("Error checking username uniqueness:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (isSignup) {
+      const delayDebounceFn = setTimeout(() => {
+        checkUsernameAvailability(username);
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    } else {
+      setIsUsernameAvailable(null);
+    }
+  }, [username, isSignup]);
+
+  const handleGoogleLoginResponse = async (response: any) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const idToken = response.credential;
+      await googleLogin(idToken);
+      navigate('/projects');
+    } catch (err: any) {
+      setError(err.message || 'Google Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Dynamically load Google Identity Services script for Admin logins
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-google-client-id.apps.googleusercontent.com';
+      try {
+        (window as any).google?.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleLoginResponse,
+        });
+
+        (window as any).google?.accounts.id.renderButton(
+          document.getElementById('google-signin-btn'),
+          { theme: 'outline', size: 'large', width: '100%' }
+        );
+      } catch (err) {
+        console.error("Google Auth initialization failed:", err);
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    if (isSignup && isUsernameAvailable === false) {
+      setError('Please choose an available username.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Default subdomain is 'guest-tenant'
       const subdomain = 'guest-tenant';
-
-      if (isSignup) {
-        // Call the login endpoint, which now handles dynamic silent registration
-        // if user doesn't exist, passing name.trim() along
-        await login(email, password, subdomain, name.trim());
-      } else {
-        await login(email, password, subdomain);
-      }
+      // Logs in or registers regular users passwordless using their unique username
+      await login(username.trim(), '', subdomain, username.trim());
       navigate('/projects');
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please check your credentials.');
+      setError(err.message || 'An error occurred during authentication.');
     } finally {
       setLoading(false);
     }
@@ -80,46 +151,22 @@ export const Login: React.FC = () => {
               </Alert>
             )}
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {isSignup && (
-                <TextField
-                  fullWidth
-                  label="Your Name"
-                  variant="outlined"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                    }
-                  }}
-                />
-              )}
-
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <TextField
                 fullWidth
-                label="Email Address"
-                type="email"
+                label="Your Username"
                 variant="outlined"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
                 required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-
-              <TextField
-                fullWidth
-                label="Password"
-                type="password"
-                variant="outlined"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                helperText={
+                  isSignup && isUsernameAvailable !== null
+                    ? isUsernameAvailable
+                      ? '🟢 Username is available'
+                      : '🔴 Username is already taken'
+                    : 'Enter letters, numbers, hyphens, or underscores'
+                }
+                error={isSignup && isUsernameAvailable === false}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -132,7 +179,7 @@ export const Login: React.FC = () => {
                 fullWidth
                 variant="contained"
                 size="large"
-                disabled={loading}
+                disabled={loading || (isSignup && isUsernameAvailable === false)}
                 sx={{ 
                   mt: 1, 
                   height: 44, 
@@ -148,7 +195,7 @@ export const Login: React.FC = () => {
                 {loading ? 'Processing...' : isSignup ? 'Create Account & Sign In' : 'Sign In'}
               </Button>
 
-              <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Box sx={{ textAlign: 'center', mt: 0.5 }}>
                 <Link
                   component="button"
                   type="button"
@@ -156,6 +203,7 @@ export const Login: React.FC = () => {
                   onClick={() => {
                     setIsSignup(!isSignup);
                     setError(null);
+                    setIsUsernameAvailable(null);
                   }}
                   sx={{ 
                     color: 'primary.main', 
@@ -168,6 +216,20 @@ export const Login: React.FC = () => {
                 >
                   {isSignup ? 'Already have an account? Sign In' : 'Need an account? Register here'}
                 </Link>
+              </Box>
+
+              <Divider sx={{ my: 1.5 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  ADMIN PORTAL
+                </Typography>
+              </Divider>
+
+              {/* Google Sign-in button for Neon Auth (Admins Only) */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <Box id="google-signin-btn" sx={{ width: '100%', minHeight: 40 }} />
+                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', px: 2 }}>
+                  Admin accounts must authenticate securely using Google OAuth linked to Neon Auth.
+                </Typography>
               </Box>
             </Box>
           </CardContent>

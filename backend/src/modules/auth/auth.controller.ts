@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -20,6 +20,19 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Get('check-username')
+  async checkUsername(@Query('username') username: string) {
+    return this.authService.checkUsername(username);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('google-login')
+  async googleLogin(@Body('id_token') idToken: string) {
+    return this.authService.googleLogin(idToken);
   }
 
   @Public()

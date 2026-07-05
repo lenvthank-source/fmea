@@ -241,7 +241,7 @@ export class AuthService {
       where: {
         tenantId_email: {
           tenantId: tenant.id,
-          email: dto.email,
+          email: dto.email.trim(),
         },
       },
       include: {
@@ -262,9 +262,8 @@ export class AuthService {
     });
 
     if (!user) {
-      // SILENT SIGNUP: If the user doesn't exist, we create them automatically
-      const passwordHash = await bcrypt.hash(dto.password || 'password123', 12);
-      const name = dto.name || dto.email.split('@')[0];
+      // SILENT SIGNUP: If the user doesn't exist, we create them automatically with NO password hash
+      const name = dto.name || dto.email.trim();
 
       // Find Quality Engineer role for this tenant
       let qeRole = await this.prisma.role.findFirst({
@@ -282,9 +281,9 @@ export class AuthService {
         const newUser = await tx.user.create({
           data: {
             tenantId: tenant.id,
-            email: dto.email,
+            email: dto.email.trim(),
             name,
-            passwordHash,
+            passwordHash: null, // No password for registered regular users
             status: 'active',
           },
         });
@@ -322,11 +321,13 @@ export class AuthService {
         throw new UnauthorizedException('User account is inactive or archived');
       }
 
-      // 3. Verify password
-      const isPasswordValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid email or password');
+      // Check if user is an Admin
+      const isAdmin = user.userRoles.some((ur) => ur.role.name === 'Admin');
+      if (isAdmin) {
+        throw new UnauthorizedException('Admin accounts must authenticate using Google Auth.');
       }
+      
+      // Regular users are logged in immediately without password verification (passwordless)
     }
 
     if (!user) {
@@ -454,5 +455,193 @@ export class AuthService {
         email: true,
       },
     });
+  }
+
+  async checkUsername(username: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { subdomain: 'guest-tenant' },
+    });
+    if (!tenant) {
+      return { available: true };
+    }
+    const user = await this.prisma.user.findFirst({
+      where: {
+        tenantId: tenant.id,
+        email: username.trim(),
+      },
+    });
+    return { available: !user };
+  }
+
+  async googleLogin(idToken: string) {
+    let payload: any;
+    try {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!response.ok) {
+        throw new UnauthorizedException('Invalid Google ID Token');
+      }
+      payload = await response.json();
+    } catch (err) {
+      throw new UnauthorizedException('Failed to verify Google Token');
+    }
+
+    const email = payload.email;
+    const name = payload.name || email.split('@')[0];
+
+    // Find the guest-tenant
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { subdomain: 'guest-tenant' },
+    });
+    if (!tenant) {
+      throw new UnauthorizedException('Default guest-tenant not found');
+    }
+
+    // Look up user by email
+    let user = await this.prisma.user.findUnique({
+      where: {
+        tenantId_email: {
+          tenantId: tenant.id,
+          email: email,
+        },
+      },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      // Find Admin role
+      let adminRole = await this.prisma.role.findFirst({
+        where: { tenantId: tenant.id, name: 'Admin' },
+      });
+
+      user = await this.prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            email: email,
+            name: name,
+            passwordHash: null,
+            status: 'active',
+          },
+        });
+
+        if (adminRole) {
+          await tx.userRole.create({
+            data: {
+              userId: newUser.id,
+              roleId: adminRole.id,
+            },
+          });
+        }
+
+        return tx.user.findUnique({
+          where: { id: newUser.id },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      });
+    } else {
+      if (user.status !== 'active') {
+        throw new UnauthorizedException('User account is inactive or archived');
+      }
+
+      // Ensure they have the Admin role, if not assign it
+      const isAdmin = user.userRoles.some((ur) => ur.role.name === 'Admin');
+      if (!isAdmin) {
+        let adminRole = await this.prisma.role.findFirst({
+          where: { tenantId: tenant.id, name: 'Admin' },
+        });
+        if (adminRole) {
+          await this.prisma.userRole.create({
+            data: {
+              userId: user.id,
+              roleId: adminRole.id,
+            },
+          });
+          // Re-fetch user
+          user = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: {
+              userRoles: {
+                include: {
+                  role: {
+                    include: {
+                      rolePermissions: {
+                        include: {
+                          permission: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (!user) {
+      throw new UnauthorizedException('Failed to process admin user');
+    }
+
+    // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissionCodesSet = new Set<string>();
+    for (const ur of user.userRoles) {
+      for (const rp of ur.role.rolePermissions) {
+        permissionCodesSet.add(rp.permission.code);
+      }
+    }
+    const permissions = Array.from(permissionCodesSet);
+
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      tenantId: user.tenantId,
+      roles,
+      permissions,
+    });
+
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles,
+      },
+    };
   }
 }

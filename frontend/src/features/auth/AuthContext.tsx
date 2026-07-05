@@ -14,6 +14,7 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   signup: (email: string, password: string, name: string, subdomain: string, tenantName: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
@@ -189,6 +190,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const googleLogin = async (idToken: string) => {
+    const response = await fetch(`${API_URL}/auth/google-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || 'Google login failed');
+    }
+
+    const data = await response.json();
+    const accessToken = data.access_token;
+    const claims = parseJwt(accessToken);
+
+    localStorage.setItem('token', accessToken);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    
+    setToken(accessToken);
+    setUser({
+      id: claims.sub,
+      email: claims.email,
+      name: data.user.name,
+      tenantId: claims.tenant_id || claims.tenantId,
+      roles: claims.roles || [],
+      permissions: claims.permissions || [],
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('refresh_token');
@@ -204,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, signup, logout, hasPermission }}>
+    <AuthContext.Provider value={{ token, user, loading, login, signup, logout, hasPermission, googleLogin }}>
       {children}
     </AuthContext.Provider>
   );
