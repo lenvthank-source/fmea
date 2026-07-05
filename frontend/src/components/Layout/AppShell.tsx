@@ -27,7 +27,7 @@ import { API_BASE_URL } from '../../config';
 import { useResponsive } from '../../hooks/useResponsive';
 
 export const AppShell: React.FC = () => {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -230,6 +230,10 @@ export const AppShell: React.FC = () => {
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{user.name}</Typography>
                     <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                   </Box>
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={() => { handleClose(); logout(); navigate('/login'); }} sx={{ py: 1, fontWeight: 500, color: 'error.main' }}>
+                  Sign Out
                 </MenuItem>
               </Menu>
             </div>

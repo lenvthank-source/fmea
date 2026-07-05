@@ -41,8 +41,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
 
       const subdomain = 'guest-tenant';
-      const email = 'admin@example.com';
-      const passwordHash = await bcrypt.hash('adminpassword', 12);
 
       await this.$transaction(async (tx) => {
         // Create default tenant
@@ -148,21 +146,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           })),
         });
 
-        // Create admin user
-        const user = await tx.user.create({
+        // Create default guest user (no password, alphanumeric username)
+        const guestUser = await tx.user.create({
           data: {
             tenantId: tenant.id,
-            email,
-            name: 'System Admin',
-            passwordHash,
+            email: 'guest123',
+            name: 'Guest User',
+            passwordHash: null,
           },
         });
 
-        // Assign admin role to user
+        // Assign Quality Engineer role to guest user
         await tx.userRole.create({
           data: {
-            userId: user.id,
-            roleId: adminRole.id,
+            userId: guestUser.id,
+            roleId: qeRole.id,
           },
         });
       });
