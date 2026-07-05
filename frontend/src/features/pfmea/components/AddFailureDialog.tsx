@@ -40,18 +40,18 @@ const ROLE_LABELS: Record<
 > = {
   effect: {
     title: 'Add Failure Effect',
-    color: '#b71c1c',
+    color: '#0F172A',
     description:
       'Higher-level failure associated with a project-level function',
   },
   mode: {
     title: 'Add Failure Mode',
-    color: '#b71c1c',
+    color: '#0F172A',
     description: 'The specific failure being analyzed at process step level',
   },
   cause: {
     title: 'Add Failure Cause',
-    color: '#b71c1c',
+    color: '#0F172A',
     description: 'Root cause of failure at work element level',
   },
 };
@@ -189,19 +189,19 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         <Box
           sx={{
             p: 1.5,
-            bgcolor: '#e8f5e9',
-            border: '1px solid #81c784',
+            bgcolor: 'rgba(15, 23, 42, 0.04)',
+            border: '1px solid rgba(15, 23, 42, 0.08)',
             borderRadius: 2,
             mb: 2,
           }}
         >
           <Typography
             variant="caption"
-            sx={{ fontWeight: 'bold', color: '#1b5e20', display: 'block' }}
+            sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}
           >
             Associated Function:
           </Typography>
-          <Typography variant="body2" sx={{ color: '#1b5e20' }}>
+          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
             {functionNarration || '\u2014'}
           </Typography>
         </Box>
@@ -303,7 +303,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           onClick={handleSubmit}
           disabled={loading || !narration.trim()}
           variant="contained"
-          color="error"
+          color="primary"
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}

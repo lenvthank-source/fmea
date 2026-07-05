@@ -121,8 +121,8 @@ export const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRadius: 16,
-          padding: 8,
           boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
+          overflow: 'hidden',
         },
       },
     },

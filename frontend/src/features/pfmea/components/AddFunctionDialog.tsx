@@ -122,7 +122,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle
-        sx={{ bgcolor: '#1b5e20', color: 'white', fontWeight: 'bold', py: 1.5 }}
+        sx={{ bgcolor: '#0F172A', color: 'white', fontWeight: 'bold', py: 1.5 }}
       >
         {editMode ? 'Edit' : 'Add'} Function / Requirement — {PARENT_LABELS[parentType]}
       </DialogTitle>
@@ -195,7 +195,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
           onClick={handleSubmit}
           disabled={loading || !narration.trim()}
           variant="contained"
-          sx={{ bgcolor: '#1b5e20', '&:hover': { bgcolor: '#2e7d32' } }}
+          color="primary"
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}
