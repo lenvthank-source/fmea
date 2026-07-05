@@ -7,22 +7,26 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
+  async findAll(tenantId: string, status?: string) {
     return this.prisma.project.findMany({
       where: {
         tenantId,
-        status: { not: 'archived' },
+        status: status || { not: 'archived' },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(tenantId: string, id: string) {
+  async findOne(tenantId: string, id: string, allowArchived = false) {
     const project = await this.prisma.project.findUnique({
       where: { id },
     });
 
-    if (!project || project.status === 'archived') {
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.status === 'archived' && !allowArchived) {
       throw new NotFoundException('Project not found');
     }
 
@@ -163,12 +167,11 @@ export class ProjectService {
   }
 
   async remove(tenantId: string, id: string) {
-    // Verify ownership first
-    await this.findOne(tenantId, id);
+    // Verify ownership first (allow deleting archived projects)
+    await this.findOne(tenantId, id, true);
 
-    return this.prisma.project.update({
+    return this.prisma.project.delete({
       where: { id },
-      data: { status: 'archived' },
     });
   }
 

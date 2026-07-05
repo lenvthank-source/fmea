@@ -458,7 +458,7 @@ export const ActionsDashboard: React.FC = () => {
   });
 
   return (
-    <Box>
+    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}>
       {/* Header Section */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>

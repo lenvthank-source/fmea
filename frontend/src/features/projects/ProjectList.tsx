@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Alert, CircularProgress, FormControlLabel, Chip, Radio, RadioGroup,
+  TextField, Alert, FormControlLabel, Chip, Radio, RadioGroup,
   Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
-  TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper
+  TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab
 } from '@mui/material';
 import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
+import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
 
 interface Project {
   id: string;
@@ -46,11 +47,12 @@ interface Project {
 }
 
 export const ProjectList: React.FC = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
 
   // Wizard Dialog State
   const [open, setOpen] = useState(false);
@@ -122,7 +124,10 @@ export const ProjectList: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/projects`, {
+      const url = activeTab === 'archived'
+        ? `${API_BASE_URL}/projects?status=archived`
+        : `${API_BASE_URL}/projects`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -143,7 +148,7 @@ export const ProjectList: React.FC = () => {
     if (token) {
       fetchProjects();
     }
-  }, [token]);
+  }, [token, activeTab]);
 
   const handleDeleteProject = async () => {
     if (!deleteTargetId) return;
@@ -161,6 +166,40 @@ export const ProjectList: React.FC = () => {
       setDeleteLoading(false);
       setDeleteConfirmOpen(false);
       setDeleteTargetId(null);
+    }
+  };
+
+  const handleArchiveProject = async (projectId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'archived' })
+      });
+      if (!res.ok) throw new Error('Failed to archive project');
+      fetchProjects();
+    } catch (err: any) {
+      setError(err.message || 'Failed to archive project');
+    }
+  };
+
+  const handleRestoreProject = async (projectId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'active' })
+      });
+      if (!res.ok) throw new Error('Failed to restore project');
+      fetchProjects();
+    } catch (err: any) {
+      setError(err.message || 'Failed to restore project');
     }
   };
 
@@ -419,8 +458,8 @@ export const ProjectList: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
             Projects Dashboard
@@ -434,6 +473,21 @@ export const ProjectList: React.FC = () => {
         </Button>
       </Box>
 
+      <Tabs 
+        value={activeTab} 
+        onChange={(_, newValue) => setActiveTab(newValue)} 
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+      >
+        <Tab label="Active Projects" value="active" />
+        <Tab label="Archived Projects" value="archived" />
+      </Tabs>
+
+      {activeTab === 'archived' && (
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+          ⚠️ <strong>Warning:</strong> Archived projects are hidden from active workspaces and will be permanently deleted after 30 days.
+        </Alert>
+      )}
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
@@ -441,17 +495,17 @@ export const ProjectList: React.FC = () => {
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-          <CircularProgress />
-        </Box>
+        <DashboardSkeleton showMascot={!token} />
       ) : projects.length === 0 ? (
         <Box sx={{ textAlign: 'center', p: 8, border: '1px dashed #e2e8f0', borderRadius: 5, bgcolor: 'background.paper' }}>
           <Typography color="text.secondary" gutterBottom>
-            No projects found in this workspace.
+            {activeTab === 'archived' ? 'No archived projects found.' : 'No projects found in this workspace.'}
           </Typography>
-          <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2 }}>
-            Create Your First Project
-          </Button>
+          {activeTab !== 'archived' && (
+            <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2 }}>
+              Create Your First Project
+            </Button>
+          )}
         </Box>
       ) : (
         <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
@@ -519,33 +573,83 @@ export const ProjectList: React.FC = () => {
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
         onClose={() => { setMenuAnchor(null); setMenuProjectId(null); }}
-        sx={{ '& .MuiPaper-root': { borderRadius: 2, minWidth: 160, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } }}
+        sx={{ '& .MuiPaper-root': { borderRadius: 2, minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } }}
       >
-        <MenuItem
-          onClick={() => {
-            const selectedProj = projects.find(p => p.id === menuProjectId);
-            if (selectedProj) {
-              handleEditClick(selectedProj);
-            }
-            setMenuAnchor(null);
-            setMenuProjectId(null);
-          }}
-        >
-          <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Edit Project</ListItemText>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setDeleteTargetId(menuProjectId);
-            setDeleteConfirmOpen(true);
-            setMenuAnchor(null);
-            setMenuProjectId(null);
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <ListItemIcon><DeleteIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-          <ListItemText>Delete Project</ListItemText>
-        </MenuItem>
+        {activeTab === 'active' ? (
+          <>
+            <MenuItem
+              onClick={() => {
+                const selectedProj = projects.find(p => p.id === menuProjectId);
+                if (selectedProj) {
+                  handleEditClick(selectedProj);
+                }
+                setMenuAnchor(null);
+                setMenuProjectId(null);
+              }}
+            >
+              <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+              <ListItemText>Edit Project</ListItemText>
+            </MenuItem>
+            
+            <MenuItem
+              onClick={() => {
+                if (menuProjectId) {
+                  handleArchiveProject(menuProjectId);
+                }
+                setMenuAnchor(null);
+                setMenuProjectId(null);
+              }}
+            >
+              <ListItemIcon><DeleteIcon fontSize="small" /></ListItemIcon>
+              <ListItemText>Archive Project</ListItemText>
+            </MenuItem>
+
+            {user?.roles?.includes('Admin') && (
+              <MenuItem
+                onClick={() => {
+                  setDeleteTargetId(menuProjectId);
+                  setDeleteConfirmOpen(true);
+                  setMenuAnchor(null);
+                  setMenuProjectId(null);
+                }}
+                sx={{ color: 'error.main' }}
+              >
+                <ListItemIcon><DeleteIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
+                <ListItemText>Permanent Delete</ListItemText>
+              </MenuItem>
+            )}
+          </>
+        ) : (
+          <>
+            <MenuItem
+              onClick={() => {
+                if (menuProjectId) {
+                  handleRestoreProject(menuProjectId);
+                }
+                setMenuAnchor(null);
+                setMenuProjectId(null);
+              }}
+            >
+              <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+              <ListItemText>Restore Project</ListItemText>
+            </MenuItem>
+
+            {user?.roles?.includes('Admin') && (
+              <MenuItem
+                onClick={() => {
+                  setDeleteTargetId(menuProjectId);
+                  setDeleteConfirmOpen(true);
+                  setMenuAnchor(null);
+                  setMenuProjectId(null);
+                }}
+                sx={{ color: 'error.main' }}
+              >
+                <ListItemIcon><DeleteIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
+                <ListItemText>Permanent Delete</ListItemText>
+              </MenuItem>
+            )}
+          </>
+        )}
       </Menu>
 
       {/* Delete Confirmation Dialog */}

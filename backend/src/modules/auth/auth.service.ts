@@ -9,6 +9,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 // Default permissions definition
 const PERMISSIONS = [
+  { code: 'admin.users', description: 'Manage users', module: 'admin' },
   { code: 'project.create', description: 'Create projects', module: 'project' },
   { code: 'project.edit', description: 'Edit projects', module: 'project' },
   { code: 'project.view', description: 'View projects', module: 'project' },
@@ -236,7 +237,7 @@ export class AuthService {
     }
 
     // 2. Resolve user by email inside this tenant
-    const user = await this.prisma.user.findUnique({
+    let user = await this.prisma.user.findUnique({
       where: {
         tenantId_email: {
           tenantId: tenant.id,
@@ -260,14 +261,76 @@ export class AuthService {
       },
     });
 
-    if (!user || user.status !== 'active') {
-      throw new UnauthorizedException('Invalid email or password');
+    if (!user) {
+      // SILENT SIGNUP: If the user doesn't exist, we create them automatically
+      const passwordHash = await bcrypt.hash(dto.password || 'password123', 12);
+      const name = dto.name || dto.email.split('@')[0];
+
+      // Find Quality Engineer role for this tenant
+      let qeRole = await this.prisma.role.findFirst({
+        where: { tenantId: tenant.id, name: 'Quality Engineer' },
+      });
+
+      // Fallback
+      if (!qeRole) {
+        qeRole = await this.prisma.role.findFirst({
+          where: { tenantId: tenant.id },
+        });
+      }
+
+      user = await this.prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            email: dto.email,
+            name,
+            passwordHash,
+            status: 'active',
+          },
+        });
+
+        if (qeRole) {
+          await tx.userRole.create({
+            data: {
+              userId: newUser.id,
+              roleId: qeRole.id,
+            },
+          });
+        }
+
+        return tx.user.findUnique({
+          where: { id: newUser.id },
+          include: {
+            userRoles: {
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      });
+    } else {
+      if (user.status !== 'active') {
+        throw new UnauthorizedException('User account is inactive or archived');
+      }
+
+      // 3. Verify password
+      const isPasswordValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
     }
 
-    // 3. Verify password
-    const isPasswordValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+    if (!user) {
+      throw new UnauthorizedException('Authentication failed');
     }
 
     // Update last login

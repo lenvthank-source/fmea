@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, IconButton, Alert, CircularProgress, Tab, Tabs, Input, Drawer,
+  Paper, IconButton, Alert, Tab, Tabs, Input, Drawer,
   Divider, Stack, TextField, Tooltip, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import {
@@ -14,6 +14,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
+import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -573,11 +574,7 @@ export const PfdWorkspace: React.FC = () => {
   };
 
   if (loading && !revisionId) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <WorkspaceSkeleton />;
   }
 
   return (

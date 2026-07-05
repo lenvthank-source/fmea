@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Query } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -11,14 +11,14 @@ export class ProjectController {
 
   @Get()
   @Permissions('project.view')
-  async findAll(@Request() req: RequestWithUser) {
-    return this.projectService.findAll(req.user.tenantId);
+  async findAll(@Request() req: RequestWithUser, @Query('status') status?: string) {
+    return this.projectService.findAll(req.user.tenantId, status);
   }
 
   @Get(':id')
   @Permissions('project.view')
   async findOne(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.projectService.findOne(req.user.tenantId, id);
+    return this.projectService.findOne(req.user.tenantId, id, true);
   }
 
   @Post()

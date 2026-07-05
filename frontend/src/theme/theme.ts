@@ -90,10 +90,10 @@ export const theme = createTheme({
           borderRadius: 12,
           boxShadow: '0 1px 2px rgba(40, 37, 29, 0.06), 0 4px 12px rgba(40, 37, 29, 0.08)',
           border: '1px solid rgba(40, 37, 29, 0.1)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            boxShadow: '0 1px 3px rgba(40, 37, 29, 0.08), 0 8px 16px rgba(40, 37, 29, 0.1)',
-            transform: 'none',
+            boxShadow: '0 4px 6px rgba(40, 37, 29, 0.08), 0 12px 24px rgba(40, 37, 29, 0.12)',
+            transform: 'translateY(-3px)',
           },
         },
       },

@@ -13,7 +13,7 @@ interface AuthContextType {
   token: string | null;
   user: UserSession | null;
   loading: boolean;
-  login: (email: string, password: string, subdomain: string) => Promise<void>;
+  login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
   signup: (email: string, password: string, name: string, subdomain: string, tenantName: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
@@ -129,11 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     performAutoLogin();
   }, []);
 
-  const login = async (email: string, password: string, subdomain: string) => {
+  const login = async (email: string, password: string, subdomain: string, name?: string) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, subdomain }),
+      body: JSON.stringify({ email, password, subdomain, name }),
     });
 
     if (!response.ok) {

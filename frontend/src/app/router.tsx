@@ -10,20 +10,15 @@ import { DfmeaWorkspace } from '../features/dfmea/DfmeaWorkspace';
 import { ControlPlanWorkspace } from '../features/control-plan/ControlPlanWorkspace';
 import { ActionsDashboard } from '../features/actions/ActionsDashboard';
 import { LinkageMap } from '../features/linkage/LinkageMap';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Login } from '../features/auth/Login';
+import { AdminPanel } from '../features/admin/AdminPanel';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (!token) {
+  // If authentication is still loading (e.g. silent auto-login), we render the children (AppShell)
+  // so the user sees the sidebar/navbar and the skeleton dashboard immediately.
+  if (!loading && !token) {
     return <Navigate to="/login" replace />;
   }
 
@@ -33,7 +28,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
-      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/login" element={<Login />} />
       
       <Route
         path="/"
@@ -52,15 +47,7 @@ export const AppRouter: React.FC = () => {
         <Route path="projects/:projectId/linkage" element={<LinkageMap />} />
         <Route path="projects/:projectId/settings" element={<ProjectSettings />} />
         <Route path="actions" element={<ActionsDashboard />} />
-        <Route
-          path="admin"
-          element={
-            <Box>
-              <Typography variant="h5" sx={{ mb: 2 }}>Admin Panel</Typography>
-              <Typography color="text.secondary">System settings are deferred to Sprint 3.</Typography>
-            </Box>
-          }
-        />
+        <Route path="admin" element={<AdminPanel />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -10,9 +10,10 @@ import { PermissionGuard } from './modules/auth/guards/permission.guard';
 import { ProjectModule } from './modules/project/project.module';
 import { PfdModule } from './modules/pfd/pfd.module';
 import { PfmeaModule } from './modules/pfmea/pfmea.module';
-import { ControlPlanModule } from './modules/control-plan/control-plan.module';
 import { ActionModule } from './modules/action/action.module';
 import { StructureLinkageModule } from './modules/structure-linkage/structure-linkage.module';
+import { UserModule } from './modules/user/user.module';
+import { ControlPlanModule } from './modules/control-plan/control-plan.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { StructureLinkageModule } from './modules/structure-linkage/structure-li
     ControlPlanModule,
     ActionModule,
     StructureLinkageModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

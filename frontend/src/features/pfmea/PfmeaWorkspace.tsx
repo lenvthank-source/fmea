@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Chip, IconButton, Alert, CircularProgress, Select, MenuItem, Dialog, DialogTitle,
+  Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
   Collapse, Grid
 } from '@mui/material';
@@ -15,6 +15,7 @@ import {
   KeyboardArrowUp as ExpandLessIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
+import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
@@ -864,11 +865,7 @@ export const PfmeaWorkspace: React.FC = () => {
   };
 
   if (loading && !pfmeaRevisionId) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <WorkspaceSkeleton />;
   }
 
   return (
