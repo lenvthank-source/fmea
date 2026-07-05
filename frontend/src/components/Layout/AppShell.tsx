@@ -65,6 +65,7 @@ export const AppShell: React.FC = () => {
   // Extract projectId if inside a project workspace path
   const match = location.pathname.match(/\/projects\/([^/]+)/);
   const projectId = match && match[1] !== 'projects' ? match[1] : null;
+  const showAppBar = !projectId;
 
   // Fetch project details when inside a project
   useEffect(() => {
@@ -181,14 +182,15 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', flexDirection: 'column' }}>
       <AppBar
-        position="fixed"
+        position={showAppBar ? "static" : "fixed"}
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           bgcolor: 'background.paper',
-          borderBottom: '1px solid rgba(40, 37, 29, 0.1)',
+          borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
           boxShadow: 'none',
+          display: showAppBar ? 'block' : 'none'
         }}
       >
         <Toolbar>
@@ -240,23 +242,24 @@ export const AppShell: React.FC = () => {
           )}
         </Toolbar>
       </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
+      <Box sx={{ display: 'flex', flexGrow: 1, flexDirection: 'row', width: '100%', minHeight: 0 }}>
+        <Drawer
+          variant="permanent"
+          sx={{
             width: drawerWidth,
-            boxSizing: 'border-box',
-            bgcolor: 'background.paper',
-            borderRight: '1px solid rgba(40, 37, 29, 0.1)',
-            transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            overflowX: 'hidden',
-          },
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto', mt: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            flexShrink: 0,
+            [`& .MuiDrawer-paper`]: {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              bgcolor: 'background.paper',
+              borderRight: '1px solid rgba(40, 37, 29, 0.1)',
+              transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              overflowX: 'hidden',
+            },
+          }}
+        >
+          {showAppBar && <Toolbar />}
+          <Box sx={{ overflow: 'auto', mt: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
           <Box>
             {/* Project Header section */}
             {projectId && projectName && !collapsed && (
@@ -373,9 +376,10 @@ export const AppShell: React.FC = () => {
           </Box>
         </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, minWidth: 0 }}>
         <Outlet />
       </Box>
     </Box>
+  </Box>
   );
 };

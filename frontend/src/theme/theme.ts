@@ -152,7 +152,7 @@ export const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          padding: '12px 16px',
+          padding: '6px 12px',
           borderColor: 'rgba(15, 23, 42, 0.06)',
         },
         head: {
@@ -162,6 +162,7 @@ export const theme = createTheme({
           fontSize: '0.85rem',
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
+          padding: '8px 12px',
         },
       },
     },

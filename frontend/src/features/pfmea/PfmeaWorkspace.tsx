@@ -901,7 +901,7 @@ export const PfmeaWorkspace: React.FC = () => {
       </Box>
 
       {/* Failure Modes & Linkage Status Bar */}
-      {(() => {
+      {activeTab !== 'tree' && (() => {
         const allFailures = structureFunctions.flatMap(sf => sf.failures || []);
         const totalFailureModes = allFailures.filter((f: any) => f.role === 'mode').length;
         const linkedFailureModes = allFailures.filter((f: any) => f.role === 'mode' && f.isLinked).length;
@@ -952,30 +952,41 @@ export const PfmeaWorkspace: React.FC = () => {
       )}
 
       {/* RENDER ACTIVE TAB VIEW */}
-      {activeTab === 'tree' ? (
-        <PfmeaStructureTree
-          projectName={projectName}
-          steps={steps}
-          rows={rows}
-          onAddStep={() => setAddDialogOpen(true)}
-          onEditStep={() => {}}
-          onDeleteStep={handleDeleteRow}
-          onMoveStep={() => {}}
-          onAddFunction={handleAddFunctionFromTree}
-          onAddWorkElement={handleAddWorkElementFromTree}
-          onAddFailure={handleAddFailureFromTree}
-          onOpenLinkageModal={(modeId) => {
-            setLinkageModalFailureModeId(modeId);
-            setLinkageModalOpen(true);
-          }}
-          onOpenDetailWindow={(modeId) => {
-            setDetailWindowFailureModeId(modeId);
-            setDetailWindowOpen(true);
-          }}
-          onEditNode={handleEditNodeFromTree}
-          structureFunctions={structureFunctions}
-        />
-      ) : activeTab === 'table' ? (
+      {activeTab === 'tree' ? (() => {
+        const allFailures = structureFunctions.flatMap(sf => sf.failures || []);
+        const totalFailureModes = allFailures.filter((f: any) => f.role === 'mode').length;
+        const linkedFailureModes = allFailures.filter((f: any) => f.role === 'mode' && f.isLinked).length;
+        const unlinkedFailureModes = totalFailureModes - linkedFailureModes;
+        return (
+          <PfmeaStructureTree
+            projectName={projectName}
+            steps={steps}
+            rows={rows}
+            onAddStep={() => setAddDialogOpen(true)}
+            onEditStep={() => {}}
+            onDeleteStep={handleDeleteRow}
+            onMoveStep={() => {}}
+            onAddFunction={handleAddFunctionFromTree}
+            onAddWorkElement={handleAddWorkElementFromTree}
+            onAddFailure={handleAddFailureFromTree}
+            onOpenLinkageModal={(modeId) => {
+              setLinkageModalFailureModeId(modeId);
+              setLinkageModalOpen(true);
+            }}
+            onOpenDetailWindow={(modeId) => {
+              setDetailWindowFailureModeId(modeId);
+              setDetailWindowOpen(true);
+            }}
+            onEditNode={handleEditNodeFromTree}
+            structureFunctions={structureFunctions}
+            linkageStats={{
+              total: totalFailureModes,
+              linked: linkedFailureModes,
+              unlinked: unlinkedFailureModes
+            }}
+          />
+        );
+      })() : activeTab === 'table' ? (
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>

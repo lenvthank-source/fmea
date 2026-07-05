@@ -9,7 +9,8 @@ import {
   Collapse,
   Tooltip,
   TextField,
-  Divider
+  Divider,
+  Chip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -62,6 +63,11 @@ interface PfmeaStructureTreeProps {
   onOpenDetailWindow?: (failureModeId: string) => void;
   onEditNode?: (nodeId: string) => void;
   structureFunctions?: any[];
+  linkageStats?: {
+    total: number;
+    linked: number;
+    unlinked: number;
+  };
 }
 
 export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
@@ -78,6 +84,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onOpenDetailWindow,
   onEditNode,
   structureFunctions,
+  linkageStats,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -214,7 +221,36 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
           boxShadow: 'none'
         }}
       >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          {/* Linkage Status Stats (Merged) */}
+          {linkageStats && (
+            <>
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', letterSpacing: '0.3px' }}>📊 LINKAGES</Typography>
+                <Chip
+                  label={`${linkageStats.total} Total`}
+                  size="small"
+                  sx={{ bgcolor: 'rgba(15, 23, 42, 0.06)', color: 'text.primary', fontWeight: 'bold', height: 22, fontSize: '0.75rem' }}
+                />
+                <Chip
+                  label={`${linkageStats.linked} Linked`}
+                  size="small"
+                  color="success"
+                  sx={{ fontWeight: 'bold', height: 22, fontSize: '0.75rem' }}
+                />
+                {linkageStats.unlinked > 0 && (
+                  <Chip
+                    label={`${linkageStats.unlinked} Unlinked`}
+                    size="small"
+                    color="warning"
+                    sx={{ fontWeight: 'bold', height: 22, fontSize: '0.75rem' }}
+                  />
+                )}
+              </Stack>
+              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+            </>
+          )}
+
           {/* Linkage Section */}
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mr: 1 }}>
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>LINKAGE</Typography>
