@@ -130,6 +130,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     performAutoLogin();
   }, []);
 
+  // Keep-alive background ping to keep backend and database awake while the app is open
+  useEffect(() => {
+    // Ping immediately on mount to wake up the server/db
+    fetch(`${API_URL}/health`).catch((err) => console.warn('Initial keep-awake ping failed:', err));
+
+    // Ping every 3 minutes (180,000 ms)
+    const interval = setInterval(() => {
+      fetch(`${API_URL}/health`).catch((err) => console.warn('Background keep-awake ping failed:', err));
+    }, 180000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const login = async (email: string, password: string, subdomain: string, name?: string) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
