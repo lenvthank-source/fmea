@@ -124,4 +124,7 @@ export class UpdateProjectDto {
   @IsString()
   @IsOptional()
   preliminaryFinalFlag?: string;
+
+  @IsOptional()
+  uiSettings?: any;
 }

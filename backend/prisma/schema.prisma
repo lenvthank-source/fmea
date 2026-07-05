@@ -155,6 +155,7 @@ model Project {
   dwgNumber                String?    @map("dwg_number") @db.VarChar(100)
   dwgRevNoAndDate          String?    @map("dwg_rev_no_date") @db.VarChar(100)
   preliminaryFinalFlag     String?    @default("preliminary") @map("preliminary_final_flag") @db.VarChar(20)
+  uiSettings               Json?      @map("ui_settings")
 
   @@index([tenantId])
   @@index([tenantId, status])

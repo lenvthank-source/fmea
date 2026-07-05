@@ -41,6 +41,32 @@ export const AppShell: React.FC = () => {
   const [projectName, setProjectName] = useState<string>('');
   const [pfmeaOpen, setPfmeaOpen] = useState(true);
   const [dfmeaOpen, setDfmeaOpen] = useState(false);
+  const [autohideEnabled, setAutohideEnabled] = useState<boolean>(true);
+  const [hoverTimer, setHoverTimer] = useState<any>(null);
+
+  const handleMouseEnter = () => {
+    if (!autohideEnabled) return;
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      setHoverTimer(null);
+    }
+    setCollapsedState(false);
+  };
+
+  const handleMouseLeave = () => {
+    if (!autohideEnabled) return;
+    if (hoverTimer) clearTimeout(hoverTimer);
+    const timer = setTimeout(() => {
+      setCollapsedState(true);
+    }, 1000);
+    setHoverTimer(timer);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimer) clearTimeout(hoverTimer);
+    };
+  }, [hoverTimer]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -81,6 +107,16 @@ export const AppShell: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setProjectName(data.name);
+          if (data.uiSettings) {
+            try {
+              const parsed = typeof data.uiSettings === 'string' ? JSON.parse(data.uiSettings) : data.uiSettings;
+              setAutohideEnabled(parsed.autohideSidebar !== false);
+            } catch {
+              setAutohideEnabled(true);
+            }
+          } else {
+            setAutohideEnabled(true);
+          }
         }
       } catch (err) {
         console.error('Failed to load project details', err);
@@ -245,6 +281,8 @@ export const AppShell: React.FC = () => {
       <Box sx={{ display: 'flex', flexGrow: 1, flexDirection: 'row', width: '100%', minHeight: 0 }}>
         <Drawer
           variant="permanent"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           sx={{
             width: drawerWidth,
             flexShrink: 0,

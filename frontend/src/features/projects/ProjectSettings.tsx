@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField, Alert, CircularProgress, Grid, Card, CardContent,
-  FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab
+  FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab, Switch
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
@@ -22,6 +22,7 @@ export const ProjectSettings: React.FC = () => {
 
   // Form states
   const [name, setName] = useState('');
+  const [autohideSidebar, setAutohideSidebar] = useState(true);
   const [description, setDescription] = useState('');
   const [modelYear, setModelYear] = useState('');
   const [documentTypes, setDocumentTypes] = useState<string[]>([]);
@@ -95,6 +96,17 @@ export const ProjectSettings: React.FC = () => {
         setOriginationDate(data.originationDate ? data.originationDate.split('T')[0] : '');
         setSupplierApprovalDate(data.supplierApprovalDate ? data.supplierApprovalDate.split('T')[0] : '');
         setCftMembers(data.cftMembers || []);
+        
+        if (data.uiSettings) {
+          try {
+            const parsed = typeof data.uiSettings === 'string' ? JSON.parse(data.uiSettings) : data.uiSettings;
+            setAutohideSidebar(parsed.autohideSidebar !== false);
+          } catch {
+            setAutohideSidebar(true);
+          }
+        } else {
+          setAutohideSidebar(true);
+        }
         
         setCustomerEngApprover(data.customerEngApprover || '');
         setCustomerEngApprovalDate(data.customerEngApprovalDate ? data.customerEngApprovalDate.split('T')[0] : '');
@@ -189,6 +201,9 @@ export const ProjectSettings: React.FC = () => {
       dwgNumber: dwgNumber || null,
       dwgRevNoAndDate: dwgRevNoAndDate || null,
       preliminaryFinalFlag,
+      uiSettings: {
+        autohideSidebar,
+      },
     };
 
     try {
@@ -246,6 +261,7 @@ export const ProjectSettings: React.FC = () => {
           <Tab label="Part & Customer Info" />
           <Tab label="Document Control & CFT" />
           <Tab label="Approval Sign-offs" />
+          <Tab label="UI Settings" />
         </Tabs>
       </Box>
 
@@ -590,6 +606,37 @@ export const ProjectSettings: React.FC = () => {
                     value={otherApprovalDate2}
                     onChange={(e) => setOtherApprovalDate2(e.target.value)}
                   />
+                </Grid>
+              </Grid>
+            )}
+
+            {/* Tab 4: UI Settings */}
+            {tabValue === 4 && (
+              <Grid container spacing={2.5}>
+                <Grid size={12}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'text.primary' }}>
+                    Workspace Customizations & UI Preferences
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Configure the workspace layout and interactive UI settings for this project.
+                  </Typography>
+                </Grid>
+                <Grid size={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                    <Box sx={{ mr: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                        Autohide Navigation Sidebar
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Collapses the left navigation menu automatically when mouse leaves the sidebar for 1 second. Hovering over the left edge expands it instantly.
+                      </Typography>
+                    </Box>
+                    <Switch
+                      checked={autohideSidebar}
+                      onChange={(e) => setAutohideSidebar(e.target.checked)}
+                      color="primary"
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             )}

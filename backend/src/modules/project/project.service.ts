@@ -162,6 +162,7 @@ export class ProjectService {
         dwgNumber: dto.dwgNumber,
         dwgRevNoAndDate: dto.dwgRevNoAndDate,
         preliminaryFinalFlag: dto.preliminaryFinalFlag,
+        uiSettings: dto.uiSettings,
       },
     });
   }
