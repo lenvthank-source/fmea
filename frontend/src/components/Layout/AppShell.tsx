@@ -42,31 +42,16 @@ export const AppShell: React.FC = () => {
   const [pfmeaOpen, setPfmeaOpen] = useState(true);
   const [dfmeaOpen, setDfmeaOpen] = useState(false);
   const [autohideEnabled, setAutohideEnabled] = useState<boolean>(true);
-  const [hoverTimer, setHoverTimer] = useState<any>(null);
 
   const handleMouseEnter = () => {
     if (!autohideEnabled) return;
-    if (hoverTimer) {
-      clearTimeout(hoverTimer);
-      setHoverTimer(null);
-    }
     setCollapsedState(false);
   };
 
   const handleMouseLeave = () => {
     if (!autohideEnabled) return;
-    if (hoverTimer) clearTimeout(hoverTimer);
-    const timer = setTimeout(() => {
-      setCollapsedState(true);
-    }, 1000);
-    setHoverTimer(timer);
+    setCollapsedState(true);
   };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimer) clearTimeout(hoverTimer);
-    };
-  }, [hoverTimer]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -291,7 +276,9 @@ export const AppShell: React.FC = () => {
               boxSizing: 'border-box',
               bgcolor: 'background.paper',
               borderRight: '1px solid rgba(40, 37, 29, 0.1)',
-              transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: collapsed
+                ? 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)'
+                : 'width 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
               overflowX: 'hidden',
             },
           }}
