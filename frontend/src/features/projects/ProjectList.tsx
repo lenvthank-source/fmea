@@ -679,7 +679,7 @@ export const ProjectList: React.FC = () => {
           </Stepper>
         </Box>
 
-        <Box component="form" onSubmit={isEditing ? handleUpdate : handleCreate}>
+        <Box>
           <DialogContent sx={{ p: 3 }}>
             {createError && (
               <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
@@ -1038,15 +1038,26 @@ export const ProjectList: React.FC = () => {
           </DialogContent>
 
           <DialogActions sx={{ p: 3, borderTop: '1px solid #e2e8f0' }}>
-            <Button onClick={handleClose} disabled={createLoading}>Cancel</Button>
+            <Button type="button" onClick={handleClose} disabled={createLoading}>Cancel</Button>
             <Box sx={{ flexGrow: 1 }} />
             {step > 1 && (
-              <Button onClick={handleBack} disabled={createLoading}>Back</Button>
+              <Button type="button" onClick={handleBack} disabled={createLoading}>Back</Button>
             )}
             {step < 3 ? (
-              <Button onClick={handleNext} variant="contained">Next</Button>
+              <Button type="button" onClick={handleNext} variant="contained">Next</Button>
             ) : (
-              <Button type="submit" variant="contained" disabled={createLoading}>
+              <Button
+                type="button"
+                variant="contained"
+                disabled={createLoading}
+                onClick={(e) => {
+                  if (isEditing) {
+                    handleUpdate(e as any);
+                  } else {
+                    handleCreate(e as any);
+                  }
+                }}
+              >
                 {createLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Project')}
               </Button>
             )}
