@@ -30,14 +30,23 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Private Credentials
-FMEA Credentials.txt
+# Private Credentials & Metadata
+/FMEA Credentials.txt
+/query
 
-# Ignore all markdown files except README.md
-*.md
-**/*.md
-!README.md
-!**/README.md
+# Root configurations and deployment guides
+/package.json
+/fmea-pod.yaml
+/*.yaml
+/*.yml
+/deplopyment guide
+/deployment_guide.md
+/first_time_user_guide.md
+/podman_deployment_guide.md
 
-# Ignore specific non-markdown guides
-deplopyment guide
+# Ignore entire docs directory
+/docs/
+
+# Ignore all subfolder README.md files (except root)
+**/README.md
+!/README.md

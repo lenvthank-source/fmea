@@ -227,9 +227,6 @@ export const Login: React.FC = () => {
               {/* Google Sign-in button for Neon Auth (Admins Only) */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 <Box id="google-signin-btn" sx={{ width: '100%', minHeight: 40 }} />
-                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', px: 2 }}>
-                  Admin accounts must authenticate securely using Google OAuth linked to Neon Auth.
-                </Typography>
               </Box>
             </Box>
           </CardContent>
