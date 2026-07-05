@@ -115,7 +115,7 @@ export const Login: React.FC = () => {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #01696F 0%, #004F53 100%)',
+        background: 'linear-gradient(135deg, #0F172A 0%, #0D9488 100%)',
         py: 4,
         px: 2
       }}

@@ -91,7 +91,7 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({ showMascot
               <TableBody>
                 {[1, 2, 3, 4, 5].map((idx) => (
                   <TableRow key={idx}>
-                    <TableCell><Skeleton width={140} height={20} sx={{ bgcolor: 'rgba(1, 105, 111, 0.08)' }} /></TableCell>
+                    <TableCell><Skeleton width={140} height={20} sx={{ bgcolor: 'rgba(13, 148, 136, 0.08)' }} /></TableCell>
                     <TableCell><Skeleton width="90%" height={20} /></TableCell>
                     <TableCell><Skeleton width={70} height={20} /></TableCell>
                     <TableCell><Skeleton width={50} height={20} /></TableCell>
@@ -124,8 +124,8 @@ export const DashboardSkeleton: React.FC<DashboardSkeletonProps> = ({ showMascot
             sx={{
               p: 4,
               borderRadius: 4,
-              boxShadow: '0 8px 32px rgba(40, 37, 29, 0.12)',
-              border: '1px solid rgba(1, 105, 111, 0.12)',
+              boxShadow: '0 8px 32px rgba(15, 23, 42, 0.08)',
+              border: '1px solid rgba(13, 148, 136, 0.12)',
               bgcolor: 'background.paper',
               display: 'flex',
               flexDirection: 'column',
