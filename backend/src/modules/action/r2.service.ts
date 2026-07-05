@@ -15,10 +15,17 @@ export class R2Service {
   private readonly localUploadDir = path.join(process.cwd(), 'uploads', 'evidence');
 
   constructor(private configService: ConfigService) {
-    const accessKeyId = this.configService.get<string>('R2_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get<string>('R2_SECRET_ACCESS_KEY');
-    const endpoint = this.configService.get<string>('R2_ENDPOINT');
-    this.bucketName = this.configService.get<string>('R2_BUCKET_NAME') || null;
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID || this.configService.get<string>('R2_ACCESS_KEY_ID');
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || this.configService.get<string>('R2_SECRET_ACCESS_KEY');
+    const endpoint = process.env.R2_ENDPOINT || this.configService.get<string>('R2_ENDPOINT');
+    this.bucketName = process.env.R2_BUCKET_NAME || this.configService.get<string>('R2_BUCKET_NAME') || null;
+
+    this.logger.log(
+      `Checking R2 env variables: R2_ACCESS_KEY_ID=${accessKeyId ? 'configured' : 'missing'}, ` +
+      `R2_SECRET_ACCESS_KEY=${secretAccessKey ? 'configured' : 'missing'}, ` +
+      `R2_ENDPOINT=${endpoint ? 'configured' : 'missing'}, ` +
+      `R2_BUCKET_NAME=${this.bucketName ? 'configured' : 'missing'}`
+    );
 
     if (accessKeyId && secretAccessKey && endpoint && this.bucketName) {
       this.s3Client = new S3Client({
@@ -33,7 +40,7 @@ export class R2Service {
       this.logger.log('Cloudflare R2 storage initialized successfully.');
     } else {
       this.logger.warn(
-        'Cloudflare R2 configuration missing. Falling back to local filesystem storage for action evidence.',
+        'Cloudflare R2 configuration missing or incomplete. Falling back to local filesystem storage for action evidence.',
       );
       // Ensure local upload directory exists
       if (!fs.existsSync(this.localUploadDir)) {

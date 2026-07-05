@@ -44,9 +44,109 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
   };
 
   const generateCSV = (watermark: string) => {
-    let headers: string[] = [];
-    let rows: string[][] = [];
+    // Helper to format item arrays for cell display with Excel-specific line breaks
+    const formatExcelList = (arr: any[] | undefined): string => {
+      if (!arr || arr.length === 0) return '—';
+      return arr.map(item => {
+        const val = typeof item === 'object' ? (item.name || '') : String(item);
+        return val
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }).join('<br style="mso-data-placement:same-cell;"/>');
+    };
 
+    // Helper to apply class names for Action Priority ratings
+    const getApStyleClass = (ap: string | undefined): string => {
+      if (!ap) return '';
+      const cleanAp = ap.trim().toUpperCase();
+      if (cleanAp === 'HIGH' || cleanAp === 'H') return 'class="ap-high"';
+      if (cleanAp === 'MEDIUM' || cleanAp === 'M') return 'class="ap-medium"';
+      if (cleanAp === 'LOW' || cleanAp === 'L') return 'class="ap-low"';
+      return '';
+    };
+
+    let headers: string[] = [];
+    let tableRowsHtml = '';
+
+    // 1. Calculate spans for Process Steps, Functions, and Requirements
+    const stepSpans: number[] = [];
+    const funcSpans: number[] = [];
+    const reqSpans: number[] = [];
+
+    if (docType === 'PFMEA' || docType === 'DFMEA') {
+      let i = 0;
+      while (i < data.length) {
+        let stepCount = 1;
+        const currentStepId = data[i].processStepId;
+        
+        while (i + stepCount < data.length && data[i + stepCount].processStepId === currentStepId) {
+          stepCount++;
+        }
+        
+        stepSpans[i] = stepCount;
+        for (let k = 1; k < stepCount; k++) {
+          stepSpans[i + k] = 0;
+        }
+        
+        let j = i;
+        const stepEnd = i + stepCount;
+        while (j < stepEnd) {
+          let funcCount = 1;
+          const currentFuncsStr = data[j].functions?.map((f: any) => f.name).join('|') || '';
+          
+          while (j + funcCount < stepEnd && (data[j + funcCount].functions?.map((f: any) => f.name).join('|') || '') === currentFuncsStr) {
+            funcCount++;
+          }
+          
+          funcSpans[j] = funcCount;
+          for (let k = 1; k < funcCount; k++) {
+            funcSpans[j + k] = 0;
+          }
+          
+          let r = j;
+          const funcEnd = j + funcCount;
+          while (r < funcEnd) {
+            let reqCount = 1;
+            const currentReqsStr = data[r].requirements?.map((req: any) => req.name).join('|') || '';
+            
+            while (r + reqCount < funcEnd && (data[r + reqCount].requirements?.map((req: any) => req.name).join('|') || '') === currentReqsStr) {
+              reqCount++;
+            }
+            
+            reqSpans[r] = reqCount;
+            for (let k = 1; k < reqCount; k++) {
+              reqSpans[r + k] = 0;
+            }
+            
+            r += reqCount;
+          }
+          
+          j += funcCount;
+        }
+        
+        i += stepCount;
+      }
+    } else if (docType === 'CONTROL_PLAN') {
+      let i = 0;
+      while (i < data.length) {
+        let stepCount = 1;
+        const currentStepId = data[i].processStepId;
+        
+        while (i + stepCount < data.length && data[i + stepCount].processStepId === currentStepId) {
+          stepCount++;
+        }
+        
+        stepSpans[i] = stepCount;
+        for (let k = 1; k < stepCount; k++) {
+          stepSpans[i + k] = 0;
+        }
+        i += stepCount;
+      }
+    }
+
+    // 2. Generate Columns and Rows based on Document Type
     if (docType === 'PFMEA') {
       headers = [
         '#', 'Process Step', 'Work Element (4M)', 'Functions', 'Requirements',
@@ -57,7 +157,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         headers.push('Classification');
       }
 
-      rows = data.map(row => {
+      data.forEach((row, idx) => {
         const step = steps?.find(s => s.id === row.processStepId);
         let workElements = '';
         if (step) {
@@ -73,44 +173,54 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           }
         }
 
-        const funcs = row.functions?.map((f: any) => f.name).join(' | ') || '';
-        const reqs = row.requirements?.map((r: any) => r.name).join(' | ') || '';
-        const effects = row.effects?.map((e: any) => e.name).join(' | ') || '';
-        const fms = row.failureModes?.map((fm: any) => fm.name).join(' | ') || '';
-        const causes = row.causes?.map((c: any) => c.name).join(' | ') || '';
-        const prevControls = row.controls?.filter((c: any) => c.type === 'prevention').map((c: any) => c.name).join(' | ') || '';
-        const detControls = row.controls?.filter((c: any) => c.type === 'detection').map((c: any) => c.name).join(' | ') || '';
-
-        const cells = [
-          row.rowNumber,
-          step ? `${step.stepNumber} - ${step.name}` : '',
-          workElements,
-          funcs,
-          reqs,
-          effects,
-          row.severity || '',
-          fms,
-          causes,
-          prevControls,
-          row.occurrence || '',
-          detControls,
-          row.detection || '',
-          row.ap || '',
-          row.notes || ''
-        ];
-
-        if (watermark) {
-          cells.push(`[${watermark}]`);
+        const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
+        tableRowsHtml += `<tr ${rowClass}>`;
+        tableRowsHtml += `<td class="text-center">${row.rowNumber}</td>`;
+        
+        if (stepSpans[idx] > 0) {
+          const stepText = step ? `${step.stepNumber} - ${step.name}` : '';
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${stepText}</td>`;
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${workElements}</td>`;
         }
-        return cells.map(val => `"${String(val).replace(/"/g, '""')}"`);
+        
+        if (funcSpans[idx] > 0) {
+          tableRowsHtml += `<td rowspan="${funcSpans[idx]}">${formatExcelList(row.functions)}</td>`;
+        }
+        
+        if (reqSpans[idx] > 0) {
+          tableRowsHtml += `<td rowspan="${reqSpans[idx]}">${formatExcelList(row.requirements)}</td>`;
+        }
+        
+        tableRowsHtml += `<td>${formatExcelList(row.effects)}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.severity || ''}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.failureModes)}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.causes)}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'prevention'))}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.occurrence || ''}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'detection'))}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.detection || ''}</td>`;
+        
+        const apVal = row.ap || '';
+        tableRowsHtml += `<td ${getApStyleClass(apVal)}>${apVal}</td>`;
+        tableRowsHtml += `<td>${row.notes || ''}</td>`;
+        
+        if (watermark) {
+          tableRowsHtml += `<td>[${watermark}]</td>`;
+        }
+        tableRowsHtml += '</tr>';
       });
+
     } else if (docType === 'DFMEA') {
       headers = [
         '#', 'Higher Level (System)', 'Focus Element', 'Component Element', 'Functions', 'Requirements',
         'Failure Effects (FE)', 'S', 'Failure Modes (FM)', 'Failure Causes (FC)',
         'Prevention Controls', 'O', 'Detection Controls', 'D', 'AP', 'Filter Code', 'Notes'
       ];
-      rows = data.map(row => {
+      if (watermark) {
+        headers.push('Classification');
+      }
+
+      data.forEach((row, idx) => {
         const step = steps?.find(s => s.id === row.processStepId);
         let workElements = '';
         if (step) {
@@ -126,76 +236,160 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           }
         }
 
-        const funcs = row.functions?.map((f: any) => f.name).join(' | ') || '';
-        const reqs = row.requirements?.map((r: any) => r.name).join(' | ') || '';
-        const effects = row.effects?.map((e: any) => e.name).join(' | ') || '';
-        const fms = row.failureModes?.map((fm: any) => fm.name).join(' | ') || '';
-        const causes = row.causes?.map((c: any) => c.name).join(' | ') || '';
-        const prevControls = row.controls?.filter((c: any) => c.type === 'prevention').map((c: any) => c.name).join(' | ') || '';
-        const detControls = row.controls?.filter((c: any) => c.type === 'detection').map((c: any) => c.name).join(' | ') || '';
-
-        const cells = [
-          row.rowNumber,
-          projectName || 'System (Root)',
-          step ? `${step.stepNumber} - ${step.name}` : '',
-          workElements,
-          funcs,
-          reqs,
-          effects,
-          row.severity || '',
-          fms,
-          causes,
-          prevControls,
-          row.occurrence || '',
-          detControls,
-          row.detection || '',
-          row.ap || '',
-          row.filterCode || '',
-          row.notes || ''
-        ];
-        if (watermark) {
-          cells.push(`[${watermark}]`);
+        const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
+        tableRowsHtml += `<tr ${rowClass}>`;
+        tableRowsHtml += `<td class="text-center">${row.rowNumber}</td>`;
+        
+        if (idx === 0) {
+          tableRowsHtml += `<td rowspan="${data.length}">${projectName || 'System (Root)'}</td>`;
         }
-        return cells.map(val => `"${String(val).replace(/"/g, '""')}"`);
+        
+        if (stepSpans[idx] > 0) {
+          const stepText = step ? `${step.stepNumber} - ${step.name}` : '';
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${stepText}</td>`;
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${workElements}</td>`;
+        }
+        
+        if (funcSpans[idx] > 0) {
+          tableRowsHtml += `<td rowspan="${funcSpans[idx]}">${formatExcelList(row.functions)}</td>`;
+        }
+        
+        if (reqSpans[idx] > 0) {
+          tableRowsHtml += `<td rowspan="${reqSpans[idx]}">${formatExcelList(row.requirements)}</td>`;
+        }
+        
+        tableRowsHtml += `<td>${formatExcelList(row.effects)}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.severity || ''}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.failureModes)}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.causes)}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'prevention'))}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.occurrence || ''}</td>`;
+        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'detection'))}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.detection || ''}</td>`;
+        
+        const apVal = row.ap || '';
+        tableRowsHtml += `<td ${getApStyleClass(apVal)}>${apVal}</td>`;
+        tableRowsHtml += `<td>${row.filterCode || ''}</td>`;
+        tableRowsHtml += `<td>${row.notes || ''}</td>`;
+        
+        if (watermark) {
+          tableRowsHtml += `<td>[${watermark}]</td>`;
+        }
+        tableRowsHtml += '</tr>';
       });
+
     } else if (docType === 'CONTROL_PLAN') {
       headers = [
         '#', 'Source', 'Process Step', 'Machine / Equipment', 'Characteristics', 'Classification',
         'Spec / Tolerance', 'Measurement Method', 'Sample Size', 'Frequency', 'Control Type',
         'Control Method', 'Reaction Plan', 'Responsible'
       ];
-      rows = data.map(row => {
+      if (watermark) {
+        headers.push('Classification');
+      }
+
+      data.forEach((row, idx) => {
         const step = steps?.find(s => s.id === row.processStepId);
         const sourceLabel = row.linkedPfmeaRows && row.linkedPfmeaRows.length > 0 ? 'FMEA' : 'PFD';
-        const cells = [
-          row.rowNumber,
-          sourceLabel,
-          step ? `${step.stepNumber} - ${step.name}` : '',
-          row.machinesEquipmentDocs || '',
-          row.characteristicName || '',
-          row.characteristicClassification || '',
-          row.specTolerance || '',
-          row.measurementMethod || '',
-          row.sampleSize || '',
-          row.frequency || '',
-          row.controlType || '',
-          row.controlMethod || '',
-          row.reactionPlan || '',
-          row.responsible || ''
-        ];
-        if (watermark) {
-          cells.push(`[${watermark}]`);
+        const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
+        
+        tableRowsHtml += `<tr ${rowClass}>`;
+        tableRowsHtml += `<td class="text-center">${row.rowNumber}</td>`;
+        tableRowsHtml += `<td class="text-center">${sourceLabel}</td>`;
+        
+        if (stepSpans[idx] > 0) {
+          const stepText = step ? `${step.stepNumber} - ${step.name}` : '';
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${stepText}</td>`;
+          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${row.machinesEquipmentDocs || ''}</td>`;
         }
-        return cells.map(val => `"${String(val).replace(/"/g, '""')}"`);
+        
+        tableRowsHtml += `<td>${row.characteristicName || ''}</td>`;
+        tableRowsHtml += `<td class="text-center text-bold">${row.characteristicClassification || ''}</td>`;
+        tableRowsHtml += `<td>${row.specTolerance || ''}</td>`;
+        tableRowsHtml += `<td>${row.measurementMethod || ''}</td>`;
+        tableRowsHtml += `<td>${row.sampleSize || ''}</td>`;
+        tableRowsHtml += `<td>${row.frequency || ''}</td>`;
+        tableRowsHtml += `<td>${row.controlType || ''}</td>`;
+        tableRowsHtml += `<td>${row.controlMethod || ''}</td>`;
+        tableRowsHtml += `<td>${row.reactionPlan || ''}</td>`;
+        tableRowsHtml += `<td>${row.responsible || ''}</td>`;
+        
+        if (watermark) {
+          tableRowsHtml += `<td>[${watermark}]</td>`;
+        }
+        tableRowsHtml += '</tr>';
       });
     }
 
-    const csvContent = [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // 3. Assemble Excel-compliant styled HTML spreadsheet template
+    const excelTemplate = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>${docType} Export</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #0F172A; }
+            table { border-collapse: collapse; }
+            th {
+              background-color: #0F172A;
+              color: #ffffff;
+              font-weight: bold;
+              font-size: 10.5pt;
+              border: 0.5pt solid #94A3B8;
+              padding: 8px 6px;
+              text-align: left;
+            }
+            td {
+              font-size: 9.5pt;
+              border: 0.5pt solid #CBD5E1;
+              padding: 6px;
+              vertical-align: top;
+              mso-number-format: "\\@";
+            }
+            .text-center { text-align: center; }
+            .text-bold { font-weight: bold; }
+            .bg-zebra { background-color: #F8FAFC; }
+            .rating-cell { font-weight: bold; text-align: center; }
+            .ap-high { background-color: #FEE2E2; color: #991B1B; font-weight: bold; text-align: center; }
+            .ap-medium { background-color: #FEF3C7; color: #92400E; font-weight: bold; text-align: center; }
+            .ap-low { background-color: #DCFCE7; color: #166534; font-weight: bold; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <h2>${projectName} — ${docType} Spreadsheet</h2>
+          <p>Exported on: ${new Date().toLocaleDateString()}</p>
+          <table>
+            <thead>
+              <tr>
+                ${headers.map(h => `<th>${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xls`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -465,7 +659,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                 label={
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <DownloadIcon fontSize="small" color="primary" />
-                    <Typography variant="body2">Export to Excel Spreadsheet (CSV Format)</Typography>
+                    <Typography variant="body2">Export to Excel Spreadsheet (.XLS Format)</Typography>
                   </Stack>
                 } 
               />
