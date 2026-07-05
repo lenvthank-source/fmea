@@ -80,6 +80,15 @@ export const RatingDropdown: React.FC<RatingDropdownProps> = ({
           const val = e.target.value as any;
           onChange(val === '' ? null : Number(val));
         }}
+        renderValue={(selected) => {
+          const selVal = selected as any;
+          if (selVal === '') return <em>—</em>;
+          return (
+            <Typography variant="body2" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+              {selected}
+            </Typography>
+          );
+        }}
       >
         <MenuItem value="">
           <em>—</em>
