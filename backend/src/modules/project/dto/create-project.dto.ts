@@ -2,8 +2,8 @@ import { IsNotEmpty, IsOptional, IsString, IsArray, IsDateString } from 'class-v
 
 export class CreateProjectDto {
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsString()
   @IsOptional()
@@ -34,8 +34,8 @@ export class CreateProjectDto {
   organisationCode?: string;
 
   @IsString()
-  @IsOptional()
-  orgPartNumber?: string;
+  @IsNotEmpty()
+  orgPartNumber: string;
 
   @IsString()
   @IsOptional()

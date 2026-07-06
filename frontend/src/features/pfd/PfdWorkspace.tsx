@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, IconButton, Alert, Tab, Tabs, Input, Drawer,
-  Divider, Stack, TextField, Tooltip, FormControl, InputLabel, Select, MenuItem
+  Divider, Stack, TextField, Tooltip, FormControl, InputLabel, Select, MenuItem, Fab
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -11,13 +11,17 @@ import {
   ContentCopy as DuplicateIcon,
   DragIndicator as DragIcon,
   Info as DetailsIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  KeyboardArrowDown as ExpandMoreIcon,
+  KeyboardArrowRight as ChevronRightIcon,
+  Download as DownloadIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
+import { ReportExporter } from '../reports/ReportExporter';
 
 interface ProcessStep {
   id: string;
@@ -44,6 +48,27 @@ export const PfdWorkspace: React.FC = () => {
   const { token } = useAuth();
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
+
+  const handleToggleExpand = (stepId: string) => {
+    setCollapsedSteps(prev => {
+      const next = new Set(prev);
+      if (next.has(stepId)) {
+        next.delete(stepId);
+      } else {
+        next.add(stepId);
+      }
+      return next;
+    });
+  };
+
+  const handleExpandAll = () => {
+    setCollapsedSteps(new Set());
+  };
+
+  const handleCollapseAll = () => {
+    setCollapsedSteps(new Set(steps.map(s => s.id)));
+  };
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +78,7 @@ export const PfdWorkspace: React.FC = () => {
 
   // Drawer for Detail Editing
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
   const [hoveredStepId, setHoveredStepId] = useState<string | null>(null);
 
@@ -617,13 +643,35 @@ export const PfdWorkspace: React.FC = () => {
             }}
           />
         </Tabs>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenAddDrawer}
-        >
-          Add Step
-        </Button>
+        {activeTab === 'table' && (
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleExpandAll}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              Expand All
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleCollapseAll}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              Collapse All
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setExportOpen(true)}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none', fontWeight: 600, ml: 1 }}
+            >
+              Export
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {error && (
@@ -636,7 +684,8 @@ export const PfdWorkspace: React.FC = () => {
       <DocumentHeader projectId={projectId!} docType="PFD" />
 
       {activeTab === 'table' ? (
-        <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1 }}>
+        <>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1 }}>
           <Table aria-label="PFD spreadsheet grid" size="small">
             <TableHead>
               <TableRow>
@@ -655,13 +704,29 @@ export const PfdWorkspace: React.FC = () => {
             <TableBody>
               {steps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    No steps added yet. Click "+ Add Step" to insert a blank row.
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                    <Typography color="text.secondary" sx={{ mb: 2 }}>
+                      No process steps added yet.
+                    </Typography>
+                    <Fab
+                      color="primary"
+                      variant="extended"
+                      onClick={handleOpenAddDrawer}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        boxShadow: '0 4px 14px 0 rgba(13, 148, 136, 0.4)',
+                      }}
+                    >
+                      <AddIcon sx={{ mr: 1 }} />
+                      Add First Step
+                    </Fab>
                   </TableCell>
                 </TableRow>
               ) : (
                 steps.map((step, index) => {
                   const icons = step.flowIcons || {};
+                  const isCollapsed = collapsedSteps.has(step.id);
                   return (
                     <TableRow
                       key={step.id}
@@ -671,61 +736,80 @@ export const PfdWorkspace: React.FC = () => {
                       onDrop={() => handleDrop(index)}
                       onMouseEnter={() => setHoveredStepId(step.id)}
                       onMouseLeave={() => setHoveredStepId(null)}
+                      onClick={() => handleToggleExpand(step.id)}
                       sx={{
-                        '&:hover': { bgcolor: '#f8fafc' },
+                        '&:hover': { bgcolor: '#f8fafc', cursor: 'pointer' },
                         opacity: draggedIndex === index ? 0.5 : 1,
-                        cursor: 'grab',
                         position: 'relative'
                       }}
                     >
                       {/* Drag Handle */}
-                      <TableCell align="center" sx={{ cursor: 'move' }}>
+                      <TableCell align="center" sx={{ cursor: 'move' }} onClick={(e) => e.stopPropagation()}>
                         <DragIcon fontSize="small" sx={{ color: 'text.disabled' }} />
                       </TableCell>
 
                       {/* Step Number */}
-                      <TableCell>
-                        <Input
-                          value={step.stepNumber}
-                          onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
-                          disableUnderline
-                          fullWidth
-                          sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
-                        />
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <IconButton size="small" onClick={() => handleToggleExpand(step.id)} sx={{ p: 0.25 }}>
+                            {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                          </IconButton>
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                              {step.stepNumber}
+                            </Typography>
+                          ) : (
+                            <Input
+                              value={step.stepNumber}
+                              onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
+                              disableUnderline
+                              fullWidth
+                              sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
 
                       {/* Process Description */}
-                      <TableCell>
-                        <Input
-                          id={`name-input-${step.id}`}
-                          value={step.name}
-                          placeholder="Drill core hole..."
-                          onChange={(e) => handleFieldChange(step.id, 'name', e.target.value)}
-                          disableUnderline
-                          fullWidth
-                          sx={{ fontSize: '0.85rem' }}
-                        />
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? (
+                          <Typography sx={{ fontSize: '0.85rem', color: 'text.primary' }}>
+                            {step.name || 'Untitled Process Step'}
+                          </Typography>
+                        ) : (
+                          <Input
+                            id={`name-input-${step.id}`}
+                            value={step.name}
+                            placeholder="Drill core hole..."
+                            onChange={(e) => handleFieldChange(step.id, 'name', e.target.value)}
+                            disableUnderline
+                            fullWidth
+                            sx={{ fontSize: '0.85rem' }}
+                          />
+                        )}
                       </TableCell>
 
                       {/* Incoming Variation */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
-                        {renderMultiInputCell(step.id, 'incomingVariation', 'Raw casting variation...')}
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? null : renderMultiInputCell(step.id, 'incomingVariation', 'Raw casting variation...')}
                       </TableCell>
 
                       {/* Special Characteristics */}
-                      <TableCell>
-                        <Input
-                          value={step.specialCharacteristics || ''}
-                          placeholder="CC / SC"
-                          onChange={(e) => handleFieldChange(step.id, 'specialCharacteristics', e.target.value)}
-                          disableUnderline
-                          fullWidth
-                          sx={{ fontSize: '0.85rem' }}
-                        />
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? null : (
+                          <Input
+                            value={step.specialCharacteristics || ''}
+                            placeholder="CC / SC"
+                            onChange={(e) => handleFieldChange(step.id, 'specialCharacteristics', e.target.value)}
+                            disableUnderline
+                            fullWidth
+                            sx={{ fontSize: '0.85rem' }}
+                          />
+                        )}
                       </TableCell>
 
-                      {/* Flow Symbols - Floating hover overlay + permanent visible active symbols */}
-                      <TableCell sx={{ position: 'relative', minWidth: 130, p: 0.5, bgcolor: 'rgba(1, 105, 111, 0.02)', borderLeft: '1px solid rgba(1, 105, 111, 0.06)', borderRight: '1px solid rgba(1, 105, 111, 0.06)' }}>
+                      {/* Flow Symbols */}
+                      <TableCell sx={{ position: 'relative', minWidth: 130, p: 0.5, bgcolor: 'rgba(1, 105, 111, 0.02)', borderLeft: '1px solid rgba(1, 105, 111, 0.06)', borderRight: '1px solid rgba(1, 105, 111, 0.06)' }} onClick={(e) => e.stopPropagation()}>
                         {hoveredStepId === step.id ? (
                           <Box
                             sx={{
@@ -825,22 +909,22 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Machines / Machinery / Docs */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
-                        {renderMultiInputCell(step.id, 'machinesEquipmentDocs', 'CNC Drilling Machine...')}
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? null : renderMultiInputCell(step.id, 'machinesEquipmentDocs', 'CNC Drilling Machine...')}
                       </TableCell>
 
                       {/* Desired Outcome */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
-                        {renderMultiInputCell(step.id, 'desiredOutcome', 'Hole diameter ø12.05mm')}
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? null : renderMultiInputCell(step.id, 'desiredOutcome', 'Hole diameter ø12.05mm')}
                       </TableCell>
 
                       {/* Process Characteristics */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }}>
-                        {renderMultiInputCell(step.id, 'processCharacteristics', 'Drill spindle speed')}
+                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                        {isCollapsed ? null : renderMultiInputCell(step.id, 'processCharacteristics', 'Drill spindle speed')}
                       </TableCell>
 
                       {/* Actions */}
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Stack direction="row" spacing={0.5}>
                           <IconButton size="small" onClick={() => openDetails(step)}>
                             <DetailsIcon fontSize="small" />
@@ -860,6 +944,24 @@ export const PfdWorkspace: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        {steps.length > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
+            <Fab
+              color="primary"
+              variant="extended"
+              onClick={handleOpenAddDrawer}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 14px 0 rgba(13, 148, 136, 0.4)',
+              }}
+            >
+              <AddIcon sx={{ mr: 1 }} />
+              Add Process Step
+            </Fab>
+          </Box>
+        )}
+      </>
       ) : (
         /* Flow Diagram View */
         <Box sx={{ position: 'relative', border: '1px solid #cbd5e1', borderRadius: 4, overflow: 'hidden', bgcolor: '#f8fafc', height: 600 }}>
@@ -1522,6 +1624,15 @@ export const PfdWorkspace: React.FC = () => {
           </Stack>
         </Box>
       </Drawer>
+
+      <ReportExporter
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        docType="PFD"
+        projectName=""
+        data={steps}
+        steps={steps}
+      />
     </Box>
   );
 };

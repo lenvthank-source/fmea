@@ -127,4 +127,8 @@ export class UpdateProjectDto {
 
   @IsOptional()
   uiSettings?: any;
+
+  @IsString()
+  @IsOptional()
+  revisionNumber?: string;
 }

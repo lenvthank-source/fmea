@@ -13,7 +13,6 @@ interface DocumentHeaderProps {
 export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docType, onHeaderLoaded }) => {
   const { token } = useAuth();
   const [project, setProject] = useState<any>(null);
-  const [documentInfo, setDocumentInfo] = useState<any>(null);
   const [expanded, setExpanded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -28,17 +27,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
         const projectData = await projectRes.json();
         setProject(projectData);
         if (onHeaderLoaded) {
-          onHeaderLoaded(projectData);
-        }
-
-        // 2. Fetch project documents to get current revision information
-        const docsRes = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (docsRes.ok) {
-          const docs = await docsRes.json();
-          const targetDoc = docs.find((d: any) => d.type === docType);
-          setDocumentInfo(targetDoc);
+          const formattedName = projectData.partName ? `${projectData.partName} (${projectData.orgPartNumber || 'N/A'})` : (projectData.name || 'Untitled');
+          onHeaderLoaded({ ...projectData, name: formattedName });
         }
       } catch (err) {
         console.error('Error fetching document header info:', err);
@@ -76,6 +66,27 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
     }
   };
 
+  const getDerivedDocNumber = () => {
+    const partNo = project.orgPartNumber || '—';
+    if (docType === 'PFD') return `PFD-${partNo}`;
+    if (docType === 'PFMEA') return `PFMEA-${partNo}`;
+    if (docType === 'DFMEA') return `DFMEA-${partNo}`;
+    if (docType === 'CONTROL_PLAN') return `CP-${partNo}`;
+    return partNo;
+  };
+
+  const getStatusChipProps = () => {
+    const status = (project.documentTypes?.[0] || 'Prototype');
+    switch (status) {
+      case 'Production': return { color: 'success' as const, label: 'PRODUCTION' };
+      case 'Safe Launch': return { color: 'secondary' as const, label: 'SAFE LAUNCH' };
+      case 'Pre-Launch': return { color: 'info' as const, label: 'PRE-LAUNCH' };
+      default: return { color: 'warning' as const, label: 'PROTOTYPE' };
+    }
+  };
+
+  const statusProps = getStatusChipProps();
+
   return (
     <Card sx={{ mb: 3, border: '1px solid #e2e8f0', borderRadius: 4, bgcolor: 'background.paper', overflow: 'hidden' }}>
       {/* Header bar always visible */}
@@ -97,13 +108,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
             Part: {project.partName || '—'}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            • Rev: {documentInfo?.currentRevisionId ? '1.0' : '1.0'}
+            • Rev: {project.revisionNumber || '1.0'}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             • Cust: {project.customer || '—'}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            • Part No: {project.customerPartNumber || project.orgPartNumber || '—'}
+            • Part No: {project.orgPartNumber || '—'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -145,7 +156,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>FMEA ID / Document Number</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.documentNumber || '—'}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{getDerivedDocNumber()}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Start Date</Typography>
@@ -162,10 +173,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
               <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>{project.keyContact || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Confidentiality Level</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Status</Typography>
               <Chip
-                label={(project.preliminaryFinalFlag || 'Internal').toUpperCase()}
-                color="primary"
+                label={statusProps.label}
+                color={statusProps.color}
                 variant="outlined"
                 size="small"
                 sx={{ mt: 0.5, fontWeight: 'bold', height: 22, fontSize: '0.75rem' }}

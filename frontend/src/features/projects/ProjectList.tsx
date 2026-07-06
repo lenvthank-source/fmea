@@ -44,6 +44,8 @@ interface Project {
   customerQualApprovalDate?: string;
   otherApprover?: string;
   otherApprovalDate2?: string;
+  revisionNumber?: string;
+  updatedAt: string;
 }
 
 export const ProjectList: React.FC = () => {
@@ -355,12 +357,12 @@ export const ProjectList: React.FC = () => {
 
   const validateStep = () => {
     if (step === 1) {
-      if (!name.trim()) return 'Project Name is required';
+      if (!partName.trim()) return 'Part Name / Description is required';
+      if (!orgPartNumber.trim()) return 'Organisation Part No. is required';
       if (documentTypes.length === 0) return 'At least one Document Type must be selected';
     } else if (step === 2) {
       if (!organisationName.trim()) return 'Organisation Name is required';
       if (!customer.trim()) return 'Customer is required';
-      if (!partName.trim()) return 'Part Name / Description is required';
     }
     return null;
   };
@@ -512,11 +514,12 @@ export const ProjectList: React.FC = () => {
           <Table>
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Project Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Name (Part Number)</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Customer</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Model Year</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Document Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Created At</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Modified At</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 60 }}>Rev</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 80 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -534,24 +537,41 @@ export const ProjectList: React.FC = () => {
                         '&:hover': { textDecoration: 'underline' }
                       }}
                     >
-                      {project.name}
+                      {project.partName || 'Untitled'} ({project.orgPartNumber || 'N/A'})
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-                      {project.description || 'No description provided.'}
-                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{project.customer || '—'}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{project.customer || 'Internal'}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{project.modelYear || 'N/A'}</Typography>
+                    <Chip 
+                      label={project.documentTypes?.[0] || 'Prototype'} 
+                      size="small" 
+                      color={
+                        project.documentTypes?.[0] === 'Production' ? 'success' :
+                        project.documentTypes?.[0] === 'Safe Launch' ? 'secondary' :
+                        project.documentTypes?.[0] === 'Pre-Launch' ? 'info' : 'warning'
+                      }
+                      variant="outlined"
+                      sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
                       {new Date(project.createdAt).toLocaleDateString()}
                     </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                      {new Date(project.updatedAt).toLocaleDateString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={project.revisionNumber || '1.0'}
+                      size="small"
+                      sx={{ fontWeight: 'bold', fontSize: '0.75rem', bgcolor: '#f1f5f9', color: '#475569' }}
+                    />
                   </TableCell>
                   <TableCell align="center">
                     <IconButton
@@ -667,7 +687,7 @@ export const ProjectList: React.FC = () => {
       </Dialog>
 
       {/* 3-Step Create/Edit Project Modal */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth={false} fullWidth sx={{ '& .MuiDialog-paper': { width: '80vw', maxWidth: '80vw' } }}>
         <DialogTitle sx={{ fontWeight: 'bold', px: 3, pt: 3 }}>
           {isEditing ? 'Edit Quality Project' : 'Create Quality Project'}
         </DialogTitle>
@@ -690,26 +710,29 @@ export const ProjectList: React.FC = () => {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <Box>
-                <TextField
-                  fullWidth
-                  label="Project Name *"
-                  variant="outlined"
-                  margin="normal"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-                <TextField
-                  fullWidth
-                  label="Description"
-                  variant="outlined"
-                  margin="normal"
-                  multiline
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
                 <Grid container spacing={2}>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      label="Part Name / Description *"
+                      variant="outlined"
+                      margin="normal"
+                      value={partName}
+                      onChange={(e) => setPartName(e.target.value)}
+                      required
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      label="Organisation Part No. *"
+                      variant="outlined"
+                      margin="normal"
+                      value={orgPartNumber}
+                      onChange={(e) => setOrgPartNumber(e.target.value)}
+                      required
+                    />
+                  </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
@@ -728,12 +751,12 @@ export const ProjectList: React.FC = () => {
                       value={documentTypes[0] || 'Prototype'}
                       onChange={(e) => setDocumentTypes([e.target.value])}
                     >
-                      {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
+                      {['Prototype', 'Pre-Launch', 'Safe Launch', 'Production'].map((type) => (
                         <FormControlLabel
-                          key={type}
-                          value={type}
-                          control={<Radio />}
-                          label={type}
+                           key={type}
+                           value={type}
+                           control={<Radio />}
+                           label={type}
                         />
                       ))}
                     </RadioGroup>
@@ -770,16 +793,6 @@ export const ProjectList: React.FC = () => {
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Organisation Part No."
-                      variant="outlined"
-                      margin="normal"
-                      value={orgPartNumber}
-                      onChange={(e) => setOrgPartNumber(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
                       label="Organisation / Plant"
                       variant="outlined"
                       margin="normal"
@@ -806,17 +819,6 @@ export const ProjectList: React.FC = () => {
                       margin="normal"
                       value={customerPartNumber}
                       onChange={(e) => setCustomerPartNumber(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      fullWidth
-                      label="Part Name / Description *"
-                      variant="outlined"
-                      margin="normal"
-                      value={partName}
-                      onChange={(e) => setPartName(e.target.value)}
-                      required
                     />
                   </Grid>
                   <Grid size={6}>
@@ -892,26 +894,21 @@ export const ProjectList: React.FC = () => {
                       <FormControlLabel value="final" control={<Radio />} label="Final" />
                     </RadioGroup>
                   </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      label="Document Number"
-                      variant="outlined"
-                      margin="normal"
-                      value={documentNumber}
-                      onChange={(e) => setDocumentNumber(e.target.value)}
-                      helperText="Auto-suggested prefix. Override if desired."
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      label="Control Plan Number"
-                      variant="outlined"
-                      margin="normal"
-                      value={controlPlanNumber}
-                      onChange={(e) => setControlPlanNumber(e.target.value)}
-                    />
+                  <Grid size={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, mt: 1 }}>
+                      Auto-Derived Document Numbers
+                    </Typography>
+                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="body2">
+                        <strong>PFD Document No:</strong> PFD-{orgPartNumber || '—'}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>PFMEA Document No:</strong> PFMEA-{orgPartNumber || '—'}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Control Plan No:</strong> CP-{orgPartNumber || '—'}
+                      </Typography>
+                    </Box>
                   </Grid>
                   <Grid size={6}>
                     <TextField

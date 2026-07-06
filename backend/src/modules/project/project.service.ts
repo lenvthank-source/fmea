@@ -163,6 +163,7 @@ export class ProjectService {
         dwgRevNoAndDate: dto.dwgRevNoAndDate,
         preliminaryFinalFlag: dto.preliminaryFinalFlag,
         uiSettings: dto.uiSettings,
+        revisionNumber: dto.revisionNumber,
       },
     });
   }
@@ -181,6 +182,61 @@ export class ProjectService {
 
     return this.prisma.document.findMany({
       where: { projectId, tenantId },
+    });
+  }
+
+  async createRevision(tenantId: string, projectId: string, userId: string, changeDesc: string) {
+    const project = await this.findOne(tenantId, projectId);
+    
+    const currentRev = project.revisionNumber || '1.0';
+    let nextRev = '2.0';
+    const currentNum = parseFloat(currentRev);
+    if (!isNaN(currentNum)) {
+      nextRev = (currentNum + 1.0).toFixed(1);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const revision = await tx.projectRevision.create({
+        data: {
+          projectId,
+          revisionNo: nextRev,
+          changeDesc,
+          createdById: userId,
+        },
+        include: {
+          createdBy: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      await tx.project.update({
+        where: { id: projectId },
+        data: {
+          revisionNumber: nextRev,
+        },
+      });
+
+      return revision;
+    });
+  }
+
+  async getRevisions(tenantId: string, projectId: string) {
+    await this.findOne(tenantId, projectId);
+    return this.prisma.projectRevision.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 }

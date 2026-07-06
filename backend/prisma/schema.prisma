@@ -51,6 +51,7 @@ model User {
   createdProjs Project[]      @relation("ProjectCreator")
   createdDocs  Document[]     @relation("DocumentCreator")
   createdRevs  DocumentRevision[] @relation("RevisionCreator")
+  createdProjectRevs ProjectRevision[] @relation("ProjectRevisionCreator")
   approvals    Approval[]
   pfmeaRows    PfmeaRow[]
   ownedActions   Action[]           @relation("ActionOwner")
@@ -110,7 +111,7 @@ model RolePermission {
 model Project {
   id              String     @id @default(uuid()) @db.Uuid
   tenantId        String     @map("tenant_id") @db.Uuid
-  name            String     @db.VarChar(255)
+  name            String?    @db.VarChar(255)
   description     String?
   customer        String?    @db.VarChar(255)
   plantId         String?    @map("plant_id") @db.Uuid
@@ -127,6 +128,8 @@ model Project {
   documents       Document[]
   processItems    ProcessItem[]
   actions         Action[]
+  revisionNumber  String?    @default("1.0") @map("revision_number") @db.VarChar(20)
+  revisions       ProjectRevision[]
 
   // Extended Quality Headers Metadata
   organisationName          String?    @map("organisation_name") @db.VarChar(255)
@@ -696,4 +699,19 @@ model LinkAction {
 
   @@index([failureLinkId])
   @@map("link_action")
+}
+
+model ProjectRevision {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  revisionNo  String   @map("revision_no") @db.VarChar(20)
+  changeDesc  String   @map("change_description")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdById String   @map("created_by") @db.Uuid
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("ProjectRevisionCreator", fields: [createdById], references: [id])
+
+  @@index([projectId])
+  @@map("project_revision")
 }

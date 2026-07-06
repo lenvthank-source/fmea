@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, TextField, Alert, CircularProgress, Grid, Card, CardContent,
-  FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab, Switch
+  FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab, Switch,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
+import { Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -56,6 +58,69 @@ export const ProjectSettings: React.FC = () => {
   const [customerQualApprovalDate, setCustomerQualApprovalDate] = useState('');
   const [otherApprover, setOtherApprover] = useState('');
   const [otherApprovalDate2, setOtherApprovalDate2] = useState('');
+
+  // Revision states
+  const [revisions, setRevisions] = useState<any[]>([]);
+  const [revisionsLoading, setRevisionsLoading] = useState(false);
+  const [createRevisionOpen, setCreateRevisionOpen] = useState(false);
+  const [changeDesc, setChangeDesc] = useState('');
+  const [createRevisionLoading, setCreateRevisionLoading] = useState(false);
+
+  const fetchRevisions = async () => {
+    setRevisionsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/revisions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to load revisions');
+      const data = await response.json();
+      setRevisions(data);
+    } catch (err: any) {
+      setError(err.message || 'Could not load revision history');
+    } finally {
+      setRevisionsLoading(false);
+    }
+  };
+
+  const handleCreateRevision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!changeDesc.trim()) return;
+
+    setCreateRevisionLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/revisions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ changeDesc: changeDesc.trim() })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to create revision');
+      }
+
+      setSuccess('Project revision created successfully. Current revision has been incremented.');
+      setChangeDesc('');
+      setCreateRevisionOpen(false);
+      fetchRevisions();
+    } catch (err: any) {
+      setError(err.message || 'Could not create revision');
+    } finally {
+      setCreateRevisionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tabValue === 5 && projectId && token) {
+      fetchRevisions();
+    }
+  }, [tabValue, projectId, token]);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -262,6 +327,7 @@ export const ProjectSettings: React.FC = () => {
           <Tab label="Document Control & CFT" />
           <Tab label="Approval Sign-offs" />
           <Tab label="UI Settings" />
+          <Tab label="Revision History" />
         </Tabs>
       </Box>
 
@@ -640,20 +706,129 @@ export const ProjectSettings: React.FC = () => {
                 </Grid>
               </Grid>
             )}
+
+            {/* Tab 5: Revision History */}
+            {tabValue === 5 && (
+              <Box sx={{ mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                      Project Revision History Log
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      View all revisions, changes, and historical releases of this project workspace.
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={() => setCreateRevisionOpen(true)}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
+                  >
+                    Create Revision
+                  </Button>
+                </Box>
+
+                {revisionsLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress size={30} />
+                  </Box>
+                ) : revisions.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 3 }}>
+                    No project revisions found. Rev 1.0 is active.
+                  </Alert>
+                ) : (
+                  <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
+                    <Table size="small">
+                      <TableHead sx={{ bgcolor: 'action.hover' }}>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold', width: 100 }}>Revision</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 180 }}>Created At</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Change Description</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 180 }}>Author</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {revisions.map((rev) => (
+                          <TableRow key={rev.id}>
+                            <TableCell sx={{ fontWeight: 'bold' }}>
+                              <Chip label={rev.revisionNumber} size="small" color="primary" variant="outlined" />
+                            </TableCell>
+                            <TableCell>
+                              {new Date(rev.createdAt).toLocaleString()}
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'pre-wrap' }}>
+                              {rev.changeDescription}
+                            </TableCell>
+                            <TableCell>
+                              {rev.createdBy?.name || rev.createdBy?.email || 'System'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
+            )}
           </CardContent>
           
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, p: 2, borderTop: '1px solid #e2e8f0' }}>
+          {tabValue !== 5 && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, p: 2, borderTop: '1px solid #e2e8f0' }}>
+              <Button
+                type="submit"
+                variant="contained"
+                startIcon={<SaveIcon />}
+                disabled={saveLoading}
+              >
+                {saveLoading ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </Box>
+          )}
+        </Card>
+      </Box>
+
+      {/* Create Revision Dialog */}
+      <Dialog
+        open={createRevisionOpen}
+        onClose={() => setCreateRevisionOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Box component="form" onSubmit={handleCreateRevision}>
+          <DialogTitle sx={{ fontWeight: 'bold' }}>Create Project Revision</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+              Creating a revision increments the project's version number (e.g. 1.0 → 2.0) and snapshots the current state of PFD, FMEAs, and Control Plans.
+            </Typography>
+            <TextField
+              required
+              fullWidth
+              multiline
+              rows={4}
+              label="Change Description"
+              placeholder="e.g. Incorporated customer review feedback on operation 20 drilling spec."
+              value={changeDesc}
+              onChange={(e) => setChangeDesc(e.target.value)}
+              variant="outlined"
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setCreateRevisionOpen(false)} variant="outlined">
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="contained"
-              startIcon={<SaveIcon />}
-              disabled={saveLoading}
+              color="primary"
+              disabled={createRevisionLoading || !changeDesc.trim()}
             >
-              {saveLoading ? 'Saving...' : 'Save Settings'}
+              {createRevisionLoading ? 'Creating...' : 'Create Revision'}
             </Button>
-          </Box>
-        </Card>
-      </Box>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </Box>
   );
 };

@@ -91,7 +91,7 @@ export const AppShell: React.FC = () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setProjectName(data.name);
+          setProjectName(data.partName ? `${data.partName} (${data.orgPartNumber || 'N/A'})` : (data.name || 'Untitled'));
           if (data.uiSettings) {
             try {
               const parsed = typeof data.uiSettings === 'string' ? JSON.parse(data.uiSettings) : data.uiSettings;

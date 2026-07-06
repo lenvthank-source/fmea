@@ -48,4 +48,23 @@ export class ProjectController {
   async findDocuments(@Request() req: RequestWithUser, @Param('id') id: string) {
     return this.projectService.findDocuments(req.user.tenantId, id);
   }
+
+  @Post(':id/revisions')
+  @Permissions('project.edit')
+  async createRevision(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body('changeDesc') changeDesc: string,
+  ) {
+    return this.projectService.createRevision(req.user.tenantId, id, req.user.sub, changeDesc);
+  }
+
+  @Get(':id/revisions')
+  @Permissions('project.view')
+  async getRevisions(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    return this.projectService.getRevisions(req.user.tenantId, id);
+  }
 }
