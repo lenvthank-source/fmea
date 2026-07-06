@@ -99,10 +99,14 @@ export class AuthService {
           const dbPermissions = await tx.permission.findMany();
           await tx.rolePermission.createMany({
             data: dbPermissions.map((p) => ({
-              roleId: adminRole.id,
+              roleId: adminRole!.id,
               permissionId: p.id,
             })),
           });
+        }
+
+        if (!adminRole) {
+          throw new Error('Admin role could not be created or retrieved.');
         }
 
         await tx.userRole.create({
