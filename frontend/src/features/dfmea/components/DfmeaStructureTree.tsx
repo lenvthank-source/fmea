@@ -316,7 +316,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                 {expandedNodes.root ? <ExpandIcon /> : <CollapseIcon />}
               </IconButton>
               <RootIcon sx={{ color: '#0f172a', fontSize: '1.25rem' }} />
-              <Typography sx={{ fontWeight: 900, fontSize: '1.05rem', color: '#0f172a', fontFamily: 'inherit', letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontWeight: 900, fontSize: '0.85rem', color: '#0f172a', fontFamily: 'inherit', letterSpacing: '-0.01em' }}>
                 {projectName || 'Process Item (Root)'}
               </Typography>
             </Stack>
@@ -359,7 +359,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                         {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                       </IconButton>
                       <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                      <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                      <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                     </Stack>
 
                     <Collapse in={!!expandedNodes[nodeKey]}>
@@ -385,7 +385,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                               }}
                             >
                               <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
+                              <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
                             </Stack>
                           </Box>
                         ))}
@@ -447,7 +447,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                         {stepExpanded ? <ExpandIcon /> : <CollapseIcon />}
                       </IconButton>
                       <StepIcon sx={{ color: '#854d0e', fontSize: '1.3rem' }} />
-                      <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#854d0e', fontFamily: 'inherit', display: 'flex', alignItems: 'center' }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#854d0e', fontFamily: 'inherit', display: 'flex', alignItems: 'center' }}>
                         {step.stepNumber}: {step.name || 'Untitled System Element'}
                         {step.isOrphaned && (
                           <Tooltip title="Linked PFD step has been deleted (Orphaned)">
@@ -493,7 +493,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                   {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                                 </IconButton>
                                 <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                               </Stack>
 
                               <Collapse in={!!expandedNodes[nodeKey]}>
@@ -520,7 +520,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                         }}
                                       >
                                         <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                                        <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
+                                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
                                       </Stack>
                                     </Box>
                                   ))}
@@ -563,7 +563,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                   {weExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                 </IconButton>
                                 <WorkElementIcon sx={{ color: '#1e3a8a', fontSize: '1.1rem' }} />
-                                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#1e3a8a', fontFamily: 'inherit' }}>{we}</Typography>
+                                <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e3a8a', fontFamily: 'inherit' }}>{we}</Typography>
                               </Stack>
 
                               <Collapse in={weExpanded}>
@@ -603,7 +603,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                             {weFuncExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                           </IconButton>
                                            <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                           <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                           <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                                         </Stack>
 
                                         <Collapse in={weFuncExpanded}>
@@ -630,7 +630,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                                   }}
                                                 >
                                                    <FailureIcon sx={{ color: '#7f1d1d', fontSize: '1.1rem' }} />
-                                                   <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
+                                                   <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#7f1d1d', fontFamily: 'inherit' }}>{fail}</Typography>
                                                 </Stack>
                                               </Box>
                                             ))}

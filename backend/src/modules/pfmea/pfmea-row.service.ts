@@ -150,6 +150,12 @@ export class PfmeaRowService {
     const D = dto.detection !== undefined ? dto.detection : row.detection;
     const calculatedAp = calculateAP(S, O, D);
 
+    // Recalculate Revised AP
+    const revS = dto.revisedSeverity !== undefined ? dto.revisedSeverity : row.revisedSeverity;
+    const revO = dto.revisedOccurrence !== undefined ? dto.revisedOccurrence : row.revisedOccurrence;
+    const revD = dto.revisedDetection !== undefined ? dto.revisedDetection : row.revisedDetection;
+    const calculatedRevisedAp = (revS && revO && revD) ? calculateAP(revS, revO, revD) : null;
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Sync Functions (Many-to-Many)
       if (dto.functions) {
@@ -397,6 +403,16 @@ export class PfmeaRowService {
           notes: dto.notes !== undefined ? dto.notes : row.notes,
           status: dto.status !== undefined ? dto.status : row.status,
           accessLevel: dto.accessLevel !== undefined ? dto.accessLevel : row.accessLevel,
+          preventionAction: dto.preventionAction !== undefined ? dto.preventionAction : row.preventionAction,
+          detectionAction: dto.detectionAction !== undefined ? dto.detectionAction : row.detectionAction,
+          responsibility: dto.responsibility !== undefined ? dto.responsibility : row.responsibility,
+          targetDate: dto.targetDate !== undefined ? (dto.targetDate ? new Date(dto.targetDate) : null) : row.targetDate,
+          actionTaken: dto.actionTaken !== undefined ? dto.actionTaken : row.actionTaken,
+          completionDate: dto.completionDate !== undefined ? (dto.completionDate ? new Date(dto.completionDate) : null) : row.completionDate,
+          revisedSeverity: dto.revisedSeverity !== undefined ? dto.revisedSeverity : row.revisedSeverity,
+          revisedOccurrence: dto.revisedOccurrence !== undefined ? dto.revisedOccurrence : row.revisedOccurrence,
+          revisedDetection: dto.revisedDetection !== undefined ? dto.revisedDetection : row.revisedDetection,
+          revisedAp: calculatedRevisedAp,
         },
       });
     });

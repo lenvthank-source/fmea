@@ -50,12 +50,70 @@ export class AuthService {
   ) {}
 
   async signup(dto: SignupDto) {
-    // 1. Verify subdomain is unique
-    const existingTenant = await this.prisma.tenant.findUnique({
+    // 1. Resolve tenant
+    let tenant = await this.prisma.tenant.findUnique({
       where: { subdomain: dto.subdomain },
     });
-    if (existingTenant) {
-      throw new ConflictException('Subdomain is already registered');
+
+    if (tenant) {
+      // Tenant exists, check if user already exists
+      const existingUser = await this.prisma.user.findUnique({
+        where: {
+          tenantId_email: {
+            tenantId: tenant.id,
+            email: dto.email.trim(),
+          },
+        },
+      });
+      if (existingUser) {
+        throw new ConflictException('Email is already registered under this subdomain');
+      }
+
+      // Create new user inside existing tenant and make them Admin
+      return this.prisma.$transaction(async (tx) => {
+        const passwordHash = await bcrypt.hash(dto.password, 12);
+        const user = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            email: dto.email.trim(),
+            name: dto.name,
+            passwordHash,
+            status: 'active',
+          },
+        });
+
+        let adminRole = await tx.role.findFirst({
+          where: { tenantId: tenant.id, name: 'Admin' },
+        });
+
+        if (!adminRole) {
+          adminRole = await tx.role.create({
+            data: {
+              tenantId: tenant.id,
+              name: 'Admin',
+              description: 'Tenant Administrator with full access rights',
+              isSystem: true,
+            },
+          });
+          
+          const dbPermissions = await tx.permission.findMany();
+          await tx.rolePermission.createMany({
+            data: dbPermissions.map((p) => ({
+              roleId: adminRole.id,
+              permissionId: p.id,
+            })),
+          });
+        }
+
+        await tx.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: adminRole.id,
+          },
+        });
+
+        return user;
+      });
     }
 
     // 2. Perform Tenant, User, and RBAC setup in a database transaction
@@ -63,7 +121,7 @@ export class AuthService {
       // Create Tenant
       const tenant = await tx.tenant.create({
         data: {
-          name: dto.tenantName,
+          name: dto.tenantName || dto.subdomain,
           subdomain: dto.subdomain,
         },
       });
@@ -75,9 +133,10 @@ export class AuthService {
       const user = await tx.user.create({
         data: {
           tenantId: tenant.id,
-          email: dto.email,
+          email: dto.email.trim(),
           name: dto.name,
           passwordHash,
+          status: 'active',
         },
       });
 
@@ -237,7 +296,7 @@ export class AuthService {
     }
 
     // 2. Resolve user by email inside this tenant
-    let user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         tenantId_email: {
           tenantId: tenant.id,
@@ -262,76 +321,21 @@ export class AuthService {
     });
 
     if (!user) {
-      // SILENT SIGNUP: If the user doesn't exist, we create them automatically with NO password hash
-      const name = dto.name || dto.email.trim();
-
-      // Find Quality Engineer role for this tenant
-      let qeRole = await this.prisma.role.findFirst({
-        where: { tenantId: tenant.id, name: 'Quality Engineer' },
-      });
-
-      // Fallback
-      if (!qeRole) {
-        qeRole = await this.prisma.role.findFirst({
-          where: { tenantId: tenant.id },
-        });
-      }
-
-      user = await this.prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: {
-            tenantId: tenant.id,
-            email: dto.email.trim(),
-            name,
-            passwordHash: null, // No password for registered regular users
-            status: 'active',
-          },
-        });
-
-        if (qeRole) {
-          await tx.userRole.create({
-            data: {
-              userId: newUser.id,
-              roleId: qeRole.id,
-            },
-          });
-        }
-
-        return tx.user.findUnique({
-          where: { id: newUser.id },
-          include: {
-            userRoles: {
-              include: {
-                role: {
-                  include: {
-                    rolePermissions: {
-                      include: {
-                        permission: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
-      });
-    } else {
-      if (user.status !== 'active') {
-        throw new UnauthorizedException('User account is inactive or archived');
-      }
-
-      // Check if user is an Admin
-      const isAdmin = user.userRoles.some((ur) => ur.role.name === 'Admin');
-      if (isAdmin) {
-        throw new UnauthorizedException('Admin accounts must authenticate using Google Auth.');
-      }
-      
-      // Regular users are logged in immediately without password verification (passwordless)
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!user) {
-      throw new UnauthorizedException('Authentication failed');
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('User account is inactive or archived');
+    }
+
+    // 3. Verify password
+    if (!dto.password) {
+      throw new UnauthorizedException('Password is required');
+    }
+
+    const isPasswordValid = user.passwordHash ? await bcrypt.compare(dto.password, user.passwordHash) : false;
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     // Update last login

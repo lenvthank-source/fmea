@@ -13,12 +13,20 @@ import { LinkageMap } from '../features/linkage/LinkageMap';
 import { Login } from '../features/auth/Login';
 import { AdminPanel } from '../features/admin/AdminPanel';
 
+import { Box, CircularProgress } from '@mui/material';
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useAuth();
 
-  // If authentication is still loading (e.g. silent auto-login), we render the children (AppShell)
-  // so the user sees the sidebar/navbar and the skeleton dashboard immediately.
-  if (!loading && !token) {
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 

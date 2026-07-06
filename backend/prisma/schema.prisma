@@ -419,6 +419,16 @@ model PfmeaRow {
   filterCode    String?           @map("filter_code") @db.VarChar(50)
   status        String            @default("draft") @db.VarChar(20)
   accessLevel   String            @default("public") @map("access_level") @db.VarChar(20)
+  preventionAction   String?           @map("prevention_action") @db.Text
+  detectionAction    String?           @map("detection_action") @db.Text
+  responsibility     String?           @db.VarChar(255)
+  targetDate         DateTime?         @map("target_date") @db.Date
+  actionTaken        String?           @map("action_taken") @db.Text
+  completionDate     DateTime?         @map("completion_date") @db.Date
+  revisedSeverity    Int?              @map("revised_severity") @db.SmallInt
+  revisedOccurrence  Int?              @map("revised_occurrence") @db.SmallInt
+  revisedDetection   Int?              @map("revised_detection") @db.SmallInt
+  revisedAp          String?           @map("revised_ap") @db.Char(1)
   notes         String?           @db.Text
   createdById   String            @map("created_by") @db.Uuid
   createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz

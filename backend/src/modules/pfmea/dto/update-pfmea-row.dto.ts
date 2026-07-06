@@ -56,6 +56,48 @@ export class UpdatePfmeaRowDto {
   @IsOptional()
   workElementName?: string | null;
 
+  @IsString()
+  @IsOptional()
+  preventionAction?: string | null;
+
+  @IsString()
+  @IsOptional()
+  detectionAction?: string | null;
+
+  @IsString()
+  @IsOptional()
+  responsibility?: string | null;
+
+  @IsString()
+  @IsOptional()
+  targetDate?: string | null;
+
+  @IsString()
+  @IsOptional()
+  actionTaken?: string | null;
+
+  @IsString()
+  @IsOptional()
+  completionDate?: string | null;
+
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  revisedSeverity?: number | null;
+
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  revisedOccurrence?: number | null;
+
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  @IsOptional()
+  revisedDetection?: number | null;
+
   @IsIn(['draft', 'reviewed', 'approved', 'archived'])
   @IsOptional()
   status?: string;

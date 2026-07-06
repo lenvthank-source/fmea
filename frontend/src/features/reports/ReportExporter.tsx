@@ -92,11 +92,26 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
   };
 
   const generateExcel = (_watermark: string) => {
-    const formatExcelList = (arr: any[] | undefined): string => {
-      if (!arr || arr.length === 0) return '—';
+    const formatExcelList = (val: any): string => {
+      if (!val) return '—';
+      let arr: any[] = [];
+      if (Array.isArray(val)) {
+        arr = val;
+      } else if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val);
+          arr = Array.isArray(parsed) ? parsed : [val];
+        } catch {
+          arr = val.includes('\n') ? val.split('\n') : [val];
+        }
+      } else {
+        arr = [String(val)];
+      }
+
+      if (arr.length === 0) return '—';
       return arr.map(item => {
-        const val = typeof item === 'object' ? (item.name || '') : String(item);
-        return val
+        const itemVal = typeof item === 'object' ? (item.name || '') : String(item);
+        return itemVal
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
@@ -486,7 +501,10 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                 margin: 0 !important;
                 padding: 0 !important;
               }
-              body > * {
+              #root {
+                display: none !important;
+              }
+              .MuiBackdrop-root {
                 display: none !important;
               }
               /* Display only the print preview content */

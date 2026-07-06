@@ -408,7 +408,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 {expandedNodes.root ? <ExpandIcon /> : <CollapseIcon />}
               </IconButton>
               <RootIcon sx={{ color: '#0f172a', fontSize: '1.25rem' }} />
-              <Typography sx={{ fontWeight: 900, fontSize: '1.05rem', color: '#0f172a', fontFamily: 'inherit', letterSpacing: '-0.01em' }}>
+              <Typography sx={{ fontWeight: 900, fontSize: '0.85rem', color: '#0f172a', fontFamily: 'inherit', letterSpacing: '-0.01em' }}>
                 {projectName || 'Process Item (Root)'}
               </Typography>
               <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
@@ -477,7 +477,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                           {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                         </IconButton>
                         <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                        <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                         <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                           <Tooltip title="Add Failure (Effect)">
                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
@@ -538,7 +538,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                 >
                                   <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
                                   {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                  <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                   
                                   <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                     {failNode && onOpenLinkageModal && (
@@ -628,7 +628,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         {stepExpanded ? <ExpandIcon /> : <CollapseIcon />}
                       </IconButton>
                       <StepIcon sx={{ color: '#854d0e', fontSize: '1.3rem' }} />
-                      <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#854d0e', fontFamily: 'inherit', display: 'flex', alignItems: 'center' }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#854d0e', fontFamily: 'inherit', display: 'flex', alignItems: 'center' }}>
                         {step.stepNumber}: {step.name || 'Untitled Step'}
                         {step.isOrphaned && (
                           <Tooltip title="Linked PFD step has been deleted (Orphaned)">
@@ -709,7 +709,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                     {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                                   </IconButton>
                                   <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                  <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                                   <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                     <Tooltip title="Add Failure (Mode)">
                                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
@@ -770,7 +770,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                           >
                                             <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
                                             {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                            <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                             <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                               {failNode && onOpenLinkageModal && (
                                                 <Tooltip title="Link Effects / Causes">
@@ -839,7 +839,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   {weExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                 </IconButton>
                                 <WorkElementIcon sx={{ color: '#1e3a8a', fontSize: '1.1rem' }} />
-                                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#1e3a8a', fontFamily: 'inherit' }}>{we}</Typography>
+                                <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e3a8a', fontFamily: 'inherit' }}>{we}</Typography>
                                 <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                   <Tooltip title="Add Work Element Function">
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>
@@ -898,7 +898,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                               {weFuncExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                             </IconButton>
                                              <FunctionIcon sx={{ color: '#14532d', fontSize: '1.1rem' }} />
-                                             <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
+                                             <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#14532d', fontFamily: 'inherit' }}>{fn}</Typography>
                                             <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                               <Tooltip title="Add Failure (Cause)">
                                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
@@ -959,7 +959,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                     >
                                                       <FailureIcon sx={{ color: textColor, fontSize: '1.1rem' }} />
                                                       {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '0.9rem', ml: -0.5, mr: 0.5 }} />}
-                                                      <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
+                                                      <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                                       
                                                       <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                                         {failNode && onOpenLinkageModal && (

@@ -514,7 +514,8 @@ export const ProjectList: React.FC = () => {
           <Table>
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Name (Part Number)</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Name</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Number</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Customer</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Document Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Created At</TableCell>
@@ -537,7 +538,12 @@ export const ProjectList: React.FC = () => {
                         '&:hover': { textDecoration: 'underline' }
                       }}
                     >
-                      {project.partName || 'Untitled'} ({project.orgPartNumber || 'N/A'})
+                      {project.partName || 'Untitled'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                      {project.orgPartNumber || '—'}
                     </Typography>
                   </TableCell>
                   <TableCell>

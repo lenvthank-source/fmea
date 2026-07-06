@@ -3,16 +3,14 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
-  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
-  Collapse, Grid
+  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
-  KeyboardArrowDown as ExpandMoreIcon,
-  KeyboardArrowUp as ExpandLessIcon
+  AccountTree as AccountTreeIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -48,6 +46,17 @@ interface PfmeaRow {
   notes: string;
   status: string;
   accessLevel: string;
+  filterCode?: string | null;
+  preventionAction?: string | null;
+  detectionAction?: string | null;
+  responsibility?: string | null;
+  targetDate?: string | null;
+  actionTaken?: string | null;
+  completionDate?: string | null;
+  revisedSeverity?: number | null;
+  revisedOccurrence?: number | null;
+  revisedDetection?: number | null;
+  revisedAp?: string | null;
   processStep?: { name: string; stepNumber: string; isOrphaned?: boolean } | null;
   functions: { name: string }[];
   requirements: { name: string }[];
@@ -78,8 +87,6 @@ export const PfmeaWorkspace: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Expanded Optimization Rows state
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Dialog and Drawer states
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -826,6 +833,48 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
+  const handleFieldChange = async (rowId: string, field: string, value: any) => {
+    setError(null);
+    const targetRow = rows.find((r) => r.id === rowId);
+    if (!targetRow) return;
+
+    let updatedFields: any = { [field]: value };
+    if (field === 'revisedSeverity' || field === 'revisedOccurrence' || field === 'revisedDetection') {
+      const rS = field === 'revisedSeverity' ? value : targetRow.revisedSeverity;
+      const rO = field === 'revisedOccurrence' ? value : targetRow.revisedOccurrence;
+      const rD = field === 'revisedDetection' ? value : targetRow.revisedDetection;
+      const localRevisedAp = (rS && rO && rD) ? calculateAP(rS, rO, rD) : null;
+      updatedFields.revisedAp = localRevisedAp;
+    }
+
+    setRows((prev) =>
+      prev.map((r) => (r.id === rowId ? { ...r, ...updatedFields } : r))
+    );
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedFields),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to persist update for ${field}.`);
+      }
+
+      const updatedRow = await response.json();
+      setRows((prev) =>
+        prev.map((r) => (r.id === rowId ? { ...r, ...updatedRow } : r))
+      );
+    } catch (err: any) {
+      setError(err.message || 'Failed to update field. Reverting...');
+      fetchData();
+    }
+  };
+
 
 
   const getApBadge = (ap: string | null) => {
@@ -840,10 +889,6 @@ export const PfmeaWorkspace: React.FC = () => {
       default:
         return <Chip label={ap} size="small" />;
     }
-  };
-
-  const toggleRowExpansion = (rowId: string) => {
-    setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
   };
 
 
@@ -991,27 +1036,45 @@ export const PfmeaWorkspace: React.FC = () => {
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
               <TableRow>
-                <TableCell />
-                <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
-                <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Process Step</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Work Element (4M)</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Functions / Requirements</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Effects (FE)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>S</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Modes (FM)</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Failure Causes (FC)</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Prevention Controls</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>O</TableCell>
-                <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Detection Controls</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center' }}>D</TableCell>
-                <TableCell sx={{ minWidth: 70, fontWeight: 'bold', textAlign: 'center' }}>AP</TableCell>
-                <TableCell sx={{ minWidth: 90, fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+                <TableCell colSpan={3} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Structure Analysis</TableCell>
+                <TableCell colSpan={1} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Function Analysis</TableCell>
+                <TableCell colSpan={4} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Failure Analysis</TableCell>
+                <TableCell colSpan={6} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Risk Analysis</TableCell>
+                <TableCell colSpan={10} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Optimisation</TableCell>
+                <TableCell colSpan={1} align="center" sx={{ fontWeight: 800, bgcolor: '#f1f5f9', borderBottom: '1px solid #cbd5e1', fontSize: '0.8rem' }}>Actions</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ minWidth: 40, fontWeight: 'bold', position: 'sticky', left: 0, bgcolor: '#f8fafc', zIndex: 3, borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>#</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', position: 'sticky', left: 40, bgcolor: '#f8fafc', zIndex: 3, borderRight: '2px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Structure / Item</TableCell>
+                <TableCell sx={{ minWidth: 140, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Work Element (4M)</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Function / Focus Element</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Failure Mode</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Potential Effects</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>SEV</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Failure Causes</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Current Control – Prevention</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>OCC</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Current Control – Detection</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>DET</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>AP</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>FC</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Prevention Action</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Detection Action</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Responsibility & Target Date</TableCell>
+                <TableCell sx={{ minWidth: 150, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Action Taken & Completion Date</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>SEV (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>OCC (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>DET (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>AP (rev)</TableCell>
+                <TableCell sx={{ minWidth: 90, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Status</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 'bold', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 110, fontWeight: 'bold', textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.78rem' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={15} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={25} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No PFMEA analysis rows added yet. Click "Add Analysis Row" to begin.
                   </TableCell>
                 </TableRow>
@@ -1032,224 +1095,342 @@ export const PfmeaWorkspace: React.FC = () => {
                     }
                   }
 
-                  const isExpanded = !!expandedRows[row.id];
-
                   return (
-                    <React.Fragment key={row.id}>
-                      <TableRow sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
-                        {/* Expansion trigger */}
-                        <TableCell sx={{ width: 40, p: 0.5 }}>
-                          <IconButton size="small" onClick={() => toggleRowExpansion(row.id)}>
-                            {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-                          </IconButton>
-                        </TableCell>
+                    <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
+                      {/* Row Number */}
+                      <TableCell sx={{ fontWeight: 'bold', position: 'sticky', left: 0, bgcolor: '#fff', zIndex: 1, fontSize: '0.75rem' }}>{row.rowNumber}</TableCell>
 
-                        {/* Row Number */}
-                        <TableCell sx={{ fontWeight: 'bold' }}>{row.rowNumber}</TableCell>
-
-                        {/* Process Step */}
-                        <TableCell>
-                          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {row.processStep?.stepNumber}
-                            </Typography>
-                            {row.processStep?.isOrphaned && (
-                              <Chip 
-                                label="Orphaned" 
-                                size="small" 
-                                color="error" 
-                                variant="outlined" 
-                                sx={{ height: 18, fontSize: '0.65rem', px: 0.5 }} 
-                              />
-                            )}
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                            {row.processStep?.name}
+                      {/* Structure / Item */}
+                      <TableCell sx={{ position: 'sticky', left: 40, bgcolor: '#fff', zIndex: 1, borderRight: '2px solid #cbd5e1' }}>
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                          <AccountTreeIcon sx={{ fontSize: '0.8rem', color: '#854d0e' }} />
+                          <Typography sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                            {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : ''}
+                            {row.processStep?.name || 'Untitled Step'}
                           </Typography>
-                        </TableCell>
+                        </Stack>
+                      </TableCell>
 
-                        {/* Work Element (4M) */}
-                        <TableCell>
-                          <Stack spacing={0.5} direction="row" sx={{ flexWrap: 'wrap' }}>
-                            {workElements.map((we, weIdx) => (
-                              <Chip key={weIdx} label={we} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.75rem', borderColor: '#f97316', color: '#f97316' }} />
-                            ))}
-                            {workElements.length === 0 && '—'}
-                          </Stack>
-                        </TableCell>
+                      {/* Work Element (4M) */}
+                      <TableCell>
+                        <Stack spacing={0.5} direction="row" sx={{ flexWrap: 'wrap' }}>
+                          {workElements.map((we, weIdx) => (
+                            <Chip key={weIdx} label={we} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.72rem', borderColor: '#f97316', color: '#f97316' }} />
+                          ))}
+                          {workElements.length === 0 && '—'}
+                        </Stack>
+                      </TableCell>
 
-                        {/* Functions & Requirements */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.functions?.map((f, i) => (
-                              <Chip key={i} label={`F: ${f.name}`} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                            ))}
-                            {row.requirements?.map((req, i) => (
-                              <Chip key={i} label={`R: ${req.name}`} size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                            ))}
-                            {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Failure Effects (FE) */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.effects?.map((e, i) => (
-                              <Chip key={i} label={e.name} size="small" color="error" sx={{ height: 20, fontSize: '0.75rem' }} />
-                            ))}
-                            {(!row.effects || row.effects.length === 0) && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Severity (S) with Tooltip guide */}
-                        <TableCell align="center">
-                          <RatingDropdown
-                            ratingType="severity"
-                            value={row.severity}
-                            onChange={(val) => handleRatingChange(row.id, 'severity', val || 0)}
-                            hideLabel
-                            size="small"
-                          />
-                        </TableCell>
-
-                        {/* Failure Modes (FM) */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.failureModes?.map((fm, i) => (
-                              <Chip key={i} label={fm.name} size="small" color="error" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                            ))}
-                            {(!row.failureModes || row.failureModes.length === 0) && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Failure Causes (FC) */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.causes?.map((c, i) => (
-                              <Chip key={i} label={c.name} size="small" color="warning" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                            ))}
-                            {(!row.causes || row.causes.length === 0) && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Prevention Controls */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.controls
-                              ?.filter((c) => c.type === 'prevention')
-                              .map((c, i) => (
-                                <Chip key={i} label={c.name} size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                              ))}
-                            {row.controls?.filter((c) => c.type === 'prevention').length === 0 && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Occurrence (O) with Tooltip guide */}
-                        <TableCell align="center">
-                          <RatingDropdown
-                            ratingType="occurrence"
-                            value={row.occurrence}
-                            onChange={(val) => handleRatingChange(row.id, 'occurrence', val || 0)}
-                            hideLabel
-                            size="small"
-                          />
-                        </TableCell>
-
-                        {/* Detection Controls */}
-                        <TableCell>
-                          <Stack spacing={0.5}>
-                            {row.controls
-                              ?.filter((c) => c.type === 'detection')
-                              .map((c, i) => (
-                                <Tooltip title={c.detectionMethod || ''} key={i}>
-                                  <Chip label={c.name} size="small" color="success" variant="outlined" sx={{ height: 20, fontSize: '0.75rem' }} />
-                                </Tooltip>
-                              ))}
-                            {row.controls?.filter((c) => c.type === 'detection').length === 0 && '—'}
-                          </Stack>
-                        </TableCell>
-
-                        {/* Detection (D) with Tooltip guide */}
-                        <TableCell align="center">
-                          <RatingDropdown
-                            ratingType="detection"
-                            value={row.detection}
-                            onChange={(val) => handleRatingChange(row.id, 'detection', val || 0)}
-                            hideLabel
-                            size="small"
-                          />
-                        </TableCell>
-
-                        {/* AP Badge */}
-                        <TableCell align="center">{getApBadge(row.ap)}</TableCell>
-
-                        {/* Actions */}
-                        <TableCell align="center">
-                          <Tooltip title="Create Corrective Action">
-                            <IconButton
+                      {/* Function / Focus Element */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.functions?.map((f, i) => (
+                            <Chip
+                              key={i}
+                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
+                              label={f.name}
                               size="small"
-                              color="secondary"
-                              onClick={() => {
-                                setSelectedRowForAction(row);
-                                setActionDialogOpen(true);
-                              }}
-                            >
-                              <PlaylistAddIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                              sx={{ bgcolor: '#fef9c3', color: '#854d0e', borderColor: '#fef08a', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
+                            />
+                          ))}
+                          {row.requirements?.map((req, i) => (
+                            <Chip key={i} label={`R: ${req.name}`} size="small" color="secondary" variant="outlined" sx={{ height: 22, fontSize: '0.72rem' }} />
+                          ))}
+                          {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* Failure Mode */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.failureModes?.map((fm, i) => (
+                            <Chip
+                              key={i}
+                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
+                              label={fm.name}
+                              size="small"
+                              sx={{ bgcolor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
+                            />
+                          ))}
+                          {(!row.failureModes || row.failureModes.length === 0) && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* Potential Effects */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.effects?.map((e, i) => (
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.75rem' }}>{e.name}</Typography>
+                          ))}
+                          {(!row.effects || row.effects.length === 0) && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* SEV */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="severity"
+                          value={row.severity}
+                          onChange={(val) => handleRatingChange(row.id, 'severity', val || 0)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* Failure Causes */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.causes?.map((c, i) => (
+                            <Chip
+                              key={i}
+                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
+                              label={c.name}
+                              size="small"
+                              sx={{ bgcolor: '#ffedd5', color: '#c2410c', borderColor: '#fed7aa', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
+                            />
+                          ))}
+                          {(!row.causes || row.causes.length === 0) && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* Current Control – Prevention */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.controls?.filter(c => c.type === 'prevention').map((c, i) => (
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.75rem' }}>{c.name}</Typography>
+                          ))}
+                          {row.controls?.filter(c => c.type === 'prevention').length === 0 && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* OCC */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="occurrence"
+                          value={row.occurrence}
+                          onChange={(val) => handleRatingChange(row.id, 'occurrence', val || 0)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* Current Control – Detection */}
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          {row.controls?.filter(c => c.type === 'detection').map((c, i) => (
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.75rem' }}>{c.name}</Typography>
+                          ))}
+                          {row.controls?.filter(c => c.type === 'detection').length === 0 && '—'}
+                        </Stack>
+                      </TableCell>
+
+                      {/* DET */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="detection"
+                          value={row.detection}
+                          onChange={(val) => handleRatingChange(row.id, 'detection', val || 0)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* AP */}
+                      <TableCell align="center">{getApBadge(row.ap)}</TableCell>
+
+                      {/* FC */}
+                      <TableCell align="center">
+                        <TextField
+                          size="small"
+                          variant="standard"
+                          value={row.filterCode || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'filterCode', e.target.value)}
+                          sx={{ 
+                            width: 45,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            input: { textAlign: 'center', fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Prevention Action */}
+                      <TableCell>
+                        <TextField
+                          multiline
+                          size="small"
+                          variant="standard"
+                          value={row.preventionAction || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'preventionAction', e.target.value)}
+                          placeholder="Action..."
+                          sx={{ 
+                            minWidth: 180,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Detection Action */}
+                      <TableCell>
+                        <TextField
+                          multiline
+                          size="small"
+                          variant="standard"
+                          value={row.detectionAction || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'detectionAction', e.target.value)}
+                          placeholder="Action..."
+                          sx={{ 
+                            minWidth: 180,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Responsibility & Target Date */}
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          variant="standard"
+                          value={row.responsibility || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'responsibility', e.target.value)}
+                          placeholder="Resp & Date..."
+                          sx={{ 
+                            minWidth: 120,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            input: { fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Action Taken & Completion Date */}
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          variant="standard"
+                          value={row.actionTaken || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'actionTaken', e.target.value)}
+                          placeholder="Action taken..."
+                          sx={{ 
+                            minWidth: 120,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            input: { fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* SEV (revised) */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="severity"
+                          value={row.revisedSeverity}
+                          onChange={(val) => handleFieldChange(row.id, 'revisedSeverity', val)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* OCC (revised) */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="occurrence"
+                          value={row.revisedOccurrence}
+                          onChange={(val) => handleFieldChange(row.id, 'revisedOccurrence', val)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* DET (revised) */}
+                      <TableCell align="center">
+                        <RatingDropdown
+                          ratingType="detection"
+                          value={row.revisedDetection}
+                          onChange={(val) => handleFieldChange(row.id, 'revisedDetection', val)}
+                          hideLabel
+                          size="small"
+                        />
+                      </TableCell>
+
+                      {/* AP (revised) */}
+                      <TableCell align="center">{getApBadge(row.revisedAp || null)}</TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <Select
+                          value={row.status || 'draft'}
+                          size="small"
+                          variant="standard"
+                          onChange={(e) => handleFieldChange(row.id, 'status', e.target.value)}
+                          sx={{ fontSize: '0.75rem', minWidth: 90 }}
+                          disableUnderline
+                        >
+                          <MenuItem value="draft">Open</MenuItem>
+                          <MenuItem value="reviewed">In Progress</MenuItem>
+                          <MenuItem value="approved">Closed</MenuItem>
+                        </Select>
+                      </TableCell>
+
+                      {/* Remarks */}
+                      <TableCell>
+                        <TextField
+                          multiline
+                          size="small"
+                          variant="standard"
+                          value={row.notes || ''}
+                          onChange={(e) => handleFieldChange(row.id, 'notes', e.target.value)}
+                          placeholder="Remarks..."
+                          sx={{ 
+                            minWidth: 150,
+                            '& .MuiInput-underline:before': { borderBottom: 'none' },
+                            '& .MuiInput-underline:after': { borderBottom: 'none' },
+                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
+                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell align="center">
+                        <Tooltip title="Create Corrective Action">
                           <IconButton
                             size="small"
-                            color="primary"
+                            color="secondary"
                             onClick={() => {
-                              const failId = getFailureModeDbId(row);
-                              if (failId) {
-                                handleEditNodeFromTree(`struct-mode::${failId}`);
-                              } else {
-                                const failName = row.failureModes?.[0]?.name;
-                                const fnName = row.functions?.[0]?.name;
-                                if (row.processStepId && fnName && failName) {
-                                  handleEditNodeFromTree(`step-fail::${row.processStepId}::${fnName}::${failName}`);
-                                } else if (!row.processStepId && fnName && failName) {
-                                  handleEditNodeFromTree(`root-fail-${fnName}-${failName}`);
-                                }
-                              }
+                              setSelectedRowForAction(row);
+                              setActionDialogOpen(true);
                             }}
                           >
-                            <EditIcon fontSize="small" />
+                            <PlaylistAddIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-
-                      {/* Expandable Step 6 Optimization Sub-Panel */}
-                      <TableRow>
-                        <TableCell colSpan={15} sx={{ p: 0, bgcolor: '#fafafa' }}>
-                          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                            <Box sx={{ p: 3, borderLeft: '3px solid #01696F', m: 1.5, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid rgba(40,37,29,0.06)' }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
-                                Step 6 Optimization (Action Plan)
-                              </Typography>
-                              <Grid container spacing={3} sx={{ fontSize: '0.85rem' }}>
-                                <Grid size={{ xs: 12, md: 4 }}>
-                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Prevention Action</Typography>
-                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>Implement tool wear sensor feedback loop</Typography>
-                                </Grid>
-                                <Grid size={{ xs: 12, md: 4 }}>
-                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Detection Action</Typography>
-                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>Perform 100% laser caliper test</Typography>
-                                </Grid>
-                                <Grid size={{ xs: 12, md: 4 }}>
-                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', color: 'text.secondary' }}>Responsible Person & Target Date</Typography>
-                                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>John Doe • Oct 15, 2026</Typography>
-                                </Grid>
-                              </Grid>
-                            </Box>
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
+                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            const failId = getFailureModeDbId(row);
+                            if (failId) {
+                              handleEditNodeFromTree(`struct-mode::${failId}`);
+                            }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}

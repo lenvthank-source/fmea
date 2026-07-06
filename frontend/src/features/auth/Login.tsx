@@ -1,63 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container } from '@mui/material';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../../config';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
-
-  // Check username availability when typing or on blur
-  const checkUsernameAvailability = async (nameVal: string) => {
-    if (!nameVal.trim()) {
-      setIsUsernameAvailable(null);
-      return;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/check-username?username=${encodeURIComponent(nameVal.trim())}`);
-      if (response.ok) {
-        const data = await response.json();
-        setIsUsernameAvailable(data.available);
-      }
-    } catch (err) {
-      console.error("Error checking username uniqueness:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (isSignup) {
-      const delayDebounceFn = setTimeout(() => {
-        checkUsernameAvailability(username);
-      }, 500);
-      return () => clearTimeout(delayDebounceFn);
-    } else {
-      setIsUsernameAvailable(null);
-    }
-  }, [username, isSignup]);
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
-    if (isSignup && isUsernameAvailable === false) {
-      setError('Please choose an available username.');
-      return;
-    }
-
     setLoading(true);
 
     try {
       const subdomain = 'guest-tenant';
-      // Logs in or registers regular users passwordless using their unique username
-      await login(username.trim(), '', subdomain, username.trim());
+      if (isSignup) {
+        // Sign up first
+        await signup(email.trim(), password, fullName.trim(), subdomain, 'Guest Workspace');
+      }
+      // Then log in
+      await login(email.trim(), password, subdomain);
       navigate('/projects');
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication.');
@@ -110,21 +78,45 @@ export const Login: React.FC = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              {isSignup && (
+                <TextField
+                  fullWidth
+                  label="Full Name"
+                  variant="outlined"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    }
+                  }}
+                />
+              )}
+
               <TextField
                 fullWidth
-                label="Your Username"
+                label="Email Address"
+                type="email"
                 variant="outlined"
-                value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                helperText={
-                  isSignup && isUsernameAvailable !== null
-                    ? isUsernameAvailable
-                      ? '🟢 Username is available'
-                      : '🔴 Username is already taken'
-                    : 'Enter letters, numbers, hyphens, or underscores'
-                }
-                error={isSignup && isUsernameAvailable === false}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -137,7 +129,7 @@ export const Login: React.FC = () => {
                 fullWidth
                 variant="contained"
                 size="large"
-                disabled={loading || (isSignup && isUsernameAvailable === false)}
+                disabled={loading}
                 sx={{ 
                   mt: 1, 
                   height: 44, 
@@ -161,7 +153,6 @@ export const Login: React.FC = () => {
                   onClick={() => {
                     setIsSignup(!isSignup);
                     setError(null);
-                    setIsUsernameAvailable(null);
                   }}
                   sx={{ 
                     color: 'primary.main', 
@@ -175,8 +166,6 @@ export const Login: React.FC = () => {
                   {isSignup ? 'Already have an account? Sign In' : 'Need an account? Register here'}
                 </Link>
               </Box>
-
-
             </Box>
           </CardContent>
         </Card>
