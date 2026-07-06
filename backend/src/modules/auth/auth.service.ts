@@ -86,6 +86,8 @@ export class AuthService {
           where: { tenantId: tenant.id, name: 'Admin' },
         });
 
+        const dbPermissions = await tx.permission.findMany();
+
         if (!adminRole) {
           adminRole = await tx.role.create({
             data: {
@@ -96,7 +98,6 @@ export class AuthService {
             },
           });
           
-          const dbPermissions = await tx.permission.findMany();
           await tx.rolePermission.createMany({
             data: dbPermissions.map((p) => ({
               roleId: adminRole!.id,
@@ -116,7 +117,27 @@ export class AuthService {
           },
         });
 
-        return user;
+        const tokens = await this.generateTokens({
+          sub: user.id,
+          email: user.email,
+          tenantId: tenant.id,
+          roles: ['Admin'],
+          permissions: dbPermissions.map((p) => p.code),
+        });
+
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            subdomain: tenant.subdomain,
+          },
+          ...tokens,
+        };
       });
     }
 

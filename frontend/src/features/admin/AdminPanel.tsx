@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Button, Alert, CircularProgress } from '@mui/material';
-import { Delete as DeleteIcon } from '@mui/icons-material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Button, Alert, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Stack } from '@mui/material';
+import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -24,6 +24,49 @@ export const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
+
+  // Edit User Dialog States
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [editRole, setEditRole] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  const handleOpenEdit = (userItem: UserItem) => {
+    setEditingUser(userItem);
+    setEditRole(userItem.userRoles[0]?.role?.name || 'Viewer');
+    setEditPassword('');
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+    setSaveLoading(true);
+    try {
+      const payload: any = { roleName: editRole };
+      if (editPassword.trim()) {
+        payload.password = editPassword;
+      }
+      const response = await fetch(`${API_BASE_URL}/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to update user');
+      }
+      setEditDialogOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Could not update user');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -162,19 +205,32 @@ export const AdminPanel: React.FC = () => {
                       {new Date(item.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell align="center">
-                      {item.status === 'archived' && !isSelf && !isItemAdmin && (
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          startIcon={<DeleteIcon />}
-                          disabled={deleteLoadingId === item.id}
-                          onClick={() => handleDeleteUser(item.id)}
-                          sx={{ borderRadius: 2, height: 30, textTransform: 'none', fontWeight: 600 }}
-                        >
-                          {deleteLoadingId === item.id ? 'Deleting...' : 'Delete'}
-                        </Button>
-                      )}
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                        {!isSelf && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={() => handleOpenEdit(item)}
+                            sx={{ borderRadius: 2, height: 30, textTransform: 'none', fontWeight: 600 }}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                        {item.status === 'archived' && !isSelf && !isItemAdmin && (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            startIcon={<DeleteIcon />}
+                            disabled={deleteLoadingId === item.id}
+                            onClick={() => handleDeleteUser(item.id)}
+                            sx={{ borderRadius: 2, height: 30, textTransform: 'none', fontWeight: 600 }}
+                          >
+                            {deleteLoadingId === item.id ? 'Deleting...' : 'Delete'}
+                          </Button>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 );
@@ -183,6 +239,63 @@ export const AdminPanel: React.FC = () => {
           </Table>
         </TableContainer>
       )}
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit User Properties</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            {editingUser && (
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">Name</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{editingUser.name}</Typography>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1 }}>Email</Typography>
+                <Typography variant="body2">{editingUser.email}</Typography>
+              </Box>
+            )}
+
+            <FormControl fullWidth size="small">
+              <InputLabel>User Role</InputLabel>
+              <Select
+                value={editRole}
+                label="User Role"
+                onChange={(e) => setEditRole(e.target.value)}
+              >
+                <MenuItem value="Admin">Admin</MenuItem>
+                <MenuItem value="Design Engineer">Design Engineer</MenuItem>
+                <MenuItem value="Process Engineer">Process Engineer</MenuItem>
+                <MenuItem value="Quality Engineer">Quality Engineer</MenuItem>
+                <MenuItem value="Production Engineer">Production Engineer</MenuItem>
+                <MenuItem value="Maintenance">Maintenance</MenuItem>
+                <MenuItem value="Program Management">Program Management</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Reset Password (Optional)"
+              type="password"
+              placeholder="Leave blank to keep current password"
+              value={editPassword}
+              onChange={(e) => setEditPassword(e.target.value)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setEditDialogOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveUser}
+            variant="contained"
+            disabled={saveLoading}
+            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100 }}
+          >
+            {saveLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, Param, Request } from '@nestjs/common';
+import { Controller, Get, Delete, Param, Request, Patch, Body } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
@@ -11,6 +11,16 @@ export class UserController {
   @Permissions('admin.users')
   async findAll(@Request() req: RequestWithUser) {
     return this.userService.findAll(req.user.tenantId);
+  }
+
+  @Patch(':id')
+  @Permissions('admin.users')
+  async update(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() dto: { roleName?: string; password?: string }
+  ) {
+    return this.userService.update(req.user.tenantId, id, dto);
   }
 
   @Delete(':id')

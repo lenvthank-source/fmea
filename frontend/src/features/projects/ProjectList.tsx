@@ -55,6 +55,7 @@ export const ProjectList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Wizard Dialog State
   const [open, setOpen] = useState(false);
@@ -484,6 +485,17 @@ export const ProjectList: React.FC = () => {
         <Tab label="Archived Projects" value="archived" />
       </Tabs>
 
+      <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+        <TextField
+          placeholder="Search by Part Name or Part Number..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          size="small"
+          variant="outlined"
+          sx={{ width: 350, bgcolor: 'background.paper', borderRadius: 1 }}
+        />
+      </Box>
+
       {activeTab === 'archived' && (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
           ⚠️ <strong>Warning:</strong> Archived projects are hidden from active workspaces and will be permanently deleted after 30 days.
@@ -496,36 +508,46 @@ export const ProjectList: React.FC = () => {
         </Alert>
       )}
 
-      {loading ? (
-        <DashboardSkeleton showMascot={!token} />
-      ) : projects.length === 0 ? (
-        <Box sx={{ textAlign: 'center', p: 8, border: '1px dashed #e2e8f0', borderRadius: 5, bgcolor: 'background.paper' }}>
-          <Typography color="text.secondary" gutterBottom>
-            {activeTab === 'archived' ? 'No archived projects found.' : 'No projects found in this workspace.'}
-          </Typography>
-          {activeTab !== 'archived' && (
-            <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2 }}>
-              Create Your First Project
-            </Button>
-          )}
-        </Box>
-      ) : (
-        <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
-          <Table>
-            <TableHead sx={{ bgcolor: '#f8fafc' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Number</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Customer</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Document Type</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Created At</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Modified At</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 60 }}>Rev</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 80 }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {projects.map((project) => (
+      {(() => {
+        const filteredProjects = projects.filter((p) => {
+          const nameMatch = (p.partName || '').toLowerCase().includes(searchQuery.toLowerCase());
+          const numberMatch = (p.orgPartNumber || '').toLowerCase().includes(searchQuery.toLowerCase());
+          return nameMatch || numberMatch;
+        });
+
+        return loading ? (
+          <DashboardSkeleton showMascot={!token} />
+        ) : filteredProjects.length === 0 ? (
+          <Box sx={{ textAlign: 'center', p: 8, border: '1px dashed #e2e8f0', borderRadius: 5, bgcolor: 'background.paper' }}>
+            <Typography color="text.secondary" gutterBottom>
+              {searchQuery 
+                ? 'No projects matched your search query.' 
+                : (activeTab === 'archived' ? 'No archived projects found.' : 'No projects found in this workspace.')
+              }
+            </Typography>
+            {!searchQuery && activeTab !== 'archived' && (
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2 }}>
+                Create Your First Project
+              </Button>
+            )}
+          </Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Part Number</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Customer</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Document Type</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Created At</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Modified At</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 60 }}>Rev</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: 80 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredProjects.map((project) => (
                 <TableRow key={project.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell>
                     <Typography
@@ -592,7 +614,7 @@ export const ProjectList: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      )}
+      ) })()}
 
       {/* Project Context Menu */}
       <Menu
@@ -906,13 +928,13 @@ export const ProjectList: React.FC = () => {
                     </Typography>
                     <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Typography variant="body2">
-                        <strong>PFD Document No:</strong> PFD-{orgPartNumber || '—'}
+                        <strong>PFD Document No:</strong> PFD{orgPartNumber || '—'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>PFMEA Document No:</strong> PFMEA-{orgPartNumber || '—'}
+                        <strong>PFMEA Document No:</strong> PFMEA{orgPartNumber || '—'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Control Plan No:</strong> CP-{orgPartNumber || '—'}
+                        <strong>Control Plan No:</strong> CP{orgPartNumber || '—'}
                       </Typography>
                     </Box>
                   </Grid>

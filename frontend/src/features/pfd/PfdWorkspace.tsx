@@ -48,6 +48,7 @@ export const PfdWorkspace: React.FC = () => {
   const { token } = useAuth();
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState('');
   const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
 
   const handleToggleExpand = (stepId: string) => {
@@ -372,6 +373,7 @@ export const PfdWorkspace: React.FC = () => {
               onKeyDown={(e) => handleKeyDown(e, idx)}
               disableUnderline
               fullWidth
+              multiline
               sx={{ fontSize: '0.85rem', pr: items.length > 1 ? 3 : 0 }}
             />
             {items.length > 1 && (
@@ -681,7 +683,7 @@ export const PfdWorkspace: React.FC = () => {
       )}
 
       {/* Reusable Collapsible Document Header */}
-      <DocumentHeader projectId={projectId!} docType="PFD" />
+      <DocumentHeader projectId={projectId!} docType="PFD" onHeaderLoaded={(p) => setProjectName(p.name)} />
 
       {activeTab === 'table' ? (
         <>
@@ -690,7 +692,7 @@ export const PfdWorkspace: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell style={{ width: 40 }} /> {/* Drag Handle */}
-                <TableCell style={{ width: 80, fontWeight: 'bold' }}>Step #</TableCell>
+                <TableCell style={{ width: 130, fontWeight: 'bold' }}>Step #</TableCell>
                 <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
                 <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Incoming Source of Variation</TableCell>
                 <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
@@ -784,6 +786,7 @@ export const PfdWorkspace: React.FC = () => {
                             onChange={(e) => handleFieldChange(step.id, 'name', e.target.value)}
                             disableUnderline
                             fullWidth
+                            multiline
                             sx={{ fontSize: '0.85rem' }}
                           />
                         )}
@@ -803,6 +806,7 @@ export const PfdWorkspace: React.FC = () => {
                             onChange={(e) => handleFieldChange(step.id, 'specialCharacteristics', e.target.value)}
                             disableUnderline
                             fullWidth
+                            multiline
                             sx={{ fontSize: '0.85rem' }}
                           />
                         )}
@@ -1629,7 +1633,7 @@ export const PfdWorkspace: React.FC = () => {
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         docType="PFD"
-        projectName=""
+        projectName={projectName}
         data={steps}
         steps={steps}
       />

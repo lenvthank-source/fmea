@@ -68,10 +68,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
 
   const getDerivedDocNumber = () => {
     const partNo = project.orgPartNumber || '—';
-    if (docType === 'PFD') return `PFD-${partNo}`;
-    if (docType === 'PFMEA') return `PFMEA-${partNo}`;
-    if (docType === 'DFMEA') return `DFMEA-${partNo}`;
-    if (docType === 'CONTROL_PLAN') return `CP-${partNo}`;
+    if (docType === 'PFD') return `PFD${partNo}`;
+    if (docType === 'PFMEA') return `PFMEA${partNo}`;
+    if (docType === 'DFMEA') return `DFMEA${partNo}`;
+    if (docType === 'CONTROL_PLAN') return `CP${partNo}`;
     return partNo;
   };
 

@@ -73,10 +73,10 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
 
   const getDerivedDocNumber = () => {
     const partNo = project?.orgPartNumber || '—';
-    if (docType === 'PFD') return `PFD-${partNo}`;
-    if (docType === 'PFMEA') return `PFMEA-${partNo}`;
-    if (docType === 'DFMEA') return `DFMEA-${partNo}`;
-    if (docType === 'CONTROL_PLAN') return `CP-${partNo}`;
+    if (docType === 'PFD') return `PFD${partNo}`;
+    if (docType === 'PFMEA') return `PFMEA${partNo}`;
+    if (docType === 'DFMEA') return `DFMEA${partNo}`;
+    if (docType === 'CONTROL_PLAN') return `CP${partNo}`;
     return partNo;
   };
 
@@ -375,7 +375,35 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         <body>
           <h2>${projectName} — ${getDocTypeName()}</h2>
           <p>Exported on: ${new Date().toLocaleDateString()}</p>
-          <table>
+          ${project ? `
+            <table style="margin-bottom: 20px; border-collapse: collapse;">
+              <tr>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Company Name:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.organisationName || '—'}</td>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Customer Name:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.customer || '—'}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Manufacturing Plant:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.organisationPlant || '—'}</td>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Document Number:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${getDerivedDocNumber()}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Subject (Part Name):</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.partName || '—'}</td>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Part Number:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.orgPartNumber || '—'}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Revision / Status:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">Rev ${project.revisionNumber || '1.0'} (${getStatusLabel()})</td>
+                <td colspan="2" style="font-weight: bold; background-color: #f1f5f9; border: 0.5pt solid #cbd5e1;">Origination Date:</td>
+                <td colspan="2" style="border: 0.5pt solid #cbd5e1;">${project.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'}</td>
+              </tr>
+            </table>
+          ` : ''}
+          <table style="border-collapse: collapse;">
             <thead>
               <tr>
                 ${headers.map(h => `<th>${h}</th>`).join('')}
@@ -504,6 +532,24 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
               #root {
                 display: none !important;
               }
+              /* Reset MUI Dialog overlay wrappers for absolute static flow */
+              .MuiDialog-root {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+              }
+              .MuiDialog-container {
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+              }
               .MuiBackdrop-root {
                 display: none !important;
               }
@@ -518,6 +564,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                 margin: 0 !important;
                 padding: 0 !important;
                 box-shadow: none !important;
+                overflow: visible !important;
               }
               .print-toolbar {
                 display: none !important;
@@ -525,6 +572,8 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
               .print-preview-card {
                 border: none !important;
                 box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
               }
               ${paperSizesCss[paperSize]}
             }
