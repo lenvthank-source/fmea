@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container, Divider } from '@mui/material';
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, Link, Container } from '@mui/material';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
 
 export const Login: React.FC = () => {
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [isSignup, setIsSignup] = useState(false);
@@ -41,49 +41,7 @@ export const Login: React.FC = () => {
     }
   }, [username, isSignup]);
 
-  const handleGoogleLoginResponse = async (response: any) => {
-    setError(null);
-    setLoading(true);
-    try {
-      const idToken = response.credential;
-      await googleLogin(idToken);
-      navigate('/projects');
-    } catch (err: any) {
-      setError(err.message || 'Google Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Dynamically load Google Identity Services script for Admin logins
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-google-client-id.apps.googleusercontent.com';
-      try {
-        (window as any).google?.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleLoginResponse,
-        });
-
-        (window as any).google?.accounts.id.renderButton(
-          document.getElementById('google-signin-btn'),
-          { theme: 'outline', size: 'large', width: '100%' }
-        );
-      } catch (err) {
-        console.error("Google Auth initialization failed:", err);
-      }
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,16 +176,7 @@ export const Login: React.FC = () => {
                 </Link>
               </Box>
 
-              <Divider sx={{ my: 1.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  ADMIN PORTAL
-                </Typography>
-              </Divider>
 
-              {/* Google Sign-in button for Neon Auth (Admins Only) */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                <Box id="google-signin-btn" sx={{ width: '100%', minHeight: 40 }} />
-              </Box>
             </Box>
           </CardContent>
         </Card>

@@ -28,12 +28,7 @@ export class AuthController {
     return this.authService.checkUsername(username);
   }
 
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @Post('google-login')
-  async googleLogin(@Body('id_token') idToken: string) {
-    return this.authService.googleLogin(idToken);
-  }
+
 
   @Public()
   @HttpCode(HttpStatus.OK)

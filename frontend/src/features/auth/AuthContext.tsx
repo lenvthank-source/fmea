@@ -14,7 +14,6 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
-  googleLogin: (idToken: string) => Promise<void>;
   signup: (email: string, password: string, name: string, subdomain: string, tenantName: string) => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
@@ -42,93 +41,140 @@ function parseJwt(token: string): any {
   }
 }
 
+const originalFetch = window.fetch;
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      const claims = parseJwt(savedToken);
-      if (claims && claims.exp * 1000 > Date.now()) {
-        setToken(savedToken);
+  const refreshAccessToken = async (): Promise<boolean> => {
+    const savedRefreshToken = localStorage.getItem('refresh_token');
+    if (!savedRefreshToken) {
+      logout();
+      return false;
+    }
+    try {
+      const response = await originalFetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: savedRefreshToken }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const accessToken = data.access_token;
+        const claims = parseJwt(accessToken);
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        setToken(accessToken);
         setUser({
           id: claims.sub,
           email: claims.email,
-          name: claims.name || claims.email,
+          name: data.user?.name || claims.name || claims.email,
           tenantId: claims.tenant_id || claims.tenantId,
           roles: claims.roles || [],
           permissions: claims.permissions || [],
         });
-        setLoading(false);
-        return;
+        return true;
       } else {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
+        logout();
+        return false;
       }
+    } catch (err) {
+      console.error('Token refresh failed:', err);
+      logout();
+      return false;
     }
+  };
 
-    const performAutoLogin = async () => {
-      try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'guest@example.com', password: 'guestpassword', subdomain: 'guest-tenant' }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const accessToken = data.access_token;
-          const claims = parseJwt(accessToken);
-          localStorage.setItem('token', accessToken);
-          localStorage.setItem('refresh_token', data.refresh_token);
-          setToken(accessToken);
+  useEffect(() => {
+    const initAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      const savedRefreshToken = localStorage.getItem('refresh_token');
+
+      if (savedToken) {
+        const claims = parseJwt(savedToken);
+        if (claims && claims.exp * 1000 > Date.now() + 30000) {
+          setToken(savedToken);
           setUser({
             id: claims.sub,
             email: claims.email,
-            name: data.user.name,
+            name: claims.name || claims.email,
             tenantId: claims.tenant_id || claims.tenantId,
             roles: claims.roles || [],
             permissions: claims.permissions || [],
           });
-        } else {
-          const signupResponse = await fetch(`${API_URL}/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: 'guest@example.com',
-              password: 'guestpassword',
-              name: 'Guest User',
-              subdomain: 'guest-tenant',
-              tenantName: 'Guest Workspace',
-            }),
-          });
-          if (signupResponse.ok) {
-            const data = await signupResponse.json();
-            const accessToken = data.access_token;
-            const claims = parseJwt(accessToken);
-            localStorage.setItem('token', accessToken);
-            localStorage.setItem('refresh_token', data.refresh_token);
-            setToken(accessToken);
-            setUser({
-              id: claims.sub,
-              email: claims.email,
-              name: data.user.name,
-              tenantId: claims.tenant_id || claims.tenantId,
-              roles: claims.roles || [],
-              permissions: claims.permissions || [],
-            });
-          }
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error('Silent auto guest login failed:', err);
-      } finally {
-        setLoading(false);
       }
+
+      if (savedRefreshToken) {
+        const success = await refreshAccessToken();
+        if (success) {
+          setLoading(false);
+          return;
+        }
+      }
+
+      logout();
+      setLoading(false);
     };
 
-    performAutoLogin();
+    initAuth();
   }, []);
+
+  // Background token refresh check
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(async () => {
+      const claims = parseJwt(token);
+      if (claims && claims.exp * 1000 - Date.now() < 180000) {
+        console.log('Access token expiring soon, refreshing...');
+        await refreshAccessToken();
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [token]);
+
+  // Setup fetch interceptor for 401 responses
+  useEffect(() => {
+    window.fetch = async (...args) => {
+      let [resource, config] = args;
+      let response = await originalFetch(resource, config);
+      
+      if (response.status === 401) {
+        const urlString = typeof resource === 'string' ? resource : (resource as Request).url;
+        if (urlString.includes('/auth/refresh') || urlString.includes('/auth/login')) {
+          return response;
+        }
+        
+        console.warn('Request returned 401. Attempting token refresh...');
+        const success = await refreshAccessToken();
+        if (success) {
+          const newToken = localStorage.getItem('token');
+          if (newToken && config) {
+            config.headers = {
+              ...config.headers,
+              'Authorization': `Bearer ${newToken}`
+            };
+          }
+          response = await originalFetch(resource, config);
+        } else {
+          logout();
+          window.location.href = '/login';
+        }
+      }
+      
+      return response;
+    };
+    
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [token]);
 
   // Keep-alive background ping to keep backend and database awake while the app is open
   useEffect(() => {
@@ -203,35 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const googleLogin = async (idToken: string) => {
-    const response = await fetch(`${API_URL}/auth/google-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_token: idToken }),
-    });
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.message || 'Google login failed');
-    }
-
-    const data = await response.json();
-    const accessToken = data.access_token;
-    const claims = parseJwt(accessToken);
-
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    
-    setToken(accessToken);
-    setUser({
-      id: claims.sub,
-      email: claims.email,
-      name: data.user.name,
-      tenantId: claims.tenant_id || claims.tenantId,
-      roles: claims.roles || [],
-      permissions: claims.permissions || [],
-    });
-  };
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -248,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, signup, logout, hasPermission, googleLogin }}>
+    <AuthContext.Provider value={{ token, user, loading, login, signup, logout, hasPermission } as any}>
       {children}
     </AuthContext.Provider>
   );
