@@ -533,22 +533,18 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                 display: none !important;
               }
               /* Reset MUI Dialog overlay wrappers for absolute static flow */
-              .MuiDialog-root {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-              }
-              .MuiDialog-container {
+              .MuiDialog-root,
+              .MuiDialog-container,
+              .MuiDialog-paper {
+                position: static !important;
                 display: block !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
                 width: 100% !important;
                 height: auto !important;
+                max-width: none !important;
+                max-height: none !important;
                 overflow: visible !important;
+                box-shadow: none !important;
+                background: none !important;
               }
               .MuiBackdrop-root {
                 display: none !important;
@@ -556,9 +552,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
               /* Display only the print preview content */
               .print-preview-root {
                 display: block !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
+                position: static !important;
                 width: 100% !important;
                 height: auto !important;
                 margin: 0 !important;
