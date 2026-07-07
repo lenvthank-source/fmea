@@ -23,7 +23,6 @@ import {
   ChevronRight as CollapseIcon,
   ExpandMore as ExpandIcon,
   AccountTree as RootIcon,
-  ViewWeek as StepIcon,
   PrecisionManufacturing as WorkElementIcon,
   HelpOutlined as FunctionIcon,
   Warning as FailureIcon,
@@ -446,7 +445,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                 return allRootFunctions.map((fn, fIdx) => {
                   const nodeKey = `root-func::${fn}`;
-                  const isSelected = selectedNodeId === nodeKey;
                   
                   const matchingStructFunc = projectStructFuncs.find(sf => sf.narration === fn);
                   const dbFailures = matchingStructFunc?.failures?.map((failObj: any) => failObj.narration) || [];
@@ -502,20 +500,10 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                             const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail);
                             const isLinked = failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0;
                             const failNodeId = failNode ? `struct-mode::${failNode.id}` : `root-fail-${fn}-${fail}`;
-                            const isFailSelected = selectedNodeId === failNodeId;
                             
-                            let bgcolor = '#fef2f2';
-                            let border = '2px solid #fecaca';
                             let textColor = '#7f1d1d';
-
                             if (isLinked) {
-                              bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
-                              border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
                               textColor = '#0284c7';
-                            } else {
-                              bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
-                              border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
-                              textColor = '#7f1d1d';
                             }
 
                             return (
@@ -582,7 +570,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
               {filteredSteps.map((step) => {
                 const stepNodeId = `step::${step.id}`;
                 const stepExpanded = !!expandedNodes[stepNodeId];
-                const stepSelected = selectedNodeId === stepNodeId;
 
                 const stepRows = rows.filter(r => r.processStepId === step.id);
                 
@@ -678,7 +665,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                           return allStepFunctions.map((fn, fIdx) => {
                             const nodeKey = `step-func::${step.id}::${fn}`;
-                            const isSelected = selectedNodeId === nodeKey;
                             
                             const matchingStructFunc = stepStructFuncs.find(sf => sf.narration === fn);
                             const dbFailures = matchingStructFunc?.failures?.map((failObj: any) => failObj.narration) || [];
@@ -695,7 +681,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   onClick={(e) => { e.stopPropagation(); handleSelectNode(nodeKey); }}
                                   sx={{ 
                                     cursor: 'pointer', 
-                                    py: 0.5, 
                                     py: 0.25, 
                                     px: 0.5, 
                                     alignItems: 'center',
@@ -735,19 +720,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                       const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail) || getFailureModeLinkInfo(step.id, fn, fail);
                                       const isLinked = failNode?.isLinked ?? (failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0) ?? false;
                                       const failNodeId = failNode ? `struct-mode::${failNode.id}` : `step-fail::${step.id}::${fn}::${fail}`;
-                                      const isFailSelected = selectedNodeId === failNodeId;
-
-                                      let bgcolor = '#fef2f2';
-                                      let border = '2px solid #fecaca';
+                                      
                                       let textColor = '#7f1d1d';
-
                                       if (isLinked) {
-                                        bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
-                                        border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
                                         textColor = '#0284c7';
                                       } else {
-                                        bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
-                                        border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
                                         textColor = '#7f1d1d';
                                       }
 
@@ -813,7 +790,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         {/* Work Elements List */}
                         {allWeNames.map((we, wIdx) => {
                           const weNodeId = `we::${step.id}::${we}`;
-                          const isWeSelected = selectedNodeId === weNodeId;
                           const weExpanded = !!expandedNodes[weNodeId];
                           const weRows = stepRows.filter(r => r.workElementName === we);
                           const weFunctions = Array.from(new Set(weRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
@@ -867,7 +843,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
                                     return allWeFunctions.map((fn, wfIdx) => {
                                       const weFuncKey = `we-func::${step.id}::${we}::${fn}`;
-                                      const isWeFuncSelected = selectedNodeId === weFuncKey;
                                       const weFuncExpanded = !!expandedNodes[weFuncKey];
 
                                       const matchingStructFunc = weStructFuncs.find(sf => sf.narration === fn);
@@ -922,21 +897,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             <Box sx={{ pl: 4 }}>
                                               {failures.map((fail, failIdx) => {
                                                 const failNode = matchingStructFunc?.failures?.find((failObj: any) => failObj.narration === fail);
-                                                const isLinked = failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0;
+                                                const isLinked = !!(failNode && failNode.modeEffectLinks && failNode.modeEffectLinks.length > 0);
                                                 const failNodeId = failNode ? `struct-mode::${failNode.id}` : `we-fail::${step.id}::${we}::${fn}::${fail}`;
-                                                const isFailSelected = selectedNodeId === failNodeId;
-
-                                                let bgcolor = '#fef2f2';
-                                                let border = '2px solid #fecaca';
+                                                
                                                 let textColor = '#7f1d1d';
-
                                                 if (isLinked) {
-                                                  bgcolor = isFailSelected ? '#e0f2fe' : '#f0f9ff';
-                                                  border = isFailSelected ? '2px solid #0284c7' : '2px solid #bae6fd';
                                                   textColor = '#0284c7';
                                                 } else {
-                                                  bgcolor = isFailSelected ? '#fee2e2' : '#fef2f2';
-                                                  border = isFailSelected ? '2px solid #ef4444' : '2px solid #fecaca';
                                                   textColor = '#7f1d1d';
                                                 }
 

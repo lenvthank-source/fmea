@@ -55,7 +55,7 @@ interface PfdCellWrapperProps {
 const PfdCellWrapper: React.FC<PfdCellWrapperProps> = ({ children, textToCopy, onEdit, showEditOnly = false }) => {
   const [showButtons, setShowButtons] = useState(false);
   const [copied, setCopied] = useState(false);
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timerRef = React.useRef<any>(null);
 
   const handleMouseEnter = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -135,13 +135,13 @@ const PfdCellWrapper: React.FC<PfdCellWrapperProps> = ({ children, textToCopy, o
             }
           }}
         >
-          <Tooltip title="Edit" size="small" arrow>
+          <Tooltip title="Edit" arrow>
             <IconButton onClick={handleEditClick} size="small" sx={{ p: 0.5 }}>
               <EditIcon sx={{ fontSize: '0.85rem' }} />
             </IconButton>
           </Tooltip>
           {!showEditOnly && (
-            <Tooltip title={copied ? "Copied!" : "Copy content"} size="small" arrow>
+            <Tooltip title={copied ? "Copied!" : "Copy content"} arrow>
               <IconButton onClick={handleCopy} size="small" sx={{ p: 0.5 }}>
                 {copied ? (
                   <CheckIcon sx={{ fontSize: '0.85rem', color: 'success.main' }} />
@@ -526,41 +526,7 @@ export const PfdWorkspace: React.FC = () => {
     );
   };
 
-  // Flow Icon Column Toggler
-  const handleToggleFlowIcon = async (stepId: string, iconKey: string, currentValue: boolean) => {
-    const step = steps.find(s => s.id === stepId);
-    if (!step) return;
 
-    const currentIcons = step.flowIcons || {};
-    const newIcons = { ...currentIcons, [iconKey]: !currentValue };
-
-    let stepType = step.stepType;
-    if (!currentValue) {
-      if (iconKey === 'oper') stepType = 'operation';
-      else if (iconKey === 'insp') stepType = 'inspection';
-      else if (iconKey === 'trans') stepType = 'transport';
-      else if (iconKey === 'store') stepType = 'storage';
-      else if (iconKey === 'decs') stepType = 'decision';
-      else if (iconKey === 'rework') stepType = 'rework';
-      else if (iconKey === 'reject') stepType = 'rework';
-    }
-
-    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, flowIcons: newIcons, stepType } : s));
-
-    try {
-      await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ flowIcons: newIcons, stepType })
-      });
-    } catch (err) {
-      console.error(err);
-      fetchSteps(); // rollback
-    }
-  };
 
   const handleSaveFlowIcons = async (stepId: string) => {
     const step = steps.find(s => s.id === stepId);
