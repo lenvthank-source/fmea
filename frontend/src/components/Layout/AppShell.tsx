@@ -44,8 +44,8 @@ export const AppShell: React.FC = () => {
   const [autohideEnabled, setAutohideEnabled] = useState<boolean>(true);
 
   const handleMouseEnter = () => {
-    if (!autohideEnabled) return;
-    setCollapsedState(false);
+    // Left bar auto-hide is enabled, but auto-unhide is disabled.
+    // Unhide is performed intentionally via the bottom toggle button.
   };
 
   const handleMouseLeave = () => {
@@ -284,122 +284,146 @@ export const AppShell: React.FC = () => {
           }}
         >
           {showAppBar && <Toolbar />}
-          <Box sx={{ overflow: 'auto', mt: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-          <Box>
-            {/* Project Header section */}
-            {projectId && projectName && !collapsed && (
-              <Box sx={{ px: 2, py: 1.5, mb: 1 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Current Project
-                </Typography>
-                <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: 'text.primary', mt: 0.5 }}>
-                  {projectName}
-                </Typography>
-              </Box>
-            )}
-
-            <List>
-              {projectId ? (
-                <>
-                  {renderListItem({ text: 'Back to Projects', icon: <BackIcon />, path: '/projects' })}
-                  <Divider sx={{ my: 1, mx: 1.5 }} />
-                  
-                  {renderListItem({ text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` })}
-                  
-                  {/* PFMEA collapsible item */}
-                  <ListItem disablePadding sx={{ display: 'block' }}>
-                    <ListItemButton
-                      onClick={() => setPfmeaOpen(!pfmeaOpen)}
-                      sx={{
-                        mx: collapsed ? 0.5 : 1,
-                        borderRadius: 2,
-                        mb: 0.5,
-                        pl: 2,
-                        pr: 2,
-                        py: 1,
-                        minHeight: 40,
-                        justifyContent: collapsed ? 'center' : 'space-between',
-                        '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
-                          <PfmeaIcon />
-                        </ListItemIcon>
-                        {!collapsed && (
-                          <ListItemText
-                            primary={
-                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
-                                PFMEA
-                              </Typography>
-                            }
-                          />
-                        )}
-                      </Box>
-                      {!collapsed && (pfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
-                    </ListItemButton>
-                    
-                    <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
-                      <List component="div" disablePadding>
-                        {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
-                        {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=table`, isChild: true })}
-                        {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
-                      </List>
-                    </Collapse>
-                  </ListItem>
-
-                  {/* DFMEA collapsible item */}
-                  <ListItem disablePadding sx={{ display: 'block' }}>
-                    <ListItemButton
-                      onClick={() => setDfmeaOpen(!dfmeaOpen)}
-                      sx={{
-                        mx: collapsed ? 0.5 : 1,
-                        borderRadius: 2,
-                        mb: 0.5,
-                        pl: 2,
-                        pr: 2,
-                        py: 1,
-                        minHeight: 40,
-                        justifyContent: collapsed ? 'center' : 'space-between',
-                        '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
-                          <DfmeaIcon />
-                        </ListItemIcon>
-                        {!collapsed && (
-                          <ListItemText
-                            primary={
-                              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
-                                DFMEA
-                              </Typography>
-                            }
-                          />
-                        )}
-                      </Box>
-                      {!collapsed && (dfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
-                    </ListItemButton>
-                    
-                    <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
-                      <List component="div" disablePadding>
-                        {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
-                        {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=table`, isChild: true })}
-                      </List>
-                    </Collapse>
-                  </ListItem>
-
-                  {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` })}
-                  {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/actions?projectId=${projectId}` })}
-                  {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/projects/${projectId}/linkage` })}
-                  {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` })}
-                </>
-              ) : (
-                globalMenuItems.map((item) => renderListItem(item))
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', overflow: 'hidden' }}>
+            <Box sx={{ overflowY: 'auto', flexGrow: 1 }}>
+              {/* Project Header section */}
+              {projectId && projectName && !collapsed && (
+                <Box sx={{ px: 2, py: 1.5, mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Current Project
+                  </Typography>
+                  <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: 'text.primary', mt: 0.5 }}>
+                    {projectName}
+                  </Typography>
+                </Box>
               )}
-            </List>
+
+              <List>
+                {projectId ? (
+                  <>
+                    {renderListItem({ text: 'Back to Projects', icon: <BackIcon />, path: '/projects' })}
+                    <Divider sx={{ my: 1, mx: 1.5 }} />
+                    
+                    {renderListItem({ text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` })}
+                    
+                    {/* PFMEA collapsible item */}
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                      <ListItemButton
+                        onClick={() => setPfmeaOpen(!pfmeaOpen)}
+                        sx={{
+                          mx: collapsed ? 0.5 : 1,
+                          borderRadius: 2,
+                          mb: 0.5,
+                          pl: 2,
+                          pr: 2,
+                          py: 1,
+                          minHeight: 40,
+                          justifyContent: collapsed ? 'center' : 'space-between',
+                          '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                            <PfmeaIcon />
+                          </ListItemIcon>
+                          {!collapsed && (
+                            <ListItemText
+                              primary={
+                                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                  PFMEA
+                                </Typography>
+                              }
+                            />
+                          )}
+                        </Box>
+                        {!collapsed && (pfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                      </ListItemButton>
+                      
+                      <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=table`, isChild: true })}
+                          {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
+                        </List>
+                      </Collapse>
+                    </ListItem>
+
+                    {/* DFMEA collapsible item */}
+                    <ListItem disablePadding sx={{ display: 'block' }}>
+                      <ListItemButton
+                        onClick={() => setDfmeaOpen(!dfmeaOpen)}
+                        sx={{
+                          mx: collapsed ? 0.5 : 1,
+                          borderRadius: 2,
+                          mb: 0.5,
+                          pl: 2,
+                          pr: 2,
+                          py: 1,
+                          minHeight: 40,
+                          justifyContent: collapsed ? 'center' : 'space-between',
+                          '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                            <DfmeaIcon />
+                          </ListItemIcon>
+                          {!collapsed && (
+                            <ListItemText
+                              primary={
+                                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                  DFMEA
+                                </Typography>
+                              }
+                            />
+                          )}
+                        </Box>
+                        {!collapsed && (dfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                      </ListItemButton>
+                      
+                      <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding>
+                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=table`, isChild: true })}
+                        </List>
+                      </Collapse>
+                    </ListItem>
+
+                    {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` })}
+                    {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/actions?projectId=${projectId}` })}
+                    {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/projects/${projectId}/linkage` })}
+                    {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` })}
+                  </>
+                ) : (
+                  globalMenuItems.map((item) => renderListItem(item))
+                )}
+              </List>
+            </Box>
+
+            {/* Sidebar manual toggle button */}
+            <Box 
+              sx={{ 
+                p: 1.5, 
+                display: 'flex', 
+                justifyContent: collapsed ? 'center' : 'flex-end',
+                borderTop: '1px solid rgba(40, 37, 29, 0.08)',
+                bgcolor: 'background.paper'
+              }}
+            >
+              <IconButton 
+                onClick={handleToggleCollapse} 
+                size="small" 
+                sx={{ 
+                  border: '1px solid rgba(40, 37, 29, 0.15)', 
+                  borderRadius: 1.5,
+                  bgcolor: 'background.paper',
+                  '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                }}
+              >
+                {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+              </IconButton>
+            </Box>
           </Box>
-        </Box>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, minWidth: 0 }}>
         <Outlet />

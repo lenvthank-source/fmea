@@ -14,7 +14,10 @@ import {
   Close as CloseIcon,
   KeyboardArrowDown as ExpandMoreIcon,
   KeyboardArrowRight as ChevronRightIcon,
-  Download as DownloadIcon
+  Download as DownloadIcon,
+  Check as CheckIcon,
+  Edit as EditIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -42,6 +45,118 @@ interface ProcessStep {
   processCharacteristics?: string | string[];
 }
 
+interface PfdCellWrapperProps {
+  children: React.ReactNode;
+  textToCopy: string;
+  onEdit: () => void;
+  showEditOnly?: boolean;
+}
+
+const PfdCellWrapper: React.FC<PfdCellWrapperProps> = ({ children, textToCopy, onEdit, showEditOnly = false }) => {
+  const [showButtons, setShowButtons] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setShowButtons(true);
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setShowButtons(false);
+    setCopied(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit();
+  };
+
+  return (
+    <Box
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      sx={{
+        position: 'relative',
+        minHeight: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+        '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.02)' }
+      }}
+    >
+      <Box sx={{ width: '100%', pr: showButtons ? 7 : 0, transition: 'padding-right 0.15s ease' }}>
+        {children}
+      </Box>
+      
+      {showButtons && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 4,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            gap: 0.5,
+            bgcolor: 'background.paper',
+            border: '1px solid rgba(40, 37, 29, 0.15)',
+            borderRadius: 1.5,
+            p: 0.25,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            zIndex: 10,
+            animation: 'fadeInScale 0.15s ease-in-out',
+            '@keyframes fadeInScale': {
+              from: { opacity: 0, transform: 'translateY(-50%) scale(0.9)' },
+              to: { opacity: 1, transform: 'translateY(-50%) scale(1)' }
+            }
+          }}
+        >
+          <Tooltip title="Edit" size="small" arrow>
+            <IconButton onClick={handleEditClick} size="small" sx={{ p: 0.5 }}>
+              <EditIcon sx={{ fontSize: '0.85rem' }} />
+            </IconButton>
+          </Tooltip>
+          {!showEditOnly && (
+            <Tooltip title={copied ? "Copied!" : "Copy content"} size="small" arrow>
+              <IconButton onClick={handleCopy} size="small" sx={{ p: 0.5 }}>
+                {copied ? (
+                  <CheckIcon sx={{ fontSize: '0.85rem', color: 'success.main' }} />
+                ) : (
+                  <DuplicateIcon sx={{ fontSize: '0.85rem' }} />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 export const PfdWorkspace: React.FC = () => {
   const TextFieldAny = TextField as any;
   const { projectId } = useParams<{ projectId: string }>();
@@ -49,7 +164,20 @@ export const PfdWorkspace: React.FC = () => {
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [dragAllowedIndex, setDragAllowedIndex] = useState<number | null>(null);
   const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
+  const [editingFlowSymbolsStepId, setEditingFlowSymbolsStepId] = useState<string | null>(null);
+  const [tempIcons, setTempIcons] = useState<Record<string, boolean>>({});
+
+  const renderCollapsedPreview = (val: any) => {
+    if (!val) return '—';
+    if (Array.isArray(val)) {
+      const filtered = val.filter(Boolean);
+      return filtered.length > 0 ? filtered.join(', ') : '—';
+    }
+    const str = String(val).trim();
+    return str || '—';
+  };
 
   const handleToggleExpand = (stepId: string) => {
     setCollapsedSteps(prev => {
@@ -434,6 +562,37 @@ export const PfdWorkspace: React.FC = () => {
     }
   };
 
+  const handleSaveFlowIcons = async (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+
+    let stepType = step.stepType;
+    if (tempIcons.oper) stepType = 'operation';
+    else if (tempIcons.insp) stepType = 'inspection';
+    else if (tempIcons.trans) stepType = 'transport';
+    else if (tempIcons.store) stepType = 'storage';
+    else if (tempIcons.decs) stepType = 'decision';
+    else if (tempIcons.rework) stepType = 'rework';
+    else if (tempIcons.reject) stepType = 'rework';
+
+    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, flowIcons: tempIcons, stepType } : s));
+    setEditingFlowSymbolsStepId(null);
+
+    try {
+      await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ flowIcons: tempIcons, stepType })
+      });
+    } catch (err) {
+      console.error(err);
+      fetchSteps(); // rollback
+    }
+  };
+
   // Add Step Drawer Handlers
   const handleOpenAddDrawer = () => {
     setError(null);
@@ -732,7 +891,7 @@ export const PfdWorkspace: React.FC = () => {
                   return (
                     <TableRow
                       key={step.id}
-                      draggable
+                      draggable={dragAllowedIndex === index}
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={handleDragOver}
                       onDrop={() => handleDrop(index)}
@@ -746,185 +905,319 @@ export const PfdWorkspace: React.FC = () => {
                       }}
                     >
                       {/* Drag Handle */}
-                      <TableCell align="center" sx={{ cursor: 'move' }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell
+                        align="center"
+                        sx={{ cursor: 'move' }}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={() => setDragAllowedIndex(index)}
+                        onMouseUp={() => setDragAllowedIndex(null)}
+                        onMouseLeave={() => setDragAllowedIndex(null)}
+                      >
                         <DragIcon fontSize="small" sx={{ color: 'text.disabled' }} />
                       </TableCell>
 
                       {/* Step Number */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <IconButton size="small" onClick={() => handleToggleExpand(step.id)} sx={{ p: 0.25 }}>
-                            {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-                          </IconButton>
-                          {isCollapsed ? (
-                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
-                              {step.stepNumber}
-                            </Typography>
-                          ) : (
-                            <Input
-                              value={step.stepNumber}
-                              onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
-                              disableUnderline
-                              fullWidth
-                              sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
-                            />
-                          )}
-                        </Box>
+                        <PfdCellWrapper
+                          textToCopy={step.stepNumber}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`stepNumber-input-${step.id}`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <IconButton size="small" onClick={() => handleToggleExpand(step.id)} sx={{ p: 0.25 }}>
+                              {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                            </IconButton>
+                            {isCollapsed ? (
+                              <Typography sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                {step.stepNumber}
+                              </Typography>
+                            ) : (
+                              <Input
+                                id={`stepNumber-input-${step.id}`}
+                                value={step.stepNumber}
+                                onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
+                                disableUnderline
+                                fullWidth
+                                sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
+                              />
+                            )}
+                          </Box>
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Process Description */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? (
-                          <Typography sx={{ fontSize: '0.85rem', color: 'text.primary' }}>
-                            {step.name || 'Untitled Process Step'}
-                          </Typography>
-                        ) : (
-                          <Input
-                            id={`name-input-${step.id}`}
-                            value={step.name}
-                            placeholder="Drill core hole..."
-                            onChange={(e) => handleFieldChange(step.id, 'name', e.target.value)}
-                            disableUnderline
-                            fullWidth
-                            multiline
-                            sx={{ fontSize: '0.85rem' }}
-                          />
-                        )}
+                        <PfdCellWrapper
+                          textToCopy={step.name}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`name-input-${step.id}`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.primary' }}>
+                              {step.name || 'Untitled Process Step'}
+                            </Typography>
+                          ) : (
+                            <Input
+                              id={`name-input-${step.id}`}
+                              value={step.name}
+                              placeholder="Drill core hole..."
+                              onChange={(e) => handleFieldChange(step.id, 'name', e.target.value)}
+                              disableUnderline
+                              fullWidth
+                              multiline
+                              sx={{ fontSize: '0.85rem' }}
+                            />
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Incoming Variation */}
                       <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? null : renderMultiInputCell(step.id, 'incomingVariation', 'Raw casting variation...')}
+                        <PfdCellWrapper
+                          textToCopy={renderCollapsedPreview(step.incomingVariation)}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`incomingVariation-input-${step.id}-0`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+                              {renderCollapsedPreview(step.incomingVariation)}
+                            </Typography>
+                          ) : (
+                            renderMultiInputCell(step.id, 'incomingVariation', 'Raw casting variation...')
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Special Characteristics */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? null : (
-                          <Input
-                            value={step.specialCharacteristics || ''}
-                            placeholder="CC / SC"
-                            onChange={(e) => handleFieldChange(step.id, 'specialCharacteristics', e.target.value)}
-                            disableUnderline
-                            fullWidth
-                            multiline
-                            sx={{ fontSize: '0.85rem' }}
-                          />
-                        )}
+                        <PfdCellWrapper
+                          textToCopy={step.specialCharacteristics || ''}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`specialCharacteristics-input-${step.id}`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.primary' }}>
+                              {step.specialCharacteristics || '—'}
+                            </Typography>
+                          ) : (
+                            <Input
+                              id={`specialCharacteristics-input-${step.id}`}
+                              value={step.specialCharacteristics || ''}
+                              placeholder="CC / SC"
+                              onChange={(e) => handleFieldChange(step.id, 'specialCharacteristics', e.target.value)}
+                              disableUnderline
+                              fullWidth
+                              multiline
+                              sx={{ fontSize: '0.85rem' }}
+                            />
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Flow Symbols */}
                       <TableCell sx={{ position: 'relative', minWidth: 130, p: 0.5, bgcolor: 'rgba(1, 105, 111, 0.02)', borderLeft: '1px solid rgba(1, 105, 111, 0.06)', borderRight: '1px solid rgba(1, 105, 111, 0.06)' }} onClick={(e) => e.stopPropagation()}>
-                        {hoveredStepId === step.id ? (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              left: '50%',
-                              top: '50%',
-                              transform: 'translate(-50%, -50%)',
-                              display: 'flex',
-                              gap: 0.5,
-                              bgcolor: 'rgba(255,255,255,0.98)',
-                              border: '1px solid rgba(40, 37, 29, 0.15)',
-                              borderRadius: 3,
-                              px: 1,
-                              py: 0.5,
-                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                              zIndex: 10,
-                              animation: 'fadeIn 0.15s ease-in-out',
-                              '@keyframes fadeIn': {
-                                from: { opacity: 0, transform: 'translate(-50%, -50%) scale(0.95)' },
-                                to: { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
-                              }
-                            }}
-                            onMouseEnter={() => setHoveredStepId(step.id)}
-                          >
-                            {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
-                              const isActive = !!icons[key];
-                              const iconMeta = FLOW_ICON_COLUMNS[key];
-                              return (
-                                <Tooltip key={key} title={iconMeta.name} arrow>
-                                  <Box
-                                    onClick={(e) => { e.stopPropagation(); handleToggleFlowIcon(step.id, key, isActive); }}
-                                    sx={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      width: 28,
-                                      height: 28,
-                                      borderRadius: '50%',
-                                      cursor: 'pointer',
-                                      bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
-                                      color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
-                                      fontWeight: 'bold',
-                                      border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
-                                      boxShadow: isActive ? `0 4px 8px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
-                                      transition: 'all 0.15s ease-in-out',
-                                      '&:hover': {
-                                        transform: 'scale(1.15)',
-                                        bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
-                                        border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.3)',
-                                      }
-                                    }}
-                                  >
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
-                                      {iconMeta.sym}
-                                    </Typography>
-                                  </Box>
-                                </Tooltip>
-                              );
-                            })}
-                          </Box>
-                        ) : (
-                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center' }}>
-                            {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
-                              const isActive = !!icons[key];
-                              if (!isActive) return null;
-                              const iconMeta = FLOW_ICON_COLUMNS[key];
-                              return (
-                                <Tooltip key={key} title={iconMeta.name} arrow>
-                                  <Stack spacing={0.25} sx={{ alignItems: 'center' }}>
+                        <PfdCellWrapper
+                          textToCopy=""
+                          showEditOnly
+                          onEdit={() => {
+                            setTempIcons(step.flowIcons || {});
+                            setEditingFlowSymbolsStepId(step.id);
+                          }}
+                        >
+                          {editingFlowSymbolsStepId === step.id ? (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                left: '50%',
+                                top: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.75,
+                                bgcolor: 'rgba(255,255,255,0.99)',
+                                border: '1px solid rgba(40, 37, 29, 0.15)',
+                                borderRadius: 3,
+                                px: 1.5,
+                                py: 0.75,
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
+                                zIndex: 100,
+                                animation: 'fadeInScale 0.15s ease-in-out',
+                                '@keyframes fadeInScale': {
+                                  from: { opacity: 0, transform: 'translate(-50%, -50%) scale(0.9)' },
+                                  to: { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
+                                }
+                              }}
+                            >
+                              {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
+                                const isActive = !!tempIcons[key];
+                                const iconMeta = FLOW_ICON_COLUMNS[key];
+                                return (
+                                  <Tooltip key={key} title={iconMeta.name} arrow>
                                     <Box
+                                      onClick={(e) => { e.stopPropagation(); setTempIcons(prev => ({ ...prev, [key]: !isActive })); }}
                                       sx={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        width: 30,
-                                        height: 30,
+                                        width: 28,
+                                        height: 28,
                                         borderRadius: '50%',
-                                        bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
-                                        color: SYMBOL_COLORS[key]?.text || '#ffffff',
+                                        cursor: 'pointer',
+                                        bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
+                                        color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
                                         fontWeight: 'bold',
-                                        boxShadow: `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}`
+                                        border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
+                                        transition: 'all 0.12s ease-in-out',
+                                        '&:hover': {
+                                          transform: 'scale(1.15)',
+                                          bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
+                                        }
                                       }}
                                     >
-                                      <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.9rem', userSelect: 'none' }}>
+                                      <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
                                         {iconMeta.sym}
                                       </Typography>
                                     </Box>
-                                    <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
-                                      {iconMeta.short}
-                                    </Typography>
-                                  </Stack>
-                                </Tooltip>
-                              );
-                            })}
-                          </Box>
-                        )}
+                                  </Tooltip>
+                                );
+                              })}
+                              
+                              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+                              <Tooltip title="Save Selection" arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => { e.stopPropagation(); handleSaveFlowIcons(step.id); }}
+                                  color="success"
+                                  sx={{ p: 0.25 }}
+                                >
+                                  <CheckCircleIcon sx={{ fontSize: '1.4rem' }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          ) : (
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center' }}>
+                              {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
+                                const isActive = !!icons[key];
+                                if (!isActive) return null;
+                                const iconMeta = FLOW_ICON_COLUMNS[key];
+                                return (
+                                  <Tooltip key={key} title={iconMeta.name} arrow>
+                                    <Stack spacing={0.25} sx={{ alignItems: 'center' }}>
+                                      <Box
+                                        sx={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          width: 30,
+                                          height: 30,
+                                          borderRadius: '50%',
+                                          bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
+                                          color: SYMBOL_COLORS[key]?.text || '#ffffff',
+                                          fontWeight: 'bold',
+                                          boxShadow: `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}`
+                                        }}
+                                      >
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.9rem', userSelect: 'none' }}>
+                                          {iconMeta.sym}
+                                        </Typography>
+                                      </Box>
+                                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
+                                        {iconMeta.short}
+                                      </Typography>
+                                    </Stack>
+                                  </Tooltip>
+                                );
+                              })}
+                            </Box>
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Machines / Machinery / Docs */}
                       <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? null : renderMultiInputCell(step.id, 'machinesEquipmentDocs', 'CNC Drilling Machine...')}
+                        <PfdCellWrapper
+                          textToCopy={renderCollapsedPreview(step.machinesEquipmentDocs)}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`machinesEquipmentDocs-input-${step.id}-0`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+                              {renderCollapsedPreview(step.machinesEquipmentDocs)}
+                            </Typography>
+                          ) : (
+                            renderMultiInputCell(step.id, 'machinesEquipmentDocs', 'CNC Drilling Machine...')
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Desired Outcome */}
                       <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? null : renderMultiInputCell(step.id, 'desiredOutcome', 'Hole diameter ø12.05mm')}
+                        <PfdCellWrapper
+                          textToCopy={renderCollapsedPreview(step.desiredOutcome)}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`desiredOutcome-input-${step.id}-0`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+                              {renderCollapsedPreview(step.desiredOutcome)}
+                            </Typography>
+                          ) : (
+                            renderMultiInputCell(step.id, 'desiredOutcome', 'Hole diameter ø12.05mm')
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Process Characteristics */}
                       <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
-                        {isCollapsed ? null : renderMultiInputCell(step.id, 'processCharacteristics', 'Drill spindle speed')}
+                        <PfdCellWrapper
+                          textToCopy={renderCollapsedPreview(step.processCharacteristics)}
+                          onEdit={() => {
+                            if (isCollapsed) handleToggleExpand(step.id);
+                            setTimeout(() => {
+                              const el = document.getElementById(`processCharacteristics-input-${step.id}-0`);
+                              if (el) el.focus();
+                            }, 100);
+                          }}
+                        >
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', fontStyle: 'italic' }}>
+                              {renderCollapsedPreview(step.processCharacteristics)}
+                            </Typography>
+                          ) : (
+                            renderMultiInputCell(step.id, 'processCharacteristics', 'Drill spindle speed')
+                          )}
+                        </PfdCellWrapper>
                       </TableCell>
 
                       {/* Actions */}
