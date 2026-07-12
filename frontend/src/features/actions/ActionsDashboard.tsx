@@ -462,10 +462,10 @@ export const ActionsDashboard: React.FC = () => {
       {/* Header Section */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 850, letterSpacing: '-0.75px', color: 'text.primary' }}>
             Actions & Corrective Actions
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
             Step 6 of the Quality Workflow: Manage assigned tasks, track risk reduction, and verify evidence.
           </Typography>
         </Box>

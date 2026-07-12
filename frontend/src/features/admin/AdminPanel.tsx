@@ -280,10 +280,10 @@ export const AdminPanel: React.FC = () => {
   return (
     <Box sx={{ width: '100%', maxWidth: '1440px', mx: 'auto', p: 1 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 850, letterSpacing: '-0.75px', mb: 1, color: 'text.primary' }}>
           Administration Control Panel
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
           Manage system users, view contact inquiries, and review user feedback.
         </Typography>
       </Box>

@@ -3,9 +3,10 @@ import {
   Box, Typography, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Alert, FormControlLabel, Chip, Radio, RadioGroup,
   Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
-  TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab
+  TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab,
+  Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup
 } from '@mui/material';
-import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon, GridView as GridIcon, ViewList as ListIcon, Folder as FolderIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
@@ -113,6 +114,7 @@ export const ProjectList: React.FC = () => {
   // Edit project state
   const [isEditing, setIsEditing] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => (localStorage.getItem('dashboard-view-mode') as 'grid' | 'table') || 'grid');
 
   // Auto-suggest Document Number when step 3 is reached
   useEffect(() => {
@@ -461,49 +463,132 @@ export const ProjectList: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 }, py: 1 }}>
+      {/* Page Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
-          <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Projects Dashboard
+          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 850, letterSpacing: '-0.75px', color: 'text.primary' }}>
+            Programs & Projects
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage your manufacturing programs and FMEA assessments
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            Manage your automotive manufacturing programs, FMEAs, and linked Quality Control Plans.
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
+        <Button 
+          variant="contained" 
+          startIcon={<AddIcon />} 
+          onClick={handleOpen}
+          sx={{ borderRadius: 2.5, px: 2.5, py: 1, fontWeight: 700, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
+        >
           Create Project
         </Button>
       </Box>
 
-      <Tabs 
-        value={activeTab} 
-        onChange={(_, newValue) => setActiveTab(newValue)} 
-        sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
-      >
-        <Tab label="Active Projects" value="active" />
-        <Tab label="Archived Projects" value="archived" />
-      </Tabs>
+      {/* Program Summary Statistics */}
+      {(() => {
+        const productionCount = projects.filter(p => p.documentTypes?.[0] === 'Production').length;
+        const prototypeCount = projects.filter(p => p.documentTypes?.[0] === 'Prototype').length;
+        const preLaunchCount = projects.filter(p => p.documentTypes?.[0] === 'Pre-Launch').length;
+        const otherCount = projects.length - productionCount - prototypeCount - preLaunchCount;
 
-      <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
-        <TextField
-          placeholder="Search by Part Name or Part Number..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
-          variant="outlined"
-          sx={{ width: 350, bgcolor: 'background.paper', borderRadius: 1 }}
-        />
-      </Box>
+        return (
+          <Grid container spacing={2.5} sx={{ mb: 4 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper sx={{ p: 2.5, borderRadius: 4, border: '1px solid rgba(15, 23, 42, 0.08)', bgcolor: 'background.paper', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(37, 99, 235, 0.08)', color: 'primary.main', width: 48, height: 48 }}>
+                  <FolderIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{projects.length}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    {activeTab === 'archived' ? 'Archived Projects' : 'Active Projects'}
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper sx={{ p: 2.5, borderRadius: 4, border: '1px solid rgba(15, 23, 42, 0.08)', bgcolor: 'background.paper', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(16, 185, 129, 0.08)', color: '#10b981', width: 48, height: 48 }}>
+                  <FolderIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{productionCount}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Production Phase</Typography>
+                </Box>
+              </Paper>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Paper sx={{ p: 2.5, borderRadius: 4, border: '1px solid rgba(15, 23, 42, 0.08)', bgcolor: 'background.paper', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar sx={{ bgcolor: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', width: 48, height: 48 }}>
+                  <FolderIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{prototypeCount + preLaunchCount + otherCount}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Pre-Production / Prototype</Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        );
+      })()}
+
+      {/* Toolbar Filter Section */}
+      <Paper sx={{ p: 1.5, mb: 3.5, border: '1px solid rgba(15, 23, 42, 0.08)', borderRadius: 3.5, boxShadow: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, newValue) => setActiveTab(newValue)} 
+          sx={{ 
+            minHeight: 40,
+            '& .MuiTab-root': { py: 1, minHeight: 40, fontWeight: 700, fontSize: '0.85rem' }
+          }}
+        >
+          <Tab label="Active Projects" value="active" />
+          <Tab label="Archived Projects" value="archived" />
+        </Tabs>
+
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <TextField
+            placeholder="Search part name or number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            variant="outlined"
+            sx={{ 
+              width: 280, 
+              '& .MuiOutlinedInput-root': {
+                height: 38,
+                borderRadius: 2.5,
+                fontSize: '0.825rem',
+                bgcolor: 'background.paper'
+              }
+            }}
+          />
+
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, value) => value && setViewMode(value)}
+            size="small"
+            sx={{ bgcolor: 'rgba(15, 23, 42, 0.03)', p: 0.25, borderRadius: 2.5 }}
+          >
+            <ToggleButton value="grid" sx={{ border: 'none', borderRadius: 2, px: 1.5 }}>
+              <GridIcon fontSize="small" />
+            </ToggleButton>
+            <ToggleButton value="table" sx={{ border: 'none', borderRadius: 2, px: 1.5 }}>
+              <ListIcon fontSize="small" />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+      </Paper>
 
       {activeTab === 'archived' && (
-        <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
-          ⚠️ <strong>Warning:</strong> Archived projects are hidden from active workspaces and will be permanently deleted after 30 days.
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 3, fontWeight: 555 }}>
+          ⚠️ Archived projects are hidden from active workspaces and will be permanently deleted after 30 days.
         </Alert>
       )}
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
           {error}
         </Alert>
       )}
@@ -519,18 +604,171 @@ export const ProjectList: React.FC = () => {
           <DashboardSkeleton showMascot={!token} />
         ) : filteredProjects.length === 0 ? (
           <Box sx={{ textAlign: 'center', p: 8, border: '1px dashed #e2e8f0', borderRadius: 5, bgcolor: 'background.paper' }}>
-            <Typography color="text.secondary" gutterBottom>
+            <Typography color="text.secondary" gutterBottom sx={{ fontWeight: 500 }}>
               {searchQuery 
                 ? 'No projects matched your search query.' 
                 : (activeTab === 'archived' ? 'No archived projects found.' : 'No projects found in this workspace.')
               }
             </Typography>
             {!searchQuery && activeTab !== 'archived' && (
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2 }}>
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mt: 2, borderRadius: 2.5, fontWeight: 700 }}>
                 Create Your First Project
               </Button>
             )}
           </Box>
+        ) : viewMode === 'grid' ? (
+          <Grid container spacing={3}>
+            {filteredProjects.map((project) => {
+              const docType = project.documentTypes?.[0] || 'Prototype';
+              let accentGradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+              let docTypeColor = 'warning';
+              if (docType === 'Production') {
+                accentGradient = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                docTypeColor = 'success';
+              } else if (docType === 'Safe Launch') {
+                accentGradient = 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+                docTypeColor = 'secondary';
+              } else if (docType === 'Pre-Launch') {
+                accentGradient = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                docTypeColor = 'info';
+              }
+
+              return (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project.id}>
+                  <Card 
+                    sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      borderRadius: 4, 
+                      border: '1px solid rgba(15, 23, 42, 0.08)',
+                      boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.04)',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'visible',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 12px 30px -8px rgba(15, 23, 42, 0.12)',
+                        borderColor: 'primary.light',
+                        '& .card-accent-bar': {
+                          height: 6
+                        }
+                      }
+                    }}
+                  >
+                    <Box 
+                      className="card-accent-bar"
+                      sx={{ 
+                        height: 4, 
+                        background: accentGradient, 
+                        borderTopLeftRadius: 16, 
+                        borderTopRightRadius: 16,
+                        transition: 'height 0.25s ease'
+                      }} 
+                    />
+                    
+                    <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        <Chip 
+                          label={docType} 
+                          size="small" 
+                          color={docTypeColor as any}
+                          sx={{ fontWeight: 'bold', fontSize: '0.7rem', height: 22 }}
+                        />
+                        <IconButton 
+                          size="small" 
+                          onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuProjectId(project.id); }}
+                          sx={{ mt: -0.5, mr: -0.5 }}
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+
+                      <Typography 
+                        variant="h6" 
+                        component="div" 
+                        onClick={() => navigate(`/app/projects/${project.id}/pfd`)}
+                        sx={{ 
+                          fontWeight: 700, 
+                          color: 'text.primary', 
+                          fontSize: '1.05rem', 
+                          cursor: 'pointer',
+                          mb: 0.5,
+                          '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minHeight: '2.8rem'
+                        }}
+                      >
+                        {project.partName || 'Untitled'}
+                      </Typography>
+
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 2 }}>
+                        PART NO: {project.orgPartNumber || '—'}
+                      </Typography>
+
+                      <Divider sx={{ my: 1.5, borderStyle: 'dashed' }} />
+
+                      <Stack spacing={1} sx={{ flexGrow: 1, mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>Customer:</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 600 }}>{project.customer || '—'}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>Revision:</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 600 }}>v{project.revisionNumber || '1.0'}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>Last Updated:</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                            {new Date(project.updatedAt).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Divider sx={{ my: 1.5 }} />
+
+                      <Stack direction="row" spacing={0.5} sx={{ mt: 'auto', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Tooltip title="Process Flow Diagram">
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            onClick={() => navigate(`/app/projects/${project.id}/pfd`)}
+                            sx={{ py: 0.5, px: 1, minWidth: 0, flexGrow: 1, fontSize: '0.7rem', fontWeight: 700, borderRadius: 2 }}
+                          >
+                            PFD
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="Process FMEA">
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            onClick={() => navigate(`/app/projects/${project.id}/pfmea`)}
+                            sx={{ py: 0.5, px: 1, minWidth: 0, flexGrow: 1, fontSize: '0.7rem', fontWeight: 700, borderRadius: 2 }}
+                          >
+                            PFMEA
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="Control Plan">
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            onClick={() => navigate(`/app/projects/${project.id}/control-plan`)}
+                            sx={{ py: 0.5, px: 1, minWidth: 0, flexGrow: 1, fontSize: '0.7rem', fontWeight: 700, borderRadius: 2 }}
+                          >
+                            CP
+                          </Button>
+                        </Tooltip>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
         ) : (
           <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
             <Table>
@@ -614,7 +852,8 @@ export const ProjectList: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      ) })()}
+        );
+      })()}
 
       {/* Project Context Menu */}
       <Menu
