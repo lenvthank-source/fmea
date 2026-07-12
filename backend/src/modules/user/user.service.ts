@@ -107,9 +107,77 @@ export class UserService {
       }
     }
 
-    // Physical deletion of user
-    return this.prisma.user.delete({
-      where: { id: targetUserId }
+    // Physical deletion of user in transaction to reassign references
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Reassign ledProjects to null
+      await tx.project.updateMany({
+        where: { teamLeadId: targetUserId },
+        data: { teamLeadId: null },
+      });
+
+      // 2. Reassign createdProjs to currentUserId
+      await tx.project.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 3. Reassign createdDocs to currentUserId
+      await tx.document.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 4. Reassign createdRevs to currentUserId
+      await tx.documentRevision.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 5. Reassign createdProjectRevs to currentUserId
+      await tx.projectRevision.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 6. Reassign approvals to currentUserId
+      await tx.approval.updateMany({
+        where: { approverId: targetUserId },
+        data: { approverId: currentUserId },
+      });
+
+      // 7. Reassign pfmeaRows to currentUserId
+      await tx.pfmeaRow.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 8. Reassign ownedActions to currentUserId
+      await tx.action.updateMany({
+        where: { ownerId: targetUserId },
+        data: { ownerId: currentUserId },
+      });
+
+      // 9. Reassign createdActions to currentUserId
+      await tx.action.updateMany({
+        where: { createdById: targetUserId },
+        data: { createdById: currentUserId },
+      });
+
+      // 10. Reassign uploadedEvidences to currentUserId
+      await tx.actionEvidence.updateMany({
+        where: { uploadedById: targetUserId },
+        data: { uploadedById: currentUserId },
+      });
+
+      // 11. Explicitly clear user roles
+      await tx.userRole.deleteMany({
+        where: { userId: targetUserId },
+      });
+
+      // 12. Delete User record
+      return tx.user.delete({
+        where: { id: targetUserId },
+      });
     });
   }
 
