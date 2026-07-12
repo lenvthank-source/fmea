@@ -307,7 +307,7 @@ export const ProjectSettings: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button
           startIcon={<BackIcon />}
-          onClick={() => navigate(`/projects/${projectId}/pfd`)}
+          onClick={() => navigate(`/app/projects/${projectId}/pfd`)}
           sx={{ mr: 2 }}
         >
           Back to Workspace

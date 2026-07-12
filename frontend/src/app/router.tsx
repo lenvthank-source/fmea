@@ -13,6 +13,7 @@ import { LinkageMap } from '../features/linkage/LinkageMap';
 import { Login } from '../features/auth/Login';
 import { AdminPanel } from '../features/admin/AdminPanel';
 import { LandingPage } from '../features/landing/LandingPage';
+import { InitializingWorkspace } from '../features/auth/InitializingWorkspace';
 
 import { Box, CircularProgress } from '@mui/material';
 
@@ -39,6 +40,8 @@ export const AppRouter: React.FC = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin" element={<Login />} />
+      <Route path="/app/initializing" element={<InitializingWorkspace />} />
       
       <Route
         path="/app"

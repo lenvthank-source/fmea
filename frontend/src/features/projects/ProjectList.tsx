@@ -551,7 +551,7 @@ export const ProjectList: React.FC = () => {
                 <TableRow key={project.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                   <TableCell>
                     <Typography
-                      onClick={() => navigate(`/projects/${project.id}/pfd`)}
+                      onClick={() => navigate(`/app/projects/${project.id}/pfd`)}
                       sx={{ 
                         fontWeight: 'bold', 
                         color: 'primary.main', 
