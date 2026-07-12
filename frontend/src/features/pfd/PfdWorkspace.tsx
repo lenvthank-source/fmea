@@ -1361,7 +1361,7 @@ export const PfdWorkspace: React.FC = () => {
                   height: stepHeight
                 });
 
-                currentX += 370;
+                currentX += 480;
               });
 
               return (
@@ -1418,20 +1418,21 @@ export const PfdWorkspace: React.FC = () => {
                       
                       const vars = nextS.incomingVariation.length > 0 ? nextS.incomingVariation : [''];
                       const N = vars.length;
+                      const gap = endX - startX;
 
                       return vars.map((v, k) => {
                         const midX = (startX + endX) / 2;
                         const midY = (startY + endY) / 2;
-                        const offset = N > 1 ? (k - (N - 1) / 2) * 50 : 0;
-                        const controlX = midX;
-                        const controlY = midY + offset;
+                        const offset = N > 1 ? (k - (N - 1) / 2) * 60 : 0;
+                        const controlY = midY + offset * 1.333; // Cubic bezier control point offset
                         
                         const pathData = N > 1
-                          ? `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`
+                          ? `M ${startX} ${startY} C ${startX + gap * 0.4} ${controlY}, ${endX - gap * 0.4} ${controlY}, ${endX} ${endY}`
                           : `M ${startX} ${startY} L ${endX} ${endY}`;
                         
                         const labelX = midX;
                         const labelY = midY + offset;
+                        const displayV = v.length > 25 ? `${v.substring(0, 22)}...` : v;
 
                         return (
                           <g key={`inter-${s.stepId}-${k}`}>
@@ -1444,11 +1445,11 @@ export const PfdWorkspace: React.FC = () => {
                               markerEnd="url(#arrow-inter)"
                             />
                             {v && (
-                              <g transform={`translate(${labelX}, ${labelY - 14})`}>
+                              <g transform={`translate(${labelX}, ${labelY})`}>
                                 <rect
-                                  x={-v.length * 3.5 - 6}
-                                  y="-8"
-                                  width={v.length * 7 + 12}
+                                  x={-displayV.length * 3.5 - 6}
+                                  y="-9"
+                                  width={displayV.length * 7 + 12}
                                   height="18"
                                   rx="4"
                                   fill="#ffffff"
@@ -1461,9 +1462,9 @@ export const PfdWorkspace: React.FC = () => {
                                   fontSize="9"
                                   fontWeight="bold"
                                   fill="#0f766e"
-                                  y="4"
+                                  y="3.5"
                                 >
-                                  {v}
+                                  {displayV}
                                 </text>
                               </g>
                             )}
