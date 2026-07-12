@@ -88,7 +88,23 @@ export class UserService {
 
     const isAdmin = user.userRoles.some((ur) => ur.role.name === 'Admin');
     if (isAdmin) {
-      throw new ForbiddenException('Admin users cannot be deleted');
+      const adminCount = await this.prisma.user.count({
+        where: {
+          tenantId,
+          userRoles: {
+            some: {
+              role: {
+                name: 'Admin',
+              },
+            },
+          },
+        },
+      });
+      if (adminCount <= 1) {
+        throw new ForbiddenException(
+          'At least one Admin user must always remain in the system.',
+        );
+      }
     }
 
     // Physical deletion of user

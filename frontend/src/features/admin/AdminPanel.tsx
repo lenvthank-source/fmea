@@ -352,6 +352,8 @@ export const AdminPanel: React.FC = () => {
                   const userRoleName = item.userRoles[0]?.role?.name || 'Viewer';
                   const isItemAdmin = userRoleName === 'Admin';
                   const isSelf = item.id === user.id;
+                  const adminUsers = users.filter((u) => u.userRoles[0]?.role?.name === 'Admin');
+                  const isLastAdmin = isItemAdmin && adminUsers.length <= 1;
 
                   return (
                     <TableRow key={item.id} hover>
@@ -406,7 +408,7 @@ export const AdminPanel: React.FC = () => {
                               Edit
                             </Button>
                           )}
-                          {item.status === 'archived' && !isSelf && !isItemAdmin && (
+                          {!isSelf && !isLastAdmin && (
                             <Button
                               variant="outlined"
                               color="error"
