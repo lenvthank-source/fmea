@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box, Typography, Container, Button, Grid, TextField, MenuItem,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Snackbar, Alert, Tooltip, LinearProgress, IconButton, CircularProgress
+  Paper, Snackbar, Alert, Tooltip, IconButton, CircularProgress
 } from '@mui/material';
 import {
   AccountTree, SyncAlt, Psychology, PlaylistAddCheck, TrackChanges,
-  VerifiedUser, KeyboardArrowDown, Email as EmailIcon, ArrowForward,
+  VerifiedUser, KeyboardArrowDown, ArrowForward,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -79,6 +79,8 @@ const INQUIRY_TYPES = ['Purchase Inquiry', 'Demo Request', 'Feature Request', 'G
 const GLOBAL_KEYFRAMES = `
 @keyframes bounce { 0%,20%,50%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} 60%{transform:translateY(-4px)} }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes floatSlow { 0%,100%{transform:translate(0, 0)} 50%{transform:translate(20px, -20px)} }
+@keyframes floatSlowReverse { 0%,100%{transform:translate(0, 0)} 50%{transform:translate(-15px, 15px)} }
 `;
 
 /* ════════════════════════════════════════════════════════════
@@ -140,24 +142,6 @@ export const LandingPage: React.FC = () => {
     }, { threshold: 0.1 });
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
-
-  /* ── step auto-advance ──────────────────────────────────── */
-  const [activeStep, setActiveStep] = useState(0);
-  const [stepProgress, setStepProgress] = useState(0);
-  const pauseRef = useRef(false);
-  useEffect(() => {
-    const iv = setInterval(() => {
-      if (pauseRef.current) return;
-      setStepProgress(prev => {
-        if (prev >= 100) {
-          setActiveStep(s => (s + 1) % STEPS.length);
-          return 0;
-        }
-        return prev + 5;
-      });
-    }, 120);
-    return () => clearInterval(iv);
   }, []);
 
   /* ── risk matrix ────────────────────────────────────────── */
@@ -312,12 +296,44 @@ export const LandingPage: React.FC = () => {
         id="hero"
         sx={{
           minHeight: '85vh', position: 'relative', overflow: 'hidden',
-          bgcolor: '#f8fafc',
+          background: 'radial-gradient(circle at 50% 20%, rgba(13, 148, 136, 0.08) 0%, rgba(37, 99, 235, 0.03) 40%, #ffffff 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           borderBottom: '1px solid rgba(0,0,0,0.05)',
           pt: 12, pb: 6,
         }}
       >
+        {/* Floating gradient blur blobs */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '10%',
+            left: '15%',
+            width: 300,
+            height: 300,
+            bgcolor: 'rgba(13, 148, 136, 0.1)',
+            borderRadius: '50%',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatSlow 10s ease-in-out infinite'
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '15%',
+            right: '15%',
+            width: 250,
+            height: 250,
+            bgcolor: 'rgba(37, 99, 235, 0.05)',
+            borderRadius: '50%',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatSlowReverse 12s ease-in-out infinite'
+          }}
+        />
+
         <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <Typography
             variant="h2"
@@ -418,44 +434,92 @@ export const LandingPage: React.FC = () => {
             A structured, compliance-driven approach to quality risk management
           </Typography>
 
-          <Box
-            onMouseEnter={() => { pauseRef.current = true; }}
-            onMouseLeave={() => { pauseRef.current = false; }}
-            sx={{ display: 'flex', gap: 1.5, overflowX: 'auto', pb: 2, scrollbarWidth: 'thin', '&::-webkit-scrollbar': { height: 4 } }}
-          >
+          <Box sx={{ maxWidth: 800, mx: 'auto', position: 'relative', mt: 4 }}>
+            {/* Central vertical line for timeline */}
+            <Box
+              sx={{
+                position: 'absolute',
+                left: { xs: 16, md: '50%' },
+                top: 0,
+                bottom: 0,
+                width: 2,
+                bgcolor: 'rgba(13, 148, 136, 0.15)',
+                transform: 'translateX(-50%)',
+                zIndex: 0
+              }}
+            />
             {STEPS.map((step, i) => {
-              const isActive = i === activeStep;
+              const isEven = i % 2 === 0;
               return (
                 <Box
                   key={i}
-                  onClick={() => { setActiveStep(i); setStepProgress(0); pauseRef.current = true; }}
                   sx={{
-                    minWidth: { xs: 140, md: 160 }, cursor: 'pointer', borderRadius: 3, p: 2,
-                    transition: 'all 0.2s ease',
-                    bgcolor: isActive ? 'rgba(13,148,136,0.06)' : 'rgba(0,0,0,0.01)',
-                    border: isActive ? '1.5px solid #0D9488' : '1.5px solid transparent',
-                    '&:hover': { bgcolor: 'rgba(13,148,136,0.04)', borderColor: 'rgba(13,148,136,0.2)' },
-                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: { xs: 'row', md: isEven ? 'row' : 'row-reverse' },
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    mb: 4,
+                    position: 'relative',
+                    zIndex: 1
                   }}
                 >
-                  <Typography sx={{ fontWeight: 700, fontSize: '0.68rem', color: '#0D9488', mb: 0.5 }}>
-                    STEP {i + 1}
-                  </Typography>
-                  <Typography sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.primary', mb: 1 }}>
-                    {step.title}
-                  </Typography>
-                  <Box sx={{ overflow: 'hidden', maxHeight: isActive ? 60 : 0, transition: 'max-height 0.3s ease', opacity: isActive ? 1 : 0 }}>
-                    <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', lineHeight: 1.4 }}>
-                      {step.desc}
-                    </Typography>
+                  {/* Content Card container */}
+                  <Box
+                    sx={{
+                      width: { xs: '100%', md: '45%' },
+                      pl: { xs: 6, md: isEven ? 0 : 4 },
+                      pr: { xs: 0, md: isEven ? 4 : 0 },
+                      textAlign: { xs: 'left', md: isEven ? 'right' : 'left' }
+                    }}
+                  >
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
+                        borderRadius: 3,
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        bgcolor: '#ffffff',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: '#0D9488',
+                          boxShadow: '0 4px 20px rgba(13, 148, 136, 0.05)',
+                        }
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 800, fontSize: '0.75rem', color: '#0D9488', mb: 0.5, textTransform: 'uppercase' }}>
+                        Step {i + 1}
+                      </Typography>
+                      <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: 'text.primary', mb: 1 }}>
+                        {step.title}
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary', lineHeight: 1.5 }}>
+                        {step.desc}
+                      </Typography>
+                    </Paper>
                   </Box>
-                  {isActive && (
-                    <LinearProgress
-                      variant="determinate"
-                      value={stepProgress}
-                      sx={{ mt: 1.5, height: 2, borderRadius: 1, bgcolor: 'rgba(13,148,136,0.1)', '& .MuiLinearProgress-bar': { bgcolor: '#0D9488' } }}
-                    />
-                  )}
+
+                  {/* Badge */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: { xs: 16, md: '50%' },
+                      transform: 'translateX(-50%)',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      bgcolor: '#0D9488',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      border: '4px solid #ffffff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {i + 1}
+                  </Box>
                 </Box>
               );
             })}
@@ -612,23 +676,14 @@ export const LandingPage: React.FC = () => {
           <Grid container spacing={4} sx={{ alignItems: 'center' }}>
             {/* Left info */}
             <Grid size={{ xs: 12, md: 5 }}>
-                  <Box sx={{ opacity: contactObs.inView ? 1 : 0, transform: contactObs.inView ? 'translateX(0)' : 'translateX(-16px)', transition: 'all 0.4s ease' }}>
-                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.5px' }}>
-                      Get in Touch
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6, fontSize: '0.88rem' }}>
-                      Interested in FMEApex for your organization? Reach out for a live demo, pricing details, or feature requests. Our team typically responds within 24 hours.
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0D9488' }}>
-                        <EmailIcon fontSize="small" />
-                      </Box>
-                      <Box>
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Email</Typography>
-                        <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>contact@fmeapex.online</Typography>
-                      </Box>
-                    </Box>
-                  </Box>
+              <Box sx={{ opacity: contactObs.inView ? 1 : 0, transform: contactObs.inView ? 'translateX(0)' : 'translateX(-16px)', transition: 'all 0.4s ease' }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.5px' }}>
+                  Get in Touch
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6, fontSize: '0.88rem' }}>
+                  Interested in FMEApex for your organization? Reach out for a live demo, pricing details, or feature requests. Fill out the contact form and our team will review your inquiry in the administration dashboard.
+                </Typography>
+              </Box>
             </Grid>
 
             {/* Right form */}
