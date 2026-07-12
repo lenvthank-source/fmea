@@ -12,6 +12,7 @@ import { ActionsDashboard } from '../features/actions/ActionsDashboard';
 import { LinkageMap } from '../features/linkage/LinkageMap';
 import { Login } from '../features/auth/Login';
 import { AdminPanel } from '../features/admin/AdminPanel';
+import { LandingPage } from '../features/landing/LandingPage';
 
 import { Box, CircularProgress } from '@mui/material';
 
@@ -36,17 +37,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       
       <Route
-        path="/"
+        path="/app"
         element={
           <ProtectedRoute>
             <AppShell />
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/projects" replace />} />
+        <Route index element={<Navigate to="/app/projects" replace />} />
         <Route path="projects" element={<ProjectList />} />
         <Route path="projects/:projectId/pfd" element={<PfdWorkspace />} />
         <Route path="projects/:projectId/pfmea" element={<PfmeaWorkspace />} />

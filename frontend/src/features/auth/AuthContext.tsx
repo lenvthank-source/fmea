@@ -7,6 +7,7 @@ export interface UserSession {
   tenantId: string;
   roles: string[];
   permissions: string[];
+  isGuest: boolean;
 }
 
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   user: UserSession | null;
   loading: boolean;
   login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, subdomain: string, tenantName: string) => Promise<void>;
+  guestLogin: () => Promise<void>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
 }
@@ -74,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           tenantId: claims.tenant_id || claims.tenantId,
           roles: claims.roles || [],
           permissions: claims.permissions || [],
+          isGuest: false,
         });
         return true;
       } else {
@@ -103,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             tenantId: claims.tenant_id || claims.tenantId,
             roles: claims.roles || [],
             permissions: claims.permissions || [],
+            isGuest: false,
           });
           setLoading(false);
           return;
@@ -164,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           response = await originalFetch(resource, config);
         } else {
           logout();
-          window.location.href = '/login';
+          window.location.href = '/';
         }
       }
       
@@ -216,19 +219,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tenantId: claims.tenant_id || claims.tenantId,
       roles: claims.roles || [],
       permissions: claims.permissions || [],
+      isGuest: false,
     });
   };
 
-  const signup = async (email: string, password: string, name: string, subdomain: string, tenantName: string) => {
-    const response = await fetch(`${API_URL}/auth/signup`, {
+  const guestLogin = async () => {
+    const response = await fetch(`${API_URL}/auth/guest`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, subdomain, tenantName }),
     });
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.message || 'Signup failed');
+      throw new Error(err.message || 'Guest login failed');
     }
 
     const data = await response.json();
@@ -237,7 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refresh_token', data.refresh_token);
-
+    
     setToken(accessToken);
     setUser({
       id: claims.sub,
@@ -246,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tenantId: claims.tenant_id || claims.tenantId,
       roles: claims.roles || [],
       permissions: claims.permissions || [],
+      isGuest: true,
     });
   };
 
@@ -266,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, signup, logout, hasPermission } as any}>
+    <AuthContext.Provider value={{ token, user, loading, login, guestLogin, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

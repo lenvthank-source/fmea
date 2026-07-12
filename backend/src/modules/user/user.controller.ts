@@ -28,4 +28,28 @@ export class UserController {
   async remove(@Request() req: RequestWithUser, @Param('id') id: string) {
     return this.userService.remove(req.user.tenantId, req.user.sub, id);
   }
+
+  @Get('contact-inquiries')
+  @Permissions('admin.users')
+  async getContactInquiries() {
+    return this.userService.getContactInquiries();
+  }
+
+  @Patch('contact-inquiries/:id/read')
+  @Permissions('admin.users')
+  async markInquiryRead(@Param('id') id: string) {
+    return this.userService.markInquiryRead(id);
+  }
+
+  @Get('feedback')
+  @Permissions('admin.users')
+  async getUserFeedback() {
+    return this.userService.getUserFeedback();
+  }
+
+  @Patch('feedback/:id/resolve')
+  @Permissions('admin.users')
+  async resolveFeedback(@Param('id') id: string) {
+    return this.userService.resolveFeedback(id);
+  }
 }

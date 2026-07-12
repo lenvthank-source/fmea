@@ -4,6 +4,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { theme } from './theme/theme';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppRouter } from './app/router';
+import { ErrorBoundary } from './components/FeedbackWidget/ErrorFeedback';
 
 function App() {
   return (
@@ -11,7 +12,9 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <BrowserRouter>
-          <AppRouter />
+          <ErrorBoundary>
+            <AppRouter />
+          </ErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

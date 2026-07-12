@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton,
-  ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem, Tooltip, Collapse, Divider
+  ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem, Tooltip, Collapse, Divider, Chip
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -25,6 +25,7 @@ import { useAuth } from '../../features/auth/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
 import { useResponsive } from '../../hooks/useResponsive';
+import { FeedbackWidget } from '../FeedbackWidget/FeedbackWidget';
 
 export const AppShell: React.FC = () => {
   const { user, token, logout } = useAuth();
@@ -74,7 +75,7 @@ export const AppShell: React.FC = () => {
   };
 
   // Extract projectId if inside a project workspace path
-  const match = location.pathname.match(/\/projects\/([^/]+)/);
+  const match = location.pathname.match(/\/(?:app\/)?projects\/([^/]+)/);
   const projectId = match && match[1] !== 'projects' ? match[1] : null;
   const showAppBar = !projectId;
 
@@ -111,9 +112,9 @@ export const AppShell: React.FC = () => {
   }, [projectId, token]);
 
   const globalMenuItems = [
-    { text: 'Projects', icon: <FolderIcon />, path: '/projects' },
-    { text: 'My Actions', icon: <AssignmentIcon />, path: '/actions' },
-    { text: 'Administration', icon: <AdminIcon />, path: '/admin', permission: 'admin.users' },
+    { text: 'Projects', icon: <FolderIcon />, path: '/app/projects' },
+    { text: 'My Actions', icon: <AssignmentIcon />, path: '/app/actions' },
+    { text: 'Administration', icon: <AdminIcon />, path: '/app/admin', permission: 'admin.users' },
   ];
 
   const drawerWidth = collapsed ? 64 : 240;
@@ -223,7 +224,7 @@ export const AppShell: React.FC = () => {
             {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>APEX FMEA Workspace</span>
+            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>FMEAworks</span>
           </Typography>
 
           {user && (
@@ -233,6 +234,9 @@ export const AppShell: React.FC = () => {
                   {user.name[0].toUpperCase()}
                 </Avatar>
               </IconButton>
+                {(user as any)?.isGuest && (
+                  <Chip label="Guest" size="small" sx={{ ml: 1, bgcolor: '#f59e0b', color: 'white', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
+                )}
               <Menu
                 id="menu-appbar"
                 anchorEl={anchorEl}
@@ -255,7 +259,7 @@ export const AppShell: React.FC = () => {
                   </Box>
                 </MenuItem>
                 <Divider />
-                <MenuItem onClick={() => { handleClose(); logout(); navigate('/login'); }} sx={{ py: 1, fontWeight: 500, color: 'error.main' }}>
+                <MenuItem onClick={() => { handleClose(); logout(); navigate('/'); }} sx={{ py: 1, fontWeight: 500, color: 'error.main' }}>
                   Sign Out
                 </MenuItem>
               </Menu>
@@ -301,10 +305,10 @@ export const AppShell: React.FC = () => {
               <List>
                 {projectId ? (
                   <>
-                    {renderListItem({ text: 'Back to Projects', icon: <BackIcon />, path: '/projects' })}
+                    {renderListItem({ text: 'Back to Projects', icon: <BackIcon />, path: '/app/projects' })}
                     <Divider sx={{ my: 1, mx: 1.5 }} />
                     
-                    {renderListItem({ text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/projects/${projectId}/pfd` })}
+                    {renderListItem({ text: 'Process Flow (PFD)', icon: <PfdIcon />, path: `/app/projects/${projectId}/pfd` })}
                     
                     {/* PFMEA collapsible item */}
                     <ListItem disablePadding sx={{ display: 'block' }}>
@@ -341,9 +345,9 @@ export const AppShell: React.FC = () => {
                       
                       <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
-                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
-                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=table`, isChild: true })}
-                          {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
+                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=table`, isChild: true })}
+                          {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
                         </List>
                       </Collapse>
                     </ListItem>
@@ -383,16 +387,16 @@ export const AppShell: React.FC = () => {
                       
                       <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
-                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
-                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/projects/${projectId}/dfmea?tab=table`, isChild: true })}
+                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=table`, isChild: true })}
                         </List>
                       </Collapse>
                     </ListItem>
 
-                    {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/projects/${projectId}/control-plan` })}
-                    {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/actions?projectId=${projectId}` })}
-                    {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/projects/${projectId}/linkage` })}
-                    {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/projects/${projectId}/settings` })}
+                    {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/app/projects/${projectId}/control-plan` })}
+                    {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/app/actions?projectId=${projectId}` })}
+                    {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/app/projects/${projectId}/linkage` })}
+                    {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/app/projects/${projectId}/settings` })}
                   </>
                 ) : (
                   globalMenuItems.map((item) => renderListItem(item))
@@ -429,6 +433,7 @@ export const AppShell: React.FC = () => {
         <Outlet />
       </Box>
     </Box>
+      <FeedbackWidget />
   </Box>
   );
 };

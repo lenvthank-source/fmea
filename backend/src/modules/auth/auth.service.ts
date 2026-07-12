@@ -502,4 +502,137 @@ export class AuthService {
     return { available: !user };
   }
 
+  async createGuestUser() {
+    // Find or verify guest tenant exists
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { subdomain: 'guest-tenant' },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Guest tenant not configured');
+    }
+
+    const shortId = Math.random().toString(36).substring(2, 8);
+    const guestEmail = `guest-${shortId}@fmeaworks.app`;
+    const guestName = `Guest-${shortId}`;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 15);
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: guestEmail,
+          name: guestName,
+          passwordHash: null,
+          status: 'active',
+          isGuest: true,
+          guestExpiresAt: expiresAt,
+        },
+      });
+
+      // Find or create Quality Engineer role for guests
+      let qeRole = await tx.role.findFirst({
+        where: { tenantId: tenant.id, name: 'Quality Engineer' },
+      });
+
+      if (!qeRole) {
+        qeRole = await tx.role.create({
+          data: {
+            tenantId: tenant.id,
+            name: 'Quality Engineer',
+            description: 'Standard engineer responsible for FMEA authoring',
+            isSystem: true,
+          },
+        });
+
+        const qePermCodes = [
+          'project.create', 'project.view', 'project.edit',
+          'pfmea.create', 'pfmea.edit', 'pfmea.view',
+          'dfmea.create', 'dfmea.edit', 'dfmea.view',
+          'cp.create', 'cp.edit', 'cp.view',
+          'revision.create', 'revision.submit',
+          'action.create', 'action.edit', 'action.view', 'action.close',
+        ];
+        const dbPerms = await tx.permission.findMany({
+          where: { code: { in: qePermCodes } },
+        });
+        if (dbPerms.length > 0) {
+          await tx.rolePermission.createMany({
+            data: dbPerms.map((p) => ({
+              roleId: qeRole!.id,
+              permissionId: p.id,
+            })),
+          });
+        }
+      }
+
+      await tx.userRole.create({
+        data: {
+          userId: user.id,
+          roleId: qeRole.id,
+        },
+      });
+
+      // Fetch permissions for token
+      const roleWithPerms = await tx.role.findUnique({
+        where: { id: qeRole.id },
+        include: { rolePermissions: { include: { permission: true } } },
+      });
+      const permissions = roleWithPerms?.rolePermissions.map((rp) => rp.permission.code) || [];
+
+      const tokens = await this.generateTokens({
+        sub: user.id,
+        email: user.email,
+        tenantId: tenant.id,
+        roles: ['Quality Engineer'],
+        permissions,
+      });
+
+      return {
+        user: { id: user.id, email: user.email, name: user.name },
+        tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
+        isGuest: true,
+        ...tokens,
+      };
+    });
+  }
+
+  async createContactInquiry(data: { name: string; email: string; company?: string; type: string; message: string }) {
+    return this.prisma.contactInquiry.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        company: data.company || null,
+        type: data.type,
+        message: data.message,
+      },
+    });
+  }
+
+  async createUserFeedback(data: {
+    userId?: string; userEmail?: string; isGuest?: boolean;
+    type: string; message: string; pageUrl: string;
+    pageTitle?: string; component?: string;
+    errorMessage?: string; errorStack?: string;
+    browserInfo?: string; screenSize?: string; metadata?: any;
+  }) {
+    return this.prisma.userFeedback.create({
+      data: {
+        userId: data.userId || null,
+        userEmail: data.userEmail || null,
+        isGuest: data.isGuest || false,
+        type: data.type,
+        message: data.message,
+        pageUrl: data.pageUrl,
+        pageTitle: data.pageTitle || null,
+        component: data.component || null,
+        errorMessage: data.errorMessage || null,
+        errorStack: data.errorStack || null,
+        browserInfo: data.browserInfo || null,
+        screenSize: data.screenSize || null,
+        metadata: data.metadata || {},
+      },
+    });
+  }
+
 }

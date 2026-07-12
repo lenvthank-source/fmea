@@ -28,7 +28,36 @@ export class AuthController {
     return this.authService.checkUsername(username);
   }
 
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Post('guest')
+  async guestLogin() {
+    return this.authService.createGuestUser();
+  }
 
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Post('contact')
+  async submitContact(
+    @Body() dto: { name: string; email: string; company?: string; type: string; message: string },
+  ) {
+    return this.authService.createContactInquiry(dto);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Post('feedback')
+  async submitFeedback(
+    @Body() dto: {
+      userId?: string; userEmail?: string; isGuest?: boolean;
+      type: string; message: string; pageUrl: string;
+      pageTitle?: string; component?: string;
+      errorMessage?: string; errorStack?: string;
+      browserInfo?: string; screenSize?: string; metadata?: any;
+    },
+  ) {
+    return this.authService.createUserFeedback(dto);
+  }
 
   @Public()
   @HttpCode(HttpStatus.OK)

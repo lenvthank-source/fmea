@@ -46,6 +46,8 @@ export class UserService {
         status: true,
         createdAt: true,
         lastLoginAt: true,
+        isGuest: true,
+        guestExpiresAt: true,
         userRoles: {
           select: {
             role: {
@@ -188,6 +190,32 @@ export class UserService {
       }
 
       return { success: true };
+    });
+  }
+
+  async getContactInquiries() {
+    return this.prisma.contactInquiry.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async markInquiryRead(id: string) {
+    return this.prisma.contactInquiry.update({
+      where: { id },
+      data: { isRead: true },
+    });
+  }
+
+  async getUserFeedback() {
+    return this.prisma.userFeedback.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async resolveFeedback(id: string) {
+    return this.prisma.userFeedback.update({
+      where: { id },
+      data: { isResolved: true },
     });
   }
 }

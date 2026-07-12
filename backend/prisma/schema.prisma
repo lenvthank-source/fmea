@@ -41,6 +41,8 @@ model User {
   passwordHash String?        @map("password_hash") @db.VarChar(255)
   avatarUrl    String?        @map("avatar_url") @db.VarChar(500)
   status       String         @default("active") @db.VarChar(20)
+  isGuest      Boolean        @default(false) @map("is_guest")
+  guestExpiresAt DateTime?    @map("guest_expires_at") @db.Timestamptz
   mfaEnabled   Boolean        @default(false) @map("mfa_enabled")
   lastLoginAt  DateTime?      @map("last_login_at") @db.Timestamptz
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
@@ -724,4 +726,36 @@ model ProjectRevision {
 
   @@index([projectId])
   @@map("project_revision")
+}
+
+model ContactInquiry {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  company   String?  @db.VarChar(255)
+  type      String   @db.VarChar(50)
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("contact_inquiry")
+}
+
+model UserFeedback {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  userEmail    String?  @map("user_email") @db.VarChar(255)
+  isGuest      Boolean  @default(false) @map("is_guest")
+  type         String   @db.VarChar(30)
+  message      String   @db.Text
+  pageUrl      String   @map("page_url") @db.VarChar(500)
+  pageTitle    String?  @map("page_title") @db.VarChar(255)
+  component    String?  @db.VarChar(255)
+  errorMessage String?  @map("error_message") @db.Text
+  errorStack   String?  @map("error_stack") @db.Text
+  browserInfo  String?  @map("browser_info") @db.VarChar(500)
+  screenSize   String?  @map("screen_size") @db.VarChar(50)
+  metadata     Json?    @default("{}")
+  isResolved   Boolean  @default(false) @map("is_resolved")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("user_feedback")
 }
