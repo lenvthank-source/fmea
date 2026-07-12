@@ -32,6 +32,7 @@ interface ProcessStep {
   name: string;
   stepType: string;
   machinesEquipmentDocs?: any;
+  isOrphaned?: boolean;
 }
 
 interface PfmeaRow {
@@ -795,6 +796,51 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
+  const handleDeleteStep = async (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+
+    const assocRows = rows.filter(r => r.processStepId === stepId);
+    
+    let confirmMsg = `Are you sure you want to delete the process step "${step.stepNumber} - ${step.name}"?`;
+    if (step.isOrphaned) {
+      confirmMsg = `This process step is orphaned because the original PFD step was deleted. Deleting it will remove it from FMEA along with all associated analysis data. Do you want to delete it?`;
+    } else if (assocRows.length > 0) {
+      confirmMsg = `Deleting this process step will also delete all of its associated FMEA analysis rows (${assocRows.length} rows). Are you sure you want to proceed?`;
+    }
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setError(null);
+    try {
+      // 1. Delete associated FMEA rows first (to bypass backend check in pfd-steps deletion)
+      for (const r of assocRows) {
+        const response = await fetch(`${API_BASE_URL}/pfmea-rows/${r.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete FMEA row: ${r.rowNumber}`);
+        }
+      }
+
+      // 2. Delete the step itself
+      const response = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete process step.');
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Could not delete process step.');
+    }
+  };
+
   const handleRatingChange = async (rowId: string, field: 'severity' | 'occurrence' | 'detection', value: number) => {
     setError(null);
     const targetRow = rows.find((r) => r.id === rowId);
@@ -1009,7 +1055,7 @@ export const PfmeaWorkspace: React.FC = () => {
             rows={rows}
             onAddStep={() => setAddDialogOpen(true)}
             onEditStep={() => {}}
-            onDeleteStep={handleDeleteRow}
+            onDeleteStep={handleDeleteStep}
             onMoveStep={() => {}}
             onAddFunction={handleAddFunctionFromTree}
             onAddWorkElement={handleAddWorkElementFromTree}
