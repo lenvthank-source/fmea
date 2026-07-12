@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /app/
-Sitemap: https://fmeaworks.app/sitemap.xml
+Sitemap: https://fmeapex.online/sitemap.xml

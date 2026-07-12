@@ -224,7 +224,7 @@ export const AppShell: React.FC = () => {
             {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>FMEAworks</span>
+            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>FMEApex</span>
           </Typography>
 
           {user && (

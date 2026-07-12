@@ -261,7 +261,7 @@ export const LandingPage: React.FC = () => {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}
           >
-            FMEAworks
+            FMEApex
           </Typography>
 
           <Box sx={{ flex: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center', gap: 4 }}>
@@ -612,23 +612,23 @@ export const LandingPage: React.FC = () => {
           <Grid container spacing={4} sx={{ alignItems: 'center' }}>
             {/* Left info */}
             <Grid size={{ xs: 12, md: 5 }}>
-              <Box sx={{ opacity: contactObs.inView ? 1 : 0, transform: contactObs.inView ? 'translateX(0)' : 'translateX(-16px)', transition: 'all 0.4s ease' }}>
-                <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.5px' }}>
-                  Get in Touch
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6, fontSize: '0.88rem' }}>
-                  Interested in FMEAworks for your organization? Reach out for a live demo, pricing details, or feature requests. Our team typically responds within 24 hours.
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0D9488' }}>
-                    <EmailIcon fontSize="small" />
+                  <Box sx={{ opacity: contactObs.inView ? 1 : 0, transform: contactObs.inView ? 'translateX(0)' : 'translateX(-16px)', transition: 'all 0.4s ease' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5, letterSpacing: '-0.5px' }}>
+                      Get in Touch
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6, fontSize: '0.88rem' }}>
+                      Interested in FMEApex for your organization? Reach out for a live demo, pricing details, or feature requests. Our team typically responds within 24 hours.
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0D9488' }}>
+                        <EmailIcon fontSize="small" />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Email</Typography>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>contact@fmeapex.online</Typography>
+                      </Box>
+                    </Box>
                   </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Email</Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>contact@fmeaworks.app</Typography>
-                  </Box>
-                </Box>
-              </Box>
             </Grid>
 
             {/* Right form */}
@@ -686,7 +686,7 @@ export const LandingPage: React.FC = () => {
           <Grid container spacing={3} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', background: 'linear-gradient(135deg, #0D9488, #2563eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5 }}>
-                FMEAworks
+                FMEApex
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
                 AI-Powered Quality Risk Platform
@@ -711,7 +711,7 @@ export const LandingPage: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem', textAlign: { xs: 'left', md: 'right' } }}>
-                © 2026 FMEAworks. All rights reserved.
+                © 2026 FMEApex. All rights reserved.
               </Typography>
             </Grid>
           </Grid>

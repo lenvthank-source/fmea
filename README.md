@@ -1,6 +1,6 @@
-# FMEAworks — AI-Powered FMEA Quality Risk Platform
+# FMEApex — AI-Powered FMEA Quality Risk Platform
 
-FMEAworks is an interactive engineering workspace designed for quality risk management and analysis. The platform implements AI-powered assistance and standard Failure Mode and Effects Analysis (FMEA) methodologies to streamline engineering workflows, process flow diagrams, and corrective actions.
+FMEApex is an interactive engineering workspace designed for quality risk management and analysis. The platform implements AI-powered assistance and standard Failure Mode and Effects Analysis (FMEA) methodologies to streamline engineering workflows, process flow diagrams, and corrective actions.
 
 ## Core Features
 

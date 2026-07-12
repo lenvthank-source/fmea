@@ -512,7 +512,7 @@ export class AuthService {
     }
 
     const shortId = Math.random().toString(36).substring(2, 8);
-    const guestEmail = `guest-${shortId}@fmeaworks.app`;
+    const guestEmail = `guest-${shortId}@fmeapex.online`;
     const guestName = `Guest-${shortId}`;
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 15);

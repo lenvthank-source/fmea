@@ -69,7 +69,7 @@ export const InitializingWorkspace: React.FC = () => {
             mb: 1.5,
           }}
         >
-          FMEAworks
+          FMEApex
         </Typography>
 
         <Box sx={{ width: '100%', mb: 3 }}>

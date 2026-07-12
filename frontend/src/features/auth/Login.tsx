@@ -65,7 +65,7 @@ export const Login: React.FC = () => {
                 mb: 1,
               }}
             >
-              FMEAworks
+              FMEApex
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
               Administrator Portal
