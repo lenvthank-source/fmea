@@ -841,6 +841,244 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
+  const handleDeleteNode = async (nodeId: string) => {
+    if (!nodeId) return;
+
+    // 1. Process Step
+    if (nodeId.startsWith('step::')) {
+      const stepId = nodeId.replace('step::', '');
+      await handleDeleteStep(stepId);
+      return;
+    }
+
+    // 2. Work Element (Work Step)
+    if (nodeId.startsWith('we::')) {
+      const withoutPrefix = nodeId.replace('we::', '');
+      const sepIdx = withoutPrefix.indexOf('::');
+      const stepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
+      const weName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
+
+      const step = steps.find(s => s.id === stepId);
+      if (!step) return;
+
+      const assocRows = rows.filter(r => r.processStepId === stepId && r.workElementName === weName);
+      
+      let confirmMsg = `Are you sure you want to delete the work element "${weName}"?`;
+      if (assocRows.length > 0) {
+        confirmMsg = `Deleting this work element will also delete all of its associated FMEA analysis rows (${assocRows.length} rows). Are you sure you want to proceed?`;
+      }
+      if (!window.confirm(confirmMsg)) return;
+
+      setError(null);
+      try {
+        for (const r of assocRows) {
+          await fetch(`${API_BASE_URL}/pfmea-rows/${r.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+
+        let existingWe: string[] = [];
+        if (Array.isArray(step.machinesEquipmentDocs)) {
+          existingWe = step.machinesEquipmentDocs;
+        } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
+          try {
+            const parsed = JSON.parse(step.machinesEquipmentDocs);
+            existingWe = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
+          } catch {
+            existingWe = [step.machinesEquipmentDocs];
+          }
+        }
+        const updatedWe = existingWe.filter(w => w !== weName);
+
+        const response = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ machinesEquipmentDocs: updatedWe })
+        });
+        if (!response.ok) throw new Error('Failed to update Process Step.');
+
+        await fetchData();
+      } catch (err: any) {
+        setError(err.message || 'Could not delete work element.');
+      }
+      return;
+    }
+
+    const findStructFunc = (parentType: string, parentId: string | null, name: string) => {
+      return structureFunctions.find(
+        (sf) => sf.parentType === parentType && 
+        (!parentId || sf.parentId === parentId) && 
+        sf.narration === name
+      );
+    };
+
+    // 3. Project Function / Step Function / Work Element Function
+    let functionToDelete: any = null;
+    let funcName = '';
+    let parentStepId: string | null = null;
+    let parentWeName: string | null = null;
+
+    if (nodeId.startsWith('root-func::')) {
+      funcName = nodeId.replace('root-func::', '');
+      functionToDelete = findStructFunc('project', projectId || null, funcName);
+    } else if (nodeId.startsWith('step-func::')) {
+      const withoutPrefix = nodeId.replace('step-func::', '');
+      const sepIdx = withoutPrefix.indexOf('::');
+      parentStepId = sepIdx >= 0 ? withoutPrefix.slice(0, sepIdx) : withoutPrefix;
+      funcName = sepIdx >= 0 ? withoutPrefix.slice(sepIdx + 2) : '';
+      functionToDelete = findStructFunc('process_step', parentStepId, funcName);
+    } else if (nodeId.startsWith('we-func::')) {
+      const withoutPrefix = nodeId.replace('we-func::', '');
+      const parts = withoutPrefix.split('::');
+      parentStepId = parts[0];
+      parentWeName = parts[1];
+      funcName = parts.slice(2).join('::');
+      functionToDelete = findStructFunc('work_element', `${parentStepId}::${parentWeName}`, funcName);
+    }
+
+    if (funcName) {
+      if (!window.confirm(`Are you sure you want to delete the function "${funcName}"?`)) return;
+      setError(null);
+      try {
+        if (functionToDelete) {
+          const response = await fetch(`${API_BASE_URL}/structure-functions/${functionToDelete.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!response.ok) throw new Error('Failed to delete structure function.');
+        }
+
+        const matchingRows = rows.filter(r => 
+          r.processStepId === parentStepId && 
+          r.workElementName === parentWeName &&
+          r.functions?.some(f => f.name === funcName)
+        );
+
+        for (const row of matchingRows) {
+          const updatedFuncs = (row.functions?.map((f: any) => f.name) || []).filter(f => f !== funcName);
+          if (updatedFuncs.length === 0 && (row.failureModes?.length || 0) === 0) {
+            await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } else {
+            await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({ functions: updatedFuncs })
+            });
+          }
+        }
+
+        await fetchData();
+      } catch (err: any) {
+        setError(err.message || 'Could not delete function.');
+      }
+      return;
+    }
+
+    // 4. Failure Mode / Cause / Effect
+    let failureToDelete: any = null;
+    let failName = '';
+    let parentFnName = '';
+    let stepId: string | null = null;
+    let weName: string | null = null;
+
+    if (nodeId.startsWith('struct-mode::')) {
+      const failId = nodeId.replace('struct-mode::', '');
+      for (const sf of structureFunctions) {
+        const f = sf.failures?.find((failObj: any) => failObj.id === failId);
+        if (f) {
+          failureToDelete = f;
+          failName = f.narration;
+          parentFnName = sf.narration;
+          if (sf.parentType === 'process_step') stepId = sf.parentId;
+          else if (sf.parentType === 'work_element') {
+            const parts = sf.parentId.split('::');
+            stepId = parts[0];
+            weName = parts[1];
+          }
+          break;
+        }
+      }
+    } else if (nodeId.startsWith('root-fail-')) {
+      const withoutPrefix = nodeId.replace('root-fail-', '');
+      for (const sf of structureFunctions.filter(f => f.parentType === 'project')) {
+        if (withoutPrefix.startsWith(sf.narration + '-')) {
+          failName = withoutPrefix.replace(sf.narration + '-', '');
+          const f = sf.failures?.find((failObj: any) => failObj.narration === failName);
+          if (f) failureToDelete = f;
+          parentFnName = sf.narration;
+          break;
+        }
+      }
+    } else if (nodeId.startsWith('step-fail::')) {
+      const parts = nodeId.replace('step-fail::', '').split('::');
+      stepId = parts[0];
+      parentFnName = parts[1];
+      failName = parts[2];
+      const sf = findStructFunc('process_step', stepId, parentFnName);
+      if (sf) {
+        failureToDelete = sf.failures?.find((failObj: any) => failObj.narration === failName);
+      }
+    } else if (nodeId.startsWith('we-fail::')) {
+      const parts = nodeId.replace('we-fail::', '').split('::');
+      stepId = parts[0];
+      weName = parts[1];
+      parentFnName = parts[2];
+      failName = parts[3];
+      const sf = findStructFunc('work_element', `${stepId}::${weName}`, parentFnName);
+      if (sf) {
+        failureToDelete = sf.failures?.find((failObj: any) => failObj.narration === failName);
+      }
+    }
+
+    if (failName) {
+      if (!window.confirm(`Are you sure you want to delete the failure "${failName}"?`)) return;
+      setError(null);
+      try {
+        if (failureToDelete) {
+          const response = await fetch(`${API_BASE_URL}/structure-failures/${failureToDelete.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!response.ok) throw new Error('Failed to delete structure failure.');
+        }
+
+        const matchingRows = rows.filter(r => 
+          r.processStepId === stepId && 
+          r.workElementName === weName &&
+          r.functions?.some(f => f.name === parentFnName) &&
+          r.failureModes?.some(fm => fm.name === failName)
+        );
+
+        for (const row of matchingRows) {
+          const updatedFms = (row.failureModes?.map((fm: any) => fm.name) || []).filter(fm => fm !== failName);
+          await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ failureModes: updatedFms })
+          });
+        }
+
+        await fetchData();
+      } catch (err: any) {
+        setError(err.message || 'Could not delete failure.');
+      }
+      return;
+    }
+  };
+
   const handleRatingChange = async (rowId: string, field: 'severity' | 'occurrence' | 'detection', value: number) => {
     setError(null);
     const targetRow = rows.find((r) => r.id === rowId);
@@ -1055,7 +1293,7 @@ export const PfmeaWorkspace: React.FC = () => {
             rows={rows}
             onAddStep={() => setAddDialogOpen(true)}
             onEditStep={() => {}}
-            onDeleteStep={handleDeleteStep}
+            onDeleteNode={handleDeleteNode}
             onMoveStep={() => {}}
             onAddFunction={handleAddFunctionFromTree}
             onAddWorkElement={handleAddWorkElementFromTree}

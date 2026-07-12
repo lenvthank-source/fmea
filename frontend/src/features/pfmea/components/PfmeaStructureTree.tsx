@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import processStepIcon from '../../../assets/process-step.png';
-import failureIcon from '../../../assets/failure.png';
 import {
   Box,
   Typography,
@@ -25,7 +23,8 @@ import {
   HelpOutlined as FunctionIcon,
   Warning as FailureIcon,
   Link as LinkIcon,
-  Info as DetailsIcon
+  Info as DetailsIcon,
+  Settings as ProcessStepIcon
 } from '@mui/icons-material';
 
 interface ProcessStep {
@@ -55,7 +54,7 @@ interface PfmeaStructureTreeProps {
   rows: PfmeaRow[];
   onAddStep: () => void;
   onEditStep: (step: ProcessStep) => void;
-  onDeleteStep: (stepId: string) => void;
+  onDeleteNode: (nodeId: string) => void;
   onMoveStep: (stepId: string, direction: 'up' | 'down') => void;
   onAddFunction: (stepId: string | null, workElementName?: string | null) => void;
   onAddWorkElement: (stepId: string) => void;
@@ -77,7 +76,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   rows,
   onAddStep,
   onEditStep,
-  onDeleteStep,
+  onDeleteNode,
   onAddFunction,
   onAddWorkElement,
   onAddFailure,
@@ -206,9 +205,20 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
     s.stepNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group root rows
   const rootRows = rows.filter(r => !r.processStepId);
   const rootFunctions = Array.from(new Set(rootRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
+
+  const isDeleteEnabled = !!selectedNodeId && (
+    selectedNodeId.startsWith('step::') ||
+    selectedNodeId.startsWith('we::') ||
+    selectedNodeId.startsWith('root-func::') ||
+    selectedNodeId.startsWith('step-func::') ||
+    selectedNodeId.startsWith('we-func::') ||
+    selectedNodeId.startsWith('struct-mode::') ||
+    selectedNodeId.startsWith('root-fail-') ||
+    selectedNodeId.startsWith('step-fail::') ||
+    selectedNodeId.startsWith('we-fail::')
+  );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
@@ -340,10 +350,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
             <IconButton
               size="small"
               color="error"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
+              disabled={!isDeleteEnabled}
               onClick={() => {
-                const stepId = selectedNodeId?.replace('step::', '');
-                if (stepId) onDeleteStep(stepId);
+                if (selectedNodeId) onDeleteNode(selectedNodeId);
               }}
             >
               <DeleteIcon fontSize="small" />
@@ -366,6 +375,40 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
               }
             }}
           />
+        </Stack>
+
+        <Divider sx={{ my: 1.5 }} />
+
+        {/* Legend / Abbreviation Guide */}
+        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px' }}>LEGEND:</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <RootIcon sx={{ color: '#2962FF', fontSize: '0.9rem' }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Root (Process Item)</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <ProcessStepIcon sx={{ color: '#FF6D00', fontSize: '0.9rem' }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Process Step (Operation)</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <WorkElementIcon sx={{ color: '#D500F9', fontSize: '0.9rem' }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Work Element (Work Step)</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <FunctionIcon sx={{ color: '#00C853', fontSize: '0.9rem' }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Function</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <FailureIcon sx={{ color: '#FF0000', fontSize: '0.9rem' }} />
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Failure Mode (Unlinked)</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <FailureIcon sx={{ color: '#00E5FF', fontSize: '0.9rem' }} />
+              <LinkIcon sx={{ color: '#00E5FF', fontSize: '0.75rem', ml: -0.25 }} />
+            </Box>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Failure Mode (Linked)</Typography>
+          </Box>
         </Stack>
       </Paper>
 
@@ -476,20 +519,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#00C853' }}>
                           {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                         </IconButton>
-                        <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                          <Box 
-                            component="img" 
-                            src={processStepIcon} 
-                            alt="icon" 
-                            sx={{ 
-                              width: 30, 
-                              height: 30, 
-                              objectFit: 'contain',
-                              transform: 'translateX(-100px)',
-                              filter: 'drop-shadow(100px 0 0 #00C853)' 
-                            }} 
-                          />
-                        </Box>
+                        <FunctionIcon sx={{ color: '#00C853', fontSize: '1.25rem', mr: 0.75 }} />
                         <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#00C853', fontFamily: 'inherit' }}>{fn}</Typography>
                         <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                           <Tooltip title="Add Failure (Effect)">
@@ -500,6 +530,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                           <Tooltip title="Edit Function">
                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                               <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Function">
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                              <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                             </IconButton>
                           </Tooltip>
                         </Box>
@@ -539,20 +574,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                     '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                   }}
                                 >
-                                  <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                    <Box 
-                                      component="img" 
-                                      src={failureIcon} 
-                                      alt="icon" 
-                                      sx={{ 
-                                        width: 30, 
-                                        height: 30, 
-                                        objectFit: 'contain',
-                                        transform: 'translateX(-100px)',
-                                        filter: `drop-shadow(100px 0 0 ${textColor})` 
-                                      }} 
-                                    />
-                                  </Box>
+                                  <FailureIcon sx={{ color: textColor, fontSize: '1.25rem', mr: 0.75 }} />
                                   {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '1.1rem', ml: -0.5, mr: 0.5 }} />}
                                   <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                   
@@ -578,6 +600,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                         </IconButton>
                                       </Tooltip>
                                     )}
+                                    <Tooltip title="Delete Failure">
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                        <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                      </IconButton>
+                                    </Tooltip>
                                   </Box>
                                 </Stack>
                               </Box>
@@ -642,20 +669,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(stepNodeId); }} sx={{ p: 0.25, color: '#FF6D00' }}>
                         {stepExpanded ? <ExpandIcon /> : <CollapseIcon />}
                       </IconButton>
-                      <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                        <Box 
-                          component="img" 
-                          src={processStepIcon} 
-                          alt="icon" 
-                          sx={{ 
-                            width: 30, 
-                            height: 30, 
-                            objectFit: 'contain',
-                            transform: 'translateX(-100px)',
-                            filter: 'drop-shadow(100px 0 0 #FF6D00)' 
-                          }} 
-                        />
-                      </Box>
+                      <ProcessStepIcon sx={{ color: '#FF6D00', fontSize: '1.25rem', mr: 0.75 }} />
                       <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#FF6D00', fontFamily: 'inherit' }}>
                         {step.stepNumber} - {step.name || 'Untitled Step'}
                         {step.isOrphaned && (
@@ -681,7 +695,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete Step">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteStep(step.id); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(stepNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
                             <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                           </IconButton>
                         </Tooltip>
@@ -735,20 +749,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(nodeKey); }} sx={{ p: 0.25, color: '#00C853' }}>
                                     {expandedNodes[nodeKey] ? <ExpandIcon /> : <CollapseIcon />}
                                   </IconButton>
-                                  <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                    <Box 
-                                      component="img" 
-                                      src={processStepIcon} 
-                                      alt="icon" 
-                                      sx={{ 
-                                        width: 30, 
-                                        height: 30, 
-                                        objectFit: 'contain',
-                                        transform: 'translateX(-100px)',
-                                        filter: 'drop-shadow(100px 0 0 #00C853)' 
-                                      }} 
-                                    />
-                                  </Box>
+                                  <FunctionIcon sx={{ color: '#00C853', fontSize: '1.25rem', mr: 0.75 }} />
                                   <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#00C853', fontFamily: 'inherit' }}>{fn}</Typography>
                                   <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                     <Tooltip title="Add Failure (Mode)">
@@ -759,6 +760,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                     <Tooltip title="Edit Function">
                                       <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                                         <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete Function">
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(nodeKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                        <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                       </IconButton>
                                     </Tooltip>
                                   </Box>
@@ -798,20 +804,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                               '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                             }}
                                           >
-                                            <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                              <Box 
-                                                component="img" 
-                                                src={failureIcon} 
-                                                alt="icon" 
-                                                sx={{ 
-                                                  width: 30, 
-                                                  height: 30, 
-                                                  objectFit: 'contain',
-                                                  transform: 'translateX(-100px)',
-                                                  filter: `drop-shadow(100px 0 0 ${textColor})` 
-                                                }} 
-                                              />
-                                            </Box>
+                                            <FailureIcon sx={{ color: textColor, fontSize: '1.25rem', mr: 0.75 }} />
                                             {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '1.1rem', ml: -0.5, mr: 0.5 }} />}
                                             <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                             <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
@@ -836,6 +829,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                   </IconButton>
                                                 </Tooltip>
                                               )}
+                                              <Tooltip title="Delete Failure">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                                  <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                                </IconButton>
+                                              </Tooltip>
                                             </Box>
                                           </Stack>
                                         </Box>
@@ -880,25 +878,17 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weNodeId); }} sx={{ p: 0.25, color: '#D500F9' }}>
                                   {weExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                 </IconButton>
-                                <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                  <Box 
-                                    component="img" 
-                                    src={processStepIcon} 
-                                    alt="icon" 
-                                    sx={{ 
-                                      width: 30, 
-                                      height: 30, 
-                                      objectFit: 'contain',
-                                      transform: 'translateX(-100px)',
-                                      filter: 'drop-shadow(100px 0 0 #D500F9)' 
-                                    }} 
-                                  />
-                                </Box>
+                                <WorkElementIcon sx={{ color: '#D500F9', fontSize: '1.25rem', mr: 0.75 }} />
                                 <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#D500F9', fontFamily: 'inherit' }}>{we}</Typography>
                                 <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                   <Tooltip title="Add Work Element Function">
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>
                                       <AddIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Delete Work Element">
+                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(weNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                      <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                     </IconButton>
                                   </Tooltip>
                                 </Box>
@@ -951,20 +941,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(weFuncKey); }} sx={{ p: 0.25, color: '#00C853' }}>
                                               {weFuncExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                             </IconButton>
-                                            <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                              <Box 
-                                                component="img" 
-                                                src={processStepIcon} 
-                                                alt="icon" 
-                                                sx={{ 
-                                                  width: 30, 
-                                                  height: 30, 
-                                                  objectFit: 'contain',
-                                                  transform: 'translateX(-100px)',
-                                                  filter: 'drop-shadow(100px 0 0 #00C853)' 
-                                                }} 
-                                              />
-                                            </Box>
+                                            <FunctionIcon sx={{ color: '#00C853', fontSize: '1.25rem', mr: 0.75 }} />
                                             <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#00C853', fontFamily: 'inherit' }}>{fn}</Typography>
                                             <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                               <Tooltip title="Add Failure (Cause)">
@@ -975,6 +952,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                               <Tooltip title="Edit Function">
                                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditNode && onEditNode(weFuncKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                                                   <EditIcon sx={{ fontSize: '0.9rem', color: '#14532d' }} />
+                                                </IconButton>
+                                              </Tooltip>
+                                              <Tooltip title="Delete Function">
+                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(weFuncKey); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                                  <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                                 </IconButton>
                                               </Tooltip>
                                             </Box>
@@ -1014,20 +996,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                         '&:hover .inline-actions': { opacity: 1, pointerEvents: 'auto' }
                                                       }}
                                                     >
-                                                      <Box sx={{ display: 'inline-flex', width: 30, height: 30, overflow: 'hidden', mr: 0.75, alignItems: 'center', justifyContent: 'center' }}>
-                                                        <Box 
-                                                          component="img" 
-                                                          src={failureIcon} 
-                                                          alt="icon" 
-                                                          sx={{ 
-                                                            width: 30, 
-                                                            height: 30, 
-                                                            objectFit: 'contain',
-                                                            transform: 'translateX(-100px)',
-                                                            filter: `drop-shadow(100px 0 0 ${textColor})` 
-                                                          }} 
-                                                        />
-                                                      </Box>
+                                                      <FailureIcon sx={{ color: textColor, fontSize: '1.25rem', mr: 0.75 }} />
                                                       {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '1.1rem', ml: -0.5, mr: 0.5 }} />}
                                                       <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: textColor, fontFamily: 'inherit' }}>{fail}</Typography>
                                                       
@@ -1053,6 +1022,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                                             </IconButton>
                                                           </Tooltip>
                                                         )}
+                                                        <Tooltip title="Delete Failure">
+                                                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(failNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
+                                                            <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
+                                                          </IconButton>
+                                                        </Tooltip>
                                                       </Box>
                                                     </Stack>
                                                   </Box>
