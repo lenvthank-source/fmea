@@ -1235,8 +1235,8 @@ export const PfdWorkspace: React.FC = () => {
             <Button size="small" variant="contained" color="inherit" onClick={handleResetZoom} sx={{ fontSize: '0.75rem' }}>Fit</Button>
           </Box>
           <Box sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 10 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ bgcolor: 'rgba(255,255,255,0.8)', px: 1.5, py: 0.75, borderRadius: 2, border: '1px solid #e2e8f0' }}>
-              💡 Drag to Pan • Mouse wheel to Zoom
+            <Typography variant="caption" color="text.secondary" sx={{ bgcolor: 'rgba(255,255,255,0.9)', px: 1.5, py: 0.75, borderRadius: 2, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              💡 Drag to Pan • Mouse wheel to Zoom • Click Card for Details
             </Typography>
           </Box>
           <div
@@ -1271,9 +1271,18 @@ export const PfdWorkspace: React.FC = () => {
                   y: number;
                 }>;
                 incomingVariation: string[];
+                workElements: string[];
+                x: number;
+                y: number;
+                width: number;
+                height: number;
               }> = [];
 
               let currentX = 100;
+              const stepY = 120;
+              const stepWidth = 280;
+              const stepHeight = 230;
+
               steps.forEach((step) => {
                 const activeKeys = Object.keys(FLOW_ICON_COLUMNS).filter(k => step.flowIcons?.[k]);
                 if (activeKeys.length === 0) {
@@ -1294,20 +1303,39 @@ export const PfdWorkspace: React.FC = () => {
                 }
                 incomingVar = incomingVar.map(v => v.trim()).filter(Boolean);
 
+                let stepWorkElements: string[] = [];
+                if (Array.isArray(step.machinesEquipmentDocs)) {
+                  stepWorkElements = step.machinesEquipmentDocs;
+                } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
+                  try {
+                    const parsed = JSON.parse(step.machinesEquipmentDocs);
+                    stepWorkElements = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
+                  } catch {
+                    stepWorkElements = [step.machinesEquipmentDocs];
+                  }
+                }
+                const workElements = stepWorkElements.map(w => w.trim()).filter(Boolean);
+
                 const stepX = currentX;
-                const stepWidth = 200;
+                const M = activeKeys.length;
+                const startSymX = stepX + 28;
+                const endSymX = stepX + stepWidth - 28;
+                const stepSymX = M > 1 ? (endSymX - startSymX) / (M - 1) : 0;
                 
                 const nodes = activeKeys.map((key, nodeIdx) => {
                   const meta = FLOW_ICON_COLUMNS[key] || FLOW_ICON_COLUMNS.oper;
-                  let color = '#6366f1';
-                  if (key === 'insp') color = '#0d9488';
-                  else if (key === 'trans') color = '#f97316';
-                  else if (key === 'store') color = '#2563eb';
-                  else if (key === 'wip') color = '#d97706';
-                  else if (key === 'recArea') color = '#059669';
-                  else if (key === 'decs') color = '#9333ea';
-                  else if (key === 'rework') color = '#e11d48';
-                  else if (key === 'reject') color = '#dc2626';
+                  let color = '#0D9488'; // Teal
+                  if (key === 'insp') color = '#2563eb'; // Blue
+                  else if (key === 'trans') color = '#f97316'; // Orange
+                  else if (key === 'store') color = '#d97706'; // Amber
+                  else if (key === 'wip') color = '#9333ea'; // Purple
+                  else if (key === 'recArea') color = '#059669'; // Emerald
+                  else if (key === 'decs') color = '#475569'; // Slate
+                  else if (key === 'rework') color = '#e11d48'; // Rose
+                  else if (key === 'reject') color = '#dc2626'; // Red
+
+                  const symX = M > 1 ? startSymX + nodeIdx * stepSymX : stepX + stepWidth / 2;
+                  const symY = stepY + 165;
 
                   return {
                     id: `${step.id}-${key}`,
@@ -1315,8 +1343,8 @@ export const PfdWorkspace: React.FC = () => {
                     sym: meta.sym,
                     short: meta.short,
                     color,
-                    x: stepX + stepWidth / 2,
-                    y: 180 + nodeIdx * 120
+                    x: symX,
+                    y: symY
                   };
                 });
 
@@ -1325,10 +1353,15 @@ export const PfdWorkspace: React.FC = () => {
                   stepNumber: step.stepNumber,
                   name: step.name,
                   nodes,
-                  incomingVariation: incomingVar
+                  incomingVariation: incomingVar,
+                  workElements,
+                  x: stepX,
+                  y: stepY,
+                  width: stepWidth,
+                  height: stepHeight
                 });
 
-                currentX += 320;
+                currentX += 370;
               });
 
               return (
@@ -1338,70 +1371,80 @@ export const PfdWorkspace: React.FC = () => {
                   onWheel={handleWheel}
                   style={{ overflow: 'visible' }}
                 >
+                  <defs>
+                    {/* Workspace dot grid pattern */}
+                    <pattern id="dot-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                      <circle cx="2" cy="2" r="1.5" fill="#e2e8f0" />
+                    </pattern>
+                    <marker id="arrow-inter" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                      <path d="M0,0 L0,6 L9,3 z" fill="#0D9488" />
+                    </marker>
+                    <marker id="arrow-intra" markerWidth="6" markerHeight="6" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
+                      <path d="M0,0 L0,4 L6,2 z" fill="#94a3b8" />
+                    </marker>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#dot-grid)" />
+
                   <g transform={`translate(${panX}, ${panY}) scale(${zoom})`}>
-                    {/* 1. Connections within steps */}
+                    {/* 1. Intra-step horizontal connections */}
                     {stepNodes.map((s) => {
                       return s.nodes.slice(0, -1).map((node, idx) => {
                         const nextNode = s.nodes[idx + 1];
                         return (
                           <g key={`intra-${node.id}`}>
-                            <defs>
-                              <marker id={`arrow-intra-${node.id}`} markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto" markerUnits="strokeWidth">
-                                <path d="M0,0 L0,6 L9,3 z" fill="#cbd5e1" />
-                              </marker>
-                            </defs>
                             <line
-                              x1={node.x}
+                              x1={node.x + 18}
                               y1={node.y}
-                              x2={nextNode.x}
+                              x2={nextNode.x - 18}
                               y2={nextNode.y}
                               stroke="#cbd5e1"
-                              strokeWidth="3"
-                              markerEnd={`url(#arrow-intra-${node.id})`}
+                              strokeWidth="2"
+                              markerEnd="url(#arrow-intra)"
                             />
                           </g>
                         );
                       });
                     })}
 
-                    {/* 2. Connections between steps with quadratic bezier curves for branches */}
+                    {/* 2. Connections between steps */}
                     {stepNodes.slice(0, -1).map((s, idx) => {
                       const nextS = stepNodes[idx + 1];
                       if (s.nodes.length === 0 || nextS.nodes.length === 0) return null;
-                      const startNode = s.nodes[s.nodes.length - 1];
-                      const endNode = nextS.nodes[0];
+                      
+                      const startX = s.x + s.width;
+                      const startY = s.y + 165;
+                      const endX = nextS.x;
+                      const endY = nextS.y + 165;
                       
                       const vars = nextS.incomingVariation.length > 0 ? nextS.incomingVariation : [''];
                       const N = vars.length;
 
                       return vars.map((v, k) => {
-                        const midX = (startNode.x + endNode.x) / 2;
-                        const midY = (startNode.y + endNode.y) / 2;
-                        const offset = N > 1 ? (k - (N - 1) / 2) * 80 : 0;
+                        const midX = (startX + endX) / 2;
+                        const midY = (startY + endY) / 2;
+                        const offset = N > 1 ? (k - (N - 1) / 2) * 50 : 0;
                         const controlX = midX;
                         const controlY = midY + offset;
                         
-                        const pathData = `M ${startNode.x} ${startNode.y} Q ${controlX} ${controlY} ${endNode.x} ${endNode.y}`;
-                        const labelX = 0.25 * startNode.x + 0.5 * controlX + 0.25 * endNode.x;
-                        const labelY = 0.25 * startNode.y + 0.5 * controlY + 0.25 * endNode.y;
+                        const pathData = N > 1
+                          ? `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`
+                          : `M ${startX} ${startY} L ${endX} ${endY}`;
+                        
+                        const labelX = midX;
+                        const labelY = midY + offset;
 
                         return (
                           <g key={`inter-${s.stepId}-${k}`}>
-                            <defs>
-                              <marker id={`arrow-inter-${s.stepId}-${k}`} markerWidth="6" markerHeight="6" refX="20" refY="3" orient="auto">
-                                <path d="M0,0 L0,6 L6,3 z" fill="#818cf8" />
-                              </marker>
-                            </defs>
                             <path
                               d={pathData}
                               fill="none"
-                              stroke="#818cf8"
-                              strokeWidth="2"
+                              stroke="#0D9488"
+                              strokeWidth="2.5"
                               strokeDasharray={N > 1 ? '4 4' : '0'}
-                              markerEnd={`url(#arrow-inter-${s.stepId}-${k})`}
+                              markerEnd="url(#arrow-inter)"
                             />
                             {v && (
-                              <g transform={`translate(${labelX}, ${labelY - 12})`}>
+                              <g transform={`translate(${labelX}, ${labelY - 14})`}>
                                 <rect
                                   x={-v.length * 3.5 - 6}
                                   y="-8"
@@ -1409,7 +1452,7 @@ export const PfdWorkspace: React.FC = () => {
                                   height="18"
                                   rx="4"
                                   fill="#ffffff"
-                                  stroke="#818cf8"
+                                  stroke="#0D9488"
                                   strokeWidth="1"
                                   style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }}
                                 />
@@ -1417,7 +1460,7 @@ export const PfdWorkspace: React.FC = () => {
                                   textAnchor="middle"
                                   fontSize="9"
                                   fontWeight="bold"
-                                  fill="#3730a3"
+                                  fill="#0f766e"
                                   y="4"
                                 >
                                   {v}
@@ -1431,9 +1474,6 @@ export const PfdWorkspace: React.FC = () => {
 
                     {/* 3. Steps boundary boxes and active flow symbol nodes */}
                     {stepNodes.map((s) => {
-                      const stepWidth = 200;
-                      const minHeight = 120 + s.nodes.length * 120;
-                      
                       return (
                         <g 
                           key={s.stepId}
@@ -1445,51 +1485,98 @@ export const PfdWorkspace: React.FC = () => {
                           }}
                           style={{ cursor: 'pointer' }}
                         >
+                          {/* Card Outer Shape */}
                           <rect
-                            x={s.nodes[0].x - stepWidth / 2}
-                            y="60"
-                            width={stepWidth}
-                            height={minHeight}
+                            x={s.x}
+                            y={s.y}
+                            width={s.width}
+                            height={s.height}
                             rx="12"
-                            fill={hoveredStepId === s.stepId ? "rgba(1, 105, 111, 0.04)" : "rgba(255, 255, 255, 0.85)"}
-                            stroke={hoveredStepId === s.stepId ? "#01696F" : "#e2e8f0"}
+                            fill={hoveredStepId === s.stepId ? "#f8fafc" : "#ffffff"}
+                            stroke={hoveredStepId === s.stepId ? "#0D9488" : "#e2e8f0"}
                             strokeWidth={hoveredStepId === s.stepId ? 2.5 : 1.5}
-                            strokeDasharray={hoveredStepId === s.stepId ? "0" : "4 4"}
                             style={{ 
                               filter: hoveredStepId === s.stepId 
-                                ? 'drop-shadow(0px 6px 12px rgba(1, 105, 111, 0.15))' 
-                                : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.02))',
+                                ? 'drop-shadow(0px 8px 16px rgba(13, 148, 136, 0.12))' 
+                                : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.03))',
                               transition: 'all 0.2s ease-in-out'
                             }}
                           />
                           
+                          {/* Header Bar */}
+                          <path
+                            d={`M ${s.x + 12} ${s.y} L ${s.x + s.width - 12} ${s.y} A 12 12 0 0 1 ${s.x + s.width} ${s.y + 12} L ${s.x + s.width} ${s.y + 40} L ${s.x} ${s.y + 40} L ${s.x} ${s.y + 12} A 12 12 0 0 1 ${s.x + 12} ${s.y} Z`}
+                            fill={hoveredStepId === s.stepId ? "#0f766e" : "#0D9488"}
+                            style={{ transition: 'all 0.2s ease-in-out' }}
+                          />
+                          
+                          {/* Header Text */}
                           <text
-                            x={s.nodes[0].x}
-                            y="95"
-                            textAnchor="middle"
-                            fontWeight="bold"
-                            fontSize="14"
-                            fill={hoveredStepId === s.stepId ? "#01696F" : "#1e293b"}
+                            x={s.x + 16}
+                            y={s.y + 25}
+                            fontWeight="800"
+                            fontSize="13"
+                            fill="#ffffff"
                           >
-                            {s.stepNumber}
+                            Step {s.stepNumber}
                           </text>
+                          
+                          {/* Step Name */}
                           <text
-                            x={s.nodes[0].x}
-                            y="118"
-                            textAnchor="middle"
-                            fontSize="11"
-                            fill={hoveredStepId === s.stepId ? "#01696F" : "#64748b"}
-                            fontWeight="600"
+                            x={s.x + 16}
+                            y={s.y + 65}
+                            fontWeight="700"
+                            fontSize="13"
+                            fill={hoveredStepId === s.stepId ? "#0f766e" : "#1e293b"}
                           >
-                            {s.name.length > 25 ? `${s.name.substring(0, 22)}...` : (s.name || 'Untitled Step')}
+                            {s.name.length > 30 ? `${s.name.substring(0, 27)}...` : (s.name || 'Untitled Step')}
                           </text>
 
+                          {/* Components / Work Elements section */}
+                          <g transform={`translate(${s.x + 16}, ${s.y + 85})`}>
+                            <text x="0" y="5" fontSize="9.5" fontWeight="800" fill="#64748b">COMPONENTS:</text>
+                            
+                            {s.workElements.length === 0 ? (
+                              <text x="0" y="20" fontSize="10.5" fontStyle="italic" fill="#94a3b8">No components linked</text>
+                            ) : (
+                              s.workElements.slice(0, 3).map((we, idx) => {
+                                const badgeX = idx * 82;
+                                const displayWe = we.length > 12 ? `${we.substring(0, 9)}..` : we;
+                                return (
+                                  <g key={idx} transform={`translate(${badgeX}, 11)`}>
+                                    <rect
+                                      x="0"
+                                      y="0"
+                                      width="76"
+                                      height="18"
+                                      rx="4"
+                                      fill="#f1f5f9"
+                                      stroke="#cbd5e1"
+                                      strokeWidth="1"
+                                    />
+                                    <text
+                                      x="38"
+                                      y="12"
+                                      textAnchor="middle"
+                                      fontSize="9"
+                                      fontWeight="600"
+                                      fill="#475569"
+                                    >
+                                      {displayWe}
+                                    </text>
+                                  </g>
+                                );
+                              })
+                            )}
+                          </g>
+
+                          {/* Symbol nodes chain */}
                           {s.nodes.map((node) => (
                             <g key={node.id}>
                               <circle
                                 cx={node.x}
                                 cy={node.y}
-                                r="28"
+                                r="18"
                                 fill="#ffffff"
                                 stroke={node.color}
                                 strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2}
@@ -1502,25 +1589,25 @@ export const PfdWorkspace: React.FC = () => {
                                 x={node.x}
                                 y={node.y + 5}
                                 textAnchor="middle"
-                                fontSize="18"
+                                fontSize="15"
                                 fontWeight="bold"
                                 fill={node.color}
                               >
                                 {node.sym}
                               </text>
                               <rect
-                                x={node.x - 22}
-                                y={node.y + 34}
-                                width="44"
-                                height="15"
-                                rx="3.5"
+                                x={node.x - 18}
+                                y={node.y + 22}
+                                width="36"
+                                height="11"
+                                rx="2"
                                 fill={node.color}
                               />
                               <text
                                 x={node.x}
-                                y={node.y + 44}
+                                y={node.y + 30}
                                 textAnchor="middle"
-                                fontSize="8.5"
+                                fontSize="7.5"
                                 fontWeight="bold"
                                 fill="#ffffff"
                               >
