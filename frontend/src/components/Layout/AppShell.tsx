@@ -313,7 +313,13 @@ export const AppShell: React.FC = () => {
                     {/* PFMEA collapsible item */}
                     <ListItem disablePadding sx={{ display: 'block' }}>
                       <ListItemButton
-                        onClick={() => setPfmeaOpen(!pfmeaOpen)}
+                        onClick={() => {
+                          if (collapsed) {
+                            navigate(`/app/projects/${projectId}/pfmea`);
+                          } else {
+                            setPfmeaOpen(!pfmeaOpen);
+                          }
+                        }}
                         sx={{
                           mx: collapsed ? 0.5 : 1,
                           borderRadius: 2,
@@ -345,9 +351,8 @@ export const AppShell: React.FC = () => {
                       
                       <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
-                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
-                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=table`, isChild: true })}
-                          {renderListItem({ text: 'Func/Fail Chains', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=chains`, isChild: true })}
+                          {renderListItem({ text: 'Tree View', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Report View', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/pfmea?tab=table`, isChild: true })}
                         </List>
                       </Collapse>
                     </ListItem>
@@ -355,7 +360,13 @@ export const AppShell: React.FC = () => {
                     {/* DFMEA collapsible item */}
                     <ListItem disablePadding sx={{ display: 'block' }}>
                       <ListItemButton
-                        onClick={() => setDfmeaOpen(!dfmeaOpen)}
+                        onClick={() => {
+                          if (collapsed) {
+                            navigate(`/app/projects/${projectId}/dfmea`);
+                          } else {
+                            setDfmeaOpen(!dfmeaOpen);
+                          }
+                        }}
                         sx={{
                           mx: collapsed ? 0.5 : 1,
                           borderRadius: 2,
@@ -387,8 +398,8 @@ export const AppShell: React.FC = () => {
                       
                       <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
-                          {renderListItem({ text: 'Structure Tree', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
-                          {renderListItem({ text: 'Analysis Table', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=table`, isChild: true })}
+                          {renderListItem({ text: 'Tree View', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=tree`, isChild: true })}
+                          {renderListItem({ text: 'Report View', icon: <BulletIcon sx={{ fontSize: 6 }} />, path: `/app/projects/${projectId}/dfmea?tab=table`, isChild: true })}
                         </List>
                       </Collapse>
                     </ListItem>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, IconButton } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 interface StepFormDialogProps {
   open: boolean;
@@ -66,8 +67,19 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{stepToEdit ? 'Edit Process Step' : 'Add Process Step'}</DialogTitle>
+    <Dialog open={open} onClose={(_, reason) => { if (reason !== 'backdropClick') onClose(); }} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>{stepToEdit ? 'Edit Process Step' : 'Add Process Step'}</span>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Grid container spacing={2}>

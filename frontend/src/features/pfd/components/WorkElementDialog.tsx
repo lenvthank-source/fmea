@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, IconButton } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 interface WorkElementDialogProps {
   open: boolean;
@@ -28,8 +29,19 @@ export const WorkElementDialog: React.FC<WorkElementDialogProps> = ({ open, onCl
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Add Work Element (4M Sub-Task)</DialogTitle>
+    <Dialog open={open} onClose={(_, reason) => { if (reason !== 'backdropClick') onClose(); }} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Add Work Element (4M Sub-Task)</span>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <TextField

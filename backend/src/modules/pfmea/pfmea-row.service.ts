@@ -425,4 +425,263 @@ export class PfmeaRowService {
       where: { id: rowId },
     });
   }
+
+  async syncFromTree(tenantId: string, revisionId: string) {
+    const revision = await this.verifyRevisionAccess(tenantId, revisionId);
+    
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Fetch all steps for this revision
+      const steps = await tx.processStep.findMany({
+        where: { revisionId },
+      });
+
+      // 2. Fetch all project structure functions with failures and linkages
+      const projectFunctions = await tx.structureFunction.findMany({
+        where: { projectId: revision.document.projectId, tenantId },
+        include: {
+          failures: {
+            include: {
+              modeEffectLinks: {
+                include: {
+                  linkedFailure: {
+                    include: { function: true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Fetch all existing rows in this revision to match or clean up
+      const existingRows = await tx.pfmeaRow.findMany({
+        where: { revisionId },
+        include: {
+          functions: { include: { function: true } },
+          failureModes: { include: { failureMode: true } },
+          effects: { include: { effect: true } },
+          causes: { include: { cause: true } },
+          controls: { include: { control: true } },
+        }
+      });
+
+      const processedRowIds = new Set<string>();
+
+      // Loop through each process step to find its modes and linkages
+      for (const step of steps) {
+        const stepFunctions = projectFunctions.filter(
+          (sf) => sf.parentType === 'process_step' && sf.parentId === step.id
+        );
+
+        for (const sf of stepFunctions) {
+          const modes = sf.failures.filter((f) => f.role === 'mode');
+
+          for (const mode of modes) {
+            const effects = mode.modeEffectLinks
+              .filter((l) => l.linkType === 'effect')
+              .map((l) => l.linkedFailure);
+            const causes = mode.modeEffectLinks
+              .filter((l) => l.linkType === 'cause')
+              .map((l) => l.linkedFailure);
+
+            // Determine severity (S) from highest rating of linked effects
+            const severityRatings = effects.map((e) => e.severityRating).filter(Boolean) as number[];
+            const S = severityRatings.length > 0 ? Math.max(...severityRatings) : mode.severityRating;
+
+            // Determine occurrence (O) and detection (D) from linked causes
+            const occurrenceRatings = causes.map((c) => c.occurrenceRating).filter(Boolean) as number[];
+            const O = occurrenceRatings.length > 0 ? Math.max(...occurrenceRatings) : null;
+
+            const detectionRatings = causes.map((c) => c.detectionRating).filter(Boolean) as number[];
+            const D = detectionRatings.length > 0 ? Math.max(...detectionRatings) : null;
+
+            // Get work element name from causes
+            let workElementName: string | null = null;
+            if (causes.length > 0) {
+              const firstCause = causes[0];
+              const parts = firstCause.function.parentId.split('::');
+              workElementName = parts[1] || null;
+            }
+
+            // Find existing row
+            let row = existingRows.find(
+              (r) =>
+                r.processStepId === step.id &&
+                r.failureModes.some((fm) => fm.failureMode.name === mode.narration)
+            );
+
+            const ap = (S && O && D) ? calculateAP(S, O, D) : null;
+
+            if (row) {
+              // Update row
+              await tx.pfmeaRow.update({
+                where: { id: row.id },
+                data: {
+                  workElementName,
+                  severity: S,
+                  occurrence: O,
+                  detection: D,
+                  ap,
+                },
+              });
+              processedRowIds.add(row.id);
+            } else {
+              // Create row
+              const nextRowNumber = await this.getNextRowNumber(tx, revisionId);
+              row = await tx.pfmeaRow.create({
+                data: {
+                  revisionId,
+                  processStepId: step.id,
+                  workElementName,
+                  rowNumber: nextRowNumber,
+                  severity: S,
+                  occurrence: O,
+                  detection: D,
+                  ap,
+                  createdById: revision.createdById,
+                },
+                include: {
+                  functions: true,
+                  failureModes: true,
+                  effects: true,
+                  causes: true,
+                  controls: true,
+                }
+              }) as any;
+              processedRowIds.add(row!.id);
+            }
+
+            const rowId = row!.id;
+
+            // Sync functions
+            await tx.pfmeaRowFunction.deleteMany({ where: { pfmeaRowId: rowId } });
+            let funcRecord = await tx.function.findFirst({
+              where: { tenantId, name: { equals: sf.narration, mode: 'insensitive' } },
+            });
+            if (!funcRecord) {
+              funcRecord = await tx.function.create({
+                data: { tenantId, name: sf.narration, isTemplate: false },
+              });
+            }
+            await tx.pfmeaRowFunction.create({
+              data: { pfmeaRowId: rowId, functionId: funcRecord.id },
+            });
+
+            // Sync failure modes
+            await tx.pfmeaRowFailureMode.deleteMany({ where: { pfmeaRowId: rowId } });
+            let modeRecord = await tx.failureMode.findFirst({
+              where: { tenantId, name: { equals: mode.narration, mode: 'insensitive' } },
+            });
+            if (!modeRecord) {
+              modeRecord = await tx.failureMode.create({
+                data: { tenantId, name: mode.narration, isTemplate: false },
+              });
+            }
+            await tx.pfmeaRowFailureMode.create({
+              data: { pfmeaRowId: rowId, failureModeId: modeRecord.id },
+            });
+
+            // Sync effects
+            await tx.pfmeaRowEffect.deleteMany({ where: { pfmeaRowId: rowId } });
+            for (const eff of effects) {
+              let effRecord = await tx.effect.findFirst({
+                where: { tenantId, name: { equals: eff.narration, mode: 'insensitive' } },
+              });
+              if (!effRecord) {
+                effRecord = await tx.effect.create({
+                  data: { tenantId, name: eff.narration, isTemplate: false },
+                });
+              }
+              await tx.pfmeaRowEffect.create({
+                data: { pfmeaRowId: rowId, effectId: effRecord.id },
+              });
+            }
+
+            // Sync causes
+            await tx.pfmeaRowCause.deleteMany({ where: { pfmeaRowId: rowId } });
+            for (const cause of causes) {
+              let causeRecord = await tx.cause.findFirst({
+                where: { tenantId, name: { equals: cause.narration, mode: 'insensitive' } },
+              });
+              if (!causeRecord) {
+                causeRecord = await tx.cause.create({
+                  data: { tenantId, name: cause.narration, isTemplate: false },
+                });
+              }
+              await tx.pfmeaRowCause.create({
+                data: { pfmeaRowId: rowId, causeId: causeRecord.id },
+              });
+            }
+
+            // Sync controls from causes
+            await tx.pfmeaRowControl.deleteMany({ where: { pfmeaRowId: rowId } });
+            for (const cause of causes) {
+              if (cause.currentControlPrevention) {
+                let ctrlRecord = await tx.control.findFirst({
+                  where: {
+                    tenantId,
+                    type: 'prevention',
+                    name: { equals: cause.currentControlPrevention, mode: 'insensitive' },
+                  },
+                });
+                if (!ctrlRecord) {
+                  ctrlRecord = await tx.control.create({
+                    data: {
+                      tenantId,
+                      type: 'prevention',
+                      name: cause.currentControlPrevention,
+                      isTemplate: false,
+                    },
+                  });
+                }
+                await tx.pfmeaRowControl.create({
+                  data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
+                });
+              }
+
+              if (cause.currentControlDetection) {
+                let ctrlRecord = await tx.control.findFirst({
+                  where: {
+                    tenantId,
+                    type: 'detection',
+                    name: { equals: cause.currentControlDetection, mode: 'insensitive' },
+                  },
+                });
+                if (!ctrlRecord) {
+                  ctrlRecord = await tx.control.create({
+                    data: {
+                      tenantId,
+                      type: 'detection',
+                      name: cause.currentControlDetection,
+                      isTemplate: false,
+                    },
+                  });
+                }
+                await tx.pfmeaRowControl.create({
+                  data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // 5. Delete rows that are no longer referenced in the structure tree
+      for (const row of existingRows) {
+        if (!processedRowIds.has(row.id)) {
+          await tx.pfmeaRow.delete({ where: { id: row.id } });
+        }
+      }
+
+      return { success: true, syncedCount: processedRowIds.size };
+    });
+  }
+
+  private async getNextRowNumber(tx: any, revisionId: string): Promise<number> {
+    const agg = await tx.pfmeaRow.aggregate({
+      where: { revisionId },
+      _max: { rowNumber: true },
+    });
+    return (agg._max.rowNumber || 0) + 1;
+  }
 }

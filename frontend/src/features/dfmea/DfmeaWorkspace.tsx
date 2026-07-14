@@ -490,8 +490,8 @@ export const DfmeaWorkspace: React.FC = () => {
           indicatorColor="primary"
           textColor="primary"
         >
-          <Tab value="tree" label="Structure Tree" sx={{ fontWeight: 'bold' }} />
-          <Tab value="table" label="Analysis Table" sx={{ fontWeight: 'bold' }} />
+          <Tab value="tree" label="Tree View" sx={{ fontWeight: 'bold' }} />
+          <Tab value="table" label="Report View" sx={{ fontWeight: 'bold' }} />
         </Tabs>
         
         <Stack direction="row" spacing={1.5}>

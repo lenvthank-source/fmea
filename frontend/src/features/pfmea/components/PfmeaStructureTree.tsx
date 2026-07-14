@@ -68,6 +68,7 @@ interface PfmeaStructureTreeProps {
     linked: number;
     unlinked: number;
   };
+  onSyncPfd?: () => void;
 }
 
 export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
@@ -85,6 +86,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onEditNode,
   structureFunctions,
   linkageStats,
+  onSyncPfd,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -324,6 +326,27 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
               onClick={handleAddFailureClick}
             >
               Failure
+            </Button>
+          </Stack>
+
+          <Divider orientation="vertical" flexItem />
+
+          {/* Sync Section */}
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>SYNC</Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={onSyncPfd}
+              sx={{
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                height: 32,
+                fontSize: '0.8rem',
+                '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' }
+              }}
+            >
+              Sync PFD
             </Button>
           </Stack>
 

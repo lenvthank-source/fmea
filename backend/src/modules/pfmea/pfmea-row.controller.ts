@@ -40,4 +40,10 @@ export class PfmeaRowController {
   async removeRow(@Request() req: RequestWithUser, @Param('rowId') rowId: string) {
     return this.pfmeaRowService.removeRow(req.user.tenantId, rowId);
   }
+
+  @Post('revisions/:id/sync-from-tree')
+  @Permissions('pfmea.edit')
+  async syncFromTree(@Request() req: RequestWithUser, @Param('id') revisionId: string) {
+    return this.pfmeaRowService.syncFromTree(req.user.tenantId, revisionId);
+  }
 }

@@ -173,6 +173,30 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   }, [token]);
 
+  const [syncingTree, setSyncingTree] = useState(false);
+  const handleSyncTreeWithTable = async () => {
+    if (!pfmeaRevisionId) return;
+    setSyncingTree(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/sync-from-tree`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to synchronize FMEA report view with structure tree.');
+      }
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message || 'Could not synchronize tree.');
+    } finally {
+      setSyncingTree(false);
+    }
+  };
+
   const handleCreateAction = async () => {
     if (!selectedRowForAction || !actionDescription || !actionOwnerId || !actionDueDate) return;
     setError(null);
@@ -1212,9 +1236,8 @@ export const PfmeaWorkspace: React.FC = () => {
           indicatorColor="primary"
           textColor="primary"
         >
-          <Tab value="tree" label="Structure Tree" sx={{ fontWeight: 'bold' }} />
-          <Tab value="table" label="Analysis Table" sx={{ fontWeight: 'bold' }} />
-          <Tab value="chains" label="Func/Fail Chains" sx={{ fontWeight: 'bold' }} />
+          <Tab value="tree" label="Tree View" sx={{ fontWeight: 'bold' }} />
+          <Tab value="table" label="Report View" sx={{ fontWeight: 'bold' }} />
         </Tabs>
         
         <Stack direction="row" spacing={1.5} sx={{ mt: isMobile ? 1.5 : 0 }}>
@@ -1222,9 +1245,19 @@ export const PfmeaWorkspace: React.FC = () => {
             Export FMEA
           </Button>
           {activeTab === 'table' && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-              Add Analysis Row
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleSyncTreeWithTable}
+                disabled={syncingTree}
+              >
+                {syncingTree ? 'Syncing...' : 'Sync Tree'}
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+                Add Analysis Row
+              </Button>
+            </>
           )}
         </Stack>
       </Box>
@@ -1313,6 +1346,7 @@ export const PfmeaWorkspace: React.FC = () => {
               linked: linkedFailureModes,
               unlinked: unlinkedFailureModes
             }}
+            onSyncPfd={handleImportPfdSteps}
           />
         );
       })() : activeTab === 'table' ? (
