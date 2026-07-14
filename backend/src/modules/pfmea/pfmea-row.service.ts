@@ -583,6 +583,7 @@ export class PfmeaRowService {
 
             // Sync effects
             await tx.pfmeaRowEffect.deleteMany({ where: { pfmeaRowId: rowId } });
+            const addedEffectIds = new Set<string>();
             for (const eff of effects) {
               let effRecord = await tx.effect.findFirst({
                 where: { tenantId, name: { equals: eff.narration, mode: 'insensitive' } },
@@ -592,13 +593,17 @@ export class PfmeaRowService {
                   data: { tenantId, name: eff.narration, isTemplate: false },
                 });
               }
-              await tx.pfmeaRowEffect.create({
-                data: { pfmeaRowId: rowId, effectId: effRecord.id },
-              });
+              if (!addedEffectIds.has(effRecord.id)) {
+                await tx.pfmeaRowEffect.create({
+                  data: { pfmeaRowId: rowId, effectId: effRecord.id },
+                });
+                addedEffectIds.add(effRecord.id);
+              }
             }
 
             // Sync causes
             await tx.pfmeaRowCause.deleteMany({ where: { pfmeaRowId: rowId } });
+            const addedCauseIds = new Set<string>();
             for (const cause of causes) {
               let causeRecord = await tx.cause.findFirst({
                 where: { tenantId, name: { equals: cause.narration, mode: 'insensitive' } },
@@ -608,13 +613,17 @@ export class PfmeaRowService {
                   data: { tenantId, name: cause.narration, isTemplate: false },
                 });
               }
-              await tx.pfmeaRowCause.create({
-                data: { pfmeaRowId: rowId, causeId: causeRecord.id },
-              });
+              if (!addedCauseIds.has(causeRecord.id)) {
+                await tx.pfmeaRowCause.create({
+                  data: { pfmeaRowId: rowId, causeId: causeRecord.id },
+                });
+                addedCauseIds.add(causeRecord.id);
+              }
             }
 
             // Sync controls from causes
             await tx.pfmeaRowControl.deleteMany({ where: { pfmeaRowId: rowId } });
+            const addedControlIds = new Set<string>();
             for (const cause of causes) {
               if (cause.currentControlPrevention) {
                 let ctrlRecord = await tx.control.findFirst({
@@ -634,9 +643,12 @@ export class PfmeaRowService {
                     },
                   });
                 }
-                await tx.pfmeaRowControl.create({
-                  data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
-                });
+                if (!addedControlIds.has(ctrlRecord.id)) {
+                  await tx.pfmeaRowControl.create({
+                    data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
+                  });
+                  addedControlIds.add(ctrlRecord.id);
+                }
               }
 
               if (cause.currentControlDetection) {
@@ -657,9 +669,12 @@ export class PfmeaRowService {
                     },
                   });
                 }
-                await tx.pfmeaRowControl.create({
-                  data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
-                });
+                if (!addedControlIds.has(ctrlRecord.id)) {
+                  await tx.pfmeaRowControl.create({
+                    data: { pfmeaRowId: rowId, controlId: ctrlRecord.id },
+                  });
+                  addedControlIds.add(ctrlRecord.id);
+                }
               }
             }
           }
