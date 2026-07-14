@@ -1631,7 +1631,7 @@ export const PfdWorkspace: React.FC = () => {
       <Drawer
         anchor="right"
         open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
+        onClose={(_, reason) => { if (reason !== 'backdropClick') setDetailsOpen(false); }}
         slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
       >
         {selectedStep && (
@@ -1821,7 +1821,7 @@ export const PfdWorkspace: React.FC = () => {
       <Drawer
         anchor="right"
         open={addOpen}
-        onClose={() => setAddOpen(false)}
+        onClose={(_, reason) => { if (reason !== 'backdropClick') setAddOpen(false); }}
         slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

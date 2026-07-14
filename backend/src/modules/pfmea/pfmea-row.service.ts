@@ -674,6 +674,8 @@ export class PfmeaRowService {
       }
 
       return { success: true, syncedCount: processedRowIds.size };
+    }, {
+      timeout: 30000
     });
   }
 
