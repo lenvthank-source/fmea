@@ -249,6 +249,18 @@ export class StructureLinkageService {
       (c) => c.function.parentId === stepParentId || c.function.parentId.startsWith(stepParentId + '::'),
     );
 
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { name: true },
+    });
+    const projectName = project?.name || 'Process Item';
+
+    const step = await this.prisma.processStep.findUnique({
+      where: { id: stepParentId },
+      select: { name: true, stepNumber: true },
+    });
+    const operationName = step ? `${step.stepNumber} - ${step.name}` : 'Operation';
+
     // Currently linked effects and causes
     const existingLinks = await this.prisma.failureLink.findMany({
       where: { failureModeId },
@@ -261,15 +273,24 @@ export class StructureLinkageService {
       .map((l) => l.linkedFailureId);
 
     return {
-      mode,
+      mode: {
+        ...mode,
+        parentName: operationName,
+      },
       effects: effects.map((e) => ({
         ...e,
+        parentName: projectName,
         isCurrentlyLinked: linkedEffectIds.includes(e.id),
       })),
-      causes: causes.map((c) => ({
-        ...c,
-        isCurrentlyLinked: linkedCauseIds.includes(c.id),
-      })),
+      causes: causes.map((c) => {
+        const parts = c.function.parentId.split('::');
+        const workStepName = parts[1] || 'Work Step';
+        return {
+          ...c,
+          parentName: workStepName,
+          isCurrentlyLinked: linkedCauseIds.includes(c.id),
+        };
+      }),
       linkedEffectIds,
       linkedCauseIds,
     };
