@@ -128,4 +128,12 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   preliminaryFinalFlag?: string;
+
+  @IsString()
+  @IsOptional()
+  sourceProjectId?: string;
+
+  @IsArray()
+  @IsOptional()
+  importTypes?: string[];
 }

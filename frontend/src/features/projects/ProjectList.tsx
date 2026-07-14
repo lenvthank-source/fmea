@@ -4,7 +4,8 @@ import {
   TextField, Alert, FormControlLabel, Chip, Radio, RadioGroup,
   Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
   TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab,
-  Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup
+  Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup,
+  FormControl, InputLabel, Select, Checkbox
 } from '@mui/material';
 import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon, GridView as GridIcon, ViewList as ListIcon, Folder as FolderIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
@@ -92,6 +93,10 @@ export const ProjectList: React.FC = () => {
   const [originationDate, setOriginationDate] = useState(new Date().toISOString().split('T')[0]);
   const [supplierApprovalDate, setSupplierApprovalDate] = useState('');
   
+  // Import from existing project state
+  const [sourceProjectId, setSourceProjectId] = useState('');
+  const [importTypes, setImportTypes] = useState<string[]>([]);
+
   // CFT Members
   const [cftMembers, setCftMembers] = useState<string[]>([]);
   const [newCftMember, setNewCftMember] = useState('');
@@ -355,6 +360,8 @@ export const ProjectList: React.FC = () => {
     setCustomerQualApprovalDate('');
     setOtherApprover('');
     setOtherApprovalDate2('');
+    setSourceProjectId('');
+    setImportTypes([]);
   };
 
 
@@ -436,6 +443,8 @@ export const ProjectList: React.FC = () => {
       dwgNumber: dwgNumber || null,
       dwgRevNoAndDate: dwgRevNoAndDate || null,
       preliminaryFinalFlag,
+      sourceProjectId: sourceProjectId || null,
+      importTypes: sourceProjectId ? importTypes : [],
     };
 
     try {
@@ -1027,6 +1036,75 @@ export const ProjectList: React.FC = () => {
                         />
                       ))}
                     </RadioGroup>
+                  </Grid>
+                  <Grid size={12}>
+                    <Box sx={{ mt: 2, p: 2, border: '1px solid #cbd5e1', borderRadius: 2, bgcolor: '#f8fafc' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#334155' }}>
+                        Import Template / Data from Existing Project (Optional)
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid size={12}>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Select Project to Import From</InputLabel>
+                            <Select
+                              value={sourceProjectId}
+                              onChange={(e) => {
+                                const val = e.target.value as string;
+                                setSourceProjectId(val);
+                                if (val) {
+                                  setImportTypes(['PFD', 'PFMEA', 'DFMEA', 'CONTROL_PLAN']);
+                                } else {
+                                  setImportTypes([]);
+                                }
+                              }}
+                              label="Select Project to Import From"
+                            >
+                              <MenuItem value=""><em>None (Create Empty Project)</em></MenuItem>
+                              {projects.map((proj) => (
+                                <MenuItem key={proj.id} value={proj.id}>
+                                  {proj.partName || proj.name} ({proj.orgPartNumber || 'N/A'}) - {proj.customer}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        {sourceProjectId && (
+                          <Grid size={12}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                              Choose Document Types to Import:
+                            </Typography>
+                            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                              {['PFD', 'PFMEA', 'DFMEA', 'CONTROL_PLAN'].map((type) => {
+                                const label = type === 'CONTROL_PLAN' ? 'Control Plan' : type;
+                                const isChecked = importTypes.includes(type);
+                                return (
+                                  <FormControlLabel
+                                    key={type}
+                                    control={
+                                      <Checkbox
+                                        checked={isChecked}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setImportTypes([...importTypes, type]);
+                                          } else {
+                                            setImportTypes(importTypes.filter((t) => t !== type));
+                                          }
+                                        }}
+                                        size="small"
+                                      />
+                                    }
+                                    label={label}
+                                  />
+                                );
+                              })}
+                            </Stack>
+                            <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 1 }}>
+                              * Active revision content (items, rows, linkages) of the checked documents will copy into the new project automatically.
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
                   </Grid>
                 </Grid>
               </Box>

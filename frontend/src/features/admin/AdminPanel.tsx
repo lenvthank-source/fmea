@@ -101,6 +101,11 @@ export const AdminPanel: React.FC = () => {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
 
+  // Revisions state
+  const [adminRevisions, setAdminRevisions] = useState<any[]>([]);
+  const [revisionsLoading, setRevisionsLoading] = useState(false);
+  const [deleteRevisionLoadingId, setDeleteRevisionLoadingId] = useState<string | null>(null);
+
   // ── Fetch Functions ───────────────────────────────────────
 
   const fetchUsers = async () => {
@@ -154,11 +159,29 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const fetchAdminRevisions = async () => {
+    setRevisionsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/admin/revisions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminRevisions(data);
+      }
+    } catch (err) {
+      console.error('Failed to load admin revisions:', err);
+    } finally {
+      setRevisionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchUsers();
       fetchInquiries();
       fetchFeedback();
+      fetchAdminRevisions();
     }
   }, [token]);
 
@@ -219,6 +242,28 @@ export const AdminPanel: React.FC = () => {
       alert(err.message || 'Could not delete user');
     } finally {
       setDeleteLoadingId(null);
+    }
+  };
+
+  const handleAdminDeleteRevision = async (revisionId: string, revisionNumber: string) => {
+    if (!window.confirm(`WARNING: Are you sure you want to completely delete version v${revisionNumber}?\n\nThis will permanently delete this version, all of its process flow diagrams, PFMEA grid rows, control plans, approvals, and all associated audit logs and history.\n\nThis action is irreversible.`)) {
+      return;
+    }
+    setDeleteRevisionLoadingId(revisionId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/projects/admin/revisions/${revisionId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete version completely');
+      }
+      setAdminRevisions((prev) => prev.filter((r) => r.id !== revisionId));
+    } catch (err: any) {
+      alert(err.message || 'Could not delete version');
+    } finally {
+      setDeleteRevisionLoadingId(null);
     }
   };
 
@@ -311,6 +356,7 @@ export const AdminPanel: React.FC = () => {
             </Badge>
           }
         />
+        <Tab label="Document Revisions" />
       </Tabs>
 
       {/* ── Tab 0: Users ────────────────────────────────────── */}
@@ -565,6 +611,108 @@ export const AdminPanel: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </TabPanel>
+
+      {/* ── Tab 3: Document Revisions ─────────────────────── */}
+      <TabPanel value={activeTab} index={3}>
+        <Alert severity="warning" sx={{ mb: 3, borderRadius: 3 }}>
+          ⚠️ <strong>Administrative Overrides:</strong> Deleting a version here completely bypasses standard user checks (such as active/locked status limits) and permanently wipes all database snapshots, associated diagrams, grid rows, and audit history.
+        </Alert>
+
+        {revisionsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : adminRevisions.length === 0 ? (
+          <Paper sx={{ p: 4, textAlign: 'center', border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3 }}>
+            <Typography color="text.secondary">No document revisions found in this workspace.</Typography>
+          </Paper>
+        ) : (
+          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Project</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Document</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Version</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Change Description</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Created By</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Created At</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Data Counts</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, width: 100 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {adminRevisions.map((rev) => {
+                  const isActive = rev.document?.currentRevisionId === rev.id;
+                  const isLocked = !!rev.lockedAt;
+                  const isDeleting = deleteRevisionLoadingId === rev.id;
+
+                  return (
+                    <TableRow key={rev.id} hover sx={{ bgcolor: isActive ? 'rgba(16, 185, 129, 0.02)' : 'transparent' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>{rev.document?.project?.name || '—'}</TableCell>
+                      <TableCell>{rev.document?.name || '—'}</TableCell>
+                      <TableCell>
+                        <Chip label={rev.document?.type || '—'} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 20 }} />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>v{rev.revisionNumber}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={isActive ? 'Active' : isLocked ? 'Locked' : rev.status === 'superseded' ? 'Superseded' : 'Draft'}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            fontSize: '0.7rem', height: 22,
+                            borderColor: isActive ? '#10b981' : isLocked ? '#f59e0b' : rev.status === 'superseded' ? '#94a3b8' : '#3b82f6',
+                            color: isActive ? '#10b981' : isLocked ? '#f59e0b' : rev.status === 'superseded' ? '#94a3b8' : '#3b82f6',
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap', maxWidth: 250 }}>
+                        <Typography variant="body2" sx={{ fontSize: '0.78rem' }}>{rev.changeDescription || '—'}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontSize: '0.78rem' }}>{rev.creator?.name || rev.creator?.email || 'System'}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.78rem' }}>
+                        {new Date(rev.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                          {rev._count?.processSteps != null && (
+                            <Chip label={`PFD: ${rev._count.processSteps}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 18 }} />
+                          )}
+                          {rev._count?.pfmeaRows != null && (
+                            <Chip label={`FMEA: ${rev._count.pfmeaRows}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 18 }} />
+                          )}
+                          {rev._count?.controlPlanRows != null && (
+                            <Chip label={`CP: ${rev._count.controlPlanRows}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 18 }} />
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Delete Completely (Bypass Constraints)">
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleAdminDeleteRevision(rev.id, rev.revisionNumber)}
+                              color="error"
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? <CircularProgress size={16} color="error" /> : <DeleteIcon fontSize="small" />}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

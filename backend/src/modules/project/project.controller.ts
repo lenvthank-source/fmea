@@ -119,6 +119,23 @@ export class ProjectController {
     return this.projectService.deleteRevision(req.user.tenantId, req.user.sub, revisionId);
   }
 
+  @Delete('admin/revisions/:revisionId')
+  @Permissions('admin.config')
+  async adminDeleteRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.adminDeleteRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  @Get('admin/revisions')
+  @Permissions('admin.config')
+  async adminGetRevisions(
+    @Request() req: RequestWithUser,
+  ) {
+    return this.projectService.adminGetRevisions(req.user.tenantId);
+  }
+
   @Post('revisions/:revisionId/activate')
   @Permissions('project.edit')
   async switchActiveRevision(

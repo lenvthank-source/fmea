@@ -1351,12 +1351,9 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Work Element (4M) */}
                       <TableCell>
-                        <Stack spacing={0.5} direction="row" sx={{ flexWrap: 'wrap' }}>
-                          {workElements.map((we, weIdx) => (
-                            <Chip key={weIdx} label={we} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.72rem', borderColor: '#f97316', color: '#f97316' }} />
-                          ))}
-                          {workElements.length === 0 && '—'}
-                        </Stack>
+                        <Typography sx={{ fontSize: '0.75rem' }}>
+                          {workElements.join(', ') || '—'}
+                        </Typography>
                       </TableCell>
 
                       {/* Function / Focus Element */}

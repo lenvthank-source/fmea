@@ -91,21 +91,40 @@ export class ProjectService {
         },
       });
 
-      // 2. Initialize default documents (PFD, PFMEA, CONTROL_PLAN)
-      const docTypes = [
-        { type: 'PFD', name: 'Process Flow Diagram' },
-        { type: 'PFMEA', name: 'Process FMEA' },
-        { type: 'CONTROL_PLAN', name: 'Control Plan' },
-      ];
+      // 2. Initialize documents (PFD, PFMEA, CONTROL_PLAN, DFMEA) - import from existing project if selected
+      const stepIdMap = new Map<string, string>();
+      const allDocTypes = ['PFD', 'PFMEA', 'DFMEA', 'CONTROL_PLAN'];
+      const docsToCreate = [...new Set([...allDocTypes, ...(dto.documentTypes || [])])];
+      const orderedDocTypes = ['PFD', 'DFMEA', 'PFMEA', 'CONTROL_PLAN'].filter(type => docsToCreate.includes(type));
 
-      for (const docType of docTypes) {
+      const isImporting = !!dto.sourceProjectId;
+      const importTypes = dto.importTypes || [];
+
+      for (const type of orderedDocTypes) {
+        let sourceDoc: any = null;
+        if (isImporting && importTypes.includes(type)) {
+          sourceDoc = await tx.document.findFirst({
+            where: {
+              projectId: dto.sourceProjectId,
+              type,
+              tenantId
+            }
+          });
+        }
+
+        let docName = '';
+        if (type === 'PFD') docName = 'Process Flow Diagram';
+        else if (type === 'PFMEA') docName = 'Process FMEA';
+        else if (type === 'DFMEA') docName = 'Design FMEA';
+        else if (type === 'CONTROL_PLAN') docName = 'Control Plan';
+
         // Create document
         const document = await tx.document.create({
           data: {
             tenantId,
             projectId: project.id,
-            type: docType.type,
-            name: `${project.name} - ${docType.name}`,
+            type,
+            name: `${project.name} - ${docName}`,
             status: 'active',
             createdById: userId,
           },
@@ -117,7 +136,8 @@ export class ProjectService {
             documentId: document.id,
             revisionNumber: '1.0',
             status: 'draft',
-            summary: 'Initial draft version',
+            summary: sourceDoc ? `Imported from ${sourceDoc.name}` : 'Initial draft version',
+            changeDescription: sourceDoc ? 'Imported initial version from source project.' : 'Initial project creation.',
             createdById: userId,
           },
         });
@@ -127,6 +147,173 @@ export class ProjectService {
           where: { id: document.id },
           data: { currentRevisionId: revision.id },
         });
+
+        // Copy content from source document if found
+        if (sourceDoc && sourceDoc.currentRevisionId) {
+          const oldRevisionId = sourceDoc.currentRevisionId;
+
+          if (type === 'PFD') {
+            const oldSteps = await tx.processStep.findMany({
+              where: { revisionId: oldRevisionId },
+              orderBy: { sequenceOrder: 'asc' }
+            });
+            for (const step of oldSteps) {
+              const newStep = await tx.processStep.create({
+                data: {
+                  revisionId: revision.id,
+                  processItemId: step.processItemId,
+                  stepNumber: step.stepNumber,
+                  name: step.name,
+                  description: step.description,
+                  stepType: step.stepType,
+                  sequenceOrder: step.sequenceOrder,
+                  inputs: step.inputs,
+                  outputs: step.outputs,
+                  resources: step.resources,
+                  incomingVariation: step.incomingVariation || undefined,
+                  specialCharacteristics: step.specialCharacteristics,
+                  flowIcons: step.flowIcons || undefined,
+                  machinesEquipmentDocs: step.machinesEquipmentDocs || undefined,
+                  desiredOutcome: step.desiredOutcome,
+                  processCharacteristics: step.processCharacteristics,
+                  linkedPfdStepId: step.linkedPfdStepId,
+                  isOrphaned: step.isOrphaned,
+                },
+              });
+              stepIdMap.set(step.id, newStep.id);
+            }
+          } else if (type === 'PFMEA' || type === 'DFMEA') {
+            const oldRows = await tx.pfmeaRow.findMany({
+              where: { revisionId: oldRevisionId },
+              include: {
+                functions: true,
+                requirements: true,
+                failureModes: true,
+                effects: true,
+                causes: true,
+                controls: true,
+                characteristics: true,
+              },
+              orderBy: { rowNumber: 'asc' }
+            });
+
+            for (const row of oldRows) {
+              const newStepId = row.processStepId ? stepIdMap.get(row.processStepId) : null;
+
+              const newRow = await tx.pfmeaRow.create({
+                data: {
+                  revisionId: revision.id,
+                  processStepId: newStepId || undefined,
+                  workElementName: row.workElementName,
+                  rowNumber: row.rowNumber,
+                  severity: row.severity,
+                  occurrence: row.occurrence,
+                  detection: row.detection,
+                  ap: row.ap,
+                  filterCode: row.filterCode,
+                  status: row.status,
+                  accessLevel: row.accessLevel,
+                  preventionAction: row.preventionAction,
+                  detectionAction: row.detectionAction,
+                  responsibility: row.responsibility,
+                  targetDate: row.targetDate,
+                  actionTaken: row.actionTaken,
+                  completionDate: row.completionDate,
+                  revisedSeverity: row.revisedSeverity,
+                  revisedOccurrence: row.revisedOccurrence,
+                  revisedDetection: row.revisedDetection,
+                  revisedAp: row.revisedAp,
+                  notes: row.notes,
+                  createdById: userId,
+                },
+              });
+
+              // Copy relations
+              if (row.functions.length > 0) {
+                await tx.pfmeaRowFunction.createMany({
+                  data: row.functions.map(f => ({
+                    pfmeaRowId: newRow.id,
+                    functionId: f.functionId,
+                  }))
+                });
+              }
+              if (row.requirements.length > 0) {
+                await tx.pfmeaRowRequirement.createMany({
+                  data: row.requirements.map(req => ({
+                    pfmeaRowId: newRow.id,
+                    requirementId: req.requirementId,
+                  }))
+                });
+              }
+              if (row.failureModes.length > 0) {
+                await tx.pfmeaRowFailureMode.createMany({
+                  data: row.failureModes.map(fm => ({
+                    pfmeaRowId: newRow.id,
+                    failureModeId: fm.failureModeId,
+                  }))
+                });
+              }
+              if (row.effects.length > 0) {
+                await tx.pfmeaRowEffect.createMany({
+                  data: row.effects.map(e => ({
+                    pfmeaRowId: newRow.id,
+                    effectId: e.effectId,
+                  }))
+                });
+              }
+              if (row.causes.length > 0) {
+                await tx.pfmeaRowCause.createMany({
+                  data: row.causes.map(c => ({
+                    pfmeaRowId: newRow.id,
+                    causeId: c.causeId,
+                  }))
+                });
+              }
+              if (row.controls.length > 0) {
+                await tx.pfmeaRowControl.createMany({
+                  data: row.controls.map(ctrl => ({
+                    pfmeaRowId: newRow.id,
+                    controlId: ctrl.controlId,
+                  }))
+                });
+              }
+              if (row.characteristics.length > 0) {
+                await tx.pfmeaRowCharacteristic.createMany({
+                  data: row.characteristics.map(char => ({
+                    pfmeaRowId: newRow.id,
+                    characteristicId: char.characteristicId,
+                  }))
+                });
+              }
+            }
+          } else if (type === 'CONTROL_PLAN') {
+            const oldCpRows = await tx.controlPlanRow.findMany({
+              where: { revisionId: oldRevisionId },
+              orderBy: { rowNumber: 'asc' }
+            });
+            for (const cpRow of oldCpRows) {
+              const newStepId = cpRow.processStepId ? stepIdMap.get(cpRow.processStepId) : null;
+
+              await tx.controlPlanRow.create({
+                data: {
+                  revisionId: revision.id,
+                  processStepId: newStepId || cpRow.processStepId,
+                  characteristicId: cpRow.characteristicId,
+                  rowNumber: cpRow.rowNumber,
+                  specTolerance: cpRow.specTolerance,
+                  measurementMethod: cpRow.measurementMethod,
+                  sampleSize: cpRow.sampleSize,
+                  frequency: cpRow.frequency,
+                  controlType: cpRow.controlType,
+                  controlMethod: cpRow.controlMethod,
+                  reactionPlan: cpRow.reactionPlan,
+                  responsible: cpRow.responsible,
+                  notes: cpRow.notes,
+                },
+              });
+            }
+          }
+        }
       }
 
       return project;
@@ -561,6 +748,129 @@ export class ProjectService {
     });
 
     return { deleted: true, revisionId };
+  }
+
+  async adminDeleteRevision(tenantId: string, userId: string, revisionId: string) {
+    const revision = await this.prisma.documentRevision.findUnique({
+      where: { id: revisionId },
+      include: {
+        document: {
+          select: {
+            id: true,
+            tenantId: true,
+            projectId: true,
+            currentRevisionId: true,
+          },
+        },
+      },
+    });
+
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    // Tenant isolation check
+    if (revision.document.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this revision');
+    }
+
+    // Delete within a transaction
+    await this.prisma.$transaction(async (tx) => {
+      // 1. If this is the currently active revision for the document
+      if (revision.document.currentRevisionId === revisionId) {
+        // Find another revision for this document (e.g. most recent one that is not this revision)
+        const anotherRevision = await tx.documentRevision.findFirst({
+          where: {
+            documentId: revision.documentId,
+            id: { not: revisionId }
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        // Set document's currentRevisionId to the other revision or null
+        await tx.document.update({
+          where: { id: revision.documentId },
+          data: {
+            currentRevisionId: anotherRevision ? anotherRevision.id : null
+          }
+        });
+
+        // Also if we changed it, update the project's revisionNumber to match the new active revision's number (or '1.0' if none)
+        await tx.project.update({
+          where: { id: revision.document.projectId },
+          data: {
+            revisionNumber: anotherRevision ? anotherRevision.revisionNumber : '1.0'
+          }
+        });
+      }
+
+      // 2. Delete cascaded data
+      await tx.processStep.deleteMany({ where: { revisionId } });
+      await tx.pfmeaRow.deleteMany({ where: { revisionId } });
+      await tx.controlPlanRow.deleteMany({ where: { revisionId } });
+      await tx.approval.deleteMany({ where: { revisionId } });
+
+      // 3. Delete AuditLog entries related to this revision
+      await tx.auditLog.deleteMany({
+        where: {
+          tenantId,
+          entityId: revisionId
+        }
+      });
+
+      // 4. Delete ProjectRevision log entries matching this revision number and project
+      await tx.projectRevision.deleteMany({
+        where: {
+          projectId: revision.document.projectId,
+          revisionNo: revision.revisionNumber
+        }
+      });
+
+      // 5. Delete the DocumentRevision itself
+      await tx.documentRevision.delete({ where: { id: revisionId } });
+    });
+
+    return { deleted: true, revisionId };
+  }
+
+  async adminGetRevisions(tenantId: string) {
+    return this.prisma.documentRevision.findMany({
+      where: {
+        document: {
+          tenantId
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: {
+            processSteps: true,
+            pfmeaRows: true,
+            controlPlanRows: true,
+          },
+        },
+        creator: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        document: {
+          select: {
+            id: true,
+            type: true,
+            name: true,
+            currentRevisionId: true,
+            project: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
+        },
+      },
+    });
   }
 
   async updateRevision(
