@@ -14,6 +14,7 @@ import { ActionModule } from './modules/action/action.module';
 import { StructureLinkageModule } from './modules/structure-linkage/structure-linkage.module';
 import { UserModule } from './modules/user/user.module';
 import { ControlPlanModule } from './modules/control-plan/control-plan.module';
+import { AuditLogModule } from './modules/audit/audit-log.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ControlPlanModule } from './modules/control-plan/control-plan.module';
     ActionModule,
     StructureLinkageModule,
     UserModule,
+    AuditLogModule,
   ],
   controllers: [AppController],
   providers: [

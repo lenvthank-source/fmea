@@ -4,15 +4,22 @@ import {
   Box, Typography, Button, TextField, Alert, CircularProgress, Grid, Card, CardContent,
   FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab, Switch,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Tooltip, Collapse, Stack
 } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon } from '@mui/icons-material';
+import {
+  Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon,
+  Star as StarIcon, Edit as EditIcon, Delete as DeleteIcon,
+  SwapHoriz as ActivateIcon, ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon, History as HistoryIcon,
+  Close as CloseIcon
+} from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 
 export const ProjectSettings: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const isAdmin = user?.roles?.includes('Admin');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -65,6 +72,32 @@ export const ProjectSettings: React.FC = () => {
   const [createRevisionOpen, setCreateRevisionOpen] = useState(false);
   const [changeDesc, setChangeDesc] = useState('');
   const [createRevisionLoading, setCreateRevisionLoading] = useState(false);
+  const [newRevisionNumber, setNewRevisionNumber] = useState('');
+  const [newSummary, setNewSummary] = useState('');
+  const [newEffectiveFrom, setNewEffectiveFrom] = useState('');
+  const [newEffectiveTo, setNewEffectiveTo] = useState('');
+
+  // Edit revision states
+  const [editRevisionOpen, setEditRevisionOpen] = useState(false);
+  const [editRevision, setEditRevision] = useState<any>(null);
+  const [editRevNumber, setEditRevNumber] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const [editChangeDesc, setEditChangeDesc] = useState('');
+  const [editEffFrom, setEditEffFrom] = useState('');
+  const [editEffTo, setEditEffTo] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete revision states
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteRevisionTarget, setDeleteRevisionTarget] = useState<any>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Audit log / expand states
+  const [expandedRevisionId, setExpandedRevisionId] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<Record<string, any[]>>({});
+  const [auditLoading, setAuditLoading] = useState(false);
+
+
 
   const fetchRevisions = async () => {
     setRevisionsLoading(true);
@@ -97,7 +130,13 @@ export const ProjectSettings: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ changeDesc: changeDesc.trim() })
+        body: JSON.stringify({
+          changeDesc: changeDesc.trim(),
+          revisionNumber: newRevisionNumber.trim() || undefined,
+          summary: newSummary.trim() || undefined,
+          effectiveFrom: newEffectiveFrom || undefined,
+          effectiveTo: newEffectiveTo || undefined,
+        })
       });
 
       if (!response.ok) {
@@ -105,8 +144,12 @@ export const ProjectSettings: React.FC = () => {
         throw new Error(err.message || 'Failed to create revision');
       }
 
-      setSuccess('Project revision created successfully. Current revision has been incremented.');
+      setSuccess('Project revision created successfully with data snapshot.');
       setChangeDesc('');
+      setNewRevisionNumber('');
+      setNewSummary('');
+      setNewEffectiveFrom('');
+      setNewEffectiveTo('');
       setCreateRevisionOpen(false);
       fetchRevisions();
     } catch (err: any) {
@@ -114,6 +157,132 @@ export const ProjectSettings: React.FC = () => {
     } finally {
       setCreateRevisionLoading(false);
     }
+  };
+
+  const handleEditRevisionSubmit = async () => {
+    if (!editRevision) return;
+    setEditLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/revisions/${editRevision.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          revisionNumber: editRevNumber.trim() || undefined,
+          summary: editSummary.trim() || undefined,
+          changeDescription: editChangeDesc.trim() || undefined,
+          effectiveFrom: editEffFrom || undefined,
+          effectiveTo: editEffTo || undefined,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to update revision');
+      }
+      setSuccess('Revision updated successfully.');
+      setEditRevisionOpen(false);
+      fetchRevisions();
+    } catch (err: any) {
+      setError(err.message || 'Could not update revision');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteRevision = async () => {
+    if (!deleteRevisionTarget) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/revisions/${deleteRevisionTarget.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to delete revision');
+      }
+      setSuccess('Revision deleted successfully.');
+      setDeleteConfirmOpen(false);
+      setDeleteRevisionTarget(null);
+      fetchRevisions();
+    } catch (err: any) {
+      setError(err.message || 'Could not delete revision');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleActivateRevision = async (rev: any) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/projects/revisions/${rev.id}/activate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to activate revision');
+      }
+      setSuccess(`Revision ${rev.revisionNumber} is now active.`);
+      fetchRevisions();
+    } catch (err: any) {
+      setError(err.message || 'Could not activate revision');
+    }
+  };
+
+  const fetchAuditLogs = async (revisionId: string) => {
+    setAuditLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/audit-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAuditLogs(prev => ({ ...prev, [revisionId]: data }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  const toggleExpandRevision = (revisionId: string) => {
+    if (expandedRevisionId === revisionId) {
+      setExpandedRevisionId(null);
+    } else {
+      setExpandedRevisionId(revisionId);
+      if (!auditLogs[revisionId]) {
+        fetchAuditLogs(revisionId);
+      }
+    }
+  };
+
+  const openEditDialog = (rev: any) => {
+    setEditRevision(rev);
+    setEditRevNumber(rev.revisionNumber || '');
+    setEditSummary(rev.summary || '');
+    setEditChangeDesc(rev.changeDescription || '');
+    setEditEffFrom(rev.effectiveFrom ? rev.effectiveFrom.split('T')[0] : '');
+    setEditEffTo(rev.effectiveTo ? rev.effectiveTo.split('T')[0] : '');
+    setEditRevisionOpen(true);
+  };
+
+  const getRevisionChipColor = (rev: any): 'success' | 'primary' | 'default' | 'warning' => {
+    if (rev.document?.currentRevisionId === rev.id) return 'success';
+    if (rev.lockedAt) return 'warning';
+    if (rev.status === 'draft') return 'primary';
+    return 'default';
+  };
+
+  const getSuggestedNextRevision = (): string => {
+    if (revisions.length === 0) return '2.0';
+    const maxRev = revisions.reduce((max: number, r: any) => {
+      const num = parseFloat(r.revisionNumber || '0');
+      return num > max ? num : max;
+    }, 0);
+    return (maxRev + 1.0).toFixed(1);
   };
 
   useEffect(() => {
@@ -713,17 +882,17 @@ export const ProjectSettings: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box>
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                      Project Revision History Log
+                      Document Revision Management
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      View all revisions, changes, and historical releases of this project workspace.
+                      Create, view, edit, and manage document revisions with full data snapshots and audit trail.
                     </Typography>
                   </Box>
                   <Button
                     variant="contained"
                     color="primary"
                     startIcon={<AddIcon />}
-                    onClick={() => setCreateRevisionOpen(true)}
+                    onClick={() => { setNewRevisionNumber(getSuggestedNextRevision()); setCreateRevisionOpen(true); }}
                     sx={{ textTransform: 'none', fontWeight: 600 }}
                   >
                     Create Revision
@@ -736,36 +905,176 @@ export const ProjectSettings: React.FC = () => {
                   </Box>
                 ) : revisions.length === 0 ? (
                   <Alert severity="info" sx={{ borderRadius: 3 }}>
-                    No project revisions found. Rev 1.0 is active.
+                    No document revisions found. Rev 1.0 is active.
                   </Alert>
                 ) : (
                   <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3 }}>
                     <Table size="small">
-                      <TableHead sx={{ bgcolor: 'action.hover' }}>
+                      <TableHead sx={{ bgcolor: '#f1f5f9' }}>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold', width: 100 }}>Revision</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', width: 180 }}>Created At</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 40 }}></TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 120 }}>Revision</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 90 }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 90 }}>Doc Type</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Change Description</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', width: 180 }}>Author</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 140 }}>Created By</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 160 }}>Created At</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 200, textAlign: 'center' }}>Data Counts</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 140, textAlign: 'center' }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {revisions.map((rev) => (
-                          <TableRow key={rev.id}>
-                            <TableCell sx={{ fontWeight: 'bold' }}>
-                              <Chip label={rev.revisionNumber} size="small" color="primary" variant="outlined" />
-                            </TableCell>
-                            <TableCell>
-                              {new Date(rev.createdAt).toLocaleString()}
-                            </TableCell>
-                            <TableCell sx={{ whiteSpace: 'pre-wrap' }}>
-                              {rev.changeDescription}
-                            </TableCell>
-                            <TableCell>
-                              {rev.createdBy?.name || rev.createdBy?.email || 'System'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {revisions.map((rev) => {
+                          const isActive = rev.document?.currentRevisionId === rev.id;
+                          const isLocked = !!rev.lockedAt;
+                          const canEdit = !isLocked && rev.status === 'draft';
+                          const canDelete = isAdmin && !isActive && !isLocked && revisions.filter((r: any) => r.documentId === rev.documentId).length > 1;
+                          const isExpanded = expandedRevisionId === rev.id;
+
+                          return (
+                            <React.Fragment key={rev.id}>
+                              <TableRow sx={{ bgcolor: isActive ? 'rgba(16, 185, 129, 0.04)' : 'transparent', '&:hover': { bgcolor: 'action.hover' } }}>
+                                <TableCell>
+                                  <IconButton size="small" onClick={() => toggleExpandRevision(rev.id)}>
+                                    {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                                  </IconButton>
+                                </TableCell>
+                                <TableCell>
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    {isActive && <StarIcon sx={{ fontSize: 14, color: '#f59e0b' }} />}
+                                    <Chip
+                                      label={`v${rev.revisionNumber}`}
+                                      size="small"
+                                      color={getRevisionChipColor(rev)}
+                                      variant={isActive ? 'filled' : 'outlined'}
+                                      sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
+                                    />
+                                  </Stack>
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={isActive ? 'Active' : isLocked ? 'Locked' : rev.status === 'superseded' ? 'Superseded' : 'Draft'}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      fontSize: '0.7rem', height: 22,
+                                      borderColor: isActive ? '#10b981' : isLocked ? '#f59e0b' : rev.status === 'superseded' ? '#94a3b8' : '#3b82f6',
+                                      color: isActive ? '#10b981' : isLocked ? '#f59e0b' : rev.status === 'superseded' ? '#94a3b8' : '#3b82f6',
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" sx={{ fontWeight: 500 }}>{rev.document?.type || '—'}</Typography>
+                                </TableCell>
+                                <TableCell sx={{ whiteSpace: 'pre-wrap', maxWidth: 300 }}>
+                                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{rev.changeDescription || '—'}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{rev.creator?.name || rev.creator?.email || 'System'}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{new Date(rev.createdAt).toLocaleString()}</Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Stack direction="row" spacing={1} justifyContent="center">
+                                    {rev._count?.processSteps != null && (
+                                      <Chip label={`PFD: ${rev._count.processSteps}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+                                    )}
+                                    {rev._count?.pfmeaRows != null && (
+                                      <Chip label={`FMEA: ${rev._count.pfmeaRows}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+                                    )}
+                                    {rev._count?.controlPlanRows != null && (
+                                      <Chip label={`CP: ${rev._count.controlPlanRows}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+                                    )}
+                                  </Stack>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Stack direction="row" spacing={0} justifyContent="center">
+                                    {!isActive && (
+                                      <Tooltip title="Activate this revision">
+                                        <IconButton size="small" color="success" onClick={() => handleActivateRevision(rev)}>
+                                          <ActivateIcon fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                    {canEdit && (
+                                      <Tooltip title="Edit revision">
+                                        <IconButton size="small" color="primary" onClick={() => openEditDialog(rev)}>
+                                          <EditIcon fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                    {canDelete && (
+                                      <Tooltip title="Delete revision (Admin)">
+                                        <IconButton size="small" color="error" onClick={() => { setDeleteRevisionTarget(rev); setDeleteConfirmOpen(true); }}>
+                                          <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                  </Stack>
+                                </TableCell>
+                              </TableRow>
+
+                              {/* Expanded Detail Row */}
+                              <TableRow>
+                                <TableCell colSpan={9} sx={{ p: 0, borderBottom: isExpanded ? '1px solid #e2e8f0' : 'none' }}>
+                                  <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                    <Box sx={{ p: 2.5, bgcolor: '#fafafa' }}>
+                                      <Grid container spacing={2}>
+                                        <Grid size={4}>
+                                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Summary</Typography>
+                                          <Typography variant="body2">{rev.summary || '—'}</Typography>
+                                        </Grid>
+                                        <Grid size={4}>
+                                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Effective From</Typography>
+                                          <Typography variant="body2">{rev.effectiveFrom ? new Date(rev.effectiveFrom).toLocaleDateString() : '—'}</Typography>
+                                        </Grid>
+                                        <Grid size={4}>
+                                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Effective To</Typography>
+                                          <Typography variant="body2">{rev.effectiveTo ? new Date(rev.effectiveTo).toLocaleDateString() : '—'}</Typography>
+                                        </Grid>
+                                      </Grid>
+
+                                      {/* Audit Log Timeline */}
+                                      <Box sx={{ mt: 2 }}>
+                                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                                          <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Audit Trail</Typography>
+                                        </Stack>
+                                        {auditLoading && expandedRevisionId === rev.id ? (
+                                          <CircularProgress size={20} />
+                                        ) : (auditLogs[rev.id] || []).length === 0 ? (
+                                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>No audit entries for this revision.</Typography>
+                                        ) : (
+                                          <Stack spacing={1}>
+                                            {(auditLogs[rev.id] || []).map((log: any, logIdx: number) => (
+                                              <Box key={logIdx} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, pl: 1, borderLeft: '2px solid #cbd5e1' }}>
+                                                <Box sx={{ minWidth: 120 }}>
+                                                  <Typography variant="caption" color="text.secondary">{new Date(log.timestamp).toLocaleString()}</Typography>
+                                                </Box>
+                                                <Chip
+                                                  label={log.action}
+                                                  size="small"
+                                                  color={log.action === 'create' ? 'success' : log.action === 'delete' ? 'error' : log.action === 'activate' ? 'info' : 'primary'}
+                                                  variant="outlined"
+                                                  sx={{ fontSize: '0.65rem', height: 20, textTransform: 'capitalize' }}
+                                                />
+                                                <Typography variant="body2" sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+                                                  {log.newValue?.revisionNumber ? `Rev ${log.newValue.revisionNumber}` : ''}
+                                                  {log.newValue?.changeDescription ? ` — ${log.newValue.changeDescription}` : ''}
+                                                </Typography>
+                                              </Box>
+                                            ))}
+                                          </Stack>
+                                        )}
+                                      </Box>
+                                    </Box>
+                                  </Collapse>
+                                </TableCell>
+                              </TableRow>
+                            </React.Fragment>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -792,32 +1101,74 @@ export const ProjectSettings: React.FC = () => {
       {/* Create Revision Dialog */}
       <Dialog
         open={createRevisionOpen}
-        onClose={() => setCreateRevisionOpen(false)}
+        onClose={(_, reason) => { if (reason !== 'backdropClick') setCreateRevisionOpen(false); }}
         maxWidth="sm"
         fullWidth
       >
         <Box component="form" onSubmit={handleCreateRevision}>
-          <DialogTitle sx={{ fontWeight: 'bold' }}>Create Project Revision</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            Create New Revision
+            <IconButton size="small" onClick={() => setCreateRevisionOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+          </DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Creating a revision increments the project's version number (e.g. 1.0 → 2.0) and snapshots the current state of PFD, FMEAs, and Control Plans.
+              Creates a new revision and copies all data (PFD steps, FMEA rows, Control Plan rows) from the current active revision as a starting point.
             </Typography>
-            <TextField
-              required
-              fullWidth
-              multiline
-              rows={4}
-              label="Change Description"
-              placeholder="e.g. Incorporated customer review feedback on operation 20 drilling spec."
-              value={changeDesc}
-              onChange={(e) => setChangeDesc(e.target.value)}
-              variant="outlined"
-            />
+            <Stack spacing={2.5}>
+              <TextField
+                fullWidth
+                label="Revision Number"
+                placeholder="e.g. 2.0, 1.1"
+                value={newRevisionNumber}
+                onChange={(e) => setNewRevisionNumber(e.target.value)}
+                variant="outlined"
+                size="small"
+                helperText="Format: X.Y (e.g. 2.0, 1.1). Leave empty to auto-increment."
+              />
+              <TextField
+                required
+                fullWidth
+                multiline
+                rows={3}
+                label="Change Description"
+                placeholder="e.g. Incorporated customer review feedback on operation 20 drilling spec."
+                value={changeDesc}
+                onChange={(e) => setChangeDesc(e.target.value)}
+                variant="outlined"
+              />
+              <TextField
+                fullWidth
+                label="Summary"
+                placeholder="Brief summary of this revision"
+                value={newSummary}
+                onChange={(e) => setNewSummary(e.target.value)}
+                variant="outlined"
+                size="small"
+              />
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Effective From"
+                  value={newEffectiveFrom}
+                  onChange={(e) => setNewEffectiveFrom(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  size="small"
+                />
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Effective To"
+                  value={newEffectiveTo}
+                  onChange={(e) => setNewEffectiveTo(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  size="small"
+                />
+              </Stack>
+            </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setCreateRevisionOpen(false)} variant="outlined">
-              Cancel
-            </Button>
+            <Button onClick={() => setCreateRevisionOpen(false)} variant="outlined">Cancel</Button>
             <Button
               type="submit"
               variant="contained"
@@ -828,6 +1179,120 @@ export const ProjectSettings: React.FC = () => {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      {/* Edit Revision Dialog */}
+      <Dialog
+        open={editRevisionOpen}
+        onClose={() => setEditRevisionOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Edit Revision {editRevision?.revisionNumber}
+          <IconButton size="small" onClick={() => setEditRevisionOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 1 }}>
+            <TextField
+              fullWidth
+              label="Revision Number"
+              value={editRevNumber}
+              onChange={(e) => setEditRevNumber(e.target.value)}
+              variant="outlined"
+              size="small"
+              helperText="Format: X.Y (e.g. 2.0, 1.1)"
+            />
+            <TextField
+              fullWidth
+              label="Change Description"
+              multiline
+              rows={3}
+              value={editChangeDesc}
+              onChange={(e) => setEditChangeDesc(e.target.value)}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Summary"
+              value={editSummary}
+              onChange={(e) => setEditSummary(e.target.value)}
+              variant="outlined"
+              size="small"
+            />
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Effective From"
+                value={editEffFrom}
+                onChange={(e) => setEditEffFrom(e.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                size="small"
+              />
+              <TextField
+                fullWidth
+                type="date"
+                label="Effective To"
+                value={editEffTo}
+                onChange={(e) => setEditEffTo(e.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                size="small"
+              />
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setEditRevisionOpen(false)} variant="outlined">Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleEditRevisionSubmit}
+            disabled={editLoading}
+          >
+            {editLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', color: '#dc2626' }}>Delete Revision</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            This action is permanent and cannot be undone.
+          </Alert>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            You are about to delete revision <strong>v{deleteRevisionTarget?.revisionNumber}</strong> and all its associated data:
+          </Typography>
+          <Stack spacing={0.5} sx={{ pl: 2, mb: 1 }}>
+            {deleteRevisionTarget?._count?.processSteps > 0 && (
+              <Typography variant="body2" color="text.secondary">• {deleteRevisionTarget._count.processSteps} PFD step(s)</Typography>
+            )}
+            {deleteRevisionTarget?._count?.pfmeaRows > 0 && (
+              <Typography variant="body2" color="text.secondary">• {deleteRevisionTarget._count.pfmeaRows} PFMEA row(s)</Typography>
+            )}
+            {deleteRevisionTarget?._count?.controlPlanRows > 0 && (
+              <Typography variant="body2" color="text.secondary">• {deleteRevisionTarget._count.controlPlanRows} Control Plan row(s)</Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setDeleteConfirmOpen(false)} variant="outlined">Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteRevision}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete Permanently'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

@@ -210,9 +210,12 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       });
     } else if (docType === 'PFMEA') {
       headers = [
-        '#', 'Process Step', 'Work Element (4M)', 'Functions', 'Requirements',
-        'Failure Effects (FE)', 'S', 'Failure Modes (FM)', 'Failure Causes (FC)',
-        'Prevention Controls', 'O', 'Detection Controls', 'D', 'AP', 'Notes'
+        '#', 'Structure / Item', 'Work Element (4M)', 'Function / Focus Element',
+        'Failure Mode', 'Potential Effects', 'SEV', 'Failure Causes',
+        'Current Control – Prevention', 'OCC', 'Current Control – Detection', 'DET',
+        'AP', 'FC', 'Prevention Action', 'Detection Action',
+        'Responsibility & Target Date', 'Action Taken & Completion Date',
+        'SEV (rev)', 'OCC (rev)', 'DET (rev)', 'AP (rev)', 'Status', 'Remarks'
       ];
       data.forEach((row, idx) => {
         const step = steps?.find(s => s.id === row.processStepId);
@@ -232,13 +235,10 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         if (funcSpans[idx] > 0) {
           tableRowsHtml += `<td rowspan="${funcSpans[idx]}">${formatExcelList(row.functions)}</td>`;
         }
-        if (reqSpans[idx] > 0) {
-          tableRowsHtml += `<td rowspan="${reqSpans[idx]}">${formatExcelList(row.requirements)}</td>`;
-        }
         
+        tableRowsHtml += `<td>${formatExcelList(row.failureModes)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.effects)}</td>`;
         tableRowsHtml += `<td class="rating-cell">${row.severity || ''}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.failureModes)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.causes)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'prevention'))}</td>`;
         tableRowsHtml += `<td class="rating-cell">${row.occurrence || ''}</td>`;
@@ -247,6 +247,17 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         
         const apVal = row.ap || '';
         tableRowsHtml += `<td ${getApStyleClass(apVal)}>${apVal}</td>`;
+        tableRowsHtml += `<td class="text-center">${row.filterCode || ''}</td>`;
+        tableRowsHtml += `<td>${row.preventionAction || ''}</td>`;
+        tableRowsHtml += `<td>${row.detectionAction || ''}</td>`;
+        tableRowsHtml += `<td>${row.responsibility || ''}</td>`;
+        tableRowsHtml += `<td>${row.actionTaken || ''}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.revisedSeverity || ''}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.revisedOccurrence || ''}</td>`;
+        tableRowsHtml += `<td class="rating-cell">${row.revisedDetection || ''}</td>`;
+        const revisedApVal = row.revisedAp || '';
+        tableRowsHtml += `<td ${getApStyleClass(revisedApVal)}>${revisedApVal}</td>`;
+        tableRowsHtml += `<td>${row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}</td>`;
         tableRowsHtml += `<td>${row.notes || ''}</td>`;
         tableRowsHtml += '</tr>';
       });
@@ -758,20 +769,29 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                     {docType === 'PFMEA' && (
                       <>
                         <TableCell sx={{ fontWeight: 'bold', width: 40 }}>#</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Process Step</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Structure / Item</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Work Element (4M)</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Functions</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Requirements</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Failure Effects</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>S</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Failure Modes</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Function / Focus Element</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Failure Mode</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Potential Effects</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>SEV</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Failure Causes</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Prevention Controls</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>O</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>OCC</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Detection Controls</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>D</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>DET</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', width: 40 }}>AP</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Notes</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>FC</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Prevention Action</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Detection Action</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Resp & Target Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Action Taken</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>SEV (rev)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>OCC (rev)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 30 }}>DET (rev)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: 40 }}>AP (rev)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Remarks</TableCell>
                       </>
                     )}
                     {docType === 'DFMEA' && (
@@ -840,10 +860,9 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                             <TableCell>{step ? `${step.stepNumber} - ${step.name}` : ''}</TableCell>
                             <TableCell>{step ? (Array.isArray(step.machinesEquipmentDocs) ? step.machinesEquipmentDocs.join(', ') : (step.machinesEquipmentDocs || '')) : ''}</TableCell>
                             <TableCell>{row.functions?.map((f: any) => f.name).join(', ') || ''}</TableCell>
-                            <TableCell>{row.requirements?.map((req: any) => req.name).join(', ') || ''}</TableCell>
+                            <TableCell>{row.failureModes?.map((fm: any) => fm.name).join(', ') || ''}</TableCell>
                             <TableCell>{row.effects?.map((e: any) => e.name).join(', ') || ''}</TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{row.severity || ''}</TableCell>
-                            <TableCell>{row.failureModes?.map((fm: any) => fm.name).join(', ') || ''}</TableCell>
                             <TableCell>{row.causes?.map((c: any) => c.name).join(', ') || ''}</TableCell>
                             <TableCell>{row.controls?.filter((c: any) => c.type === 'prevention').map((c: any) => c.name).join(', ') || ''}</TableCell>
                             <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{row.occurrence || ''}</TableCell>
@@ -855,6 +874,21 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                               bgcolor: row.ap === 'High' ? '#fee2e2' : row.ap === 'Medium' ? '#fef3c7' : row.ap === 'Low' ? '#dcfce7' : 'transparent',
                               color: row.ap === 'High' ? '#991b1b' : row.ap === 'Medium' ? '#92400e' : row.ap === 'Low' ? '#166534' : 'inherit'
                             }}>{row.ap || ''}</TableCell>
+                            <TableCell sx={{ textAlign: 'center' }}>{row.filterCode || ''}</TableCell>
+                            <TableCell>{row.preventionAction || ''}</TableCell>
+                            <TableCell>{row.detectionAction || ''}</TableCell>
+                            <TableCell>{row.responsibility || ''}</TableCell>
+                            <TableCell>{row.actionTaken || ''}</TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{row.revisedSeverity || ''}</TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{row.revisedOccurrence || ''}</TableCell>
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{row.revisedDetection || ''}</TableCell>
+                            <TableCell sx={{
+                              textAlign: 'center',
+                              fontWeight: 'bold',
+                              bgcolor: row.revisedAp === 'High' ? '#fee2e2' : row.revisedAp === 'Medium' ? '#fef3c7' : row.revisedAp === 'Low' ? '#dcfce7' : 'transparent',
+                              color: row.revisedAp === 'High' ? '#991b1b' : row.revisedAp === 'Medium' ? '#92400e' : row.revisedAp === 'Low' ? '#166534' : 'inherit'
+                            }}>{row.revisedAp || ''}</TableCell>
+                            <TableCell>{row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}</TableCell>
                             <TableCell>{row.notes || ''}</TableCell>
                           </>
                         )}

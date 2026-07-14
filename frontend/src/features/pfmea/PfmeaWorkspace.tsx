@@ -1420,13 +1420,10 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Structure / Item */}
                       <TableCell sx={{ position: 'sticky', left: 40, bgcolor: '#fff', zIndex: 1, borderRight: '2px solid #cbd5e1' }}>
-                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                          <AccountTreeIcon sx={{ fontSize: '0.8rem', color: '#854d0e' }} />
-                          <Typography sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
-                            {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : ''}
-                            {row.processStep?.name || 'Untitled Step'}
-                          </Typography>
-                        </Stack>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.75rem' }}>
+                          {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : ''}
+                          {row.processStep?.name || 'Untitled Step'}
+                        </Typography>
                       </TableCell>
 
                       {/* Work Element (4M) */}
@@ -1441,18 +1438,12 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Function / Focus Element */}
                       <TableCell>
-                        <Stack spacing={0.5}>
+                        <Stack spacing={0.3}>
                           {row.functions?.map((f, i) => (
-                            <Chip
-                              key={i}
-                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
-                              label={f.name}
-                              size="small"
-                              sx={{ bgcolor: '#fef9c3', color: '#854d0e', borderColor: '#fef08a', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
-                            />
+                            <Typography key={i} sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#854d0e' }}>{f.name}</Typography>
                           ))}
                           {row.requirements?.map((req, i) => (
-                            <Chip key={i} label={`R: ${req.name}`} size="small" color="secondary" variant="outlined" sx={{ height: 22, fontSize: '0.72rem' }} />
+                            <Typography key={i} sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>R: {req.name}</Typography>
                           ))}
                           {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
                         </Stack>
@@ -1460,15 +1451,9 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Failure Mode */}
                       <TableCell>
-                        <Stack spacing={0.5}>
+                        <Stack spacing={0.3}>
                           {row.failureModes?.map((fm, i) => (
-                            <Chip
-                              key={i}
-                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
-                              label={fm.name}
-                              size="small"
-                              sx={{ bgcolor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
-                            />
+                            <Typography key={i} sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#991b1b' }}>{fm.name}</Typography>
                           ))}
                           {(!row.failureModes || row.failureModes.length === 0) && '—'}
                         </Stack>
@@ -1486,26 +1471,14 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* SEV */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="severity"
-                          value={row.severity}
-                          onChange={(val) => handleRatingChange(row.id, 'severity', val || 0)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.severity || '—'}</Typography>
                       </TableCell>
 
                       {/* Failure Causes */}
                       <TableCell>
-                        <Stack spacing={0.5}>
+                        <Stack spacing={0.3}>
                           {row.causes?.map((c, i) => (
-                            <Chip
-                              key={i}
-                              icon={<AccountTreeIcon sx={{ fontSize: '0.8rem !important' }} />}
-                              label={c.name}
-                              size="small"
-                              sx={{ bgcolor: '#ffedd5', color: '#c2410c', borderColor: '#fed7aa', height: 22, fontSize: '0.72rem', fontWeight: 600 }}
-                            />
+                            <Typography key={i} sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#c2410c' }}>{c.name}</Typography>
                           ))}
                           {(!row.causes || row.causes.length === 0) && '—'}
                         </Stack>
@@ -1523,13 +1496,7 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* OCC */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="occurrence"
-                          value={row.occurrence}
-                          onChange={(val) => handleRatingChange(row.id, 'occurrence', val || 0)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.occurrence || '—'}</Typography>
                       </TableCell>
 
                       {/* Current Control – Detection */}
@@ -1544,13 +1511,7 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* DET */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="detection"
-                          value={row.detection}
-                          onChange={(val) => handleRatingChange(row.id, 'detection', val || 0)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.detection || '—'}</Typography>
                       </TableCell>
 
                       {/* AP */}
@@ -1558,126 +1519,42 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* FC */}
                       <TableCell align="center">
-                        <TextField
-                          size="small"
-                          variant="standard"
-                          value={row.filterCode || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'filterCode', e.target.value)}
-                          sx={{ 
-                            width: 45,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            input: { textAlign: 'center', fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem' }}>{row.filterCode || '—'}</Typography>
                       </TableCell>
 
                       {/* Prevention Action */}
                       <TableCell>
-                        <TextField
-                          multiline
-                          size="small"
-                          variant="standard"
-                          value={row.preventionAction || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'preventionAction', e.target.value)}
-                          placeholder="Action..."
-                          sx={{ 
-                            minWidth: 180,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', minWidth: 180 }}>{row.preventionAction || '—'}</Typography>
                       </TableCell>
 
                       {/* Detection Action */}
                       <TableCell>
-                        <TextField
-                          multiline
-                          size="small"
-                          variant="standard"
-                          value={row.detectionAction || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'detectionAction', e.target.value)}
-                          placeholder="Action..."
-                          sx={{ 
-                            minWidth: 180,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', minWidth: 180 }}>{row.detectionAction || '—'}</Typography>
                       </TableCell>
 
                       {/* Responsibility & Target Date */}
                       <TableCell>
-                        <TextField
-                          size="small"
-                          variant="standard"
-                          value={row.responsibility || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'responsibility', e.target.value)}
-                          placeholder="Resp & Date..."
-                          sx={{ 
-                            minWidth: 120,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            input: { fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', minWidth: 120 }}>{row.responsibility || '—'}</Typography>
                       </TableCell>
 
                       {/* Action Taken & Completion Date */}
                       <TableCell>
-                        <TextField
-                          size="small"
-                          variant="standard"
-                          value={row.actionTaken || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'actionTaken', e.target.value)}
-                          placeholder="Action taken..."
-                          sx={{ 
-                            minWidth: 120,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            input: { fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', minWidth: 120 }}>{row.actionTaken || '—'}</Typography>
                       </TableCell>
 
                       {/* SEV (revised) */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="severity"
-                          value={row.revisedSeverity}
-                          onChange={(val) => handleFieldChange(row.id, 'revisedSeverity', val)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.revisedSeverity || '—'}</Typography>
                       </TableCell>
 
                       {/* OCC (revised) */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="occurrence"
-                          value={row.revisedOccurrence}
-                          onChange={(val) => handleFieldChange(row.id, 'revisedOccurrence', val)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.revisedOccurrence || '—'}</Typography>
                       </TableCell>
 
                       {/* DET (revised) */}
                       <TableCell align="center">
-                        <RatingDropdown
-                          ratingType="detection"
-                          value={row.revisedDetection}
-                          onChange={(val) => handleFieldChange(row.id, 'revisedDetection', val)}
-                          hideLabel
-                          size="small"
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{row.revisedDetection || '—'}</Typography>
                       </TableCell>
 
                       {/* AP (revised) */}
@@ -1685,37 +1562,14 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Status */}
                       <TableCell>
-                        <Select
-                          value={row.status || 'draft'}
-                          size="small"
-                          variant="standard"
-                          onChange={(e) => handleFieldChange(row.id, 'status', e.target.value)}
-                          sx={{ fontSize: '0.75rem', minWidth: 90 }}
-                          disableUnderline
-                        >
-                          <MenuItem value="draft">Open</MenuItem>
-                          <MenuItem value="reviewed">In Progress</MenuItem>
-                          <MenuItem value="approved">Closed</MenuItem>
-                        </Select>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                          {row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}
+                        </Typography>
                       </TableCell>
 
                       {/* Remarks */}
                       <TableCell>
-                        <TextField
-                          multiline
-                          size="small"
-                          variant="standard"
-                          value={row.notes || ''}
-                          onChange={(e) => handleFieldChange(row.id, 'notes', e.target.value)}
-                          placeholder="Remarks..."
-                          sx={{ 
-                            minWidth: 150,
-                            '& .MuiInput-underline:before': { borderBottom: 'none' },
-                            '& .MuiInput-underline:after': { borderBottom: 'none' },
-                            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-                            '& .MuiInputBase-root': { fontSize: '0.75rem' }
-                          }}
-                        />
+                        <Typography sx={{ fontSize: '0.75rem', minWidth: 150 }}>{row.notes || '—'}</Typography>
                       </TableCell>
 
                       {/* Actions */}

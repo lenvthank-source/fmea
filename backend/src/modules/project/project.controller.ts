@@ -54,9 +54,26 @@ export class ProjectController {
   async createRevision(
     @Request() req: RequestWithUser,
     @Param('id') id: string,
-    @Body('changeDesc') changeDesc: string,
+    @Body() body: {
+      changeDesc: string;
+      revisionNumber?: string;
+      summary?: string;
+      effectiveFrom?: string;
+      effectiveTo?: string;
+    },
   ) {
-    return this.projectService.createRevision(req.user.tenantId, id, req.user.sub, changeDesc);
+    return this.projectService.createRevision(
+      req.user.tenantId,
+      id,
+      req.user.sub,
+      body.changeDesc,
+      {
+        revisionNumber: body.revisionNumber,
+        summary: body.summary,
+        effectiveFrom: body.effectiveFrom,
+        effectiveTo: body.effectiveTo,
+      },
+    );
   }
 
   @Get(':id/revisions')
@@ -66,5 +83,48 @@ export class ProjectController {
     @Param('id') id: string,
   ) {
     return this.projectService.getRevisions(req.user.tenantId, id);
+  }
+
+  @Get(':id/revisions/:revisionId')
+  @Permissions('project.view')
+  async getRevisionDetail(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.getRevisionDetail(req.user.tenantId, revisionId);
+  }
+
+  @Patch('revisions/:revisionId')
+  @Permissions('project.edit')
+  async updateRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+    @Body() dto: {
+      revisionNumber?: string;
+      summary?: string;
+      changeDescription?: string;
+      effectiveFrom?: string;
+      effectiveTo?: string;
+    },
+  ) {
+    return this.projectService.updateRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+  }
+
+  @Delete('revisions/:revisionId')
+  @Permissions('admin.config')
+  async deleteRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.deleteRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  @Post('revisions/:revisionId/activate')
+  @Permissions('project.edit')
+  async switchActiveRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.switchActiveRevision(req.user.tenantId, req.user.sub, revisionId);
   }
 }
