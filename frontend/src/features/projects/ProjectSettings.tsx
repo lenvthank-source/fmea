@@ -940,7 +940,7 @@ export const ProjectSettings: React.FC = () => {
                                   </IconButton>
                                 </TableCell>
                                 <TableCell>
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                                     {isActive && <StarIcon sx={{ fontSize: 14, color: '#f59e0b' }} />}
                                     <Chip
                                       label={`v${rev.revisionNumber}`}
@@ -976,7 +976,7 @@ export const ProjectSettings: React.FC = () => {
                                   <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{new Date(rev.createdAt).toLocaleString()}</Typography>
                                 </TableCell>
                                 <TableCell align="center">
-                                  <Stack direction="row" spacing={1} justifyContent="center">
+                                  <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
                                     {rev._count?.processSteps != null && (
                                       <Chip label={`PFD: ${rev._count.processSteps}`} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
                                     )}
@@ -989,7 +989,7 @@ export const ProjectSettings: React.FC = () => {
                                   </Stack>
                                 </TableCell>
                                 <TableCell align="center">
-                                  <Stack direction="row" spacing={0} justifyContent="center">
+                                  <Stack direction="row" spacing={0} sx={{ justifyContent: 'center' }}>
                                     {!isActive && (
                                       <Tooltip title="Activate this revision">
                                         <IconButton size="small" color="success" onClick={() => handleActivateRevision(rev)}>
@@ -1037,7 +1037,7 @@ export const ProjectSettings: React.FC = () => {
 
                                       {/* Audit Log Timeline */}
                                       <Box sx={{ mt: 2 }}>
-                                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
                                           <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                                           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>Audit Trail</Typography>
                                         </Stack>

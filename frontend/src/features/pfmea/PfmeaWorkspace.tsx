@@ -10,7 +10,6 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
-  AccountTree as AccountTreeIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -19,8 +18,8 @@ import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
 import { FailureLinkageModal } from './components/FailureLinkageModal';
 import { FailureDetailWindow } from './components/FailureDetailWindow';
-import { RatingDropdown } from './components/RatingDropdown';
-import { calculateAP } from './utils/apCalculator';
+
+
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
@@ -1103,85 +1102,9 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  const handleRatingChange = async (rowId: string, field: 'severity' | 'occurrence' | 'detection', value: number) => {
-    setError(null);
-    const targetRow = rows.find((r) => r.id === rowId);
-    if (!targetRow) return;
-
-    const S = field === 'severity' ? value : targetRow.severity;
-    const O = field === 'occurrence' ? value : targetRow.occurrence;
-    const D = field === 'detection' ? value : targetRow.detection;
-    const localAp = calculateAP(S, O, D);
-
-    setRows((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, [field]: value, ap: localAp } : r))
-    );
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ [field]: value }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to persist rating update.');
-      }
-
-      const updatedRow = await response.json();
-      setRows((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, severity: updatedRow.severity, occurrence: updatedRow.occurrence, detection: updatedRow.detection, ap: updatedRow.ap } : r))
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to update rating. Reverting...');
-      fetchData();
-    }
-  };
-
-  const handleFieldChange = async (rowId: string, field: string, value: any) => {
-    setError(null);
-    const targetRow = rows.find((r) => r.id === rowId);
-    if (!targetRow) return;
-
-    let updatedFields: any = { [field]: value };
-    if (field === 'revisedSeverity' || field === 'revisedOccurrence' || field === 'revisedDetection') {
-      const rS = field === 'revisedSeverity' ? value : targetRow.revisedSeverity;
-      const rO = field === 'revisedOccurrence' ? value : targetRow.revisedOccurrence;
-      const rD = field === 'revisedDetection' ? value : targetRow.revisedDetection;
-      const localRevisedAp = (rS && rO && rD) ? calculateAP(rS, rO, rD) : null;
-      updatedFields.revisedAp = localRevisedAp;
-    }
-
-    setRows((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, ...updatedFields } : r))
-    );
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedFields),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to persist update for ${field}.`);
-      }
-
-      const updatedRow = await response.json();
-      setRows((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, ...updatedRow } : r))
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to update field. Reverting...');
-      fetchData();
-    }
-  };
+  // Note: handleRatingChange and handleFieldChange were removed as Report View
+  // is now read-only (static text). These handlers may be re-enabled if inline
+  // editing is reintroduced in a future iteration.
 
 
 
