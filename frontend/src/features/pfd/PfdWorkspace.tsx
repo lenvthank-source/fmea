@@ -1341,15 +1341,7 @@ export const PfdWorkspace: React.FC = () => {
                 
                 const nodes = activeKeys.map((key, nodeIdx) => {
                   const meta = FLOW_ICON_COLUMNS[key] || FLOW_ICON_COLUMNS.oper;
-                  let color = '#0D9488'; // Teal
-                  if (key === 'insp') color = '#2563eb'; // Blue
-                  else if (key === 'trans') color = '#f97316'; // Orange
-                  else if (key === 'store') color = '#d97706'; // Amber
-                  else if (key === 'wip') color = '#9333ea'; // Purple
-                  else if (key === 'recArea') color = '#059669'; // Emerald
-                  else if (key === 'decs') color = '#475569'; // Slate
-                  else if (key === 'rework') color = '#e11d48'; // Rose
-                  else if (key === 'reject') color = '#dc2626'; // Red
+                  const color = '#334155'; // Grayscale Slate-700 theme
 
                   const symX = M > 1 ? startSymX + nodeIdx * stepSymX : stepX + stepWidth / 2;
                   const symY = stepY + 165;
@@ -2006,17 +1998,17 @@ export const PfdWorkspace: React.FC = () => {
   );
 };
 
-// Symbol color themes
+// Symbol color themes (Grayscale Slate theme)
 const SYMBOL_COLORS: Record<string, { bg: string; text: string; shadow: string }> = {
-  trans: { bg: '#10b981', text: '#ffffff', shadow: 'rgba(16, 185, 129, 0.25)' },
-  recArea: { bg: '#6366f1', text: '#ffffff', shadow: 'rgba(99, 102, 241, 0.25)' },
-  store: { bg: '#8b5cf6', text: '#ffffff', shadow: 'rgba(139, 92, 246, 0.25)' },
-  wip: { bg: '#3b82f6', text: '#ffffff', shadow: 'rgba(59, 130, 246, 0.25)' },
-  oper: { bg: '#01696F', text: '#ffffff', shadow: 'rgba(1, 105, 111, 0.25)' },
-  insp: { bg: '#ca8a04', text: '#ffffff', shadow: 'rgba(202, 138, 4, 0.25)' },
-  decs: { bg: '#06b6d4', text: '#ffffff', shadow: 'rgba(6, 182, 212, 0.25)' },
-  rework: { bg: '#f97316', text: '#ffffff', shadow: 'rgba(249, 115, 22, 0.25)' },
-  reject: { bg: '#dc2626', text: '#ffffff', shadow: 'rgba(220, 38, 38, 0.25)' },
+  trans: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  recArea: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  store: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  wip: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  oper: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  insp: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  decs: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  rework: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
+  reject: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
 };
 
 // Flow Icons column definitions

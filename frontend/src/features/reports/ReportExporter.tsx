@@ -197,18 +197,18 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
         const icons = row.flowIcons || {};
         const activeKeys = Object.keys(icons).filter(k => icons[k]);
-        const symbolHtml = activeKeys.length > 0 ? activeKeys.map(k => {
+        const symbolHtml = activeKeys.length > 0 ? `<div style="display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0 auto;vertical-align:middle;">` + activeKeys.map(k => {
           const meta = getPfdIconMeta(k);
           const iconUrl = `${window.location.origin}${meta.iconPath}`;
-          return `<span style="display:inline-block;padding:2px 6px;border-radius:10px;background-color:${meta.bg};color:#ffffff;font-weight:bold;font-size:10px;margin:1px;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0) invert(1);" />${meta.short}</span>`;
-        }).join(' ') : '—';
+          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:${meta.bg};color:#ffffff;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0) invert(1);" />${meta.short}</span>`;
+        }).join('') + `</div>` : '—';
         
         tableRowsHtml += `<tr ${rowClass}>`;
-        tableRowsHtml += `<td class="text-center text-bold">${row.stepNumber || ''}</td>`;
-        tableRowsHtml += `<td>${row.name || ''}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.incomingVariation)}</td>`;
-        tableRowsHtml += `<td class="text-center">${row.specialCharacteristics || ''}</td>`;
-        tableRowsHtml += `<td class="text-center">${symbolHtml}</td>`;
+        tableRowsHtml += `<td class="text-center text-bold" style="vertical-align:middle;text-align:center;">${row.stepNumber || ''}</td>`;
+        tableRowsHtml += `<td style="vertical-align:middle;">${row.name || ''}</td>`;
+        tableRowsHtml += `<td style="vertical-align:middle;">${formatExcelList(row.incomingVariation)}</td>`;
+        tableRowsHtml += `<td class="text-center" style="vertical-align:middle;text-align:center;">${row.specialCharacteristics || ''}</td>`;
+        tableRowsHtml += `<td class="text-center" style="vertical-align:middle;text-align:center;align:center;valign:middle;">${symbolHtml}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.machinesEquipmentDocs)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.desiredOutcome)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.processCharacteristics)}</td>`;
@@ -852,35 +852,37 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                             <TableCell>{row.name || ''}</TableCell>
                             <TableCell>{Array.isArray(row.incomingVariation) ? row.incomingVariation.join(', ') : (row.incomingVariation || '')}</TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>{row.specialCharacteristics || ''}</TableCell>
-                            <TableCell sx={{ textAlign: 'center' }}>
-                               <Stack direction="row" spacing={0.75} sx={{ justifyContent: 'center', alignItems: 'center' }}>
-                                 {Object.keys(row.flowIcons || {}).filter(k => row.flowIcons[k]).map(key => {
-                                   const meta = getPfdIconMeta(key);
-                                   return (
-                                     <Tooltip key={key} title={meta.label} arrow>
-                                       <Box
-                                         sx={{
-                                           display: 'inline-flex',
-                                           alignItems: 'center',
-                                           justifyContent: 'center',
-                                           width: 24,
-                                           height: 24,
-                                           borderRadius: '50%',
-                                           bgcolor: meta.bg,
-                                           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                         }}
-                                       >
+                            <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle', p: 1 }}>
+                               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', minHeight: 32 }}>
+                                 <Stack direction="row" spacing={0.75} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+                                   {Object.keys(row.flowIcons || {}).filter(k => row.flowIcons[k]).map(key => {
+                                     const meta = getPfdIconMeta(key);
+                                     return (
+                                       <Tooltip key={key} title={meta.label} arrow>
                                          <Box
-                                           component="img"
-                                           src={meta.iconPath}
-                                           alt={meta.label}
-                                           sx={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
-                                         />
-                                       </Box>
-                                     </Tooltip>
-                                   );
-                                 })}
-                               </Stack>
+                                           sx={{
+                                             display: 'inline-flex',
+                                             alignItems: 'center',
+                                             justifyContent: 'center',
+                                             width: 24,
+                                             height: 24,
+                                             borderRadius: '50%',
+                                             bgcolor: meta.bg,
+                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                           }}
+                                         >
+                                           <Box
+                                             component="img"
+                                             src={meta.iconPath}
+                                             alt={meta.label}
+                                             sx={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
+                                           />
+                                         </Box>
+                                       </Tooltip>
+                                     );
+                                   })}
+                                 </Stack>
+                               </Box>
                              </TableCell>
                             <TableCell>{Array.isArray(row.machinesEquipmentDocs) ? row.machinesEquipmentDocs.join(', ') : (row.machinesEquipmentDocs || '')}</TableCell>
                             <TableCell>{Array.isArray(row.desiredOutcome) ? row.desiredOutcome.join(', ') : (row.desiredOutcome || '')}</TableCell>
