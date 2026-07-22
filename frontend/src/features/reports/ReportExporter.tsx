@@ -201,7 +201,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         const symbolHtml = activeKeys.length > 0 ? `<div style="display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0 auto;vertical-align:middle;">` + activeKeys.map(k => {
           const meta = getPfdIconMeta(k);
           const iconUrl = `${window.location.origin}${meta.iconPath}`;
-          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:#ffffff;border:1px solid #0f172a;color:#0f172a;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0.1);" />${meta.short}</span>`;
+          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:#ffffff;border:1px solid #0f172a;color:#0f172a;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;" />${meta.short}</span>`;
         }).join('') + `</div>` : '—';
         
         tableRowsHtml += `<tr ${rowClass}>`;
@@ -895,7 +895,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                                              component="img"
                                              src={meta.iconPath}
                                              alt={meta.label}
-                                             sx={{ width: 14, height: 14, filter: 'brightness(0.1)' }}
+                                             sx={{ width: 14, height: 14 }}
                                            />
                                          </Box>
                                        </Tooltip>

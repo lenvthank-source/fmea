@@ -1068,7 +1068,7 @@ export const PfdWorkspace: React.FC = () => {
                                         sx={{
                                           width: 20,
                                           height: 20,
-                                          filter: isActive ? 'brightness(0.1)' : 'opacity(0.35) grayscale(100%)',
+                                          filter: isActive ? 'none' : 'opacity(0.35)',
                                           pointerEvents: 'none'
                                         }}
                                       />
@@ -1120,7 +1120,6 @@ export const PfdWorkspace: React.FC = () => {
                                           sx={{
                                             width: 20,
                                             height: 20,
-                                            filter: 'brightness(0.1)',
                                             userSelect: 'none'
                                           }}
                                         />
@@ -1603,7 +1602,6 @@ export const PfdWorkspace: React.FC = () => {
                                   y={node.y - 11}
                                   width="22"
                                   height="22"
-                                  style={{ filter: 'brightness(0.1)' }}
                                 />
                               <rect
                                 x={node.x - 18}
