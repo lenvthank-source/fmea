@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { getPfdIconMeta } from '../pfd/utils/pfdIconMap';
+import * as XLSX from 'xlsx';
 
 interface ReportExporterProps {
   open: boolean;
@@ -434,14 +435,32 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       </html>
     `;
 
-    const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xls`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Parse HTML template and convert to genuine OpenXML .xlsx binary workbook
+    const tempDiv = document.createElement('div');
+    tempDiv.style.display = 'none';
+    tempDiv.innerHTML = excelTemplate;
+    document.body.appendChild(tempDiv);
+
+    try {
+      const wb = XLSX.utils.table_to_book(tempDiv, { sheet: `${docType} Report` });
+      document.body.removeChild(tempDiv);
+
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (document.body.contains(tempDiv)) {
+        document.body.removeChild(tempDiv);
+      }
+      console.error('Failed to export native .xlsx workbook:', err);
+    }
   };
 
   const handlePrint = () => {
