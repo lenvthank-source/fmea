@@ -1040,7 +1040,7 @@ export const PfdWorkspace: React.FC = () => {
                                 const iconMeta = FLOW_ICON_COLUMNS[key];
                                 const iconData = getPfdIconMeta(key);
                                 return (
-                                  <Tooltip key={key} title={iconMeta.name} arrow>
+                                  <Tooltip key={key} title={iconMeta.name}>
                                     <Box
                                       onClick={(e) => { e.stopPropagation(); setTempIcons(prev => ({ ...prev, [key]: !isActive })); }}
                                       sx={{
@@ -1051,13 +1051,13 @@ export const PfdWorkspace: React.FC = () => {
                                         height: 32,
                                         borderRadius: '50%',
                                         cursor: 'pointer',
-                                        bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
-                                        border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
+                                        bgcolor: '#ffffff',
+                                        border: isActive ? '2.5px solid #0f172a' : '1.5px solid rgba(203, 213, 225, 0.8)',
                                         transition: 'all 0.12s ease-in-out',
-                                        boxShadow: isActive ? `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
+                                        boxShadow: isActive ? '0 3px 8px rgba(15, 23, 42, 0.16)' : 'none',
                                         '&:hover': {
                                           transform: 'scale(1.15)',
-                                          bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
+                                          border: '2.5px solid #0f172a',
                                         }
                                       }}
                                     >
@@ -1068,7 +1068,7 @@ export const PfdWorkspace: React.FC = () => {
                                         sx={{
                                           width: 20,
                                           height: 20,
-                                          filter: isActive ? 'brightness(0) invert(1)' : 'none',
+                                          filter: isActive ? 'brightness(0.1)' : 'opacity(0.35) grayscale(100%)',
                                           pointerEvents: 'none'
                                         }}
                                       />
@@ -1108,9 +1108,9 @@ export const PfdWorkspace: React.FC = () => {
                                           width: 32,
                                           height: 32,
                                           borderRadius: '50%',
-                                          bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
-                                          color: SYMBOL_COLORS[key]?.text || '#ffffff',
-                                          boxShadow: `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}`
+                                          bgcolor: '#ffffff',
+                                          border: '2px solid #0f172a',
+                                          boxShadow: '0 2px 5px rgba(15, 23, 42, 0.08)'
                                         }}
                                       >
                                         <Box
@@ -1120,7 +1120,7 @@ export const PfdWorkspace: React.FC = () => {
                                           sx={{
                                             width: 20,
                                             height: 20,
-                                            filter: 'brightness(0) invert(1)',
+                                            filter: 'brightness(0.1)',
                                             userSelect: 'none'
                                           }}
                                         />
@@ -1589,11 +1589,11 @@ export const PfdWorkspace: React.FC = () => {
                                   cx={node.x}
                                   cy={node.y}
                                   r="18"
-                                  fill={node.color}
-                                  stroke="#ffffff"
-                                  strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2}
+                                  fill="#ffffff"
+                                  stroke="#0f172a"
+                                  strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2.5}
                                   style={{ 
-                                    filter: 'drop-shadow(0px 3px 6px rgba(0,0,0,0.12))',
+                                    filter: 'drop-shadow(0px 3px 6px rgba(15, 23, 42, 0.12))',
                                     transition: 'all 0.2s ease-in-out'
                                   }}
                                 />
@@ -1603,7 +1603,7 @@ export const PfdWorkspace: React.FC = () => {
                                   y={node.y - 11}
                                   width="22"
                                   height="22"
-                                  style={{ filter: 'brightness(0) invert(1)' }}
+                                  style={{ filter: 'brightness(0.1)' }}
                                 />
                               <rect
                                 x={node.x - 18}
@@ -1611,7 +1611,7 @@ export const PfdWorkspace: React.FC = () => {
                                 width="36"
                                 height="11"
                                 rx="2"
-                                fill={node.color}
+                                fill="#0f172a"
                               />
                               <text
                                 x={node.x}
@@ -1996,19 +1996,6 @@ export const PfdWorkspace: React.FC = () => {
       />
     </Box>
   );
-};
-
-// Symbol color themes (Grayscale Slate theme)
-const SYMBOL_COLORS: Record<string, { bg: string; text: string; shadow: string }> = {
-  trans: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  recArea: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  store: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  wip: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  oper: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  insp: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  decs: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  rework: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
-  reject: { bg: '#334155', text: '#ffffff', shadow: 'rgba(51, 65, 85, 0.25)' },
 };
 
 // Flow Icons column definitions

@@ -201,7 +201,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         const symbolHtml = activeKeys.length > 0 ? `<div style="display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0 auto;vertical-align:middle;">` + activeKeys.map(k => {
           const meta = getPfdIconMeta(k);
           const iconUrl = `${window.location.origin}${meta.iconPath}`;
-          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:${meta.bg};color:#ffffff;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0) invert(1);" />${meta.short}</span>`;
+          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:#ffffff;border:1px solid #0f172a;color:#0f172a;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0.1);" />${meta.short}</span>`;
         }).join('') + `</div>` : '—';
         
         tableRowsHtml += `<tr ${rowClass}>`;
@@ -886,15 +886,16 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                                              width: 24,
                                              height: 24,
                                              borderRadius: '50%',
-                                             bgcolor: meta.bg,
-                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                             bgcolor: '#ffffff',
+                                             border: '1.5px solid #0f172a',
+                                             boxShadow: '0 2px 4px rgba(15, 23, 42, 0.08)'
                                            }}
                                          >
                                            <Box
                                              component="img"
                                              src={meta.iconPath}
                                              alt={meta.label}
-                                             sx={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
+                                             sx={{ width: 14, height: 14, filter: 'brightness(0.1)' }}
                                            />
                                          </Box>
                                        </Tooltip>
