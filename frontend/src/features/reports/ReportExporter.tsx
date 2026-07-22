@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   RadioGroup, FormControlLabel, Radio, TextField, Stack, Typography,
   FormControl, FormLabel, MenuItem, Select, InputLabel, Box, Card,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Grid, IconButton
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Grid, IconButton, Tooltip
 } from '@mui/material';
 import {
   Download as DownloadIcon, Print as PrintIcon, Close as CloseIcon,
@@ -12,6 +12,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { getPfdIconMeta } from '../pfd/utils/pfdIconMap';
 
 interface ReportExporterProps {
   open: boolean;
@@ -195,14 +196,19 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       data.forEach((row, idx) => {
         const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
         const icons = row.flowIcons || {};
-        const symbolStr = Object.keys(icons).filter(k => icons[k]).map(k => k.substring(0, 3).toUpperCase()).join(', ');
+        const activeKeys = Object.keys(icons).filter(k => icons[k]);
+        const symbolHtml = activeKeys.length > 0 ? activeKeys.map(k => {
+          const meta = getPfdIconMeta(k);
+          const iconUrl = `${window.location.origin}${meta.iconPath}`;
+          return `<span style="display:inline-block;padding:2px 6px;border-radius:10px;background-color:${meta.bg};color:#ffffff;font-weight:bold;font-size:10px;margin:1px;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;filter:brightness(0) invert(1);" />${meta.short}</span>`;
+        }).join(' ') : '—';
         
         tableRowsHtml += `<tr ${rowClass}>`;
         tableRowsHtml += `<td class="text-center text-bold">${row.stepNumber || ''}</td>`;
         tableRowsHtml += `<td>${row.name || ''}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.incomingVariation)}</td>`;
         tableRowsHtml += `<td class="text-center">${row.specialCharacteristics || ''}</td>`;
-        tableRowsHtml += `<td class="text-center">${symbolStr}</td>`;
+        tableRowsHtml += `<td class="text-center">${symbolHtml}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.machinesEquipmentDocs)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.desiredOutcome)}</td>`;
         tableRowsHtml += `<td>${formatExcelList(row.processCharacteristics)}</td>`;
@@ -847,8 +853,35 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                             <TableCell>{Array.isArray(row.incomingVariation) ? row.incomingVariation.join(', ') : (row.incomingVariation || '')}</TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>{row.specialCharacteristics || ''}</TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>
-                              {Object.keys(row.flowIcons || {}).filter(k => row.flowIcons[k]).map(k => k.substring(0, 3).toUpperCase()).join(', ')}
-                            </TableCell>
+                               <Stack direction="row" spacing={0.75} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+                                 {Object.keys(row.flowIcons || {}).filter(k => row.flowIcons[k]).map(key => {
+                                   const meta = getPfdIconMeta(key);
+                                   return (
+                                     <Tooltip key={key} title={meta.label} arrow>
+                                       <Box
+                                         sx={{
+                                           display: 'inline-flex',
+                                           alignItems: 'center',
+                                           justifyContent: 'center',
+                                           width: 24,
+                                           height: 24,
+                                           borderRadius: '50%',
+                                           bgcolor: meta.bg,
+                                           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                         }}
+                                       >
+                                         <Box
+                                           component="img"
+                                           src={meta.iconPath}
+                                           alt={meta.label}
+                                           sx={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
+                                         />
+                                       </Box>
+                                     </Tooltip>
+                                   );
+                                 })}
+                               </Stack>
+                             </TableCell>
                             <TableCell>{Array.isArray(row.machinesEquipmentDocs) ? row.machinesEquipmentDocs.join(', ') : (row.machinesEquipmentDocs || '')}</TableCell>
                             <TableCell>{Array.isArray(row.desiredOutcome) ? row.desiredOutcome.join(', ') : (row.desiredOutcome || '')}</TableCell>
                             <TableCell>{Array.isArray(row.processCharacteristics) ? row.processCharacteristics.join(', ') : (row.processCharacteristics || '')}</TableCell>

@@ -131,7 +131,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
         // Map Permissions to QE Role
         const qePermCodes = [
-          'project.view', 'project.edit',
+          'project.create', 'project.view', 'project.edit',
           'pfmea.create', 'pfmea.edit', 'pfmea.view', 'pfmea.delete',
           'dfmea.create', 'dfmea.edit', 'dfmea.view', 'dfmea.delete',
           'cp.create', 'cp.edit', 'cp.view', 'cp.delete',

@@ -564,6 +564,21 @@ export class AuthService {
             })),
           });
         }
+      } else {
+        // Ensure project.create permission is present for guest QE role
+        const projectCreatePerm = await tx.permission.findUnique({
+          where: { code: 'project.create' },
+        });
+        if (projectCreatePerm) {
+          const existingRP = await tx.rolePermission.findFirst({
+            where: { roleId: qeRole.id, permissionId: projectCreatePerm.id },
+          });
+          if (!existingRP) {
+            await tx.rolePermission.create({
+              data: { roleId: qeRole.id, permissionId: projectCreatePerm.id },
+            });
+          }
+        }
       }
 
       await tx.userRole.create({

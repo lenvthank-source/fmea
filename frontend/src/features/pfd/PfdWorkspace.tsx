@@ -25,6 +25,7 @@ import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
+import { getPfdIconMeta } from './utils/pfdIconMap';
 
 interface ProcessStep {
   id: string;
@@ -1037,6 +1038,7 @@ export const PfdWorkspace: React.FC = () => {
                               {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
                                 const isActive = !!tempIcons[key];
                                 const iconMeta = FLOW_ICON_COLUMNS[key];
+                                const iconData = getPfdIconMeta(key);
                                 return (
                                   <Tooltip key={key} title={iconMeta.name} arrow>
                                     <Box
@@ -1045,24 +1047,31 @@ export const PfdWorkspace: React.FC = () => {
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        width: 28,
-                                        height: 28,
+                                        width: 32,
+                                        height: 32,
                                         borderRadius: '50%',
                                         cursor: 'pointer',
                                         bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'transparent',
-                                        color: isActive ? (SYMBOL_COLORS[key]?.text || '#ffffff') : '#7A7974',
-                                        fontWeight: 'bold',
                                         border: isActive ? '2px solid transparent' : '2px solid rgba(40, 37, 29, 0.15)',
                                         transition: 'all 0.12s ease-in-out',
+                                        boxShadow: isActive ? `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}` : 'none',
                                         '&:hover': {
                                           transform: 'scale(1.15)',
                                           bgcolor: isActive ? (SYMBOL_COLORS[key]?.bg || '#01696F') : 'rgba(40, 37, 29, 0.05)',
                                         }
                                       }}
                                     >
-                                      <Typography variant="body2" sx={{ fontWeight: 'bold', userSelect: 'none', fontSize: '0.95rem' }}>
-                                        {iconMeta.sym}
-                                      </Typography>
+                                      <Box
+                                        component="img"
+                                        src={iconData.iconPath}
+                                        alt={iconMeta.name}
+                                        sx={{
+                                          width: 20,
+                                          height: 20,
+                                          filter: isActive ? 'brightness(0) invert(1)' : 'none',
+                                          pointerEvents: 'none'
+                                        }}
+                                      />
                                     </Box>
                                   </Tooltip>
                                 );
@@ -1082,11 +1091,12 @@ export const PfdWorkspace: React.FC = () => {
                               </Tooltip>
                             </Box>
                           ) : (
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center' }}>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }}>
                               {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
                                 const isActive = !!icons[key];
                                 if (!isActive) return null;
                                 const iconMeta = FLOW_ICON_COLUMNS[key];
+                                const iconData = getPfdIconMeta(key);
                                 return (
                                   <Tooltip key={key} title={iconMeta.name} arrow>
                                     <Stack spacing={0.25} sx={{ alignItems: 'center' }}>
@@ -1095,18 +1105,25 @@ export const PfdWorkspace: React.FC = () => {
                                           display: 'inline-flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
-                                          width: 30,
-                                          height: 30,
+                                          width: 32,
+                                          height: 32,
                                           borderRadius: '50%',
                                           bgcolor: SYMBOL_COLORS[key]?.bg || '#01696F',
                                           color: SYMBOL_COLORS[key]?.text || '#ffffff',
-                                          fontWeight: 'bold',
                                           boxShadow: `0 3px 6px ${SYMBOL_COLORS[key]?.shadow || 'rgba(0,0,0,0.1)'}`
                                         }}
                                       >
-                                        <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.9rem', userSelect: 'none' }}>
-                                          {iconMeta.sym}
-                                        </Typography>
+                                        <Box
+                                          component="img"
+                                          src={iconData.iconPath}
+                                          alt={iconMeta.name}
+                                          sx={{
+                                            width: 20,
+                                            height: 20,
+                                            filter: 'brightness(0) invert(1)',
+                                            userSelect: 'none'
+                                          }}
+                                        />
                                       </Box>
                                       <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
                                         {iconMeta.short}
@@ -1572,30 +1589,30 @@ export const PfdWorkspace: React.FC = () => {
                           </g>
 
                           {/* Symbol nodes chain */}
-                          {s.nodes.map((node) => (
-                            <g key={node.id}>
-                              <circle
-                                cx={node.x}
-                                cy={node.y}
-                                r="18"
-                                fill="#ffffff"
-                                stroke={node.color}
-                                strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2}
-                                style={{ 
-                                  filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))',
-                                  transition: 'all 0.2s ease-in-out'
-                                }}
-                              />
-                              <text
-                                x={node.x}
-                                y={node.y + 5}
-                                textAnchor="middle"
-                                fontSize="15"
-                                fontWeight="bold"
-                                fill={node.color}
-                              >
-                                {node.sym}
-                              </text>
+                          {s.nodes.map((node) => {
+                            const iconData = getPfdIconMeta(node.symbolKey);
+                            return (
+                              <g key={node.id}>
+                                <circle
+                                  cx={node.x}
+                                  cy={node.y}
+                                  r="18"
+                                  fill={node.color}
+                                  stroke="#ffffff"
+                                  strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2}
+                                  style={{ 
+                                    filter: 'drop-shadow(0px 3px 6px rgba(0,0,0,0.12))',
+                                    transition: 'all 0.2s ease-in-out'
+                                  }}
+                                />
+                                <image
+                                  href={iconData.iconPath}
+                                  x={node.x - 11}
+                                  y={node.y - 11}
+                                  width="22"
+                                  height="22"
+                                  style={{ filter: 'brightness(0) invert(1)' }}
+                                />
                               <rect
                                 x={node.x - 18}
                                 y={node.y + 22}
@@ -1615,7 +1632,8 @@ export const PfdWorkspace: React.FC = () => {
                                 {node.short}
                               </text>
                             </g>
-                          ))}
+                          );
+                        })}
                         </g>
                       );
                     })}
