@@ -131,8 +131,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
       <Collapse in={expanded}>
         <CardContent sx={{ px: 3, py: 2.5 }}>
           <Grid container spacing={3} sx={{ fontSize: '0.85rem' }}>
-                       <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Company Name</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Organisation Name</Typography>
               <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.organisationName || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -144,26 +144,26 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
               <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.customer || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Model Year / Platform</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.modelYear || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Assy. Line No.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.assemblyLineNumber || '—'}</Typography>
             </Grid>
 
-            {/* Col 2 */}
+            {/* Row 2 */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Subject (Part Name)</Typography>
               <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.partName || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>FMEA ID / Document Number</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Document Number</Typography>
               <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{getDerivedDocNumber()}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Start Date</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{formatDate(project.originationDate)}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Dwg No.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.dwgNumber || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Revision Date</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{formatDate(project.drawingRevDate || project.updatedAt)}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Dwg Rev No / Date.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.dwgRevNoAndDate || (project.drawingRevDate ? formatDate(project.drawingRevDate) : '—')}</Typography>
             </Grid>
 
             {/* Col 3 */}

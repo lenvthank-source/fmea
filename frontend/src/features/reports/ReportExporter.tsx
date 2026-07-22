@@ -56,6 +56,32 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
     }
   }, [open, projectId, token]);
 
+  const renderPdfList = (val: any) => {
+    if (!val) return '—';
+    let arr: any[] = [];
+    if (Array.isArray(val)) {
+      arr = val;
+    } else if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        arr = Array.isArray(parsed) ? parsed : [val];
+      } catch {
+        arr = val.includes('\n') ? val.split('\n') : [val];
+      }
+    } else {
+      arr = [String(val)];
+    }
+    if (arr.length === 0) return '—';
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+        {arr.map((item, idx) => {
+          const text = typeof item === 'object' ? item.name || '' : String(item);
+          return <Typography key={idx} variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.35 }}>{text}</Typography>;
+        })}
+      </Box>
+    );
+  };
+
   const getWatermarkText = (): string => {
     if (watermarkOption === 'none') return '';
     if (watermarkOption === 'draft') return 'DRAFT';
@@ -190,31 +216,135 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
     }
 
     if (docType === 'PFD') {
-      headers = [
-        'Step #', 'Process Description', 'Incoming Variation', 'Spec Class',
-        'Flow Symbols', 'Machines / Equipment / Docs', 'Desired Outcome', 'Process Characteristics'
-      ];
-      data.forEach((row, idx) => {
-        const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
+      const aoa: any[][] = [];
+
+      // 1. Top 3 Title Rows (clean white, bold/centered text)
+      aoa.push(['PADMINI VNA MECHATRONICS PRIVATE LIMITED']);
+      aoa.push(['Process Flow Diagram (PFD)']);
+      aoa.push(['(Prototype)']);
+      aoa.push([]); // blank spacer
+
+      // 2. 6-Row Header Grid (Clean White Cells, No Color Fill)
+      aoa.push(['Organisation Name:', project?.organisationName || '—', '', '', 'Customer Name:', project?.customer || '—', '', '']);
+      aoa.push(['Manufacturing Plant:', project?.organisationPlant || '—', '', '', 'Document Number:', getDerivedDocNumber(), '', '']);
+      aoa.push(['Subject (Part Name):', project?.partName || '—', '', '', 'Part Number:', project?.orgPartNumber || '—', '', '']);
+      aoa.push(['Revision:', `Rev ${project?.revisionNumber || '1.0'} (${getStatusLabel()})`, '', '', 'Origination Date:', project?.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—', '', '']);
+      aoa.push(['Dwg No.:', project?.dwgNumber || '—', '', '', 'Dwg Rev No / Date.:', project?.dwgRevNoAndDate || (project?.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—'), '', '']);
+      aoa.push(['Assy. Line No.:', project?.assemblyLineNumber || '—', '', '', 'CFT Members:', Array.isArray(project?.cftMembers) ? project.cftMembers.join(', ') : (project?.cftMembers || '—'), '', '']);
+      aoa.push([]); // blank spacer
+
+      // 3. Main Table Header Row
+      aoa.push([
+        'Step #',
+        'Process Description',
+        'Incoming Source of Variation',
+        'Spec Class',
+        'Flow Symbols',
+        'Machines / Equipment / Docs',
+        'Desired Outcome',
+        'Process Characteristics'
+      ]);
+
+      const formatListForAoa = (val: any): string => {
+        if (!val) return '—';
+        let arr: any[] = [];
+        if (Array.isArray(val)) {
+          arr = val;
+        } else if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val);
+            arr = Array.isArray(parsed) ? parsed : [val];
+          } catch {
+            arr = val.includes('\n') ? val.split('\n') : [val];
+          }
+        } else {
+          arr = [String(val)];
+        }
+        if (arr.length === 0) return '—';
+        return arr.map(item => (typeof item === 'object' ? item.name || '' : String(item))).join('\n');
+      };
+
+      data.forEach((row) => {
         const icons = row.flowIcons || {};
         const activeKeys = Object.keys(icons).filter(k => icons[k]);
-        const symbolHtml = activeKeys.length > 0 ? `<div style="display:inline-flex;align-items:center;justify-content:center;text-align:center;margin:0 auto;vertical-align:middle;">` + activeKeys.map(k => {
-          const meta = getPfdIconMeta(k);
-          const iconUrl = `${window.location.origin}${meta.iconPath}`;
-          return `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:10px;background-color:#ffffff;border:1px solid #0f172a;color:#0f172a;font-weight:bold;font-size:10px;margin:0 2px;vertical-align:middle;"><img src="${iconUrl}" width="12" height="12" style="vertical-align:middle;margin-right:2px;" />${meta.short}</span>`;
-        }).join('') + `</div>` : '—';
-        
-        tableRowsHtml += `<tr ${rowClass}>`;
-        tableRowsHtml += `<td class="text-center text-bold" style="vertical-align:middle;text-align:center;">${row.stepNumber || ''}</td>`;
-        tableRowsHtml += `<td style="vertical-align:middle;">${row.name || ''}</td>`;
-        tableRowsHtml += `<td style="vertical-align:middle;">${formatExcelList(row.incomingVariation)}</td>`;
-        tableRowsHtml += `<td class="text-center" style="vertical-align:middle;text-align:center;">${row.specialCharacteristics || ''}</td>`;
-        tableRowsHtml += `<td class="text-center" style="vertical-align:middle;text-align:center;align:center;valign:middle;">${symbolHtml}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.machinesEquipmentDocs)}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.desiredOutcome)}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.processCharacteristics)}</td>`;
-        tableRowsHtml += '</tr>';
+        const symbolsText = activeKeys.length > 0 ? activeKeys.map(k => getPfdIconMeta(k).short).join(', ') : '—';
+
+        aoa.push([
+          row.stepNumber || '',
+          row.name || '',
+          formatListForAoa(row.incomingVariation),
+          row.specialCharacteristics || '',
+          symbolsText,
+          formatListForAoa(row.machinesEquipmentDocs),
+          formatListForAoa(row.desiredOutcome),
+          formatListForAoa(row.processCharacteristics)
+        ]);
       });
+
+      // 4. Trailing 4 Blank Rows
+      for (let b = 0; b < 4; b++) {
+        aoa.push(['', '', '', '', '', '', '', '']);
+      }
+
+      // 5. Footer Legend Row
+      aoa.push(['LEGEND:  Transportation: TRNS (⇨)   |   Storage: STR (▽)   |   Work-In Progress: WIP (☉)   |   Operation: OPER (◯)   |   Inspection: INSP (□)   |   Decision: DEC (◇)   |   Rework: REW (Ⓡ)   |   Reject: REJ (✕)']);
+
+      // 6. Sign-off Footer Row
+      aoa.push(['Prepared By: ____________________', '', 'Checked By: ____________________', '', '', 'Approved By: ____________________', '', '']);
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Define Column Widths to guarantee zero overlapping text!
+      ws['!cols'] = [
+        { wch: 12 }, // Step #
+        { wch: 32 }, // Process Description
+        { wch: 38 }, // Incoming Source of Variation
+        { wch: 14 }, // Spec Class
+        { wch: 22 }, // Flow Symbols
+        { wch: 38 }, // Machines / Equipment / Docs
+        { wch: 38 }, // Desired Outcome
+        { wch: 38 }  // Process Characteristics
+      ];
+
+      const legendRowIdx = aoa.length - 2;
+      const signoffRowIdx = aoa.length - 1;
+
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Row 0 Title
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }, // Row 1 Subtitle
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }, // Row 2 Status
+        { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }, // Row 4 Org Name value
+        { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }, // Row 4 Customer value
+        { s: { r: 5, c: 1 }, e: { r: 5, c: 3 } }, // Row 5 Plant value
+        { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } }, // Row 5 Doc No value
+        { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } }, // Row 6 Part Name value
+        { s: { r: 6, c: 5 }, e: { r: 6, c: 7 } }, // Row 6 Part No value
+        { s: { r: 7, c: 1 }, e: { r: 7, c: 3 } }, // Row 7 Rev value
+        { s: { r: 7, c: 5 }, e: { r: 7, c: 7 } }, // Row 7 Date value
+        { s: { r: 8, c: 1 }, e: { r: 8, c: 3 } }, // Row 8 Dwg No value
+        { s: { r: 8, c: 5 }, e: { r: 8, c: 7 } }, // Row 8 Dwg Rev Date value
+        { s: { r: 9, c: 1 }, e: { r: 9, c: 3 } }, // Row 9 Line No value
+        { s: { r: 9, c: 5 }, e: { r: 9, c: 7 } }, // Row 9 CFT value
+        { s: { r: legendRowIdx, c: 0 }, e: { r: legendRowIdx, c: 7 } }, // Legend
+        { s: { r: signoffRowIdx, c: 0 }, e: { r: signoffRowIdx, c: 1 } }, // Prepared By
+        { s: { r: signoffRowIdx, c: 2 }, e: { r: signoffRowIdx, c: 4 } }, // Checked By
+        { s: { r: signoffRowIdx, c: 5 }, e: { r: signoffRowIdx, c: 7 } }, // Approved By
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `${docType} Report`);
+
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
     } else if (docType === 'PFMEA') {
       headers = [
         '#', 'Structure / Item', 'Work Element (4M)', 'Function / Focus Element',
@@ -724,51 +854,81 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
               gap: 3
             }}
           >
-            {/* Header info */}
-            <Box sx={{ borderBottom: '2px solid #0F172A', pb: 2 }}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#0F172A' }}>
+            {/* Header info — 3 Separate Top Rows */}
+            <Box sx={{ borderBottom: '2px solid #0F172A', pb: 2, textAlign: 'center' }}>
+              <Typography variant="h5" sx={{ fontWeight: '900', color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                PADMINI VNA MECHATRONICS PRIVATE LIMITED
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1E293B', mt: 0.5 }}>
                 {getDocTypeName()}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                Quality Program Assessment sheet • Exported: {new Date().toLocaleDateString()}
+              <Typography variant="body2" sx={{ fontWeight: '600', color: '#64748B', mt: 0.25 }}>
+                ({getStatusLabel()})
               </Typography>
             </Box>
 
-            {/* Document Header grid display */}
+            {/* Document Header Grid Display — 6 Rows, Clean White Cells (No Color Fill) */}
             {project && (
-              <Box sx={{ p: 2.5, border: '1px solid #cbd5e1', borderRadius: 2, bgcolor: '#f8fafc' }}>
-                <Grid container spacing={2} sx={{ fontSize: '0.8rem' }}>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Company Name</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.organisationName || '—'}</Typography>
+              <Box sx={{ border: '1px solid #000000', bgcolor: '#ffffff' }}>
+                <Grid container sx={{ fontSize: '0.8rem', '& .MuiGrid-root': { borderBottom: '1px solid #000000', borderRight: '1px solid #000000', p: 1 } }}>
+                  {/* Row 1 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Organisation Name:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.organisationName || '—'}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Manufacturing Plant</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.organisationPlant || '—'}</Typography>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Customer Name:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.customer || '—'}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Customer Name</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.customer || '—'}</Typography>
+
+                  {/* Row 2 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Manufacturing Plant:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.organisationPlant || '—'}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>FMEA ID / Document Number</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{getDerivedDocNumber()}</Typography>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Document Number:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{getDerivedDocNumber()}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Subject (Part Name)</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.partName || '—'}</Typography>
+
+                  {/* Row 3 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Subject (Part Name):</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.partName || '—'}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Organisation Part No.</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.orgPartNumber || '—'}</Typography>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Part Number:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.orgPartNumber || '—'}</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Revision / Status</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Rev {project.revisionNumber || '1.0'} • <span style={{ color: '#0d9488' }}>{getStatusLabel()}</span></Typography>
+
+                  {/* Row 4 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Revision:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>Rev {project.revisionNumber || '1.0'} ({getStatusLabel()})</Typography>
                   </Grid>
-                  <Grid size={3}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600 }}>Origination Date</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{project.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'}</Typography>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Origination Date:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'}</Typography>
+                  </Grid>
+
+                  {/* Row 5 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Dwg No.:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.dwgNumber || '—'}</Typography>
+                  </Grid>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Dwg Rev No / Date.:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.dwgRevNoAndDate || (project.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—')}</Typography>
+                  </Grid>
+
+                  {/* Row 6 */}
+                  <Grid size={3} sx={{ bgcolor: '#ffffff', borderBottom: 'none' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>Assy. Line No.:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{project.assemblyLineNumber || '—'}</Typography>
+                  </Grid>
+                  <Grid size={9} sx={{ bgcolor: '#ffffff', borderBottom: 'none' }}>
+                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: '#000000' }}>CFT Members:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>{Array.isArray(project.cftMembers) ? project.cftMembers.join(', ') : (project.cftMembers || '—')}</Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -869,7 +1029,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                           <>
                             <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>{row.stepNumber || ''}</TableCell>
                             <TableCell>{row.name || ''}</TableCell>
-                            <TableCell>{Array.isArray(row.incomingVariation) ? row.incomingVariation.join(', ') : (row.incomingVariation || '')}</TableCell>
+                            <TableCell>{renderPdfList(row.incomingVariation)}</TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>{row.specialCharacteristics || ''}</TableCell>
                             <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle', p: 1 }}>
                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', minHeight: 32 }}>
@@ -904,9 +1064,9 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                                  </Stack>
                                </Box>
                              </TableCell>
-                            <TableCell>{Array.isArray(row.machinesEquipmentDocs) ? row.machinesEquipmentDocs.join(', ') : (row.machinesEquipmentDocs || '')}</TableCell>
-                            <TableCell>{Array.isArray(row.desiredOutcome) ? row.desiredOutcome.join(', ') : (row.desiredOutcome || '')}</TableCell>
-                            <TableCell>{Array.isArray(row.processCharacteristics) ? row.processCharacteristics.join(', ') : (row.processCharacteristics || '')}</TableCell>
+                            <TableCell>{renderPdfList(row.machinesEquipmentDocs)}</TableCell>
+                            <TableCell>{renderPdfList(row.desiredOutcome)}</TableCell>
+                            <TableCell>{renderPdfList(row.processCharacteristics)}</TableCell>
                           </>
                         )}
                         {docType === 'PFMEA' && (
@@ -993,9 +1153,82 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
                       </TableRow>
                     );
                   })}
+                  {/* 4 Trailing Blank Rows for PFD */}
+                  {docType === 'PFD' && [1, 2, 3, 4].map(bIdx => (
+                    <TableRow key={`blank-${bIdx}`} sx={{ height: 28 }}>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                      <TableCell>&nbsp;</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {/* Footer Section for PFD — 8-Icon Legend & Sign-Off Row */}
+            {docType === 'PFD' && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
+                {/* 8-Icon Legend Bar */}
+                <Box sx={{ border: '1px solid #000000', bgcolor: '#ffffff', p: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                  {[
+                    { key: 'trans', label: 'Transportation', short: 'TRNS', sym: '⇨', path: '/icons/pfd/transportation.svg' },
+                    { key: 'store', label: 'Storage', short: 'STR', sym: '▽', path: '/icons/pfd/Storage.svg' },
+                    { key: 'wip', label: 'Work-In Progress', short: 'WIP', sym: '☉', path: '/icons/pfd/WIP.svg' },
+                    { key: 'oper', label: 'Operation', short: 'OPER', sym: '◯', path: '/icons/pfd/operation.svg' },
+                    { key: 'insp', label: 'Inspection', short: 'INSP', sym: '□', path: '/icons/pfd/inspect.svg' },
+                    { key: 'decs', label: 'Decision', short: 'DEC', sym: '◇', path: '/icons/pfd/Decision.svg' },
+                    { key: 'rework', label: 'Rework', short: 'REW', sym: 'Ⓡ', path: '/icons/pfd/rework.svg' },
+                    { key: 'reject', label: 'Reject', short: 'REJ', sym: '✕', path: '/icons/pfd/reject.svg' },
+                  ].map((item) => (
+                    <Box key={item.key} sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                      <Box
+                        sx={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: '50%',
+                          bgcolor: '#ffffff',
+                          border: '1px solid #0f172a',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Box component="img" src={item.path} alt={item.label} sx={{ width: 11, height: 11 }} />
+                      </Box>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: '#000000' }}>
+                        {item.label}: {item.short} ({item.sym})
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Sign-Off Block */}
+                <Box sx={{ border: '1px solid #000000', bgcolor: '#ffffff', p: 1.5 }}>
+                  <Grid container spacing={2}>
+                    <Grid size={4}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>
+                        Prepared By: ____________________
+                      </Typography>
+                    </Grid>
+                    <Grid size={4}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>
+                        Checked By: ____________________
+                      </Typography>
+                    </Grid>
+                    <Grid size={4}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#000000' }}>
+                        Approved By: ____________________
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
+            )}
           </Card>
         </DialogContent>
       </Dialog>
