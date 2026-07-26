@@ -54,18 +54,18 @@ interface DfmeaStructureTreeProps {
   onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
 }
 
-// Clean Icon Component (Bold & Crisp HD 22px)
+// Crisp HD Icon Component (24px HD)
 const TreeIconBadge: React.FC<{
   type?: keyof typeof TREE_COLORS.iconBg;
   iconSrc?: string;
   size?: number;
-}> = ({ iconSrc, size = 22 }) => (
+}> = ({ iconSrc, size = 24 }) => (
   <Box
     sx={{
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      mr: 1.25,
+      mr: 1.5,
       flexShrink: 0,
       width: size,
       height: size,
@@ -80,7 +80,8 @@ const TreeIconBadge: React.FC<{
           width: size,
           height: size,
           objectFit: 'contain',
-          filter: 'drop-shadow(0px 1px 1px rgba(0,0,0,0.15))'
+          imageRendering: '-webkit-optimize-contrast',
+          filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.18))'
         }}
       />
     )}
