@@ -113,13 +113,13 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
   };
 
   // Excel generation
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const wmText = getWatermarkText();
-    generateExcel(wmText);
+    await generateExcel(wmText);
     onClose();
   };
 
-  const generateExcel = (_watermark: string) => {
+  const generateExcel = async (_watermark: string) => {
     const formatExcelList = (val: any): string => {
       if (!val) return '—';
       let arr: any[] = [];
@@ -216,126 +216,246 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
     }
 
     if (docType === 'PFD') {
-      const aoa: any[][] = [];
+      // ============================================================
+      // ExcelJS-based PFD export with full professional formatting
+      // ============================================================
+      const ExcelJS = await import('exceljs');
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'PFD System';
+      wb.created = new Date();
 
-      // 1. Top 3 Title Rows (clean white, bold/centered text)
-      aoa.push(['PADMINI VNA MECHATRONICS PRIVATE LIMITED']);
-      aoa.push(['Process Flow Diagram (PFD)']);
-      aoa.push(['(Prototype)']);
-      aoa.push([]); // blank spacer
+      // -- CONFIG --
+      const FONT = 'Calibri';
+      const BORDER_THIN: Partial<import('exceljs').Border> = { style: 'thin' as const, color: { argb: 'FF000000' } };
+      const BORDER_THICK: Partial<import('exceljs').Border> = { style: 'medium' as const, color: { argb: 'FF000000' } };
+      const HEADER_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+      const COL_WIDTHS = [9, 22, 26, 10, 20, 26, 30, 30];
+      const CENTERED_COLS = [0, 3]; // Step #, Spec Class
 
-      // 2. 6-Row Header Grid (Clean White Cells, No Color Fill)
-      aoa.push(['Organisation Name:', project?.organisationName || '—', '', '', 'Customer Name:', project?.customer || '—', '', '']);
-      aoa.push(['Manufacturing Plant:', project?.organisationPlant || '—', '', '', 'Document Number:', getDerivedDocNumber(), '', '']);
-      aoa.push(['Subject (Part Name):', project?.partName || '—', '', '', 'Part Number:', project?.orgPartNumber || '—', '', '']);
-      aoa.push(['Revision:', `Rev ${project?.revisionNumber || '1.0'} (${getStatusLabel()})`, '', '', 'Origination Date:', project?.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—', '', '']);
-      aoa.push(['Dwg No.:', project?.dwgNumber || '—', '', '', 'Dwg Rev No / Date.:', project?.dwgRevNoAndDate || (project?.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—'), '', '']);
-      aoa.push(['Assy. Line No.:', project?.assemblyLineNumber || '—', '', '', 'CFT Members:', Array.isArray(project?.cftMembers) ? project.cftMembers.join(', ') : (project?.cftMembers || '—'), '', '']);
-      aoa.push([]); // blank spacer
+      const allBorders = (style: Partial<import('exceljs').Border> = BORDER_THIN): Partial<import('exceljs').Borders> => ({
+        top: style, left: style, bottom: style, right: style
+      });
 
-      // 3. Main Table Header Row
-      aoa.push([
-        'Step #',
-        'Process Description',
-        'Incoming Source of Variation',
-        'Spec Class',
-        'Flow Symbols',
-        'Machines / Equipment / Docs',
-        'Desired Outcome',
-        'Process Characteristics'
-      ]);
-
-      const formatListForAoa = (val: any): string => {
-        if (!val) return '—';
-        let arr: any[] = [];
-        if (Array.isArray(val)) {
-          arr = val;
-        } else if (typeof val === 'string') {
-          try {
-            const parsed = JSON.parse(val);
-            arr = Array.isArray(parsed) ? parsed : [val];
-          } catch {
-            arr = val.includes('\n') ? val.split('\n') : [val];
-          }
-        } else {
-          arr = [String(val)];
+      const arrToText = (arr: any): string => {
+        if (!arr) return '';
+        if (Array.isArray(arr)) {
+          const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
+          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${x}`).join('\n') : '';
         }
-        if (arr.length === 0) return '—';
-        return arr.map(item => (typeof item === 'object' ? item.name || '' : String(item))).join('\n');
+        if (typeof arr === 'string') {
+          try {
+            const parsed = JSON.parse(arr);
+            if (Array.isArray(parsed)) return arrToText(parsed);
+          } catch { /* not JSON */ }
+          return arr;
+        }
+        return String(arr);
       };
 
-      data.forEach((row) => {
-        const icons = row.flowIcons || {};
+      const ws = wb.addWorksheet('PFD', {
+        pageSetup: {
+          orientation: 'landscape',
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+          margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 }
+        }
+      });
+      ws.columns = COL_WIDTHS.map(width => ({ width }));
+
+      // ---- TITLE BLOCK (Rows 1-3) ----
+      ws.mergeCells('A1:H1');
+      const titleCell = ws.getCell('A1');
+      titleCell.value = project?.organisationName?.toUpperCase() || 'PADMINI VNA MECHATRONICS PRIVATE LIMITED';
+      titleCell.font = { name: FONT, size: 14, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(1).height = 22;
+
+      ws.mergeCells('A2:H2');
+      const subtitleCell = ws.getCell('A2');
+      subtitleCell.value = 'Process Flow Diagram (PFD)';
+      subtitleCell.font = { name: FONT, size: 12, bold: true };
+      subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(2).height = 20;
+
+      ws.mergeCells('A3:H3');
+      const statusCell = ws.getCell('A3');
+      statusCell.value = `(${getStatusLabel() || 'Prototype'})`;
+      statusCell.font = { name: FONT, size: 11, italic: true };
+      statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(3).height = 20;
+
+      // ---- INFO GRID (Rows 4-9) ----
+      const infoRows: [string, string, string, string][] = [
+        ['Organisation Name:', project?.organisationName || '—', 'Customer Name:', project?.customer || '—'],
+        ['Manufacturing Plant:', project?.organisationPlant || '—', 'Document Number:', getDerivedDocNumber()],
+        ['Subject (Part Name):', project?.partName || '—', 'Part Number:', project?.orgPartNumber || '—'],
+        ['Revision:', `Rev ${project?.revisionNumber || '1.0'} (${getStatusLabel()})`, 'Origination Date:', project?.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'],
+        ['Dwg No.:', project?.dwgNumber || '—', 'Dwg Rev No / Date.:', project?.dwgRevNoAndDate || (project?.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—')],
+        ['Assy. Line No.:', project?.assemblyLineNumber || '—', 'CFT Members:', Array.isArray(project?.cftMembers) ? project.cftMembers.join(', ') : (project?.cftMembers || '—')],
+      ];
+
+      let r = 4;
+      infoRows.forEach(([l1, v1, l2, v2]) => {
+        ws.mergeCells(`A${r}:B${r}`);
+        const labelCell1 = ws.getCell(`A${r}`);
+        labelCell1.value = l1;
+        labelCell1.font = { name: FONT, size: 11, bold: true };
+        labelCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        labelCell1.border = allBorders();
+
+        ws.mergeCells(`C${r}:D${r}`);
+        const valCell1 = ws.getCell(`C${r}`);
+        valCell1.value = v1;
+        valCell1.font = { name: FONT, size: 11 };
+        valCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
+        valCell1.border = allBorders();
+
+        ws.mergeCells(`E${r}:F${r}`);
+        const labelCell2 = ws.getCell(`E${r}`);
+        labelCell2.value = l2;
+        labelCell2.font = { name: FONT, size: 11, bold: true };
+        labelCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        labelCell2.border = allBorders();
+
+        ws.mergeCells(`G${r}:H${r}`);
+        const valCell2 = ws.getCell(`G${r}`);
+        valCell2.value = v2;
+        valCell2.font = { name: FONT, size: 11 };
+        valCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
+        valCell2.border = allBorders();
+
+        ws.getRow(r).height = 20;
+        r++;
+      });
+
+      // ---- TABLE HEADER (Row 10) ----
+      const headerRowIdx = r;
+      const COLS = [
+        'Step #', 'Process Description', 'Incoming Source of Variation',
+        'Spec Class', 'Flow Symbols', 'Machines / Equipment / Docs',
+        'Desired Outcome', 'Process Characteristics'
+      ];
+      const headerRow = ws.getRow(headerRowIdx);
+      COLS.forEach((title, i) => {
+        const cell = headerRow.getCell(i + 1);
+        cell.value = title;
+        cell.font = { name: FONT, size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.fill = HEADER_FILL;
+        cell.border = allBorders(BORDER_THICK);
+      });
+      headerRow.height = 30;
+
+      // Freeze panes below the header row
+      ws.views = [{ state: 'frozen' as const, ySplit: headerRowIdx }];
+      // AutoFilter on header row
+      ws.autoFilter = { from: { row: headerRowIdx, column: 1 }, to: { row: headerRowIdx, column: 8 } };
+
+      r = headerRowIdx + 1;
+
+      // ---- DATA ROWS ----
+      data.forEach((step) => {
+        const row = ws.getRow(r);
+        const icons = step.flowIcons || {};
         const activeKeys = Object.keys(icons).filter(k => icons[k]);
         const symbolsText = activeKeys.length > 0 ? activeKeys.map(k => getPfdIconMeta(k).short).join(', ') : '—';
 
-        aoa.push([
-          row.stepNumber || '',
-          row.name || '',
-          formatListForAoa(row.incomingVariation),
-          row.specialCharacteristics || '',
+        const values = [
+          step.stepNumber || '',
+          step.name || '',
+          arrToText(step.incomingVariation),
+          step.specialCharacteristics || '',
           symbolsText,
-          formatListForAoa(row.machinesEquipmentDocs),
-          formatListForAoa(row.desiredOutcome),
-          formatListForAoa(row.processCharacteristics)
-        ]);
+          arrToText(step.machinesEquipmentDocs),
+          arrToText(step.desiredOutcome),
+          arrToText(step.processCharacteristics)
+        ];
+
+        values.forEach((val, i) => {
+          const cell = row.getCell(i + 1);
+          cell.value = val;
+          cell.font = { name: FONT, size: 11 };
+          cell.border = allBorders(BORDER_THIN);
+          cell.alignment = {
+            vertical: 'middle',
+            wrapText: true,
+            horizontal: CENTERED_COLS.includes(i) ? 'center' : 'left'
+          };
+        });
+
+        // Dynamic row height based on wrapped line count
+        const maxLines = Math.max(...values.map(v => String(v || '').split('\n').length));
+        row.height = Math.max(20, maxLines * 15);
+        r++;
       });
 
-      // 4. Trailing 4 Blank Rows
-      for (let b = 0; b < 4; b++) {
-        aoa.push(['', '', '', '', '', '', '', '']);
+      const lastDataRow = r - 1;
+
+      // Apply outer medium border around the entire table (header → last data row)
+      for (let c = 1; c <= 8; c++) {
+        const topCell = ws.getRow(headerRowIdx).getCell(c);
+        topCell.border = { ...topCell.border, top: BORDER_THICK };
+        const bottomCell = ws.getRow(lastDataRow).getCell(c);
+        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
+      }
+      for (let rr = headerRowIdx; rr <= lastDataRow; rr++) {
+        const leftCell = ws.getRow(rr).getCell(1);
+        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
+        const rightCell = ws.getRow(rr).getCell(8);
+        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
       }
 
-      // 5. Footer Legend Row
-      aoa.push(['LEGEND:  Transportation: TRNS (⇨)   |   Storage: STR (▽)   |   Work-In Progress: WIP (☉)   |   Operation: OPER (◯)   |   Inspection: INSP (□)   |   Decision: DEC (◇)   |   Rework: REW (Ⓡ)   |   Reject: REJ (✕)']);
+      // ---- LEGEND ROW ----
+      r += 1; // spacer row
+      ws.mergeCells(`A${r}:H${r}`);
+      const legendCell = ws.getCell(`A${r}`);
+      legendCell.value =
+        'LEGEND:  Transportation: TRNS (⇨)  |  Storage: STR (▽)  |  Work-In Progress: WIP (⊙)  |  ' +
+        'Operation: OPER (○)  |  Inspection: INSP (▭)  |  Decision: DEC (◇)  |  Rework: REW (⬠)  |  Reject: REJ (⬡)';
+      legendCell.font = { name: FONT, size: 10, italic: true };
+      legendCell.alignment = { horizontal: 'left', vertical: 'middle' };
+      ws.getRow(r).height = 20;
 
-      // 6. Sign-off Footer Row
-      aoa.push(['Prepared By: ____________________', '', 'Checked By: ____________________', '', '', 'Approved By: ____________________', '', '']);
+      // ---- SIGNATURE ROW (3 fields) ----
+      r += 1;
+      // Prepared By: (A:B), blank (C), Checked By: (D:E), blank (F), Approved By: (G:H)
+      ws.mergeCells(`A${r}:B${r}`);
+      const prepCell = ws.getCell(`A${r}`);
+      prepCell.value = 'Prepared By:';
+      prepCell.font = { name: FONT, size: 11, bold: true };
+      prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      prepCell.border = allBorders();
 
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const prepBlank = ws.getCell(`C${r}`);
+      prepBlank.border = allBorders();
 
-      // Define Column Widths to guarantee zero overlapping text!
-      ws['!cols'] = [
-        { wch: 12 }, // Step #
-        { wch: 32 }, // Process Description
-        { wch: 38 }, // Incoming Source of Variation
-        { wch: 14 }, // Spec Class
-        { wch: 22 }, // Flow Symbols
-        { wch: 38 }, // Machines / Equipment / Docs
-        { wch: 38 }, // Desired Outcome
-        { wch: 38 }  // Process Characteristics
-      ];
+      ws.mergeCells(`D${r}:E${r}`);
+      const checkCell = ws.getCell(`D${r}`);
+      checkCell.value = 'Checked By:';
+      checkCell.font = { name: FONT, size: 11, bold: true };
+      checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      checkCell.border = allBorders();
 
-      const legendRowIdx = aoa.length - 2;
-      const signoffRowIdx = aoa.length - 1;
+      const checkBlank = ws.getCell(`F${r}`);
+      checkBlank.border = allBorders();
 
-      ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Row 0 Title
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }, // Row 1 Subtitle
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }, // Row 2 Status
-        { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }, // Row 4 Org Name value
-        { s: { r: 4, c: 5 }, e: { r: 4, c: 7 } }, // Row 4 Customer value
-        { s: { r: 5, c: 1 }, e: { r: 5, c: 3 } }, // Row 5 Plant value
-        { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } }, // Row 5 Doc No value
-        { s: { r: 6, c: 1 }, e: { r: 6, c: 3 } }, // Row 6 Part Name value
-        { s: { r: 6, c: 5 }, e: { r: 6, c: 7 } }, // Row 6 Part No value
-        { s: { r: 7, c: 1 }, e: { r: 7, c: 3 } }, // Row 7 Rev value
-        { s: { r: 7, c: 5 }, e: { r: 7, c: 7 } }, // Row 7 Date value
-        { s: { r: 8, c: 1 }, e: { r: 8, c: 3 } }, // Row 8 Dwg No value
-        { s: { r: 8, c: 5 }, e: { r: 8, c: 7 } }, // Row 8 Dwg Rev Date value
-        { s: { r: 9, c: 1 }, e: { r: 9, c: 3 } }, // Row 9 Line No value
-        { s: { r: 9, c: 5 }, e: { r: 9, c: 7 } }, // Row 9 CFT value
-        { s: { r: legendRowIdx, c: 0 }, e: { r: legendRowIdx, c: 7 } }, // Legend
-        { s: { r: signoffRowIdx, c: 0 }, e: { r: signoffRowIdx, c: 1 } }, // Prepared By
-        { s: { r: signoffRowIdx, c: 2 }, e: { r: signoffRowIdx, c: 4 } }, // Checked By
-        { s: { r: signoffRowIdx, c: 5 }, e: { r: signoffRowIdx, c: 7 } }, // Approved By
-      ];
+      ws.mergeCells(`G${r}:H${r}`);
+      const approveCell = ws.getCell(`G${r}`);
+      approveCell.value = 'Approved By:';
+      approveCell.font = { name: FONT, size: 11, bold: true };
+      approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      approveCell.border = allBorders();
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, `${docType} Report`);
+      ws.getRow(r).height = 25;
 
-      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      // ---- PRINT SETUP ----
+      ws.pageSetup.printArea = `A1:H${r}`;
+      ws.pageSetup.printTitlesRow = `${headerRowIdx}:${headerRowIdx}`;
+
+      // ---- WRITE & DOWNLOAD ----
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
