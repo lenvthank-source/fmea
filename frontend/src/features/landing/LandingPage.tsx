@@ -12,6 +12,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useBackendWarmup } from '../../hooks/useBackendWarmup';
 import { API_BASE_URL } from '../../config';
+import { SEO } from '../../components/SEO/SEO';
+import { ThemeToggle } from '../../components/ThemeToggle/ThemeToggle';
+import { RiskCalculatorWidget } from './RiskCalculatorWidget';
 
 /* ────────────────────────────────────────────────────────────
    Utility hook: useInView (IntersectionObserver)
@@ -223,6 +226,11 @@ export const LandingPage: React.FC = () => {
 
   return (
     <Box sx={{ overflowX: 'hidden', bgcolor: '#ffffff', color: '#1e293b' }}>
+      <SEO
+        title="Master AIAG-VDA FMEA Faster with AI Copilot | FMEApex"
+        description="Transform your quality risk with AI-powered FMEA software. Automate AIAG-VDA 7-step compliance, link PFD-PFMEA & sync Control Plans. Start free today! 🚀"
+        canonical="/"
+      />
 
       {/* ── NAVBAR ──────────────────────────────────────────── */}
       <Box
@@ -264,7 +272,8 @@ export const LandingPage: React.FC = () => {
             ))}
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1.5, flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+            <ThemeToggle />
             <Tooltip title={isBackendReady ? 'Launch workspace' : 'Preparing secure workspace...'} arrow>
               <Box sx={{ position: 'relative' }}>
                 <Button
@@ -336,7 +345,8 @@ export const LandingPage: React.FC = () => {
 
         <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <Typography
-            variant="h2"
+            variant="h1"
+            component="h1"
             sx={{
               fontWeight: 800, color: '#0f172a', letterSpacing: '-1px',
               fontSize: { xs: '2.2rem', sm: '3rem', md: '3.6rem' },
@@ -421,6 +431,13 @@ export const LandingPage: React.FC = () => {
               </Grid>
             ))}
           </Grid>
+        </Container>
+      </Box>
+
+      {/* ── INTERACTIVE RISK CALCULATOR WIDGET ──────────────── */}
+      <Box sx={{ py: { xs: 6, md: 8 }, bgcolor: 'background.default' }}>
+        <Container maxWidth="lg">
+          <RiskCalculatorWidget />
         </Container>
       </Box>
 

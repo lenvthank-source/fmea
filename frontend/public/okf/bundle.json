@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.org",
+  "name": "FMEApex Open Knowledge Bundle",
+  "version": "1.0.0",
+  "publisher": {
+    "@type": "Organization",
+    "name": "FMEApex",
+    "url": "https://fmeapex.online"
+  },
+  "knowledgeNodes": [
+    {
+      "id": "node-aiag-vda-7step",
+      "name": "AIAG-VDA 2019 7-Step FMEA Methodology",
+      "category": "Standard",
+      "description": "Standardized 7-step FMEA framework combining AIAG and VDA guidelines. Steps: 1. Planning, 2. Structure Analysis, 3. Function Analysis, 4. Failure Analysis, 5. Risk Analysis, 6. Optimization, 7. Documentation.",
+      "url": "https://fmeapex.online/en/learn/aiag-vda-7-step-fmea"
+    },
+    {
+      "id": "node-pfd-pfmea-linking",
+      "name": "PFD to PFMEA Bidirectional Linking",
+      "category": "Feature",
+      "description": "Real-time synchronization connecting Process Flow Diagram (PFD) operation steps with PFMEA failure chain rows, automatically catching orphan steps.",
+      "url": "https://fmeapex.online/en/learn/pfd-pfmea-linking"
+    },
+    {
+      "id": "node-control-plan-sync",
+      "name": "Control Plan Synchronization",
+      "category": "Feature",
+      "description": "Bidirectional propagation of prevention and detection controls between PFMEA and Control Plan documents in a serializable transaction.",
+      "url": "https://fmeapex.online/en/learn/control-plan-sync"
+    },
+    {
+      "id": "node-21cfr11-compliance",
+      "name": "21 CFR Part 11 Audit Trail",
+      "category": "Compliance",
+      "description": "Immutable audit trails, role-segregated digital signatures (Creator vs Reviewer vs Approver), and document revision locks for regulatory readiness.",
+      "url": "https://fmeapex.online/en/learn/21-cfr-part-11-fmea"
+    }
+  ]
+}

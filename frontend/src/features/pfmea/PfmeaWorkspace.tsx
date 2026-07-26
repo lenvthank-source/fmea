@@ -1112,13 +1112,55 @@ export const PfmeaWorkspace: React.FC = () => {
     if (!ap) return <Chip label="—" size="small" variant="outlined" />;
     switch (ap) {
       case 'H':
-        return <Chip label="High" size="small" color="error" sx={{ fontWeight: 'bold' }} />;
+      case 'High':
+        return (
+          <Chip
+            label="HIGH AP"
+            size="small"
+            sx={{
+              bgcolor: '#EF4444',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.75rem',
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)',
+              px: 0.5,
+            }}
+          />
+        );
       case 'M':
-        return <Chip label="Medium" size="small" color="warning" sx={{ fontWeight: 'bold' }} />;
+      case 'Medium':
+        return (
+          <Chip
+            label="MEDIUM AP"
+            size="small"
+            sx={{
+              bgcolor: '#F59E0B',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.75rem',
+              boxShadow: '0 0 10px rgba(245, 158, 11, 0.3)',
+              px: 0.5,
+            }}
+          />
+        );
       case 'L':
-        return <Chip label="Low" size="small" color="success" sx={{ fontWeight: 'bold' }} />;
+      case 'Low':
+        return (
+          <Chip
+            label="LOW AP"
+            size="small"
+            sx={{
+              bgcolor: '#10B981',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.75rem',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.3)',
+              px: 0.5,
+            }}
+          />
+        );
       default:
-        return <Chip label={ap} size="small" />;
+        return <Chip label={ap} size="small" sx={{ fontWeight: 700 }} />;
     }
   };
 

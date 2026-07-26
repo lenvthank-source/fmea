@@ -1,0 +1,31 @@
+# FMEApex — AI-Powered FMEA Quality Risk Platform
+
+FMEApex is a cloud-native, multi-tenant quality engineering platform built for Automotive (IATF 16949), Aerospace (AS9100), Medical Devices (ISO 13485 / ISO 14971), and High-Tech Manufacturing. It automates the AIAG-VDA 2019 7-Step FMEA methodology, enforces bidirectional Process Flow Diagram (PFD) to PFMEA linking, synchronizes Control Plans in real time, and guarantees 21 CFR Part 11 compliant audit trails.
+
+## Core Platform Capabilities
+
+- **AIAG-VDA 7-Step Quality Workflow**: Guided step-by-step analysis with strict prerequisite step gating (Planning, Structure Analysis, Function Analysis, Failure Analysis, Risk Analysis, Optimization, Documentation).
+- **Automated Action Priority (AP) Calculation**: Instant lookup of High, Medium, or Low Action Priority derived strictly from AIAG-VDA 2019 Severity, Occurrence, and Detection (S/O/D 1-10) scoring tables.
+- **Bidirectional PFD ↔ PFMEA Sync**: Ensures every step in the Process Flow Diagram maps directly to a PFMEA row, automatically flagging orphan steps and coverage gaps.
+- **Control Plan Synchronization**: Real-time propagation of prevention and detection controls between PFMEA and Control Plans in a single serializable transaction.
+- **Corrective Action Lifecycles**: Complete action tracking with Cloudflare R2 evidence file storage and automated before/after risk evaluation recalculation.
+- **21 CFR Part 11 Audit Trail & Signatures**: Role-segregated approval workflows (Creator vs Reviewer vs Approver), immutable locked revisions, and cryptographic audit logging.
+
+## Key Links & Resources
+
+- Landing Page: https://fmeapex.online/
+- Guest Interactive Workspace: https://fmeapex.online/login
+- Pricing Specification: https://fmeapex.online/pricing.md
+- AIAG-VDA 7-Step Guide: https://fmeapex.online/en/learn/aiag-vda-7-step-fmea
+- PFD-PFMEA Linking: https://fmeapex.online/en/learn/pfd-pfmea-linking
+- Control Plan Sync: https://fmeapex.online/en/learn/control-plan-sync
+- 21 CFR Part 11 Compliance: https://fmeapex.online/en/learn/21-cfr-part-11-fmea
+- Automotive Industry FMEA: https://fmeapex.online/en/fmea/automotive-iatf-16949
+- Medical Device FMEA: https://fmeapex.online/en/fmea/medical-iso-13485
+- FMEApex vs Excel Comparison: https://fmeapex.online/en/vs/excel-fmea
+- FMEA Glossary: https://fmeapex.online/en/glossary/action-priority
+
+## Machine-Readable Schemas & APIs
+
+- Open Knowledge Format Bundle: https://fmeapex.online/okf/bundle.json
+- Pricing Data: https://fmeapex.online/pricing.md

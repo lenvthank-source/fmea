@@ -762,12 +762,19 @@ export const DfmeaWorkspace: React.FC = () => {
                         <TableCell sx={{ textAlign: 'center' }}>
                           {row.ap ? (
                             <Chip
-                              label={row.ap}
+                              label={row.ap === 'H' ? 'HIGH AP' : row.ap === 'M' ? 'MEDIUM AP' : row.ap === 'L' ? 'LOW AP' : row.ap}
                               size="small"
                               sx={{
-                                fontWeight: 'bold',
-                                color: 'white',
-                                bgcolor: row.ap === 'H' ? 'error.main' : row.ap === 'M' ? 'warning.main' : 'success.main'
+                                fontWeight: 800,
+                                fontSize: '0.75rem',
+                                color: '#ffffff',
+                                bgcolor: row.ap === 'H' ? '#EF4444' : row.ap === 'M' ? '#F59E0B' : '#10B981',
+                                boxShadow: row.ap === 'H'
+                                  ? '0 0 10px rgba(239, 68, 68, 0.4)'
+                                  : row.ap === 'M'
+                                  ? '0 0 10px rgba(245, 158, 11, 0.3)'
+                                  : '0 0 10px rgba(16, 185, 129, 0.3)',
+                                px: 0.5,
                               }}
                             />
                           ) : '-'}

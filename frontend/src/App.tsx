@@ -1,15 +1,12 @@
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { theme } from './theme/theme';
+import { ColorModeProvider } from './theme/ColorModeContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppRouter } from './app/router';
 import { ErrorBoundary } from './components/FeedbackWidget/ErrorFeedback';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ColorModeProvider>
       <AuthProvider>
         <BrowserRouter>
           <ErrorBoundary>
@@ -17,7 +14,7 @@ function App() {
           </ErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
-    </ThemeProvider>
+    </ColorModeProvider>
   );
 }
 

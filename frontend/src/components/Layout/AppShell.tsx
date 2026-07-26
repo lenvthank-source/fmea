@@ -26,6 +26,7 @@ import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
 import { useResponsive } from '../../hooks/useResponsive';
 import { FeedbackWidget } from '../FeedbackWidget/FeedbackWidget';
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 
 export const AppShell: React.FC = () => {
   const { user, token, logout } = useAuth();
@@ -228,7 +229,8 @@ export const AppShell: React.FC = () => {
           </Typography>
 
           {user && (
-            <div>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <ThemeToggle />
               <IconButton onClick={handleMenu} sx={{ p: 0 }}>
                 <Avatar sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', width: 32, height: 32, fontSize: '0.875rem' }}>
                   {user.name[0].toUpperCase()}
@@ -263,7 +265,7 @@ export const AppShell: React.FC = () => {
                   Sign Out
                 </MenuItem>
               </Menu>
-            </div>
+            </Box>
           )}
         </Toolbar>
       </AppBar>

@@ -14,6 +14,10 @@ import { Login } from '../features/auth/Login';
 import { AdminPanel } from '../features/admin/AdminPanel';
 import { LandingPage } from '../features/landing/LandingPage';
 import { InitializingWorkspace } from '../features/auth/InitializingWorkspace';
+import { PillarPage } from '../features/content/PillarPage';
+import { IndustryFmeaPage } from '../features/programmatic/IndustryFmeaPage';
+import { CompetitorVsPage } from '../features/programmatic/CompetitorVsPage';
+import { GlossaryPage } from '../features/programmatic/GlossaryPage';
 
 import { Box, CircularProgress } from '@mui/material';
 
@@ -38,11 +42,29 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
+      {/* Root Landing Page & Auth */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<Login />} />
       <Route path="/app/initializing" element={<InitializingWorkspace />} />
+
+      {/* SEO Educational Pillar Hubs */}
+      <Route path="/learn/:slug" element={<PillarPage />} />
+      <Route path="/:lang/learn/:slug" element={<PillarPage />} />
+
+      {/* Programmatic Industry Pages */}
+      <Route path="/fmea/:industry" element={<IndustryFmeaPage />} />
+      <Route path="/:lang/fmea/:industry" element={<IndustryFmeaPage />} />
+
+      {/* Programmatic Competitor Comparison Pages */}
+      <Route path="/vs/:competitor" element={<CompetitorVsPage />} />
+      <Route path="/:lang/vs/:competitor" element={<CompetitorVsPage />} />
+
+      {/* Programmatic Glossary Pages */}
+      <Route path="/glossary/:term" element={<GlossaryPage />} />
+      <Route path="/:lang/glossary/:term" element={<GlossaryPage />} />
       
+      {/* Protected App Workspace Routes */}
       <Route
         path="/app"
         element={
