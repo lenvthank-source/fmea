@@ -466,7 +466,26 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       URL.revokeObjectURL(url);
       return;
     } else if (docType === 'PFMEA') {
-      headers = [
+      // ============================================================
+      // ExcelJS-based PFMEA export with full professional formatting
+      // (Same strategy as PFD export — Title → Info → Header → Data → Signature)
+      // ============================================================
+      const ExcelJS = await import('exceljs');
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'PFMEA System';
+      wb.created = new Date();
+
+      // -- CONFIG --
+      const FONT = 'Calibri';
+      const BORDER_THIN: Partial<import('exceljs').Border> = { style: 'thin' as const, color: { argb: 'FF000000' } };
+      const BORDER_THICK: Partial<import('exceljs').Border> = { style: 'medium' as const, color: { argb: 'FF000000' } };
+      const HEADER_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+      const AP_HIGH_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+      const AP_MED_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+      const AP_LOW_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
+
+      const PFMEA_COL_WIDTHS = [6, 22, 20, 22, 20, 22, 7, 22, 22, 7, 22, 7, 8, 7, 22, 22, 22, 22, 8, 8, 8, 8, 12, 22];
+      const PFMEA_HEADERS = [
         '#', 'Structure / Item', 'Work Element (4M)', 'Function / Focus Element',
         'Failure Mode', 'Potential Effects', 'SEV', 'Failure Causes',
         'Current Control – Prevention', 'OCC', 'Current Control – Detection', 'DET',
@@ -474,50 +493,293 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         'Responsibility & Target Date', 'Action Taken & Completion Date',
         'SEV (rev)', 'OCC (rev)', 'DET (rev)', 'AP (rev)', 'Status', 'Remarks'
       ];
-      data.forEach((row, idx) => {
+      const TOTAL_COLS = PFMEA_HEADERS.length; // 24
+      const LAST_COL_LETTER = 'X';
+      // Columns that should be center-aligned (0-indexed): #, SEV, OCC, DET, AP, FC, SEV(rev), OCC(rev), DET(rev), AP(rev), Status
+      const CENTERED_COLS = [0, 6, 9, 11, 12, 13, 18, 19, 20, 21, 22];
+
+      const allBorders = (style: Partial<import('exceljs').Border> = BORDER_THIN): Partial<import('exceljs').Borders> => ({
+        top: style, left: style, bottom: style, right: style
+      });
+
+      const arrToText = (arr: any): string => {
+        if (!arr) return '';
+        if (Array.isArray(arr)) {
+          const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
+          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${x}`).join('\n') : '';
+        }
+        if (typeof arr === 'string') {
+          try {
+            const parsed = JSON.parse(arr);
+            if (Array.isArray(parsed)) return arrToText(parsed);
+          } catch { /* not JSON */ }
+          return arr;
+        }
+        return String(arr);
+      };
+
+      const getApFill = (ap: string | undefined): import('exceljs').FillPattern | undefined => {
+        if (!ap) return undefined;
+        const clean = ap.trim().toUpperCase();
+        if (clean === 'HIGH' || clean === 'H') return AP_HIGH_FILL;
+        if (clean === 'MEDIUM' || clean === 'M') return AP_MED_FILL;
+        if (clean === 'LOW' || clean === 'L') return AP_LOW_FILL;
+        return undefined;
+      };
+
+      const getApFontColor = (ap: string | undefined): string => {
+        if (!ap) return 'FF0F172A';
+        const clean = ap.trim().toUpperCase();
+        if (clean === 'HIGH' || clean === 'H') return 'FF991B1B';
+        if (clean === 'MEDIUM' || clean === 'M') return 'FF92400E';
+        if (clean === 'LOW' || clean === 'L') return 'FF166534';
+        return 'FF0F172A';
+      };
+
+      const ws = wb.addWorksheet('PFMEA', {
+        pageSetup: {
+          orientation: 'landscape',
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+          margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 }
+        }
+      });
+      ws.columns = PFMEA_COL_WIDTHS.map(width => ({ width }));
+
+      // ---- TITLE BLOCK (Rows 1-3) ----
+      ws.mergeCells(`A1:${LAST_COL_LETTER}1`);
+      const titleCell = ws.getCell('A1');
+      titleCell.value = project?.organisationName?.toUpperCase() || 'ORGANISATION NAME';
+      titleCell.font = { name: FONT, size: 14, bold: true };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(1).height = 22;
+
+      ws.mergeCells(`A2:${LAST_COL_LETTER}2`);
+      const subtitleCell = ws.getCell('A2');
+      subtitleCell.value = 'Process Failure Mode & Effects Analysis (PFMEA)';
+      subtitleCell.font = { name: FONT, size: 12, bold: true };
+      subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(2).height = 20;
+
+      ws.mergeCells(`A3:${LAST_COL_LETTER}3`);
+      const statusCell = ws.getCell('A3');
+      statusCell.value = `(${getStatusLabel() || 'Prototype'})`;
+      statusCell.font = { name: FONT, size: 11, italic: true };
+      statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws.getRow(3).height = 20;
+
+      // ---- INFO GRID (Rows 4-9) — 6 rows × 4 fields spanning 24 columns ----
+      // Layout: label (A:D), value (E:L), label (M:P), value (Q:X)
+      const infoRows: [string, string, string, string][] = [
+        ['Organisation Name:', project?.organisationName || '—', 'Customer Name:', project?.customer || '—'],
+        ['Manufacturing Plant:', project?.organisationPlant || '—', 'Document Number:', getDerivedDocNumber()],
+        ['Subject (Part Name):', project?.partName || '—', 'Part Number:', project?.orgPartNumber || '—'],
+        ['Revision:', `Rev ${project?.revisionNumber || '1.0'} (${getStatusLabel()})`, 'Origination Date:', project?.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'],
+        ['Dwg No.:', project?.dwgNumber || '—', 'Dwg Rev No / Date.:', project?.dwgRevNoAndDate || (project?.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—')],
+        ['Assy. Line No.:', project?.assemblyLineNumber || '—', 'CFT Members:', Array.isArray(project?.cftMembers) ? project.cftMembers.join(', ') : (project?.cftMembers || '—')],
+      ];
+
+      let r = 4;
+      infoRows.forEach(([l1, v1, l2, v2]) => {
+        // Label 1: A:D
+        ws.mergeCells(`A${r}:D${r}`);
+        const labelCell1 = ws.getCell(`A${r}`);
+        labelCell1.value = l1;
+        labelCell1.font = { name: FONT, size: 11, bold: true };
+        labelCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        labelCell1.border = allBorders();
+
+        // Value 1: E:L
+        ws.mergeCells(`E${r}:L${r}`);
+        const valCell1 = ws.getCell(`E${r}`);
+        valCell1.value = v1;
+        valCell1.font = { name: FONT, size: 11 };
+        valCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
+        valCell1.border = allBorders();
+
+        // Label 2: M:P
+        ws.mergeCells(`M${r}:P${r}`);
+        const labelCell2 = ws.getCell(`M${r}`);
+        labelCell2.value = l2;
+        labelCell2.font = { name: FONT, size: 11, bold: true };
+        labelCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        labelCell2.border = allBorders();
+
+        // Value 2: Q:X
+        ws.mergeCells(`Q${r}:${LAST_COL_LETTER}${r}`);
+        const valCell2 = ws.getCell(`Q${r}`);
+        valCell2.value = v2;
+        valCell2.font = { name: FONT, size: 11 };
+        valCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
+        valCell2.border = allBorders();
+
+        ws.getRow(r).height = 20;
+        r++;
+      });
+
+      // ---- TABLE HEADER ----
+      const headerRowIdx = r;
+      const headerRow = ws.getRow(headerRowIdx);
+      PFMEA_HEADERS.forEach((title, i) => {
+        const cell = headerRow.getCell(i + 1);
+        cell.value = title;
+        cell.font = { name: FONT, size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.fill = HEADER_FILL;
+        cell.border = allBorders(BORDER_THICK);
+      });
+      headerRow.height = 30;
+
+      // Freeze panes below the header row
+      ws.views = [{ state: 'frozen' as const, ySplit: headerRowIdx }];
+      // AutoFilter on header row (24 columns)
+      ws.autoFilter = { from: { row: headerRowIdx, column: 1 }, to: { row: headerRowIdx, column: TOTAL_COLS } };
+
+      r = headerRowIdx + 1;
+
+      // ---- DATA ROWS ----
+      data.forEach((row) => {
+        const excelRow = ws.getRow(r);
         const step = steps?.find(s => s.id === row.processStepId);
-        let workElements = '';
+
+        // Work Element — each point on separate line
+        let workElementsText = '';
         if (step) {
-          workElements = Array.isArray(step.machinesEquipmentDocs) ? step.machinesEquipmentDocs.join(', ') : (step.machinesEquipmentDocs || '');
+          if (Array.isArray(step.machinesEquipmentDocs)) {
+            workElementsText = step.machinesEquipmentDocs.map((x: string, i: number) => `${i + 1}. ${x}`).join('\n');
+          } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
+            try {
+              const parsed = JSON.parse(step.machinesEquipmentDocs);
+              workElementsText = Array.isArray(parsed) ? parsed.map((x: string, i: number) => `${i + 1}. ${x}`).join('\n') : step.machinesEquipmentDocs;
+            } catch {
+              workElementsText = step.machinesEquipmentDocs;
+            }
+          }
         }
 
-        const rowClass = idx % 2 === 0 ? '' : 'class="bg-zebra"';
-        tableRowsHtml += `<tr ${rowClass}>`;
-        tableRowsHtml += `<td class="text-center">${row.rowNumber}</td>`;
-        
-        if (stepSpans[idx] > 0) {
-          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${step ? `${step.stepNumber} - ${step.name}` : ''}</td>`;
-          tableRowsHtml += `<td rowspan="${stepSpans[idx]}">${workElements}</td>`;
+        // Responsibility & Target Date combined
+        let respTargetDate = row.responsibility || '';
+        if (row.targetDate) {
+          respTargetDate += (respTargetDate ? '\n' : '') + `Target: ${new Date(row.targetDate).toLocaleDateString()}`;
         }
-        if (funcSpans[idx] > 0) {
-          tableRowsHtml += `<td rowspan="${funcSpans[idx]}">${formatExcelList(row.functions)}</td>`;
+
+        // Action Taken & Completion Date combined
+        let actionCompDate = row.actionTaken || '';
+        if (row.completionDate) {
+          actionCompDate += (actionCompDate ? '\n' : '') + `Done: ${new Date(row.completionDate).toLocaleDateString()}`;
         }
-        
-        tableRowsHtml += `<td>${formatExcelList(row.failureModes)}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.effects)}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.severity || ''}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.causes)}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'prevention'))}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.occurrence || ''}</td>`;
-        tableRowsHtml += `<td>${formatExcelList(row.controls?.filter((c: any) => c.type === 'detection'))}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.detection || ''}</td>`;
-        
-        const apVal = row.ap || '';
-        tableRowsHtml += `<td ${getApStyleClass(apVal)}>${apVal}</td>`;
-        tableRowsHtml += `<td class="text-center">${row.filterCode || ''}</td>`;
-        tableRowsHtml += `<td>${row.preventionAction || ''}</td>`;
-        tableRowsHtml += `<td>${row.detectionAction || ''}</td>`;
-        tableRowsHtml += `<td>${row.responsibility || ''}</td>`;
-        tableRowsHtml += `<td>${row.actionTaken || ''}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.revisedSeverity || ''}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.revisedOccurrence || ''}</td>`;
-        tableRowsHtml += `<td class="rating-cell">${row.revisedDetection || ''}</td>`;
-        const revisedApVal = row.revisedAp || '';
-        tableRowsHtml += `<td ${getApStyleClass(revisedApVal)}>${revisedApVal}</td>`;
-        tableRowsHtml += `<td>${row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}</td>`;
-        tableRowsHtml += `<td>${row.notes || ''}</td>`;
-        tableRowsHtml += '</tr>';
+
+        const values = [
+          String(row.rowNumber || ''),
+          step ? `${step.stepNumber}: ${step.name}` : '',
+          workElementsText,
+          arrToText(row.functions),
+          arrToText(row.failureModes),
+          arrToText(row.effects),
+          String(row.severity || ''),
+          arrToText(row.causes),
+          arrToText(row.controls?.filter((c: any) => c.type === 'prevention')),
+          String(row.occurrence || ''),
+          arrToText(row.controls?.filter((c: any) => c.type === 'detection')),
+          String(row.detection || ''),
+          row.ap || '',
+          row.filterCode || '',
+          row.preventionAction || '',
+          row.detectionAction || '',
+          respTargetDate,
+          actionCompDate,
+          String(row.revisedSeverity || ''),
+          String(row.revisedOccurrence || ''),
+          String(row.revisedDetection || ''),
+          row.revisedAp || '',
+          row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open',
+          row.notes || ''
+        ];
+
+        values.forEach((val, i) => {
+          const cell = excelRow.getCell(i + 1);
+          cell.value = val;
+          cell.font = { name: FONT, size: 11, color: { argb: 'FF0F172A' } };
+          cell.border = allBorders(BORDER_THIN);
+          cell.alignment = {
+            vertical: 'middle',
+            wrapText: true,
+            horizontal: CENTERED_COLS.includes(i) ? 'center' : 'left'
+          };
+
+          // AP columns — conditional color fills (col index 12 = AP, 21 = AP rev)
+          if (i === 12 || i === 21) {
+            const apFill = getApFill(val);
+            if (apFill) cell.fill = apFill;
+            cell.font = { name: FONT, size: 11, bold: true, color: { argb: getApFontColor(val) } };
+          }
+        });
+
+        // Dynamic row height based on wrapped line count
+        const maxLines = Math.max(...values.map(v => String(v || '').split('\n').length));
+        excelRow.height = Math.max(20, maxLines * 15);
+        r++;
       });
+
+      const lastDataRow = r - 1;
+
+      // Apply outer medium border around entire table (header → last data row)
+      for (let c = 1; c <= TOTAL_COLS; c++) {
+        const topCell = ws.getRow(headerRowIdx).getCell(c);
+        topCell.border = { ...topCell.border, top: BORDER_THICK };
+        const bottomCell = ws.getRow(lastDataRow).getCell(c);
+        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
+      }
+      for (let rr = headerRowIdx; rr <= lastDataRow; rr++) {
+        const leftCell = ws.getRow(rr).getCell(1);
+        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
+        const rightCell = ws.getRow(rr).getCell(TOTAL_COLS);
+        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
+      }
+
+      // ---- SIGNATURE ROW ----
+      r += 1; // spacer row
+      // Prepared By: (A:H), Checked By: (I:P), Approved By: (Q:X)
+      ws.mergeCells(`A${r}:H${r}`);
+      const prepCell = ws.getCell(`A${r}`);
+      prepCell.value = 'Prepared By:';
+      prepCell.font = { name: FONT, size: 11, bold: true };
+      prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      prepCell.border = allBorders();
+
+      ws.mergeCells(`I${r}:P${r}`);
+      const checkCell = ws.getCell(`I${r}`);
+      checkCell.value = 'Checked By:';
+      checkCell.font = { name: FONT, size: 11, bold: true };
+      checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      checkCell.border = allBorders();
+
+      ws.mergeCells(`Q${r}:${LAST_COL_LETTER}${r}`);
+      const approveCell = ws.getCell(`Q${r}`);
+      approveCell.value = 'Approved By:';
+      approveCell.font = { name: FONT, size: 11, bold: true };
+      approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      approveCell.border = allBorders();
+
+      ws.getRow(r).height = 25;
+
+      // ---- PRINT SETUP ----
+      ws.pageSetup.printArea = `A1:${LAST_COL_LETTER}${r}`;
+      ws.pageSetup.printTitlesRow = `${headerRowIdx}:${headerRowIdx}`;
+
+      // ---- WRITE & DOWNLOAD ----
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
     } else if (docType === 'DFMEA') {
       headers = [
         '#', 'Higher Level', 'Focus Element', 'Component Element', 'Functions', 'Requirements',
