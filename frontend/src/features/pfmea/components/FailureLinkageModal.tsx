@@ -249,12 +249,12 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth slotProps={{ paper: { sx: { height: '88vh', borderRadius: 3 } } }}>
+    <Dialog open={open} onClose={onClose} maxWidth={false} slotProps={{ paper: { sx: { width: '96vw', height: '94vh', m: 'auto', borderRadius: 3 } } }}>
       {/* Dialog Header: Clean Professional Dark Slate */}
       <DialogTitle sx={{ bgcolor: '#0F172A', color: '#FFFFFF', px: 3, py: 2 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <LinkIcon sx={{ color: '#38BDF8' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'inherit', fontSize: '1.1rem' }}>
+          <LinkIcon sx={{ color: '#38BDF8', fontSize: '1.5rem' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'inherit', fontSize: '1.3rem' }}>
             Failure Linkage — Effects / Mode / Causes
           </Typography>
         </Stack>
@@ -271,7 +271,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
             
             {/* LEFT PANE (~70% Width): Live Linkage Network Diagram */}
             <Grid size={8} sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 3, position: 'relative', overflow: 'hidden', borderRight: '1px solid #E2E8F0' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '0.85rem' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '1.05rem' }}>
                 🔗 Failure Linkage Network Diagram
               </Typography>
               
@@ -291,10 +291,10 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 </svg>
 
                 {/* Left Side: Floating Selected Effects (Higher Level) */}
-                <Stack spacing={2} sx={{ width: '30%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pr: 1 }}>
+                <Stack spacing={2} sx={{ width: '32%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pr: 1 }}>
                   {selectedEffects.length === 0 ? (
                     <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
-                      <Typography variant="caption" color="text.secondary">No higher level effects linked</Typography>
+                      <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary' }}>No higher level effects linked</Typography>
                     </Box>
                   ) : (
                     selectedEffects.map(eff => (
@@ -302,21 +302,21 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         key={eff.id}
                         id={`selected-eff-${eff.id}`}
                         sx={{
-                          p: 1.5,
+                          p: 2,
                           borderRadius: 2,
                           bgcolor: '#FFFFFF',
                           border: '1px solid #E2E8F0',
-                          borderLeft: `3px solid ${TREE_COLORS.nodeText.failure}`,
+                          borderLeft: `4px solid ${TREE_COLORS.nodeText.failure}`,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                         }}
                       >
-                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.25 }}>
+                        <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5 }}>
                           {eff.parentName || 'Wheel Flange'}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.25 }}>
+                        <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
                           {eff.function?.narration}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
+                        <Typography sx={{ fontSize: '1.0rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                           {eff.narration}
                         </Typography>
                       </Box>
@@ -330,34 +330,34 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                   sx={{ 
                     width: '32%', 
                     zIndex: 2, 
-                    p: 2, 
+                    p: 2.5, 
                     bgcolor: '#FFFFFF', 
                     border: '1px solid #E2E8F0',
-                    borderTop: `3px solid ${TREE_COLORS.nodeText.process}`,
+                    borderTop: `4px solid ${TREE_COLORS.nodeText.process}`,
                     borderRadius: 2.5, 
                     boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
                     textAlign: 'center'
                   }}
                 >
-                  <Stack spacing={0.5} sx={{ alignItems: 'center' }}>
-                    <TreeIcon iconSrc={TREE_ASSETS.processStep} size={24} />
-                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: TREE_COLORS.nodeText.process }}>
+                  <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
+                    <TreeIcon iconSrc={TREE_ASSETS.processStep} size={28} />
+                    <Typography sx={{ fontSize: '0.98rem', fontWeight: 700, color: TREE_COLORS.nodeText.process }}>
                       {data.mode.parentName || 'Rough Turn'}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
+                    <Typography sx={{ fontSize: '0.94rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
                       {data.mode.function?.narration}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.88rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
+                    <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                       {data.mode.narration}
                     </Typography>
                   </Stack>
                 </Box>
 
                 {/* Right Side: Floating Selected Causes (Lower Level) */}
-                <Stack spacing={2} sx={{ width: '30%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pl: 1 }}>
+                <Stack spacing={2} sx={{ width: '32%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pl: 1 }}>
                   {selectedCauses.length === 0 ? (
                     <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
-                      <Typography variant="caption" color="text.secondary">No lower level causes linked</Typography>
+                      <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary' }}>No lower level causes linked</Typography>
                     </Box>
                   ) : (
                     selectedCauses.map(cause => (
@@ -365,21 +365,21 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         key={cause.id}
                         id={`selected-cause-${cause.id}`}
                         sx={{
-                          p: 1.5,
+                          p: 2,
                           borderRadius: 2,
                           bgcolor: '#FFFFFF',
                           border: '1px solid #E2E8F0',
-                          borderLeft: `3px solid ${TREE_COLORS.nodeText.workElem}`,
+                          borderLeft: `4px solid ${TREE_COLORS.nodeText.workElem}`,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                         }}
                       >
-                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.25 }}>
+                        <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.5 }}>
                           {cause.parentName || 'Tool Holder'}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.25 }}>
+                        <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
                           {cause.function?.narration}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
+                        <Typography sx={{ fontSize: '1.0rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                           {cause.narration}
                         </Typography>
                       </Box>
@@ -394,15 +394,15 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
               
               {/* TOP SECTION: Connect Higher Level Failure (Effects) */}
               <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '1px solid #E2E8F0' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '0.82rem' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '1.05rem' }}>
                   Connect Higher Level Failure
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontSize: '0.9rem' }}>
                   Selected Failure: <strong>{data.mode.narration}</strong>
                 </Typography>
 
                 {Object.keys(groupedEffects).length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
                     No higher level failure effects defined.
                   </Typography>
                 ) : (
@@ -415,25 +415,25 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                           direction="row" 
                           spacing={0.5} 
                           onClick={() => toggleGroup(fnName)}
-                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.25, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
                         >
                           {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
-                          <TreeIcon iconSrc={TREE_ASSETS.processStep} size={16} />
-                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, fontSize: '0.82rem' }}>
+                          <TreeIcon iconSrc={TREE_ASSETS.processStep} size={20} />
+                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, fontSize: '0.95rem' }}>
                             {parentName}
                           </Typography>
                         </Stack>
 
                         <Collapse in={isExpanded}>
-                          <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
+                          <Box sx={{ pl: 2.5, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
                             <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', py: 0.25, mb: 0.5 }}>
-                              <TreeIcon iconSrc={TREE_ASSETS.function} size={16} />
-                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.8rem' }}>
+                              <TreeIcon iconSrc={TREE_ASSETS.function} size={18} />
+                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.92rem' }}>
                                 {fnName}
                               </Typography>
                             </Stack>
 
-                            <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
+                            <Box sx={{ pl: 2.5, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
                               {effects.map(effect => {
                                 const isChecked = selectedEffectIds.includes(effect.id);
                                 return (
@@ -455,8 +455,8 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                                     }}
                                   >
                                     <Checkbox checked={isChecked} size="small" sx={{ p: 0.25, color: TREE_COLORS.nodeText.failure, '&.Mui-checked': { color: TREE_COLORS.nodeText.failure } }} />
-                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={16} />
-                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.82rem' }}>
+                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={18} />
+                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.95rem' }}>
                                       {effect.narration}
                                     </Typography>
                                   </Stack>
@@ -473,12 +473,12 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
               {/* BOTTOM SECTION: Connect Lower Level Failure (Causes) */}
               <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '0.82rem' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '1.05rem' }}>
                   Connect Lower Level Failure
                 </Typography>
 
                 {Object.keys(groupedCauses).length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
                     No lower level failure causes defined.
                   </Typography>
                 ) : (
@@ -491,25 +491,25 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                           direction="row" 
                           spacing={0.5} 
                           onClick={() => toggleGroup(fnName)}
-                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.25, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
                         >
                           {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
-                          <TreeIcon iconSrc={TREE_ASSETS.workElement} size={16} />
-                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, fontSize: '0.82rem' }}>
+                          <TreeIcon iconSrc={TREE_ASSETS.workElement} size={20} />
+                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, fontSize: '0.95rem' }}>
                             {parentName}
                           </Typography>
                         </Stack>
 
                         <Collapse in={isExpanded}>
-                          <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
+                          <Box sx={{ pl: 2.5, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
                             <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', py: 0.25, mb: 0.5 }}>
-                              <TreeIcon iconSrc={TREE_ASSETS.function} size={16} />
-                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.8rem' }}>
+                              <TreeIcon iconSrc={TREE_ASSETS.function} size={18} />
+                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.92rem' }}>
                                 {fnName}
                               </Typography>
                             </Stack>
 
-                            <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
+                            <Box sx={{ pl: 2.5, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
                               {causes.map(cause => {
                                 const isChecked = selectedCauseIds.includes(cause.id);
                                 return (
@@ -531,8 +531,8 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                                     }}
                                   >
                                     <Checkbox checked={isChecked} size="small" sx={{ p: 0.25, color: TREE_COLORS.nodeText.failure, '&.Mui-checked': { color: TREE_COLORS.nodeText.failure } }} />
-                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={16} />
-                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.82rem' }}>
+                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={18} />
+                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.95rem' }}>
                                       {cause.narration}
                                     </Typography>
                                   </Stack>
