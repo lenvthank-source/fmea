@@ -7,7 +7,6 @@ import {
   Grid
 } from '@mui/material';
 import {
-  Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
@@ -1228,9 +1227,6 @@ export const PfmeaWorkspace: React.FC = () => {
               >
                 {syncingTree ? 'Syncing...' : 'Sync Tree'}
               </Button>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-                Add Analysis Row
-              </Button>
             </>
           )}
         </Stack>
@@ -1316,7 +1312,7 @@ export const PfmeaWorkspace: React.FC = () => {
               {rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={25} align="center" sx={{ py: 6, color: 'text.secondary', fontSize: '0.9rem' }}>
-                    No PFMEA analysis rows added yet. Click "Add Analysis Row" to begin.
+                    No PFMEA analysis rows added yet.
                   </TableCell>
                 </TableRow>
               ) : (
