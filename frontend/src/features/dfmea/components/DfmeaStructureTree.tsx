@@ -54,31 +54,29 @@ interface DfmeaStructureTreeProps {
   onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
 }
 
-// Reusable Circular Pastel Badge Component
+// Clean Icon Component (No background circle or border)
 const TreeIconBadge: React.FC<{
-  type: keyof typeof TREE_COLORS.iconBg;
+  type?: keyof typeof TREE_COLORS.iconBg;
   iconSrc?: string;
-}> = ({ type, iconSrc }) => (
+  size?: number;
+}> = ({ iconSrc, size = 18 }) => (
   <Box
     sx={{
-      width: 24,
-      height: 24,
-      borderRadius: '50%',
-      bgcolor: TREE_COLORS.iconBg[type],
-      border: `1px solid ${TREE_COLORS.iconBorder[type]}`,
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
       mr: 1,
-      flexShrink: 0
+      flexShrink: 0,
+      width: size,
+      height: size,
     }}
   >
     {iconSrc && (
       <Box
         component="img"
         src={iconSrc}
-        alt={type}
-        sx={{ width: 14, height: 14, objectFit: 'contain' }}
+        alt="icon"
+        sx={{ width: size, height: size, objectFit: 'contain' }}
       />
     )}
   </Box>
