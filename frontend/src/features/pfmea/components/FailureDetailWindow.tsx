@@ -335,11 +335,6 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                           </Stack>
                         </Box>
                         <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="Add Action">
-                            <IconButton size="small" color="warning" onClick={() => openActionModal(entry.linkId, entry.failure.narration)}>
-                              <AddIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
                           <Tooltip title="Unlink Cause">
                             <IconButton size="small" color="error" onClick={() => handleUnlink(entry.linkId)}>
                               <LinkIcon fontSize="small" />

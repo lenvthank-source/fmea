@@ -109,14 +109,22 @@ export const PfmeaWorkspace: React.FC = () => {
   // Exporter Dialog state
   const [exporterOpen, setExporterOpen] = useState(false);
 
-  // Corrective action creation state
-  const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [selectedRowForAction, setSelectedRowForAction] = useState<PfmeaRow | null>(null);
-  const [actionDescription, setActionDescription] = useState('');
-  const [actionPriority, setActionPriority] = useState('medium');
-  const [actionOwnerId, setActionOwnerId] = useState('');
-  const [actionDueDate, setActionDueDate] = useState('');
-  const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  // Manage Action modal state (full action window)
+  const [manageActionOpen, setManageActionOpen] = useState(false);
+  const [manageActionRowId, setManageActionRowId] = useState<string | null>(null);
+  const [manageActionForm, setManageActionForm] = useState({
+    preventionAction: '',
+    detectionAction: '',
+    actionTaken: '',
+    targetDate: '',
+    completionDate: '',
+    responsibility: '',
+    status: 'Open',
+    revisedSeverity: '',
+    revisedOccurrence: '',
+    revisedDetection: '',
+    notes: '',
+  });
 
   // Linkage dialogs state
   const [linkageModalOpen, setLinkageModalOpen] = useState(false);
@@ -196,41 +204,58 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  const handleCreateAction = async () => {
-    if (!selectedRowForAction || !actionDescription || !actionOwnerId || !actionDueDate) return;
+  const openManageAction = (row: PfmeaRow) => {
+    setManageActionRowId(row.id);
+    setManageActionForm({
+      preventionAction: row.preventionAction || '',
+      detectionAction: row.detectionAction || '',
+      actionTaken: row.actionTaken || '',
+      targetDate: row.targetDate ? row.targetDate.split('T')[0] : '',
+      completionDate: row.completionDate ? row.completionDate.split('T')[0] : '',
+      responsibility: row.responsibility || '',
+      status: row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open',
+      revisedSeverity: row.revisedSeverity ? String(row.revisedSeverity) : '',
+      revisedOccurrence: row.revisedOccurrence ? String(row.revisedOccurrence) : '',
+      revisedDetection: row.revisedDetection ? String(row.revisedDetection) : '',
+      notes: row.notes || '',
+    });
+    setManageActionOpen(true);
+  };
+
+  const handleSaveManageAction = async () => {
+    if (!manageActionRowId) return;
     setError(null);
-    setActionDialogOpen(false);
     try {
-      const response = await fetch(`${API_BASE_URL}/actions`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/pfmea-rows/${manageActionRowId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          projectId,
-          description: actionDescription,
-          ownerId: actionOwnerId,
-          dueDate: actionDueDate,
-          priority: actionPriority,
-          fmeaRowId: selectedRowForAction.id,
-          fmeaType: 'PFMEA',
+          preventionAction: manageActionForm.preventionAction || null,
+          detectionAction: manageActionForm.detectionAction || null,
+          actionTaken: manageActionForm.actionTaken || null,
+          targetDate: manageActionForm.targetDate || null,
+          completionDate: manageActionForm.completionDate || null,
+          responsibility: manageActionForm.responsibility || null,
+          revisedSeverity: manageActionForm.revisedSeverity ? Number(manageActionForm.revisedSeverity) : null,
+          revisedOccurrence: manageActionForm.revisedOccurrence ? Number(manageActionForm.revisedOccurrence) : null,
+          revisedDetection: manageActionForm.revisedDetection ? Number(manageActionForm.revisedDetection) : null,
+          notes: manageActionForm.notes || null,
         }),
       });
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.message || 'Failed to create corrective action.');
+        throw new Error(err.message || 'Failed to save action data.');
       }
 
-      setActionDescription('');
-      setActionPriority('medium');
-      setActionOwnerId('');
-      setActionDueDate('');
-      setSelectedRowForAction(null);
+      setManageActionOpen(false);
+      setManageActionRowId(null);
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not create corrective action.');
+      setError(err.message || 'Could not save action data.');
     }
   };
 
@@ -1504,14 +1529,11 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Actions */}
                       <TableCell align="center">
-                        <Tooltip title="Create Corrective Action">
+                        <Tooltip title="Manage Action">
                           <IconButton
                             size="small"
                             color="secondary"
-                            onClick={() => {
-                              setSelectedRowForAction(row);
-                              setActionDialogOpen(true);
-                            }}
+                            onClick={() => openManageAction(row)}
                           >
                             <PlaylistAddIcon fontSize="small" />
                           </IconButton>
@@ -1622,80 +1644,221 @@ export const PfmeaWorkspace: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Create Corrective Action Dialog */}
-      <Dialog open={actionDialogOpen} onClose={() => setActionDialogOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Create Corrective Action</DialogTitle>
-        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Step 6 Optimization: Define preventive or corrective tasks to reduce S/O/D ratings.
-            </Typography>
+      {/* Manage Action Dialog — Full action fields matching FMEA report columns */}
+      <Dialog
+        open={manageActionOpen}
+        onClose={() => setManageActionOpen(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2, p: 1 } } }}
+      >
+        <DialogTitle sx={{ py: 1.5, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Manage Action</Typography>
+          <IconButton size="small" onClick={() => setManageActionOpen(false)}><CloseIcon /></IconButton>
+        </DialogTitle>
 
-            <TextField
-              label="Action Description / Task"
-              multiline
-              rows={3}
-              value={actionDescription}
-              onChange={(e: any) => setActionDescription(e.target.value)}
-              placeholder="Define action to reduce occurrence or improve detection..."
-              fullWidth
-              size="small"
-              required
-            />
+        <DialogContent sx={{ px: 2, py: 1 }}>
+          <Stack spacing={2}>
+            {/* Prevention Action(s) */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 180, fontWeight: 700, pt: 1 }}>
+                Prevention Action(s) :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={manageActionForm.preventionAction}
+                onChange={(e) => setManageActionForm(f => ({ ...f, preventionAction: e.target.value }))}
+                placeholder="Enter prevention action details..."
+              />
+            </Box>
 
-            <FormControl fullWidth size="small">
-              <InputLabel>Assigned Owner</InputLabel>
-              <Select
-                value={actionOwnerId}
-                label="Assigned Owner"
-                onChange={(e: any) => setActionOwnerId(e.target.value as string)}
-                required
-              >
-                {users.map((u) => (
-                  <MenuItem key={u.id} value={u.id}>
-                    {u.name} ({u.email})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {/* Detection Action */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 180, fontWeight: 700, pt: 1 }}>
+                Detection Action :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={manageActionForm.detectionAction}
+                onChange={(e) => setManageActionForm(f => ({ ...f, detectionAction: e.target.value }))}
+                placeholder="Enter detection action details..."
+              />
+            </Box>
 
-            <FormControl fullWidth size="small">
-              <InputLabel>Priority</InputLabel>
-              <Select
-                value={actionPriority}
-                label="Priority"
-                onChange={(e: any) => setActionPriority(e.target.value as string)}
-              >
-                <MenuItem value="high">High</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="low">Low</MenuItem>
-              </Select>
-            </FormControl>
+            {/* Action Taken */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 180, fontWeight: 700, pt: 1 }}>
+                Action Taken :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={manageActionForm.actionTaken}
+                onChange={(e) => setManageActionForm(f => ({ ...f, actionTaken: e.target.value }))}
+                placeholder="Enter actions taken..."
+              />
+            </Box>
 
-            <TextField
-              {...({
-                label: "Due Date",
-                type: "date",
-                value: actionDueDate,
-                onChange: (e: any) => setActionDueDate(e.target.value),
-                InputLabelProps: { shrink: true },
-                fullWidth: true,
-                size: "small",
-                required: true
-              } as any)}
-            />
+            {/* Grid for Dates & After Action S/O/D Ratings */}
+            <Grid container spacing={2.5} sx={{ mt: 1 }}>
+              {/* Left Column: Dates & Responsibility */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack spacing={2}>
+                  {/* Target Date */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Target Date :
+                    </Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      value={manageActionForm.targetDate}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, targetDate: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                  </Box>
+
+                  {/* Completion Date */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Completion Date :
+                    </Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      value={manageActionForm.completionDate}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, completionDate: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                  </Box>
+
+                  {/* Responsible Person */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Responsible Person :
+                    </Typography>
+                    <TextField
+                      size="small"
+                      placeholder="Name or team..."
+                      value={manageActionForm.responsibility}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, responsibility: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                  </Box>
+
+                  {/* Status */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Status :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={manageActionForm.status}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, status: e.target.value }))}
+                      sx={{ width: 180 }}
+                    >
+                      <MenuItem value="Open">Open</MenuItem>
+                      <MenuItem value="In Progress">In Progress</MenuItem>
+                      <MenuItem value="Completed">Completed</MenuItem>
+                      <MenuItem value="Verified">Verified</MenuItem>
+                      <MenuItem value="Closed">Closed</MenuItem>
+                    </TextField>
+                  </Box>
+                </Stack>
+              </Grid>
+
+              {/* Right Column: After Action S/O/D Ratings (Revised) */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, textAlign: 'center', color: '#0f172a' }}>
+                  After Action (Revised Ratings)
+                </Typography>
+
+                <Stack spacing={2}>
+                  {/* Severity (S) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Severity (S) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={manageActionForm.revisedSeverity}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, revisedSeverity: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                  </Box>
+
+                  {/* Occurrence (O) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Occurrence (O) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={manageActionForm.revisedOccurrence}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, revisedOccurrence: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                  </Box>
+
+                  {/* Detection (D) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Detection (D) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={manageActionForm.revisedDetection}
+                      onChange={(e) => setManageActionForm(f => ({ ...f, revisedDetection: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                  </Box>
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Remarks */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+              <Typography variant="body2" sx={{ width: 180, fontWeight: 700 }}>
+                Remarks :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                value={manageActionForm.notes}
+                onChange={(e) => setManageActionForm(f => ({ ...f, notes: e.target.value }))}
+                placeholder="Enter remarks..."
+              />
+            </Box>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setActionDialogOpen(false)} color="inherit">
-            Cancel
+
+        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end', gap: 1 }}>
+          <Button variant="contained" onClick={handleSaveManageAction} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
+            Save
           </Button>
-          <Button
-            onClick={handleCreateAction}
-            variant="contained"
-            disabled={!actionDescription || !actionOwnerId || !actionDueDate}
-          >
-            Create Action
+          <Button variant="outlined" onClick={() => setManageActionOpen(false)} sx={{ px: 4, fontWeight: 700 }}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>

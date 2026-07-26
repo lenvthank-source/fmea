@@ -236,11 +236,12 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         top: style, left: style, bottom: style, right: style
       });
 
+      const stripNum = (s: string) => s.replace(/^\d+[\.)\-]\s*/, '');
       const arrToText = (arr: any): string => {
         if (!arr) return '';
         if (Array.isArray(arr)) {
           const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
-          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${x}`).join('\n') : '';
+          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${stripNum(x)}`).join('\n') : '';
         }
         if (typeof arr === 'string') {
           try {
@@ -359,7 +360,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         const row = ws.getRow(r);
         const icons = step.flowIcons || {};
         const activeKeys = Object.keys(icons).filter(k => icons[k]);
-        const symbolsText = activeKeys.length > 0 ? activeKeys.map(k => getPfdIconMeta(k).short).join(', ') : '—';
+        const symbolsText = activeKeys.length > 0 ? activeKeys.map(k => { const m = getPfdIconMeta(k); return `${m.sym} ${m.short}`; }).join(', ') : '—';
 
         const values = [
           step.stepNumber || '',
@@ -502,11 +503,12 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         top: style, left: style, bottom: style, right: style
       });
 
+      const stripNum = (s: string) => s.replace(/^\d+[\.)\-]\s*/, '');
       const arrToText = (arr: any): string => {
         if (!arr) return '';
         if (Array.isArray(arr)) {
           const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
-          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${x}`).join('\n') : '';
+          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${stripNum(x)}`).join('\n') : '';
         }
         if (typeof arr === 'string') {
           try {
@@ -647,11 +649,11 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         let workElementsText = '';
         if (step) {
           if (Array.isArray(step.machinesEquipmentDocs)) {
-            workElementsText = step.machinesEquipmentDocs.map((x: string, i: number) => `${i + 1}. ${x}`).join('\n');
+            workElementsText = step.machinesEquipmentDocs.map((x: string, i: number) => `${i + 1}. ${x.replace(/^\d+[\.)\-]\s*/, '')}`).join('\n');
           } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
             try {
               const parsed = JSON.parse(step.machinesEquipmentDocs);
-              workElementsText = Array.isArray(parsed) ? parsed.map((x: string, i: number) => `${i + 1}. ${x}`).join('\n') : step.machinesEquipmentDocs;
+              workElementsText = Array.isArray(parsed) ? parsed.map((x: string, i: number) => `${i + 1}. ${x.replace(/^\d+[\.)\-]\s*/, '')}`).join('\n') : step.machinesEquipmentDocs;
             } catch {
               workElementsText = step.machinesEquipmentDocs;
             }
