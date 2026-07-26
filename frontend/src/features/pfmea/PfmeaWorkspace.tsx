@@ -1285,31 +1285,31 @@ export const PfmeaWorkspace: React.FC = () => {
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ minWidth: 40, fontWeight: 800, position: 'sticky', left: 0, bgcolor: '#f8fafc', zIndex: 3, borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>#</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, position: 'sticky', left: 40, bgcolor: '#f8fafc', zIndex: 3, borderRight: '2px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Structure / Item</TableCell>
-                <TableCell sx={{ minWidth: 140, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Work Element (4M)</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Function / Focus Element</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Failure Mode</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Potential Effects</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>SEV</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Failure Causes</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Current Control – Prevention</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>OCC</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Current Control – Detection</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>DET</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>AP</TableCell>
-                <TableCell sx={{ minWidth: 60, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>FC</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Prevention Action</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Detection Action</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Responsibility & Target Date</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Action Taken & Completion Date</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>SEV (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>OCC (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>DET (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>AP (rev)</TableCell>
-                <TableCell sx={{ minWidth: 90, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Status</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 800, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Remarks</TableCell>
-                <TableCell sx={{ minWidth: 110, fontWeight: 800, textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.88rem' }}>Actions</TableCell>
+                <TableCell sx={{ minWidth: 45, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#f8fafc', zIndex: 3, borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>#</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, position: 'sticky', left: 45, bgcolor: '#f8fafc', zIndex: 3, borderRight: '2px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Structure / Item</TableCell>
+                <TableCell sx={{ minWidth: 240, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Work Element (4M)</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Function / Focus Element</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Failure Mode</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Potential Effects</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>SEV</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Failure Causes</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Current Control – Prevention</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>OCC</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Current Control – Detection</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>DET</TableCell>
+                <TableCell sx={{ minWidth: 70, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>AP</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>FC</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Prevention Action</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Detection Action</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Responsibility & Target Date</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Action Taken & Completion Date</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>SEV (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>OCC (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>DET (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>AP (rev)</TableCell>
+                <TableCell sx={{ minWidth: 100, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Status</TableCell>
+                <TableCell sx={{ minWidth: 160, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 110, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1339,11 +1339,11 @@ export const PfmeaWorkspace: React.FC = () => {
                   return (
                     <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
                       {/* Row Number */}
-                      <TableCell sx={{ fontWeight: 800, position: 'sticky', left: 0, bgcolor: '#fff', zIndex: 1, borderRight: '1px solid #cbd5e1', fontSize: '0.88rem' }}>{row.rowNumber}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, position: 'sticky', left: 0, bgcolor: '#fff', zIndex: 1, borderRight: '1px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>{row.rowNumber}</TableCell>
 
                       {/* Structure / Item */}
-                      <TableCell sx={{ position: 'sticky', left: 40, bgcolor: '#fff', zIndex: 1, borderRight: '2px solid #cbd5e1' }}>
-                        <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', color: '#0f172a' }}>
+                      <TableCell sx={{ position: 'sticky', left: 45, bgcolor: '#fff', zIndex: 1, borderRight: '2px solid #cbd5e1' }}>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.85rem', color: '#334155' }}>
                           {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : ''}
                           {row.processStep?.name || 'Untitled Step'}
                         </Typography>
@@ -1353,11 +1353,11 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.3}>
                           {workElements.map((we, idx) => (
-                            <Typography key={idx} sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>
+                            <Typography key={idx} sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>
                               {we}
                             </Typography>
                           ))}
-                          {workElements.length === 0 && <Typography sx={{ fontSize: '0.88rem', color: 'text.secondary' }}>—</Typography>}
+                          {workElements.length === 0 && <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>—</Typography>}
                         </Stack>
                       </TableCell>
 
@@ -1365,10 +1365,10 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.3}>
                           {row.functions?.map((f, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{f.name}</Typography>
+                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{f.name}</Typography>
                           ))}
                           {row.requirements?.map((req, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.82rem', color: 'text.secondary', fontWeight: 600 }}>R: {req.name}</Typography>
+                            <Typography key={i} sx={{ fontSize: '0.8rem', color: 'text.secondary', fontWeight: 400 }}>R: {req.name}</Typography>
                           ))}
                           {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
                         </Stack>
@@ -1378,7 +1378,7 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.3}>
                           {row.failureModes?.map((fm, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{fm.name}</Typography>
+                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{fm.name}</Typography>
                           ))}
                           {(!row.failureModes || row.failureModes.length === 0) && '—'}
                         </Stack>
@@ -1388,7 +1388,7 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.5}>
                           {row.effects?.map((e, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{e.name}</Typography>
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{e.name}</Typography>
                           ))}
                           {(!row.effects || row.effects.length === 0) && '—'}
                         </Stack>
@@ -1396,14 +1396,14 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* SEV */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.severity || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.severity || '—'}</Typography>
                       </TableCell>
 
                       {/* Failure Causes */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.3}>
                           {row.causes?.map((c, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>{c.name}</Typography>
+                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{c.name}</Typography>
                           ))}
                           {(!row.causes || row.causes.length === 0) && '—'}
                         </Stack>
@@ -1413,7 +1413,7 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.5}>
                           {row.controls?.filter(c => c.type === 'prevention').map((c, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{c.name}</Typography>
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{c.name}</Typography>
                           ))}
                           {row.controls?.filter(c => c.type === 'prevention').length === 0 && '—'}
                         </Stack>
@@ -1421,14 +1421,14 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* OCC */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.occurrence || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.occurrence || '—'}</Typography>
                       </TableCell>
 
                       {/* Current Control – Detection */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.5}>
                           {row.controls?.filter(c => c.type === 'detection').map((c, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{c.name}</Typography>
+                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{c.name}</Typography>
                           ))}
                           {row.controls?.filter(c => c.type === 'detection').length === 0 && '—'}
                         </Stack>
@@ -1436,7 +1436,7 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* DET */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.detection || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.detection || '—'}</Typography>
                       </TableCell>
 
                       {/* AP - COLOR BADGE KEPT HERE */}
@@ -1444,25 +1444,25 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* FC */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{row.filterCode || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{row.filterCode || '—'}</Typography>
                       </TableCell>
 
                       {/* Prevention Action */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', minWidth: 180 }}>{row.preventionAction || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155', minWidth: 200 }}>{row.preventionAction || '—'}</Typography>
                       </TableCell>
 
                       {/* Detection Action */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a', minWidth: 180 }}>{row.detectionAction || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155', minWidth: 200 }}>{row.detectionAction || '—'}</Typography>
                       </TableCell>
 
                       {/* Responsibility & Target Date */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.2}>
-                          <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{row.responsibility || '—'}</Typography>
+                          <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{row.responsibility || '—'}</Typography>
                           {row.targetDate && (
-                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 600 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 400 }}>
                               Target: {new Date(row.targetDate).toLocaleDateString()}
                             </Typography>
                           )}
@@ -1472,9 +1472,9 @@ export const PfmeaWorkspace: React.FC = () => {
                       {/* Action Taken & Completion Date */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
                         <Stack spacing={0.2}>
-                          <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>{row.actionTaken || '—'}</Typography>
+                          <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{row.actionTaken || '—'}</Typography>
                           {row.completionDate && (
-                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 600 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 400 }}>
                               Done: {new Date(row.completionDate).toLocaleDateString()}
                             </Typography>
                           )}
@@ -1483,17 +1483,17 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* SEV (revised) */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.revisedSeverity || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedSeverity || '—'}</Typography>
                       </TableCell>
 
                       {/* OCC (revised) */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.revisedOccurrence || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedOccurrence || '—'}</Typography>
                       </TableCell>
 
                       {/* DET (revised) */}
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a' }}>{row.revisedDetection || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedDetection || '—'}</Typography>
                       </TableCell>
 
                       {/* AP (revised) - COLOR BADGE KEPT HERE */}
@@ -1501,14 +1501,14 @@ export const PfmeaWorkspace: React.FC = () => {
 
                       {/* Status */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>
                           {row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}
                         </Typography>
                       </TableCell>
 
                       {/* Remarks */}
                       <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.88rem', color: '#0f172a', minWidth: 150 }}>{row.notes || '—'}</Typography>
+                        <Typography sx={{ fontSize: '0.85rem', color: '#334155', minWidth: 160 }}>{row.notes || '—'}</Typography>
                       </TableCell>
 
                       {/* Actions */}
