@@ -159,7 +159,7 @@ export const Login: React.FC = () => {
             border: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
-            boxShadow: (theme) => (theme.palette.mode === 'dark' ? '0 10px 30px rgba(0,0,0,0.5)' : '0 4px 20px rgba(15,23,42,0.06)'),
+            boxShadow: '0 4px 20px rgba(15,23,42,0.06)',
           }}
         >
           <Box sx={{ mb: 3 }}>

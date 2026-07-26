@@ -1,17 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { ThemeProvider, createTheme, type Theme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-export type PaletteMode = 'system' | 'light' | 'dark';
+export type PaletteMode = 'light';
 
 interface ColorModeContextType {
   mode: PaletteMode;
-  actualMode: 'light' | 'dark';
+  actualMode: 'light';
   setMode: (mode: PaletteMode) => void;
 }
 
 const ColorModeContext = createContext<ColorModeContextType>({
-  mode: 'system',
+  mode: 'light',
   actualMode: 'light',
   setMode: () => {},
 });
@@ -19,60 +19,30 @@ const ColorModeContext = createContext<ColorModeContextType>({
 export const useColorMode = () => useContext(ColorModeContext);
 
 export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<PaletteMode>(() => {
-    const saved = localStorage.getItem('fmeapex_theme_mode') as PaletteMode;
-    return saved || 'system';
-  });
-
-  const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => setSystemPrefersDark(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  const setMode = (newMode: PaletteMode) => {
-    setModeState(newMode);
-    localStorage.setItem('fmeapex_theme_mode', newMode);
-  };
-
-  const actualMode: 'light' | 'dark' = useMemo(() => {
-    if (mode === 'system') {
-      return systemPrefersDark ? 'dark' : 'light';
-    }
-    return mode;
-  }, [mode, systemPrefersDark]);
-
   const theme: Theme = useMemo(() => {
-    const isDark = actualMode === 'dark';
-
     return createTheme({
       palette: {
-        mode: actualMode,
+        mode: 'light',
         primary: {
-          main: isDark ? '#38BDF8' : '#0F172A',
-          light: isDark ? '#7DD3FC' : '#334155',
-          dark: isDark ? '#0284C7' : '#020617',
-          contrastText: isDark ? '#0F172A' : '#ffffff',
+          main: '#0F172A',     // Slate 900
+          light: '#334155',
+          dark: '#020617',
+          contrastText: '#ffffff',
         },
         secondary: {
-          main: '#0D9488',
+          main: '#0D9488',     // Teal 600
           light: '#2DD4BF',
           dark: '#0F766E',
           contrastText: '#ffffff',
         },
         background: {
-          default: isDark ? '#090D16' : '#F8FAFC',
-          paper: isDark ? '#111827' : '#ffffff',
+          default: '#F8FAFC', // Slate 50
+          paper: '#ffffff',
         },
         text: {
-          primary: isDark ? '#F8FAFC' : '#0F172A',
-          secondary: isDark ? '#94A3B8' : '#475569',
-          disabled: isDark ? '#64748B' : '#94A3B8',
+          primary: '#0F172A',   // High-contrast Slate 900
+          secondary: '#475569', // Muted Slate 600
+          disabled: '#94A3B8',
         },
         error: {
           main: '#EF4444',
@@ -83,7 +53,7 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         success: {
           main: '#10B981',
         },
-        divider: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+        divider: 'rgba(15, 23, 42, 0.08)',
       },
       typography: {
         fontFamily: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'].join(','),
@@ -109,7 +79,7 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: 'none',
               '&:hover': {
-                boxShadow: isDark ? '0 4px 14px rgba(56, 189, 248, 0.25)' : '0 4px 12px rgba(15, 23, 42, 0.12)',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                 transform: 'translateY(-1px)',
               },
             },
@@ -126,16 +96,12 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           styleOverrides: {
             root: {
               borderRadius: 12,
-              boxShadow: isDark
-                ? '0 4px 20px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(255, 255, 255, 0.05)'
-                : '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06)',
-              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(15, 23, 42, 0.08)',
+              boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06)',
+              border: '1px solid rgba(15, 23, 42, 0.08)',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: isDark
-                  ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(13, 148, 136, 0.2)'
-                  : '0 6px 12px rgba(15, 23, 42, 0.08), 0 16px 32px rgba(15, 23, 42, 0.12)',
+                boxShadow: '0 6px 12px rgba(15, 23, 42, 0.08), 0 16px 32px rgba(15, 23, 42, 0.12)',
               },
             },
           },
@@ -144,12 +110,12 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           styleOverrides: {
             root: {
               padding: '8px 12px',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)',
+              borderColor: 'rgba(15, 23, 42, 0.06)',
             },
             head: {
               fontWeight: 700,
-              backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
-              color: isDark ? '#F8FAFC' : '#0F172A',
+              backgroundColor: '#F1F5F9',
+              color: '#0F172A',
               fontSize: '0.85rem',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
@@ -158,10 +124,10 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
       },
     });
-  }, [actualMode]);
+  }, []);
 
   return (
-    <ColorModeContext.Provider value={{ mode, actualMode, setMode }}>
+    <ColorModeContext.Provider value={{ mode: 'light', actualMode: 'light', setMode: () => {} }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}

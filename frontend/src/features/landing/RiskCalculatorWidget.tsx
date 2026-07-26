@@ -33,16 +33,9 @@ export const RiskCalculatorWidget: React.FC = () => {
       sx={{
         p: { xs: 3, md: 4 },
         borderRadius: 4,
-        background: (theme) =>
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)'
-            : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
-        border: '1px solid',
-        borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(13, 148, 136, 0.2)'),
-        boxShadow: (theme) =>
-          theme.palette.mode === 'dark'
-            ? '0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(56, 189, 248, 0.1)'
-            : '0 20px 40px rgba(15, 23, 42, 0.08), 0 0 20px rgba(13, 148, 136, 0.05)',
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+        border: '1px solid rgba(13, 148, 136, 0.2)',
+        boxShadow: '0 20px 40px rgba(15, 23, 42, 0.08), 0 0 20px rgba(13, 148, 136, 0.05)',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
@@ -164,10 +157,10 @@ export const RiskCalculatorWidget: React.FC = () => {
                 sx={{
                   p: 2.5,
                   borderRadius: 3,
-                  bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#0F2925' : '#F0FDF4'),
+                  bgcolor: '#F0FDF4',
                   border: '1.5px solid #0D9488',
                   textAlign: 'center',
-                  boxShadow: '0 0 15px rgba(13, 148, 136, 0.2)',
+                  boxShadow: '0 0 15px rgba(13, 148, 136, 0.15)',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
