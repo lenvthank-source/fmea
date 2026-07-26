@@ -54,18 +54,18 @@ interface DfmeaStructureTreeProps {
   onAddFailure: (stepId: string | null, parentContext?: { workElementName?: string | null; functionName: string }) => void;
 }
 
-// Clean Icon Component (No background circle or border)
+// Clean Icon Component (Bold & Crisp HD 22px)
 const TreeIconBadge: React.FC<{
   type?: keyof typeof TREE_COLORS.iconBg;
   iconSrc?: string;
   size?: number;
-}> = ({ iconSrc, size = 18 }) => (
+}> = ({ iconSrc, size = 22 }) => (
   <Box
     sx={{
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      mr: 1,
+      mr: 1.25,
       flexShrink: 0,
       width: size,
       height: size,
@@ -76,7 +76,12 @@ const TreeIconBadge: React.FC<{
         component="img"
         src={iconSrc}
         alt="icon"
-        sx={{ width: size, height: size, objectFit: 'contain' }}
+        sx={{
+          width: size,
+          height: size,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0px 1px 1px rgba(0,0,0,0.15))'
+        }}
       />
     )}
   </Box>
@@ -324,23 +329,23 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
           <Typography variant="caption" sx={{ fontWeight: 800, color: TREE_COLORS.textSecondary, letterSpacing: '0.5px' }}>LEGEND:</Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 500, color: TREE_COLORS.text }}>System Item (Root)</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>System Item (Root)</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 500, color: TREE_COLORS.text }}>System Element</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>System Element</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
-            <Typography variant="caption" sx={{ fontWeight: 500, color: TREE_COLORS.text }}>Component Element</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Component Element</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
-            <Typography variant="caption" sx={{ fontWeight: 500, color: TREE_COLORS.text }}>Function</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
-            <Typography variant="caption" sx={{ fontWeight: 500, color: TREE_COLORS.text }}>Failure Mode</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode</Typography>
           </Box>
         </Stack>
       </Paper>
@@ -582,7 +587,7 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
                                   {weExpanded ? <ExpandIcon /> : <CollapseIcon />}
                                 </IconButton>
                                 <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
-                                <Typography sx={TREE_TYPOGRAPHY.process}>{we}</Typography>
+                                <Typography sx={TREE_TYPOGRAPHY.workElem}>{we}</Typography>
                                 <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                   <Tooltip title="Add Component Function">
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>

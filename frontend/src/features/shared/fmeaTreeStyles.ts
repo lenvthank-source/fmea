@@ -4,25 +4,33 @@ import functionImg from '../../assets/function.png';
 import failureImg from '../../assets/failure.png';
 
 export const TREE_COLORS = {
-  text: '#2D2D2D',              // Neutral dark gray for all node text
-  textSecondary: '#6B7280',     // Secondary text
+  text: '#111827',              // Carbon Black default
+  textSecondary: '#4B5563',     // Secondary text
   connectorLine: '#D0D0D0',     // Solid light gray connector lines
-  hoverBg: '#F5F6F8',           // Light gray row hover background
-  selectedBorder: '#4F46E5',    // Left border accent for selected node
-  selectedBg: '#F5F3FF',        // Background tint for selected node
-  chevron: '#9CA3AF',           // Chevron icon color
+  hoverBg: '#F3F4F6',           // Light gray row hover background
+  selectedBorder: '#1D4ED8',    // Left border accent for selected node
+  selectedBg: '#EFF6FF',        // Background tint for selected node
+  chevron: '#6B7280',           // Chevron icon color
 
-  // Pastel circular icon container backgrounds
-  iconBg: {
-    root:      '#E8F0FE',  // Soft blue — Root/System
-    process:   '#FEF2E8',  // Soft orange — Step/Element
-    workElem:  '#F3ECFB',  // Soft purple — Work Element
-    function:  '#EAF7EE',  // Soft green — Function
-    failure:   '#FDEDEA',  // Soft red — Failure Mode (unlinked)
-    linked:    '#E0F2FE',  // Soft cyan — Failure Mode (linked)
+  // Specific text colors per node type (User Spec)
+  nodeText: {
+    root:      '#1E40AF',  // Deep Royal Blue
+    process:   '#1D4ED8',  // Blue
+    workElem:  '#111827',  // Carbon Black
+    function:  '#15803D',  // Forest Green
+    failure:   '#DC2626',  // Crimson Red
+    linked:    '#0284C7',  // Deep Cyan/Blue
   },
 
-  // Circle border colors
+  iconBg: {
+    root:      '#E8F0FE',
+    process:   '#FEF2E8',
+    workElem:  '#F3ECFB',
+    function:  '#EAF7EE',
+    failure:   '#FDEDEA',
+    linked:    '#E0F2FE',
+  },
+
   iconBorder: {
     root:      '#93C5FD',
     process:   '#FDBA74',
@@ -32,22 +40,23 @@ export const TREE_COLORS = {
     linked:    '#7DD3FC',
   },
 
-  // Icon tint/primary color
   iconColor: {
     root:      '#1E40AF',
-    process:   '#C2410C',
-    workElem:  '#7C3AED',
+    process:   '#1D4ED8',
+    workElem:  '#111827',
     function:  '#15803D',
     failure:   '#DC2626',
-    linked:    '#0369A1',
+    linked:    '#0284C7',
   }
 };
 
 export const TREE_TYPOGRAPHY = {
-  root:     { fontSize: '14px', fontWeight: 600, color: '#2D2D2D' },
-  process:  { fontSize: '13px', fontWeight: 500, color: '#2D2D2D' },
-  function: { fontSize: '13px', fontWeight: 400, color: '#2D2D2D' },
-  failure:  { fontSize: '12px', fontWeight: 400, color: '#2D2D2D' },
+  root:     { fontSize: '16px', fontWeight: 700, color: TREE_COLORS.nodeText.root },
+  process:  { fontSize: '15px', fontWeight: 600, color: TREE_COLORS.nodeText.process },
+  workElem: { fontSize: '15px', fontWeight: 600, color: TREE_COLORS.nodeText.workElem },
+  function: { fontSize: '15px', fontWeight: 600, color: TREE_COLORS.nodeText.function },
+  failure:  { fontSize: '14px', fontWeight: 600, color: TREE_COLORS.nodeText.failure },
+  linked:   { fontSize: '14px', fontWeight: 600, color: TREE_COLORS.nodeText.linked },
 };
 
 export const TREE_ASSETS = {
