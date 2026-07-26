@@ -10,7 +10,8 @@ import {
   Tooltip,
   TextField,
   Divider,
-  Chip
+  Chip,
+  Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -124,6 +125,22 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
   const toggleExpand = (id: string) => {
     setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const expandAll = () => {
+    const allExpanded: Record<string, boolean> = { root: true };
+    steps.forEach(s => {
+      allExpanded[`step::${s.id}`] = true;
+      const weList = rows.filter(r => r.processStepId === s.id).map(r => r.workElementName).filter(Boolean);
+      Array.from(new Set(weList)).forEach(we => {
+        if (we) allExpanded[`we::${s.id}::${we}`] = true;
+      });
+    });
+    setExpandedNodes(allExpanded);
+  };
+
+  const collapseAll = () => {
+    setExpandedNodes({ root: true });
   };
 
   const handleSelectNode = (id: string) => {
@@ -269,228 +286,63 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      {/* 1. Structure Tree Toolbar */}
-      <Paper
-        sx={{
-          p: 1.5,
-          border: '1px solid rgba(40, 37, 29, 0.1)',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: 'none'
-        }}
-      >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-          {/* Linkage Status Stats */}
-          {linkageStats && (
-            <>
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', letterSpacing: '0.3px' }}>📊 LINKAGES</Typography>
-                <Chip
-                  label={`${linkageStats.total} Total`}
-                  size="small"
-                  sx={{ bgcolor: 'rgba(15, 23, 42, 0.06)', color: 'text.primary', fontWeight: 'bold', height: 30, fontSize: '0.75rem' }}
-                />
-                <Chip
-                  label={`${linkageStats.linked} Linked`}
-                  size="small"
-                  color="success"
-                  sx={{ fontWeight: 'bold', height: 30, fontSize: '0.75rem' }}
-                />
-                {linkageStats.unlinked > 0 && (
-                  <Chip
-                    label={`${linkageStats.unlinked} Unlinked`}
-                    size="small"
-                    color="warning"
-                    sx={{ fontWeight: 'bold', height: 30, fontSize: '0.75rem' }}
-                  />
-                )}
-              </Stack>
-              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-            </>
-          )}
+    <Grid container spacing={2.5} sx={{ alignItems: 'flex-start' }}>
+      
+      {/* LEFT COLUMN (~70% Width): Interactive Tree Canvas Starting Right At The Top */}
+      <Grid size={{ xs: 12, md: 8.5 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        
+        {/* Compact Tree Header: Search Bar & Expand Controls */}
+        <Paper
+          sx={{
+            p: 1.5,
+            px: 2,
+            border: '1px solid rgba(40, 37, 29, 0.1)',
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            boxShadow: 'none'
+          }}
+        >
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Button size="small" variant="text" onClick={expandAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
+                Expand All
+              </Button>
+              <Typography variant="body2" color="text.secondary">•</Typography>
+              <Button size="small" variant="text" onClick={collapseAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
+                Collapse All
+              </Button>
+            </Stack>
 
-          {/* Linkage Section */}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mr: 1 }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>LINKAGE</Typography>
-            <Button
+            {/* Search Input */}
+            <TextField
+              placeholder="Search elements..."
               size="small"
-              variant="outlined"
-              startIcon={<LinkIcon />}
-              disabled={!selectedNodeId?.startsWith('struct-mode::')}
-              onClick={() => {
-                if (selectedNodeId?.startsWith('struct-mode::') && onOpenLinkageModal) {
-                  const modeId = selectedNodeId.replace('struct-mode::', '');
-                  onOpenLinkageModal(modeId);
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                width: 260,
+                '& .MuiOutlinedInput-root': {
+                  height: 34,
+                  borderRadius: 2,
+                  fontSize: '0.82rem'
                 }
               }}
-              sx={{
-                borderColor: '#b71c1c',
-                color: '#b71c1c',
-                '&:hover': { bgcolor: '#fce4ec' },
-                '&.Mui-disabled': { borderColor: 'rgba(0,0,0,0.2)', color: 'rgba(0,0,0,0.3)' }
-              }}
-            >
-              Link Failures
-            </Button>
+            />
           </Stack>
+        </Paper>
 
-          <Divider orientation="vertical" flexItem />
-
-          {/* Add Group */}
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}>ADD</Typography>
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onAddStep}
-              disabled={!isAddStepEnabled}
-            >
-              Step
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddWorkElementEnabled}
-              onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
-            >
-              Work Element
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddFunctionEnabled}
-              onClick={handleAddFunctionClick}
-            >
-              Function
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddFailureEnabled}
-              onClick={handleAddFailureClick}
-            >
-              Failure
-            </Button>
-          </Stack>
-
-          <Divider orientation="vertical" flexItem />
-
-          {/* Sync Section */}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>SYNC</Typography>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={onSyncPfd}
-              sx={{
-                borderColor: 'primary.main',
-                color: 'primary.main',
-                height: 32,
-                fontSize: '0.8rem',
-                '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' }
-              }}
-            >
-              Sync PFD
-            </Button>
-          </Stack>
-
-          <Divider orientation="vertical" flexItem />
-
-          {/* Edit Group */}
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', mr: 1 }}>EDIT</Typography>
-            <IconButton
-              size="small"
-              disabled={!selectedNodeId || selectedNodeId === 'root'}
-              onClick={() => {
-                if (!selectedNodeId) return;
-                if (onEditNode) {
-                  onEditNode(selectedNodeId);
-                } else if (selectedNodeId.startsWith('step::')) {
-                  const step = steps.find(s => `step::${s.id}` === selectedNodeId);
-                  if (step) onEditStep(step);
-                }
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={!isDeleteEnabled}
-              onClick={() => {
-                if (selectedNodeId) onDeleteNode(selectedNodeId);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-
-          {/* Search Field */}
-          <TextField
-            placeholder="Search elements..."
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{
-              ml: 'auto',
-              width: 200,
-              '& .MuiOutlinedInput-root': {
-                height: 32,
-                borderRadius: 2,
-                fontSize: '0.8rem'
-              }
-            }}
-          />
-        </Stack>
-
-        <Divider sx={{ my: 1.5 }} />
-
-        {/* Legend / Abbreviation Guide */}
-        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
-          <Typography variant="caption" sx={{ fontWeight: 800, color: TREE_COLORS.textSecondary, letterSpacing: '0.5px' }}>LEGEND:</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>Root (Process Item)</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>Process Step (Operation)</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Work Element (Work Step)</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode (Unlinked)</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="linked" iconSrc={TREE_ASSETS.failure} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.linked }}>Failure Mode (Linked)</Typography>
-          </Box>
-        </Stack>
-      </Paper>
-
-      {/* 2. Interactive Tree Structure Canvas */}
-      <Paper
-        sx={{
-          p: 3,
-          border: '1px solid rgba(40, 37, 29, 0.1)',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-          flexGrow: 1,
-          overflowY: 'auto',
-          minHeight: 400
-        }}
-      >
+        {/* Tree Structure Canvas */}
+        <Paper
+          sx={{
+            p: 3,
+            border: '1px solid rgba(40, 37, 29, 0.1)',
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            boxShadow: 'none',
+            minHeight: 650,
+            overflowY: 'auto'
+          }}
+        >
         <Box sx={{ pl: 0.5 }}>
           {/* Root node */}
           <Box sx={{ mb: 1 }}>
@@ -1016,6 +868,223 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
           </Collapse>
         </Box>
       </Paper>
-    </Box>
-  );
+    </Grid>
+
+    {/* RIGHT COLUMN (~30% Width): Sticky Control Sidebar Panel */}
+    <Grid size={{ xs: 12, md: 3.5 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
+      <Paper
+        sx={{
+          p: 2.5,
+          border: '1px solid rgba(40, 37, 29, 0.1)',
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.5
+        }}
+      >
+        {/* SECTION 1: LINKAGE & ACTIONS */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            📊 Linkages & Status
+          </Typography>
+          {linkageStats && (
+            <Stack direction="row" spacing={0.75} sx={{ mb: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
+              <Chip label={`${linkageStats.total} Total`} size="small" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
+              <Chip label={`${linkageStats.linked} Linked`} size="small" color="success" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
+              {linkageStats.unlinked > 0 && (
+                <Chip label={`${linkageStats.unlinked} Unlinked`} size="small" color="warning" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
+              )}
+            </Stack>
+          )}
+
+          <Stack spacing={1}>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              startIcon={<LinkIcon />}
+              disabled={!selectedNodeId?.startsWith('struct-mode::')}
+              onClick={() => {
+                if (selectedNodeId?.startsWith('struct-mode::') && onOpenLinkageModal) {
+                  const modeId = selectedNodeId.replace('struct-mode::', '');
+                  onOpenLinkageModal(modeId);
+                }
+              }}
+              sx={{
+                borderColor: '#b71c1c',
+                color: '#b71c1c',
+                fontWeight: 700,
+                py: 0.75,
+                '&:hover': { bgcolor: '#fce4ec' }
+              }}
+            >
+              Link Failures
+            </Button>
+
+            {onSyncPfd && (
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                onClick={onSyncPfd}
+                sx={{
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  py: 0.75,
+                  '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' }
+                }}
+              >
+                Sync PFD
+              </Button>
+            )}
+          </Stack>
+        </Box>
+
+        <Divider />
+
+        {/* SECTION 2: ADD ELEMENTS */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            ➕ Add Elements
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={onAddStep}
+                disabled={!isAddStepEnabled}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                + Step
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddWorkElementEnabled}
+                onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Work Elem
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddFunctionEnabled}
+                onClick={handleAddFunctionClick}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Function
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddFailureEnabled}
+                onClick={handleAddFailureClick}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Failure
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Divider />
+
+        {/* SECTION 3: EDIT TOOLS */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            🛠️ Tools
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              startIcon={<EditIcon />}
+              disabled={!selectedNodeId || selectedNodeId === 'root'}
+              onClick={() => {
+                if (!selectedNodeId) return;
+                if (onEditNode) {
+                  onEditNode(selectedNodeId);
+                } else if (selectedNodeId.startsWith('step::')) {
+                  const step = steps.find(s => `step::${s.id}` === selectedNodeId);
+                  if (step) onEditStep(step);
+                }
+              }}
+              sx={{ fontWeight: 600, fontSize: '0.78rem' }}
+            >
+              Edit Node
+            </Button>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              disabled={!isDeleteEnabled}
+              onClick={() => {
+                if (selectedNodeId) onDeleteNode(selectedNodeId);
+              }}
+              sx={{ fontWeight: 600, fontSize: '0.78rem' }}
+            >
+              Delete
+            </Button>
+          </Stack>
+        </Box>
+
+        <Divider />
+
+        {/* SECTION 4: COLOR LEGEND */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1.25, display: 'block' }}>
+            🏷️ Color Legend
+          </Typography>
+          <Stack spacing={1}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>Root (Process Item)</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>Process Step (Operation)</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Work Element (Work Step)</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode (Unlinked)</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="linked" iconSrc={TREE_ASSETS.failure} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.linked }}>Failure Mode (Linked)</Typography>
+            </Box>
+          </Stack>
+        </Box>
+
+      </Paper>
+    </Grid>
+
+  </Grid>
+);
 };

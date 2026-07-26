@@ -9,7 +9,8 @@ import {
   Collapse,
   Tooltip,
   TextField,
-  Divider
+  Divider,
+  Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -105,6 +106,18 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
 
   const toggleExpand = (id: string) => {
     setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const expandAll = () => {
+    const allExpanded: Record<string, boolean> = { root: true };
+    steps.forEach(s => {
+      allExpanded[`step::${s.id}`] = true;
+    });
+    setExpandedNodes(allExpanded);
+  };
+
+  const collapseAll = () => {
+    setExpandedNodes({ root: true });
   };
 
   const handleSelectNode = (id: string) => {
@@ -228,142 +241,63 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      {/* Toolbar */}
-      <Paper
-        sx={{
-          p: 1.5,
-          border: '1px solid rgba(40, 37, 29, 0.1)',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: 'none'
-        }}
-      >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onAddStep}
-              disabled={!isAddStepEnabled}
-            >
-              System Element
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddWorkElementEnabled}
-              onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
-            >
-              Component Element
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddFunctionEnabled}
-              onClick={handleAddFunctionClick}
-            >
-              Function
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              disabled={!isAddFailureEnabled}
-              onClick={handleAddFailureClick}
-            >
-              Failure Mode
-            </Button>
-          </Stack>
+    <Grid container spacing={2.5} sx={{ alignItems: 'flex-start' }}>
+      
+      {/* LEFT COLUMN (~70% Width): Interactive Tree Canvas Starting Right At The Top */}
+      <Grid size={{ xs: 12, md: 8.5 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        
+        {/* Compact Tree Header: Search Bar & Expand Controls */}
+        <Paper
+          sx={{
+            p: 1.5,
+            px: 2,
+            border: '1px solid rgba(40, 37, 29, 0.1)',
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            boxShadow: 'none'
+          }}
+        >
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Button size="small" variant="text" onClick={expandAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
+                Expand All
+              </Button>
+              <Typography variant="body2" color="text.secondary">•</Typography>
+              <Button size="small" variant="text" onClick={collapseAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
+                Collapse All
+              </Button>
+            </Stack>
 
-          <Divider orientation="vertical" flexItem />
-
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <IconButton
+            {/* Search Input */}
+            <TextField
+              placeholder="Search elements..."
               size="small"
-              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
-              onClick={() => {
-                if (selectedNodeId && selectedNodeId.startsWith('step::')) {
-                  const step = steps.find(s => `step::${s.id}` === selectedNodeId);
-                  if (step) onEditStep(step);
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                width: 260,
+                '& .MuiOutlinedInput-root': {
+                  height: 34,
+                  borderRadius: 2,
+                  fontSize: '0.82rem'
                 }
               }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={!isDeleteEnabled}
-              onClick={() => {
-                if (selectedNodeId && selectedNodeId.startsWith('step::')) {
-                  const stepId = selectedNodeId.replace('step::', '');
-                  onDeleteStep(stepId);
-                }
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+            />
           </Stack>
+        </Paper>
 
-          <TextField
-            placeholder="Search elements..."
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{
-              ml: 'auto',
-              width: 200,
-              '& .MuiOutlinedInput-root': {
-                height: 32,
-                borderRadius: 2,
-                fontSize: '0.8rem'
-              }
-            }}
-          />
-        </Stack>
-
-        <Divider sx={{ my: 1.5 }} />
-
-        {/* Legend */}
-        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
-          <Typography variant="caption" sx={{ fontWeight: 800, color: TREE_COLORS.textSecondary, letterSpacing: '0.5px' }}>LEGEND:</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>System Item (Root)</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>System Element</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Component Element</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode</Typography>
-          </Box>
-        </Stack>
-      </Paper>
-
-      {/* Tree Canvas */}
-      <Paper
-        sx={{
-          p: 3,
-          border: '1px solid rgba(40, 37, 29, 0.1)',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: 'none',
-          flexGrow: 1,
-          overflowY: 'auto',
-          minHeight: 400
-        }}
-      >
+        {/* Tree Structure Canvas */}
+        <Paper
+          sx={{
+            p: 3,
+            border: '1px solid rgba(40, 37, 29, 0.1)',
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            boxShadow: 'none',
+            minHeight: 650,
+            overflowY: 'auto'
+          }}
+        >
         <Box sx={{ pl: 0.5 }}>
           {/* Root node */}
           <Box sx={{ mb: 1 }}>
@@ -666,6 +600,158 @@ export const DfmeaStructureTree: React.FC<DfmeaStructureTreeProps> = ({
           </Collapse>
         </Box>
       </Paper>
-    </Box>
-  );
+    </Grid>
+
+    {/* RIGHT COLUMN (~30% Width): Sticky Control Sidebar Panel */}
+    <Grid size={{ xs: 12, md: 3.5 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
+      <Paper
+        sx={{
+          p: 2.5,
+          border: '1px solid rgba(40, 37, 29, 0.1)',
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.5
+        }}
+      >
+        {/* SECTION 1: ADD ELEMENTS */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            ➕ Add Elements
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={onAddStep}
+                disabled={!isAddStepEnabled}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                + Element
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddWorkElementEnabled}
+                onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Component
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddFunctionEnabled}
+                onClick={handleAddFunctionClick}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Function
+              </Button>
+            </Grid>
+            <Grid size={6}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                disabled={!isAddFailureEnabled}
+                onClick={handleAddFailureClick}
+                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+              >
+                Failure Mode
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Divider />
+
+        {/* SECTION 2: EDIT TOOLS */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            🛠️ Tools
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              startIcon={<EditIcon />}
+              disabled={!selectedNodeId || !selectedNodeId.startsWith('step::')}
+              onClick={() => {
+                if (selectedNodeId && selectedNodeId.startsWith('step::')) {
+                  const step = steps.find(s => `step::${s.id}` === selectedNodeId);
+                  if (step) onEditStep(step);
+                }
+              }}
+              sx={{ fontWeight: 600, fontSize: '0.78rem' }}
+            >
+              Edit Node
+            </Button>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              disabled={!isDeleteEnabled}
+              onClick={() => {
+                if (selectedNodeId && selectedNodeId.startsWith('step::')) {
+                  const stepId = selectedNodeId.replace('step::', '');
+                  onDeleteStep(stepId);
+                }
+              }}
+              sx={{ fontWeight: 600, fontSize: '0.78rem' }}
+            >
+              Delete
+            </Button>
+          </Stack>
+        </Box>
+
+        <Divider />
+
+        {/* SECTION 3: COLOR LEGEND */}
+        <Box>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1.25, display: 'block' }}>
+            🏷️ Color Legend
+          </Typography>
+          <Stack spacing={1}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>System Item (Root)</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>System Element</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Component Element</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode</Typography>
+            </Box>
+          </Stack>
+        </Box>
+
+      </Paper>
+    </Grid>
+
+  </Grid>
+);
 };
