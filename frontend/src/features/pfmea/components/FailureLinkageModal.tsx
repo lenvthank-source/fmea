@@ -2,17 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Stack, Checkbox,
-  CircularProgress, Chip, Alert,
-  Grid, Collapse, Divider
+  CircularProgress, Alert,
+  Grid, Collapse
 } from '@mui/material';
 import {
   Link as LinkIcon,
-  Warning as FailureIcon,
-  HelpOutlined as FunctionIcon,
-  ExpandMore as ExpandMoreIcon,
-  ChevronRight as ChevronRightIcon
+  KeyboardArrowRight as CollapseIcon,
+  KeyboardArrowDown as ExpandIcon,
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
+import { TREE_COLORS, TREE_ASSETS } from '../../shared/fmeaTreeStyles';
 
 interface FailureItem {
   id: string;
@@ -50,6 +49,34 @@ interface SvgLink {
   y2: number;
   color: string;
 }
+
+// Clean HD Tree Icon Helper
+const TreeIcon: React.FC<{ iconSrc: string; size?: number }> = ({ iconSrc, size = 18 }) => (
+  <Box
+    sx={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      mr: 1,
+      flexShrink: 0,
+      width: size,
+      height: size,
+    }}
+  >
+    <Box
+      component="img"
+      src={iconSrc}
+      alt="icon"
+      sx={{
+        width: size,
+        height: size,
+        objectFit: 'contain',
+        imageRendering: '-webkit-optimize-contrast',
+        filter: 'drop-shadow(0px 1px 1px rgba(0,0,0,0.12))',
+      }}
+    />
+  </Box>
+);
 
 export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   open,
@@ -142,7 +169,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
     const newLinks: SvgLink[] = [];
 
-    // Checked Effects coordinates (Process Item / Blue color scheme)
+    // Checked Effects coordinates
     selectedEffects.forEach(eff => {
       const el = document.getElementById(`selected-eff-${eff.id}`);
       if (el) {
@@ -152,12 +179,12 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
           y1: r.top - containerRect.top + r.height / 2,
           x2: modeLeftX,
           y2: modeY,
-          color: '#2962FF' // blue
+          color: TREE_COLORS.nodeText.process // Blue #1D4ED8
         });
       }
     });
 
-    // Checked Causes coordinates (Work Step / Violet color scheme)
+    // Checked Causes coordinates
     selectedCauses.forEach(cause => {
       const el = document.getElementById(`selected-cause-${cause.id}`);
       if (el) {
@@ -167,7 +194,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
           y1: modeY,
           x2: r.left - containerRect.left,
           y2: r.top - containerRect.top + r.height / 2,
-          color: '#D500F9' // violet
+          color: TREE_COLORS.nodeText.function // Forest Green #15803D
         });
       }
     });
@@ -177,8 +204,6 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
   useEffect(() => {
     if (!open || !data) return;
-    
-    // Calculate multiple times to catch animation frames settling
     updateCoords();
     const timers = [
       setTimeout(updateCoords, 50),
@@ -225,16 +250,17 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth slotProps={{ paper: { sx: { height: '88vh', borderRadius: 3 } } }}>
-      <DialogTitle sx={{ bgcolor: '#b71c1c', color: 'white', fontWeight: 'bold', px: 3, py: 2 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <LinkIcon />
-          <Typography variant="h6" sx={{ fontWeight: 'bold', fontFamily: 'inherit' }}>
+      {/* Dialog Header: Clean Professional Dark Slate */}
+      <DialogTitle sx={{ bgcolor: '#0F172A', color: '#FFFFFF', px: 3, py: 2 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <LinkIcon sx={{ color: '#38BDF8' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'inherit', fontSize: '1.1rem' }}>
             Failure Linkage — Effects / Mode / Causes
           </Typography>
         </Stack>
       </DialogTitle>
       
-      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#fafafa' }}>
+      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F8FAFC' }}>
         {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
@@ -243,103 +269,10 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
         ) : data ? (
           <Grid container sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
             
-            {/* LEFT COLUMN: Effects Tree */}
-            <Grid size={3} sx={{ borderRight: '1px solid rgba(0,0,0,0.08)', height: '100%', overflow: 'auto', p: 3, bgcolor: '#ffffff' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#2962FF', mb: 1.5, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                Failure Effects (Higher Level)
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
-                Check items to link project level failure effects.
-              </Typography>
-
-              {Object.keys(groupedEffects).length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  No failure effects defined.
-                </Typography>
-              ) : (
-                Object.entries(groupedEffects).map(([fnName, effects]) => {
-                  const isExpanded = !!expandedGroups[fnName];
-                  return (
-                    <Box key={fnName} sx={{ mb: 2 }}>
-                      <Stack 
-                        direction="row" 
-                        spacing={1} 
-                        onClick={() => toggleGroup(fnName)}
-                        sx={{ 
-                          cursor: 'pointer', 
-                          alignItems: 'center', 
-                          py: 0.5,
-                          px: 1, 
-                          borderRadius: 1.5, 
-                          bgcolor: 'transparent',
-                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                        }}
-                      >
-                        {isExpanded ? <ExpandMoreIcon fontSize="small" sx={{ color: '#00C853' }} /> : <ChevronRightIcon fontSize="small" sx={{ color: '#00C853' }} />}
-                        <FunctionIcon sx={{ color: '#00C853', fontSize: '1.25rem', mr: 0.5 }} />
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#00C853', fontSize: '0.85rem', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {fnName}
-                        </Typography>
-                      </Stack>
-
-                      <Collapse in={isExpanded}>
-                        <Box sx={{ pl: 2, borderLeft: '1.5px solid rgba(0, 200, 83, 0.25)', ml: 2, mt: 0.5 }}>
-                          {effects.map(effect => {
-                            const isChecked = selectedEffectIds.includes(effect.id);
-                            const isLinked = effect.isCurrentlyLinked;
-                            const textColor = isLinked ? '#00E5FF' : '#FF0000';
-                            
-                            return (
-                              <Box
-                                key={effect.id}
-                                onClick={() => toggleEffect(effect.id)}
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'flex-start',
-                                  gap: 1.5,
-                                  p: 1.5,
-                                  mb: 0.5,
-                                  borderRadius: 2,
-                                  cursor: 'pointer',
-                                  border: isChecked ? `2px solid ${textColor}` : '1px solid rgba(0,0,0,0.05)',
-                                  bgcolor: isChecked ? (isLinked ? 'rgba(0, 229, 255, 0.04)' : 'rgba(255, 0, 0, 0.04)') : '#ffffff',
-                                  transition: 'all 0.15s ease',
-                                  '&:hover': { bgcolor: isLinked ? 'rgba(0, 229, 255, 0.04)' : 'rgba(255, 0, 0, 0.04)' }
-                                }}
-                              >
-                                <Checkbox
-                                  checked={isChecked}
-                                  size="small"
-                                  sx={{ p: 0, mt: 0.25, color: textColor, '&.Mui-checked': { color: textColor } }}
-                                />
-                                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mt: 0.25 }}>
-                                  <FailureIcon sx={{ color: textColor, fontSize: '1.25rem' }} />
-                                  {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '1.1rem', ml: -0.5 }} />}
-                                </Stack>
-                                <Box>
-                                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', color: textColor }}>
-                                    {effect.narration}
-                                  </Typography>
-                                  {effect.severityRating && (
-                                    <Chip label={`S: ${effect.severityRating}`} size="small"
-                                      sx={{ height: 16, fontSize: '0.65rem', mt: 0.5, bgcolor: '#fce4ec', color: '#b71c1c', fontWeight: 'bold' }} />
-                                  )}
-                                </Box>
-                              </Box>
-                            );
-                          })}
-                        </Box>
-                      </Collapse>
-                    </Box>
-                  );
-                })
-              )}
-            </Grid>
-
-            {/* CENTER COLUMN: Live Linkage Visualization */}
-            <Grid size={6} sx={{ borderRight: '1px solid rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column', p: 3, position: 'relative', overflow: 'hidden' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.secondary', mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                🔗 Linkage Tree Preview
+            {/* LEFT PANE (~70% Width): Live Linkage Network Diagram */}
+            <Grid size={8} sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 3, position: 'relative', overflow: 'hidden', borderRight: '1px solid #E2E8F0' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '0.85rem' }}>
+                🔗 Failure Linkage Network Diagram
               </Typography>
               
               <Box ref={containerRef} sx={{ flex: 1, display: 'flex', width: '100%', position: 'relative', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}>
@@ -347,36 +280,21 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
                   {links.map((link, idx) => {
                     const midX = (link.x1 + link.x2) / 2;
-                    // Bezier Curve
                     const d = `M ${link.x1} ${link.y1} C ${midX} ${link.y1}, ${midX} ${link.y2}, ${link.x2} ${link.y2}`;
                     return (
                       <g key={idx}>
-                        {/* Glow path */}
-                        <path
-                          d={d}
-                          stroke={link.color}
-                          strokeWidth="4"
-                          fill="none"
-                          opacity="0.12"
-                        />
-                        {/* Core path */}
-                        <path
-                          d={d}
-                          stroke={link.color}
-                          strokeWidth="2"
-                          fill="none"
-                          opacity="0.8"
-                        />
+                        <path d={d} stroke={link.color} strokeWidth="3" fill="none" opacity="0.15" />
+                        <path d={d} stroke={link.color} strokeWidth="1.5" fill="none" opacity="0.85" />
                       </g>
                     );
                   })}
                 </svg>
 
-                {/* Left Side: Floating Selected Effects */}
-                <Stack spacing={2} sx={{ width: '38%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pr: 0.5 }}>
+                {/* Left Side: Floating Selected Effects (Higher Level) */}
+                <Stack spacing={2} sx={{ width: '30%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pr: 1 }}>
                   {selectedEffects.length === 0 ? (
-                    <Box sx={{ p: 2, border: '1px dashed rgba(0,0,0,0.15)', borderRadius: 2, textAlign: 'center', bgcolor: '#ffffff', opacity: 0.6 }}>
-                      <Typography variant="caption" color="text.secondary">No effects linked</Typography>
+                    <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">No higher level effects linked</Typography>
                     </Box>
                   ) : (
                     selectedEffects.map(eff => (
@@ -386,29 +304,20 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         sx={{
                           p: 1.5,
                           borderRadius: 2,
-                          border: '2px solid #2962FF',
-                          bgcolor: 'rgba(41, 98, 255, 0.04)',
-                          boxShadow: '0 4px 12px rgba(41, 98, 255, 0.08)'
+                          bgcolor: '#FFFFFF',
+                          border: '1px solid #E2E8F0',
+                          borderLeft: `3px solid ${TREE_COLORS.nodeText.failure}`,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                         }}
                       >
-                        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.7rem', color: '#2962FF', letterSpacing: '0.5px' }}>
-                            EFFECT
-                          </Typography>
-                          {eff.severityRating && (
-                            <Chip label={`S: ${eff.severityRating}`} size="small"
-                              sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fce4ec', color: '#b71c1c', fontWeight: 'bold' }} />
-                          )}
-                        </Stack>
-                        <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, wordBreak: 'break-word', color: 'text.primary' }}>
+                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.25 }}>
+                          {eff.parentName || 'Wheel Flange'}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.25 }}>
+                          {eff.function?.narration}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                           {eff.narration}
-                        </Typography>
-                        <Divider sx={{ my: 1, borderColor: 'rgba(41, 98, 255, 0.1)' }} />
-                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem' }}>
-                          Function: <strong>{eff.function?.narration}</strong>
-                        </Typography>
-                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem', mt: 0.25 }}>
-                          Location: Process Item (<strong>{eff.parentName || 'Project'}</strong>)
                         </Typography>
                       </Box>
                     ))
@@ -419,39 +328,36 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 <Box 
                   id="linkage-mode-box"
                   sx={{ 
-                    width: '22%', 
+                    width: '32%', 
                     zIndex: 2, 
                     p: 2, 
-                    bgcolor: 'rgba(255, 109, 0, 0.04)', 
-                    border: '3px solid #ff6d00', 
-                    borderRadius: 3, 
-                    boxShadow: '0 6px 20px rgba(255, 109, 0, 0.1)',
+                    bgcolor: '#FFFFFF', 
+                    border: '1px solid #E2E8F0',
+                    borderTop: `3px solid ${TREE_COLORS.nodeText.process}`,
+                    borderRadius: 2.5, 
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
                     textAlign: 'center'
                   }}
                 >
                   <Stack spacing={0.5} sx={{ alignItems: 'center' }}>
-                    <FailureIcon sx={{ color: '#ff6d00', fontSize: '1.4rem' }} />
-                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#ff6d00', tracking: '0.5px' }}>
-                      MODE
+                    <TreeIcon iconSrc={TREE_ASSETS.processStep} size={24} />
+                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: TREE_COLORS.nodeText.process }}>
+                      {data.mode.parentName || 'Rough Turn'}
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.85rem', wordBreak: 'break-word', color: 'text.primary' }}>
+                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
+                      {data.mode.function?.narration}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.88rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                       {data.mode.narration}
-                    </Typography>
-                    <Divider sx={{ width: '100%', my: 1, borderColor: 'rgba(255, 109, 0, 0.1)' }} />
-                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem' }}>
-                      Function: <strong>{data.mode.function?.narration}</strong>
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem', mt: 0.25 }}>
-                      Location: Operation (<strong>{data.mode.parentName || 'Step'}</strong>)
                     </Typography>
                   </Stack>
                 </Box>
 
-                {/* Right Side: Floating Selected Causes */}
-                <Stack spacing={2} sx={{ width: '38%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pl: 0.5 }}>
+                {/* Right Side: Floating Selected Causes (Lower Level) */}
+                <Stack spacing={2} sx={{ width: '30%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pl: 1 }}>
                   {selectedCauses.length === 0 ? (
-                    <Box sx={{ p: 2, border: '1px dashed rgba(0,0,0,0.15)', borderRadius: 2, textAlign: 'center', bgcolor: '#ffffff', opacity: 0.6 }}>
-                      <Typography variant="caption" color="text.secondary">No causes linked</Typography>
+                    <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">No lower level causes linked</Typography>
                     </Box>
                   ) : (
                     selectedCauses.map(cause => (
@@ -461,35 +367,20 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         sx={{
                           p: 1.5,
                           borderRadius: 2,
-                          border: '2px solid #D500F9',
-                          bgcolor: 'rgba(213, 0, 249, 0.04)',
-                          boxShadow: '0 4px 12px rgba(213, 0, 249, 0.08)'
+                          bgcolor: '#FFFFFF',
+                          border: '1px solid #E2E8F0',
+                          borderLeft: `3px solid ${TREE_COLORS.nodeText.workElem}`,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                         }}
                       >
-                        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.7rem', color: '#D500F9', letterSpacing: '0.5px' }}>
-                            CAUSE
-                          </Typography>
-                          <Stack direction="row" spacing={0.5}>
-                            {cause.occurrenceRating && (
-                              <Chip label={`O: ${cause.occurrenceRating}`} size="small"
-                                sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fff3e0', color: '#e65100', fontWeight: 'bold' }} />
-                            )}
-                            {cause.detectionRating && (
-                              <Chip label={`D: ${cause.detectionRating}`} size="small"
-                                sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fff3e0', color: '#e65100', fontWeight: 'bold' }} />
-                            )}
-                          </Stack>
-                        </Stack>
-                        <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, wordBreak: 'break-word', color: 'text.primary' }}>
+                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.25 }}>
+                          {cause.parentName || 'Tool Holder'}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.25 }}>
+                          {cause.function?.narration}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
                           {cause.narration}
-                        </Typography>
-                        <Divider sx={{ my: 1, borderColor: 'rgba(213, 0, 249, 0.1)' }} />
-                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem' }}>
-                          Function: <strong>{cause.function?.narration}</strong>
-                        </Typography>
-                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary', fontSize: '0.72rem', mt: 0.25 }}>
-                          Location: Work Step (<strong>{cause.parentName || 'WE'}</strong>)
                         </Typography>
                       </Box>
                     ))
@@ -498,127 +389,183 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
               </Box>
             </Grid>
 
-            {/* RIGHT COLUMN: Causes Tree */}
-            <Grid size={3} sx={{ height: '100%', overflow: 'auto', p: 3, bgcolor: '#ffffff' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#D500F9', mb: 1.5, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                Failure Causes (Lower Level)
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 3 }}>
-                Check items to link work element failure causes.
-              </Typography>
-
-              {Object.keys(groupedCauses).length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  No failure causes defined for this process step.
+            {/* RIGHT PANE (~30% Width): Dual Tree Selection Sidebar */}
+            <Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#FFFFFF' }}>
+              
+              {/* TOP SECTION: Connect Higher Level Failure (Effects) */}
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '1px solid #E2E8F0' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '0.82rem' }}>
+                  Connect Higher Level Failure
                 </Typography>
-              ) : (
-                Object.entries(groupedCauses).map(([fnName, causes]) => {
-                  const isExpanded = !!expandedGroups[fnName];
-                  return (
-                    <Box key={fnName} sx={{ mb: 2 }}>
-                      <Stack 
-                        direction="row" 
-                        spacing={1} 
-                        onClick={() => toggleGroup(fnName)}
-                        sx={{ 
-                          cursor: 'pointer', 
-                          alignItems: 'center', 
-                          py: 0.5,
-                          px: 1, 
-                          borderRadius: 1.5, 
-                          bgcolor: 'transparent',
-                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                        }}
-                      >
-                        {isExpanded ? <ExpandMoreIcon fontSize="small" sx={{ color: '#00C853' }} /> : <ChevronRightIcon fontSize="small" sx={{ color: '#00C853' }} />}
-                        <FunctionIcon sx={{ color: '#00C853', fontSize: '1.25rem', mr: 0.5 }} />
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#00C853', fontSize: '0.85rem', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {fnName}
-                        </Typography>
-                      </Stack>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Selected Failure: <strong>{data.mode.narration}</strong>
+                </Typography>
 
-                      <Collapse in={isExpanded}>
-                        <Box sx={{ pl: 2, borderLeft: '1.5px solid rgba(0, 200, 83, 0.25)', ml: 2, mt: 0.5 }}>
-                          {causes.map(cause => {
-                            const isChecked = selectedCauseIds.includes(cause.id);
-                            const isLinked = cause.isCurrentlyLinked;
-                            const textColor = isLinked ? '#00E5FF' : '#FF0000';
-                            
-                            return (
-                              <Box
-                                key={cause.id}
-                                onClick={() => toggleCause(cause.id)}
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'flex-start',
-                                  gap: 1.5,
-                                  p: 1.5,
-                                  mb: 0.5,
-                                  borderRadius: 2,
-                                  cursor: 'pointer',
-                                  border: isChecked ? `2px solid ${textColor}` : '1px solid rgba(0,0,0,0.05)',
-                                  bgcolor: isChecked ? (isLinked ? 'rgba(0, 229, 255, 0.04)' : 'rgba(255, 0, 0, 0.04)') : '#ffffff',
-                                  transition: 'all 0.15s ease',
-                                  '&:hover': { bgcolor: isLinked ? 'rgba(0, 229, 255, 0.04)' : 'rgba(255, 0, 0, 0.04)' }
-                                }}
-                              >
-                                <Checkbox
-                                  checked={isChecked}
-                                  size="small"
-                                  sx={{ p: 0, mt: 0.25, color: textColor, '&.Mui-checked': { color: textColor } }}
-                                />
-                                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mt: 0.25 }}>
-                                  <FailureIcon sx={{ color: textColor, fontSize: '1.25rem' }} />
-                                  {isLinked && <LinkIcon sx={{ color: textColor, fontSize: '1.1rem', ml: -0.5 }} />}
-                                </Stack>
-                                <Box>
-                                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.85rem', color: textColor }}>
-                                    {cause.narration}
-                                  </Typography>
-                                  <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
-                                    {cause.occurrenceRating && (
-                                      <Chip
-                                        label={`O: ${cause.occurrenceRating}`}
-                                        size="small"
-                                        sx={{ height: 16, fontSize: '0.65rem', bgcolor: '#fff3e0', color: '#e65100', fontWeight: 'bold' }}
-                                      />
-                                    )}
-                                    {cause.detectionRating && (
-                                      <Chip
-                                        label={`D: ${cause.detectionRating}`}
-                                        size="small"
-                                        sx={{ height: 16, fontSize: '0.65rem', bgcolor: '#fff3e0', color: '#e65100', fontWeight: 'bold' }}
-                                      />
-                                    )}
+                {Object.keys(groupedEffects).length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                    No higher level failure effects defined.
+                  </Typography>
+                ) : (
+                  Object.entries(groupedEffects).map(([fnName, effects]) => {
+                    const isExpanded = !!expandedGroups[fnName];
+                    const parentName = effects[0]?.parentName || 'System Item';
+                    return (
+                      <Box key={fnName} sx={{ mb: 1.5 }}>
+                        <Stack 
+                          direction="row" 
+                          spacing={0.5} 
+                          onClick={() => toggleGroup(fnName)}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.25, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                        >
+                          {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
+                          <TreeIcon iconSrc={TREE_ASSETS.processStep} size={16} />
+                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, fontSize: '0.82rem' }}>
+                            {parentName}
+                          </Typography>
+                        </Stack>
+
+                        <Collapse in={isExpanded}>
+                          <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
+                            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', py: 0.25, mb: 0.5 }}>
+                              <TreeIcon iconSrc={TREE_ASSETS.function} size={16} />
+                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.8rem' }}>
+                                {fnName}
+                              </Typography>
+                            </Stack>
+
+                            <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
+                              {effects.map(effect => {
+                                const isChecked = selectedEffectIds.includes(effect.id);
+                                return (
+                                  <Stack
+                                    key={effect.id}
+                                    direction="row"
+                                    spacing={0.5}
+                                    onClick={() => toggleEffect(effect.id)}
+                                    sx={{
+                                      cursor: 'pointer',
+                                      alignItems: 'center',
+                                      py: 0.5,
+                                      px: 0.75,
+                                      my: 0.25,
+                                      borderRadius: 1,
+                                      bgcolor: isChecked ? TREE_COLORS.selectedBg : 'transparent',
+                                      borderLeft: isChecked ? `2px solid ${TREE_COLORS.nodeText.failure}` : '2px solid transparent',
+                                      '&:hover': { bgcolor: TREE_COLORS.hoverBg }
+                                    }}
+                                  >
+                                    <Checkbox checked={isChecked} size="small" sx={{ p: 0.25, color: TREE_COLORS.nodeText.failure, '&.Mui-checked': { color: TREE_COLORS.nodeText.failure } }} />
+                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={16} />
+                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.82rem' }}>
+                                      {effect.narration}
+                                    </Typography>
                                   </Stack>
-                                </Box>
-                              </Box>
-                            );
-                          })}
-                        </Box>
-                      </Collapse>
-                    </Box>
-                  );
-                })
-              )}
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        </Collapse>
+                      </Box>
+                    );
+                  })
+                )}
+              </Box>
+
+              {/* BOTTOM SECTION: Connect Lower Level Failure (Causes) */}
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '0.82rem' }}>
+                  Connect Lower Level Failure
+                </Typography>
+
+                {Object.keys(groupedCauses).length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.8rem' }}>
+                    No lower level failure causes defined.
+                  </Typography>
+                ) : (
+                  Object.entries(groupedCauses).map(([fnName, causes]) => {
+                    const isExpanded = !!expandedGroups[fnName];
+                    const parentName = causes[0]?.parentName || 'Work Element';
+                    return (
+                      <Box key={fnName} sx={{ mb: 1.5 }}>
+                        <Stack 
+                          direction="row" 
+                          spacing={0.5} 
+                          onClick={() => toggleGroup(fnName)}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.25, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                        >
+                          {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
+                          <TreeIcon iconSrc={TREE_ASSETS.workElement} size={16} />
+                          <Typography sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, fontSize: '0.82rem' }}>
+                            {parentName}
+                          </Typography>
+                        </Stack>
+
+                        <Collapse in={isExpanded}>
+                          <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}`, mt: 0.5 }}>
+                            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', py: 0.25, mb: 0.5 }}>
+                              <TreeIcon iconSrc={TREE_ASSETS.function} size={16} />
+                              <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.function, fontSize: '0.8rem' }}>
+                                {fnName}
+                              </Typography>
+                            </Stack>
+
+                            <Box sx={{ pl: 2, ml: 1, borderLeft: `1px solid ${TREE_COLORS.connectorLine}` }}>
+                              {causes.map(cause => {
+                                const isChecked = selectedCauseIds.includes(cause.id);
+                                return (
+                                  <Stack
+                                    key={cause.id}
+                                    direction="row"
+                                    spacing={0.5}
+                                    onClick={() => toggleCause(cause.id)}
+                                    sx={{
+                                      cursor: 'pointer',
+                                      alignItems: 'center',
+                                      py: 0.5,
+                                      px: 0.75,
+                                      my: 0.25,
+                                      borderRadius: 1,
+                                      bgcolor: isChecked ? TREE_COLORS.selectedBg : 'transparent',
+                                      borderLeft: isChecked ? `2px solid ${TREE_COLORS.nodeText.workElem}` : '2px solid transparent',
+                                      '&:hover': { bgcolor: TREE_COLORS.hoverBg }
+                                    }}
+                                  >
+                                    <Checkbox checked={isChecked} size="small" sx={{ p: 0.25, color: TREE_COLORS.nodeText.failure, '&.Mui-checked': { color: TREE_COLORS.nodeText.failure } }} />
+                                    <TreeIcon iconSrc={TREE_ASSETS.failure} size={16} />
+                                    <Typography sx={{ fontWeight: 600, color: TREE_COLORS.nodeText.failure, fontSize: '0.82rem' }}>
+                                      {cause.narration}
+                                    </Typography>
+                                  </Stack>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        </Collapse>
+                      </Box>
+                    );
+                  })
+                )}
+              </Box>
+
             </Grid>
 
           </Grid>
         ) : null}
       </DialogContent>
       
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.08)', bgcolor: '#ffffff' }}>
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 'bold' }}>
+      {/* Dialog Footer Actions */}
+      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 600 }}>
           {selectedEffectIds.length} effect(s) + {selectedCauseIds.length} cause(s) selected for linkage
         </Typography>
-        <Button onClick={onClose} disabled={saving} color="inherit" sx={{ fontWeight: 'bold' }}>Cancel</Button>
+        <Button onClick={onClose} disabled={saving} color="inherit" sx={{ fontWeight: 600 }}>Cancel</Button>
         <Button
           onClick={handleSave}
           variant="contained"
           color="error"
           disabled={saving}
           startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LinkIcon />}
-          sx={{ fontWeight: 'bold' }}
+          sx={{ fontWeight: 700, px: 3 }}
         >
           {saving ? 'Saving...' : 'Save Linkage'}
         </Button>

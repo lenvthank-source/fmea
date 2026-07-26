@@ -142,8 +142,8 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: { height: '80vh' } } }}>
-      <DialogTitle sx={{ bgcolor: '#b71c1c', color: 'white', py: 1.5 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: { height: '80vh', borderRadius: 3 } } }}>
+      <DialogTitle sx={{ bgcolor: '#0F172A', color: '#FFFFFF', py: 1.5 }}>
         <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Failure Mode Detail</Typography>
