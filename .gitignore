@@ -33,6 +33,7 @@ Thumbs.db
 # Private Credentials & Metadata
 /FMEA Credentials.txt
 /query
+.agents/
 
 # Root configurations and deployment guides
 /package.json
