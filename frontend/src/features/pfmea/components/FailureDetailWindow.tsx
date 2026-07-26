@@ -8,7 +8,6 @@ import {
 } from '@mui/material';
 import {
   Close as CloseIcon,
-  Add as AddIcon,
   Delete as DeleteIcon,
   Link as LinkIcon,
   Edit as EditIcon
@@ -90,24 +89,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
     remarks: '',
   });
 
-  const openActionModal = (linkId: string, causeNarration: string) => {
-    setActionModalLinkId(linkId);
-    setEditingActionId(null);
-    setActionModalCauseName(causeNarration);
-    setActionForm({
-      preventionAction: '',
-      detectionAction: '',
-      actionTaken: '',
-      targetDate: '',
-      completionDate: '',
-      responsiblePerson: '',
-      status: 'Open',
-      revisedSeverity: '',
-      revisedOccurrence: '',
-      revisedDetection: '',
-      remarks: '',
-    });
-  };
+
 
   const openEditActionModal = (linkId: string, causeNarration: string, action: LinkAction) => {
     setActionModalLinkId(linkId);

@@ -3,13 +3,15 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
-  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab
+  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
+  Grid
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -160,25 +162,7 @@ export const PfmeaWorkspace: React.FC = () => {
   const [structFailInitialControlDetection, setStructFailInitialControlDetection] = useState('');
   const [structFailInitialFilterCode, setStructFailInitialFilterCode] = useState('');
 
-  // Load tenant users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/auth/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data);
-        }
-      } catch (err) {
-        console.error('Failed to load tenant users', err);
-      }
-    };
-    if (token) {
-      fetchUsers();
-    }
-  }, [token]);
+
 
   const [syncingTree, setSyncingTree] = useState(false);
   const handleSyncTreeWithTable = async () => {
