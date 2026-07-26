@@ -311,7 +311,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         }}
                       >
                         <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5 }}>
-                          {eff.parentName || 'Wheel Flange'}
+                          {eff.parentName || 'Project Item'}
                         </Typography>
                         <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
                           {eff.function?.narration}
@@ -342,7 +342,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                   <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
                     <TreeIcon iconSrc={TREE_ASSETS.processStep} size={28} />
                     <Typography sx={{ fontSize: '0.98rem', fontWeight: 700, color: TREE_COLORS.nodeText.process }}>
-                      {data.mode.parentName || 'Rough Turn'}
+                      {data.mode.parentName || 'Process Step'}
                     </Typography>
                     <Typography sx={{ fontSize: '0.94rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
                       {data.mode.function?.narration}
@@ -374,7 +374,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         }}
                       >
                         <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.5 }}>
-                          {cause.parentName || 'Tool Holder'}
+                          {cause.parentName || 'Work Element'}
                         </Typography>
                         <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
                           {cause.function?.narration}
@@ -408,7 +408,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 ) : (
                   Object.entries(groupedEffects).map(([fnName, effects]) => {
                     const isExpanded = !!expandedGroups[fnName];
-                    const parentName = effects[0]?.parentName || 'System Item';
+                    const parentName = effects[0]?.parentName || 'Project Item';
                     return (
                       <Box key={fnName} sx={{ mb: 1.5 }}>
                         <Stack 

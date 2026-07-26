@@ -253,13 +253,13 @@ export class StructureLinkageService {
       where: { id: projectId },
       select: { name: true },
     });
-    const projectName = project?.name || 'Process Item';
+    const projectName = project?.name || 'Project Item';
 
     const step = await this.prisma.processStep.findUnique({
       where: { id: stepParentId },
       select: { name: true, stepNumber: true },
     });
-    const operationName = step ? `${step.stepNumber} - ${step.name}` : 'Operation';
+    const operationName = step ? (step.stepNumber ? `${step.stepNumber} - ${step.name}` : step.name) : 'Process Step';
 
     // Currently linked effects and causes
     const existingLinks = await this.prisma.failureLink.findMany({
@@ -284,7 +284,7 @@ export class StructureLinkageService {
       })),
       causes: causes.map((c) => {
         const parts = c.function.parentId.split('::');
-        const workStepName = parts[1] || 'Work Step';
+        const workStepName = parts[1] || 'Work Element';
         return {
           ...c,
           parentName: workStepName,
