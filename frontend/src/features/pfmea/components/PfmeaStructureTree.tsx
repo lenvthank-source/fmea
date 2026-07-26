@@ -127,21 +127,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
     setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const expandAll = () => {
-    const allExpanded: Record<string, boolean> = { root: true };
-    steps.forEach(s => {
-      allExpanded[`step::${s.id}`] = true;
-      const weList = rows.filter(r => r.processStepId === s.id).map(r => r.workElementName).filter(Boolean);
-      Array.from(new Set(weList)).forEach(we => {
-        if (we) allExpanded[`we::${s.id}::${we}`] = true;
-      });
-    });
-    setExpandedNodes(allExpanded);
-  };
 
-  const collapseAll = () => {
-    setExpandedNodes({ root: true });
-  };
 
   const handleSelectNode = (id: string) => {
     setSelectedNodeId(id);
@@ -291,45 +277,24 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
       {/* LEFT COLUMN (~70% Width): Interactive Tree Canvas Starting Right At The Top */}
       <Grid size={{ xs: 12, md: 8.5 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         
-        {/* Compact Tree Header: Search Bar & Expand Controls */}
-        <Paper
-          sx={{
-            p: 1.5,
-            px: 2,
-            border: '1px solid rgba(40, 37, 29, 0.1)',
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            boxShadow: 'none'
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-              <Button size="small" variant="text" onClick={expandAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
-                Expand All
-              </Button>
-              <Typography variant="body2" color="text.secondary">•</Typography>
-              <Button size="small" variant="text" onClick={collapseAll} sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
-                Collapse All
-              </Button>
-            </Stack>
-
-            {/* Search Input */}
-            <TextField
-              placeholder="Search elements..."
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{
-                width: 260,
-                '& .MuiOutlinedInput-root': {
-                  height: 34,
-                  borderRadius: 2,
-                  fontSize: '0.82rem'
-                }
-              }}
-            />
-          </Stack>
-        </Paper>
+        {/* Compact Search Header */}
+        <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'flex-end' }}>
+          <TextField
+            placeholder="Search tree elements..."
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{
+              width: '100%',
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                height: 36,
+                fontSize: '0.85rem'
+              }
+            }}
+          />
+        </Box>
 
         {/* Tree Structure Canvas */}
         <Paper
@@ -884,21 +849,11 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
           gap: 2.5
         }}
       >
-        {/* SECTION 1: LINKAGE & ACTIONS */}
+        {/* SECTION 1: ACTIONS & LINKAGE */}
         <Box>
           <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
-            📊 Linkages & Status
+            🔗 Linkage Tools
           </Typography>
-          {linkageStats && (
-            <Stack direction="row" spacing={0.75} sx={{ mb: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
-              <Chip label={`${linkageStats.total} Total`} size="small" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
-              <Chip label={`${linkageStats.linked} Linked`} size="small" color="success" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
-              {linkageStats.unlinked > 0 && (
-                <Chip label={`${linkageStats.unlinked} Unlinked`} size="small" color="warning" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
-              )}
-            </Stack>
-          )}
-
           <Stack spacing={1}>
             <Button
               fullWidth
@@ -1049,37 +1004,18 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 
         <Divider />
 
-        {/* SECTION 4: COLOR LEGEND */}
+        {/* SECTION 4: LINKAGE STATUS (PLAIN TEXT AT BOTTOM) */}
         <Box>
-          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1.25, display: 'block' }}>
-            🏷️ Color Legend
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', letterSpacing: '0.5px', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+            📊 Linkage Status
           </Typography>
-          <Stack spacing={1}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="root" iconSrc={TREE_ASSETS.processStep} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.root }}>Root (Process Item)</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="process" iconSrc={TREE_ASSETS.processStep} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process }}>Process Step (Operation)</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="workElem" iconSrc={TREE_ASSETS.workElement} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem }}>Work Element (Work Step)</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.function }}>Function</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="failure" iconSrc={TREE_ASSETS.failure} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.failure }}>Failure Mode (Unlinked)</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TreeIconBadge type="linked" iconSrc={TREE_ASSETS.failure} />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.linked }}>Failure Mode (Linked)</Typography>
-            </Box>
-          </Stack>
+          {linkageStats ? (
+            <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'text.primary' }}>
+              {linkageStats.total} Total &nbsp;•&nbsp; <span style={{ color: TREE_COLORS.nodeText.function }}>{linkageStats.linked} Linked</span> &nbsp;•&nbsp; <span style={{ color: TREE_COLORS.nodeText.failure }}>{linkageStats.unlinked} Unlinked</span>
+            </Typography>
+          ) : (
+            <Typography variant="caption" color="text.secondary">No linkage data available</Typography>
+          )}
         </Box>
 
       </Paper>

@@ -698,7 +698,12 @@ model LinkAction {
   id                String    @id @default(uuid()) @db.Uuid
   failureLinkId     String    @map("failure_link_id") @db.Uuid
   description       String    @db.Text
+  preventionAction  String?   @map("prevention_action") @db.Text
+  detectionAction   String?   @map("detection_action") @db.Text
+  actionTaken       String?   @map("action_taken") @db.Text
   targetDate        DateTime? @map("target_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  responsiblePerson String?   @map("responsible_person") @db.VarChar(255)
   revisedSeverity   Int?      @map("revised_severity") @db.SmallInt
   revisedOccurrence Int?      @map("revised_occurrence") @db.SmallInt
   revisedDetection  Int?      @map("revised_detection") @db.SmallInt

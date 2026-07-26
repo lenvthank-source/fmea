@@ -1,12 +1,37 @@
 import { IsString, IsOptional, IsInt, Min, Max, IsDateString } from 'class-validator';
 
 export class CreateLinkActionDto {
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  preventionAction?: string;
+
+  @IsOptional()
+  @IsString()
+  detectionAction?: string;
+
+  @IsOptional()
+  @IsString()
+  actionTaken?: string;
 
   @IsOptional()
   @IsDateString()
   targetDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  completionDate?: string;
+
+  @IsOptional()
+  @IsString()
+  responsiblePerson?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
 
   @IsOptional()
   @IsInt()

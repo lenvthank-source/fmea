@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min, Max, IsDateString, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, Max, IsDateString } from 'class-validator';
 
 export class UpdateLinkActionDto {
   @IsOptional()
@@ -6,8 +6,28 @@ export class UpdateLinkActionDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  preventionAction?: string;
+
+  @IsOptional()
+  @IsString()
+  detectionAction?: string;
+
+  @IsOptional()
+  @IsString()
+  actionTaken?: string;
+
+  @IsOptional()
   @IsDateString()
   targetDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  completionDate?: string;
+
+  @IsOptional()
+  @IsString()
+  responsiblePerson?: string;
 
   @IsOptional()
   @IsInt()
@@ -33,6 +53,5 @@ export class UpdateLinkActionDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['open', 'in_progress', 'completed', 'closed'])
   status?: string;
 }

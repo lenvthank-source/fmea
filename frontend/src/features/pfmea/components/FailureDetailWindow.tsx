@@ -3,7 +3,8 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Stack, Chip, Tabs, Tab,
   CircularProgress, IconButton, Table, TableBody,
-  TableCell, TableHead, TableRow, Tooltip, Alert, TextField
+  TableCell, TableHead, TableRow, Tooltip, Alert, TextField,
+  Grid, MenuItem
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -65,12 +66,70 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Add action state
-  const [addActionLinkId, setAddActionLinkId] = useState<string | null>(null);
-  const [actionDesc, setActionDesc] = useState('');
-  const [actionDate, setActionDate] = useState('');
-  const [actionRemark, setActionRemark] = useState('');
-  const [addingAction, setAddingAction] = useState(false);
+  // Add action modal state matching user reference screenshot
+  const [actionModalLinkId, setActionModalLinkId] = useState<string | null>(null);
+  const [actionModalCauseName, setActionModalCauseName] = useState<string>('');
+  const [actionForm, setActionForm] = useState({
+    preventionAction: '',
+    detectionAction: '',
+    actionTaken: '',
+    targetDate: '',
+    completionDate: '',
+    responsiblePerson: '',
+    status: 'Open',
+    revisedSeverity: '',
+    revisedOccurrence: '',
+    revisedDetection: '',
+    remarks: '',
+  });
+
+  const openActionModal = (linkId: string, causeNarration: string) => {
+    setActionModalLinkId(linkId);
+    setActionModalCauseName(causeNarration);
+    setActionForm({
+      preventionAction: '',
+      detectionAction: '',
+      actionTaken: '',
+      targetDate: '',
+      completionDate: '',
+      responsiblePerson: '',
+      status: 'Open',
+      revisedSeverity: '',
+      revisedOccurrence: '',
+      revisedDetection: '',
+      remarks: '',
+    });
+  };
+
+  const submitActionModal = async () => {
+    if (!actionModalLinkId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/failure-links/${actionModalLinkId}/actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          description: actionForm.preventionAction || actionForm.detectionAction || actionForm.actionTaken || 'Action Item',
+          preventionAction: actionForm.preventionAction || undefined,
+          detectionAction: actionForm.detectionAction || undefined,
+          actionTaken: actionForm.actionTaken || undefined,
+          targetDate: actionForm.targetDate || undefined,
+          completionDate: actionForm.completionDate || undefined,
+          responsiblePerson: actionForm.responsiblePerson || undefined,
+          status: actionForm.status,
+          revisedSeverity: actionForm.revisedSeverity ? Number(actionForm.revisedSeverity) : undefined,
+          revisedOccurrence: actionForm.revisedOccurrence ? Number(actionForm.revisedOccurrence) : undefined,
+          revisedDetection: actionForm.revisedDetection ? Number(actionForm.revisedDetection) : undefined,
+          remarks: actionForm.remarks || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to save action');
+      setActionModalLinkId(null);
+      loadData();
+      onRefresh();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
 
   const loadData = () => {
     if (!failureModeId || !token) return;
@@ -99,32 +158,6 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       onRefresh();
     } catch {
       setError('Failed to unlink');
-    }
-  };
-
-  const handleAddAction = async (linkId: string) => {
-    if (!actionDesc.trim()) return;
-    setAddingAction(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/failure-links/${linkId}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          description: actionDesc.trim(),
-          targetDate: actionDate || undefined,
-          remarks: actionRemark || undefined,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to add action');
-      setAddActionLinkId(null);
-      setActionDesc('');
-      setActionDate('');
-      setActionRemark('');
-      loadData();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setAddingAction(false);
     }
   };
 
@@ -270,7 +303,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                         </Box>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="Add Action">
-                            <IconButton size="small" color="warning" onClick={() => setAddActionLinkId(entry.linkId)}>
+                            <IconButton size="small" color="warning" onClick={() => openActionModal(entry.linkId, entry.failure.narration)}>
                               <AddIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -281,54 +314,6 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                           </Tooltip>
                         </Stack>
                       </Stack>
-
-                      {/* Add Action inline form */}
-                      {addActionLinkId === entry.linkId && (
-                        <Box sx={{ p: 1.5, bgcolor: '#fffde7', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#f57f17', display: 'block', mb: 1 }}>
-                            New Action
-                          </Typography>
-                          <Stack spacing={1}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Description"
-                              value={actionDesc}
-                              onChange={e => setActionDesc(e.target.value)}
-                            />
-                            <Stack direction="row" spacing={1}>
-                              <TextField
-                                size="small"
-                                type="date"
-                                label="Target Date"
-                                value={actionDate}
-                                onChange={e => setActionDate(e.target.value)}
-                                slotProps={{ inputLabel: { shrink: true } }}
-                                sx={{ flex: 1 }}
-                              />
-                              <TextField
-                                size="small"
-                                label="Remarks"
-                                value={actionRemark}
-                                onChange={e => setActionRemark(e.target.value)}
-                                sx={{ flex: 2 }}
-                              />
-                            </Stack>
-                            <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                              <Button size="small" onClick={() => setAddActionLinkId(null)} color="inherit">Cancel</Button>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="warning"
-                                disabled={!actionDesc.trim() || addingAction}
-                                onClick={() => handleAddAction(entry.linkId)}
-                              >
-                                {addingAction ? <CircularProgress size={14} color="inherit" /> : 'Add'}
-                              </Button>
-                            </Stack>
-                          </Stack>
-                        </Box>
-                      )}
 
                       {/* Nested Actions */}
                       {entry.actions.map(action => (
@@ -379,6 +364,247 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       <DialogActions sx={{ px: 2, py: 1.5, borderTop: '1px solid #eee' }}>
         <Button onClick={onClose} variant="outlined" color="inherit">Close</Button>
       </DialogActions>
+
+      {/* ADD ACTION DIALOG (MATCHING REFERENCE SCREENSHOT) */}
+      <Dialog
+        open={Boolean(actionModalLinkId)}
+        onClose={() => setActionModalLinkId(null)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 2, p: 1 } } }}
+      >
+        <DialogTitle sx={{ py: 1.5, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Add Action</Typography>
+          <IconButton size="small" onClick={() => setActionModalLinkId(null)}><CloseIcon /></IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ px: 2, py: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary', fontWeight: 600 }}>
+            Cause : <span style={{ color: '#111827', fontWeight: 700 }}>{actionModalCauseName}</span>
+          </Typography>
+
+          <Stack spacing={2}>
+            {/* Prevention Action(s) */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 160, fontWeight: 700, pt: 1 }}>
+                Prevention Action(s) :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={actionForm.preventionAction}
+                onChange={(e) => setActionForm(f => ({ ...f, preventionAction: e.target.value }))}
+                placeholder="Enter prevention action details..."
+              />
+            </Box>
+
+            {/* Detection Action */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 160, fontWeight: 700, pt: 1 }}>
+                Detection Action :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={actionForm.detectionAction}
+                onChange={(e) => setActionForm(f => ({ ...f, detectionAction: e.target.value }))}
+                placeholder="Enter detection action details..."
+              />
+            </Box>
+
+            {/* Action Taken */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <Typography variant="body2" sx={{ width: 160, fontWeight: 700, pt: 1 }}>
+                Action Taken :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
+                value={actionForm.actionTaken}
+                onChange={(e) => setActionForm(f => ({ ...f, actionTaken: e.target.value }))}
+                placeholder="Enter actions taken..."
+              />
+            </Box>
+
+            {/* Grid for Dates & After Action S/O/D Ratings */}
+            <Grid container spacing={2.5} sx={{ mt: 1 }}>
+              {/* Left Column: Dates & Responsibility */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack spacing={2}>
+                  {/* Target Date */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Target Date :
+                    </Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      value={actionForm.targetDate}
+                      onChange={(e) => setActionForm(f => ({ ...f, targetDate: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                    <IconButton size="small" onClick={() => setActionForm(f => ({ ...f, targetDate: '' }))} sx={{ bgcolor: '#0284c7', color: '#fff', '&:hover': { bgcolor: '#0369a1' } }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  {/* Completion Date */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Completion Date :
+                    </Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      value={actionForm.completionDate}
+                      onChange={(e) => setActionForm(f => ({ ...f, completionDate: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                    <IconButton size="small" onClick={() => setActionForm(f => ({ ...f, completionDate: '' }))} sx={{ bgcolor: '#0284c7', color: '#fff', '&:hover': { bgcolor: '#0369a1' } }}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  {/* Responsible Person */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Responsible Person :
+                    </Typography>
+                    <TextField
+                      size="small"
+                      placeholder="Name or team..."
+                      value={actionForm.responsiblePerson}
+                      onChange={(e) => setActionForm(f => ({ ...f, responsiblePerson: e.target.value }))}
+                      sx={{ flexGrow: 1 }}
+                    />
+                    <Button size="small" variant="contained" sx={{ bgcolor: '#0284c7', textTransform: 'none', fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                      Add/Edit Core Team
+                    </Button>
+                  </Box>
+
+                  {/* Status */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 140, fontWeight: 700 }}>
+                      Status :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={actionForm.status}
+                      onChange={(e) => setActionForm(f => ({ ...f, status: e.target.value }))}
+                      sx={{ width: 180 }}
+                    >
+                      <MenuItem value="Open">Open</MenuItem>
+                      <MenuItem value="In Progress">In Progress</MenuItem>
+                      <MenuItem value="Completed">Completed</MenuItem>
+                      <MenuItem value="Verified">Verified</MenuItem>
+                      <MenuItem value="Closed">Closed</MenuItem>
+                    </TextField>
+                  </Box>
+                </Stack>
+              </Grid>
+
+              {/* Right Column: After Action S/O/D Ratings */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, textAlign: 'center', color: '#0f172a' }}>
+                  After Action
+                </Typography>
+
+                <Stack spacing={2}>
+                  {/* Severity (S) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Severity (S) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={actionForm.revisedSeverity}
+                      onChange={(e) => setActionForm(f => ({ ...f, revisedSeverity: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                    <Button size="small" variant="contained" sx={{ bgcolor: '#0284c7', textTransform: 'none', fontWeight: 700, fontSize: '0.75rem' }}>
+                      Guideline
+                    </Button>
+                  </Box>
+
+                  {/* Occurrence (O) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Occurrence (O) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={actionForm.revisedOccurrence}
+                      onChange={(e) => setActionForm(f => ({ ...f, revisedOccurrence: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                    <Button size="small" variant="contained" sx={{ bgcolor: '#0284c7', textTransform: 'none', fontWeight: 700, fontSize: '0.75rem' }}>
+                      Guideline
+                    </Button>
+                  </Box>
+
+                  {/* Detection (D) */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" sx={{ width: 110, fontWeight: 700 }}>
+                      Detection (D) :
+                    </Typography>
+                    <TextField
+                      select
+                      size="small"
+                      value={actionForm.revisedDetection}
+                      onChange={(e) => setActionForm(f => ({ ...f, revisedDetection: e.target.value }))}
+                      sx={{ width: 80 }}
+                    >
+                      <MenuItem value="">—</MenuItem>
+                      {[1,2,3,4,5,6,7,8,9,10].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                    </TextField>
+                    <Button size="small" variant="contained" sx={{ bgcolor: '#0284c7', textTransform: 'none', fontWeight: 700, fontSize: '0.75rem' }}>
+                      Guideline
+                    </Button>
+                  </Box>
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Remarks */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+              <Typography variant="body2" sx={{ width: 160, fontWeight: 700 }}>
+                Remarks :
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                value={actionForm.remarks}
+                onChange={(e) => setActionForm(f => ({ ...f, remarks: e.target.value }))}
+                placeholder="Enter remarks..."
+              />
+            </Box>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end', gap: 1 }}>
+          <Button variant="contained" onClick={submitActionModal} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
+            Save
+          </Button>
+          <Button variant="contained" onClick={() => setActionModalLinkId(null)} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };

@@ -457,13 +457,18 @@ export class StructureLinkageService {
     return this.prisma.linkAction.create({
       data: {
         failureLinkId,
-        description: dto.description,
+        description: dto.description || dto.preventionAction || dto.detectionAction || 'Action Item',
+        preventionAction: dto.preventionAction ?? null,
+        detectionAction: dto.detectionAction ?? null,
+        actionTaken: dto.actionTaken ?? null,
         targetDate: dto.targetDate ? new Date(dto.targetDate) : null,
+        completionDate: dto.completionDate ? new Date(dto.completionDate) : null,
+        responsiblePerson: dto.responsiblePerson ?? null,
         revisedSeverity: dto.revisedSeverity ?? null,
         revisedOccurrence: dto.revisedOccurrence ?? null,
         revisedDetection: dto.revisedDetection ?? null,
         remarks: dto.remarks ?? null,
-        status: 'open',
+        status: dto.status || 'open',
       },
     });
   }
@@ -488,8 +493,13 @@ export class StructureLinkageService {
     return this.prisma.linkAction.update({
       where: { id: actionId },
       data: {
-        description: dto.description,
+        description: dto.description ?? (dto.preventionAction || dto.detectionAction || undefined),
+        preventionAction: dto.preventionAction,
+        detectionAction: dto.detectionAction,
+        actionTaken: dto.actionTaken,
         targetDate: dto.targetDate ? new Date(dto.targetDate) : undefined,
+        completionDate: dto.completionDate ? new Date(dto.completionDate) : undefined,
+        responsiblePerson: dto.responsiblePerson,
         revisedSeverity: dto.revisedSeverity,
         revisedOccurrence: dto.revisedOccurrence,
         revisedDetection: dto.revisedDetection,
