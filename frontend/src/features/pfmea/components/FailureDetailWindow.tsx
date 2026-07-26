@@ -10,14 +10,20 @@ import {
   Close as CloseIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
 
 interface LinkAction {
   id: string;
   description: string;
-  targetDate?: string;
+  preventionAction?: string | null;
+  detectionAction?: string | null;
+  actionTaken?: string | null;
+  targetDate?: string | null;
+  completionDate?: string | null;
+  responsiblePerson?: string | null;
   revisedSeverity?: number | null;
   revisedOccurrence?: number | null;
   revisedDetection?: number | null;
@@ -68,6 +74,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
 
   // Add action modal state matching user reference screenshot
   const [actionModalLinkId, setActionModalLinkId] = useState<string | null>(null);
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [actionModalCauseName, setActionModalCauseName] = useState<string>('');
   const [actionForm, setActionForm] = useState({
     preventionAction: '',
@@ -85,6 +92,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
 
   const openActionModal = (linkId: string, causeNarration: string) => {
     setActionModalLinkId(linkId);
+    setEditingActionId(null);
     setActionModalCauseName(causeNarration);
     setActionForm({
       preventionAction: '',
@@ -101,11 +109,35 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
     });
   };
 
+  const openEditActionModal = (linkId: string, causeNarration: string, action: LinkAction) => {
+    setActionModalLinkId(linkId);
+    setEditingActionId(action.id);
+    setActionModalCauseName(causeNarration);
+    setActionForm({
+      preventionAction: action.preventionAction || action.description || '',
+      detectionAction: action.detectionAction || '',
+      actionTaken: action.actionTaken || '',
+      targetDate: action.targetDate ? action.targetDate.split('T')[0] : '',
+      completionDate: action.completionDate ? action.completionDate.split('T')[0] : '',
+      responsiblePerson: action.responsiblePerson || '',
+      status: action.status || 'Open',
+      revisedSeverity: action.revisedSeverity ? String(action.revisedSeverity) : '',
+      revisedOccurrence: action.revisedOccurrence ? String(action.revisedOccurrence) : '',
+      revisedDetection: action.revisedDetection ? String(action.revisedDetection) : '',
+      remarks: action.remarks || '',
+    });
+  };
+
   const submitActionModal = async () => {
     if (!actionModalLinkId) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/failure-links/${actionModalLinkId}/actions`, {
-        method: 'POST',
+      const url = editingActionId
+        ? `${API_BASE_URL}/link-actions/${editingActionId}`
+        : `${API_BASE_URL}/failure-links/${actionModalLinkId}/actions`;
+      const method = editingActionId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           description: actionForm.preventionAction || actionForm.detectionAction || actionForm.actionTaken || 'Action Item',
@@ -124,6 +156,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       });
       if (!res.ok) throw new Error('Failed to save action');
       setActionModalLinkId(null);
+      setEditingActionId(null);
       loadData();
       onRefresh();
     } catch (e: any) {
@@ -346,9 +379,18 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                                 )}
                               </Stack>
                             </Box>
-                            <IconButton size="small" color="error" onClick={() => handleDeleteAction(action.id)}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                            <Stack direction="row" spacing={0.5}>
+                              <Tooltip title="Edit Action">
+                                <IconButton size="small" color="primary" onClick={() => openEditActionModal(entry.linkId, entry.failure.narration, action)}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete Action">
+                                <IconButton size="small" color="error" onClick={() => handleDeleteAction(action.id)}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
                           </Stack>
                         </Box>
                       ))}

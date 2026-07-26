@@ -8,7 +8,6 @@ import {
   Stack,
   Collapse,
   Tooltip,
-  TextField,
   Divider,
   Chip,
   Grid
@@ -121,7 +120,6 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const toggleExpand = (id: string) => {
     setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
@@ -230,10 +228,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
     }
   };
 
-  const filteredSteps = steps.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.stepNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSteps = steps;
 
   const rootRows = rows.filter(r => !r.processStepId);
   const rootFunctions = Array.from(new Set(rootRows.flatMap(r => r.functions?.map(f => f.name) || []))).filter(Boolean);
@@ -274,27 +269,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   return (
     <Grid container spacing={2.5} sx={{ alignItems: 'flex-start' }}>
       
-      {/* LEFT COLUMN (~70% Width): Interactive Tree Canvas Starting Right At The Top */}
-      <Grid size={{ xs: 12, md: 8.5 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        
-        {/* Compact Search Header */}
-        <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'flex-end' }}>
-          <TextField
-            placeholder="Search tree elements..."
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{
-              width: '100%',
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              '& .MuiOutlinedInput-root': {
-                height: 36,
-                fontSize: '0.85rem'
-              }
-            }}
-          />
-        </Box>
+      {/* LEFT COLUMN (80% Width): Interactive Tree Canvas Starting Right At The Top */}
+      <Grid size={{ xs: 12, md: 9.6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 
         {/* Tree Structure Canvas */}
         <Paper
@@ -835,8 +811,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
       </Paper>
     </Grid>
 
-    {/* RIGHT COLUMN (~30% Width): Sticky Control Sidebar Panel */}
-    <Grid size={{ xs: 12, md: 3.5 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
+    {/* RIGHT COLUMN (20% Width): Sticky Control Sidebar Panel */}
+    <Grid size={{ xs: 12, md: 2.4 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
       <Paper
         sx={{
           p: 2.5,
@@ -926,9 +902,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 variant="outlined"
                 disabled={!isAddWorkElementEnabled}
                 onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
-                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                sx={{ fontWeight: 700, fontSize: '0.74rem' }}
               >
-                Work Elem
+                Work Element
               </Button>
             </Grid>
             <Grid size={6}>
