@@ -251,9 +251,9 @@ export class StructureLinkageService {
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      select: { name: true },
+      select: { name: true, partName: true, orgPartNumber: true },
     });
-    const projectName = project?.name || 'Project Item';
+    const projectName = project?.partName || project?.name || 'System Item';
 
     const step = await this.prisma.processStep.findUnique({
       where: { id: stepParentId },

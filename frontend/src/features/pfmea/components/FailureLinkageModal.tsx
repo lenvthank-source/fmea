@@ -40,6 +40,7 @@ interface FailureLinkageModalProps {
   failureModeId: string | null;
   token: string;
   onSuccess: () => void;
+  projectName?: string;
 }
 
 interface SvgLink {
@@ -84,6 +85,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   failureModeId,
   token,
   onSuccess,
+  projectName: propProjectName,
 }) => {
   const [data, setData] = useState<CandidateData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -311,7 +313,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                         }}
                       >
                         <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5 }}>
-                          {eff.parentName || 'Project Item'}
+                          {propProjectName || eff.parentName || 'System Item'}
                         </Typography>
                         <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
                           {eff.function?.narration}
@@ -408,7 +410,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 ) : (
                   Object.entries(groupedEffects).map(([fnName, effects]) => {
                     const isExpanded = !!expandedGroups[fnName];
-                    const parentName = effects[0]?.parentName || 'Project Item';
+                    const parentName = propProjectName || effects[0]?.parentName || 'System Item';
                     return (
                       <Box key={fnName} sx={{ mb: 1.5 }}>
                         <Stack 

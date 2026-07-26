@@ -1805,6 +1805,7 @@ export const PfmeaWorkspace: React.FC = () => {
           onClose={() => { setLinkageModalOpen(false); setLinkageModalFailureModeId(null); }}
           failureModeId={linkageModalFailureModeId}
           token={token}
+          projectName={projectName}
           onSuccess={() => fetchData()}
         />
       )}
