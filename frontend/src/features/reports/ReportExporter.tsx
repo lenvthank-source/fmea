@@ -949,9 +949,207 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
     }
   };
 
+  const handleExportPdf = async () => {
+    const wmText = getWatermarkText();
+    await generatePdf(wmText);
+    onClose();
+  };
+
+  const generatePdf = async (watermark: string) => {
+    let headers: string[] = [];
+    let rowsData: string[][] = [];
+
+    if (docType === 'PFD') {
+      headers = ['Step #', 'Process Step / Operation Description', 'Flow Symbols', 'Machine, Device, Jig, Tools', 'Characteristics / Special Char'];
+      const rawSteps = steps && steps.length > 0 ? steps : data;
+      rowsData = (rawSteps || []).map((step: any, index: number) => {
+        let symbolsText = '—';
+        if (step.category) {
+          const meta = getPfdIconMeta(step.category);
+          symbolsText = `${meta.symbol} (${meta.label})`;
+        }
+        let machinesText = '—';
+        if (Array.isArray(step.machinesEquipmentDocs) && step.machinesEquipmentDocs.length > 0) {
+          machinesText = step.machinesEquipmentDocs.map((m: any) => typeof m === 'string' ? m : (m.name || m.narration || '')).filter(Boolean).join('<br/>');
+        } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs.trim()) {
+          machinesText = step.machinesEquipmentDocs;
+        }
+        return [
+          step.stepNumber ? String(step.stepNumber) : String(index + 1),
+          step.name || step.description || '—',
+          symbolsText,
+          machinesText,
+          step.specialCharacteristics || '—',
+        ];
+      });
+    } else if (docType === 'PFMEA' || docType === 'DFMEA') {
+      headers = [
+        'Process Step / Function',
+        'Failure Mode',
+        'Failure Effect',
+        'S',
+        'Failure Cause',
+        'O',
+        'Prevention Control',
+        'Detection Control',
+        'D',
+        'AP',
+        'Action Prevention',
+        'Action Detection',
+        'Resp & Target',
+        'Action Taken & Date',
+        'S (rev)',
+        'O (rev)',
+        'D (rev)',
+        'AP (rev)',
+        'Status'
+      ];
+      rowsData = (data || []).map((row: any) => [
+        row.processStepName || row.functionNarration || '—',
+        row.failureModeNarration || '—',
+        row.failureEffectNarration || '—',
+        String(row.severityRating || '—'),
+        row.failureCauseNarration || '—',
+        String(row.occurrenceRating || '—'),
+        row.currentControlPrevention || '—',
+        row.currentControlDetection || '—',
+        String(row.detectionRating || '—'),
+        row.actionPriority || '—',
+        row.preventionAction || '—',
+        row.detectionAction || '—',
+        row.responsibility && row.targetDate ? `${row.responsibility} (${row.targetDate})` : '—',
+        row.actionTaken && row.completionDate ? `${row.actionTaken} (${row.completionDate})` : '—',
+        String(row.revisedSeverity || '—'),
+        String(row.revisedOccurrence || '—'),
+        String(row.revisedDetection || '—'),
+        row.revisedAp || '—',
+        row.status || 'Open',
+      ]);
+    } else if (docType === 'CONTROL_PLAN') {
+      headers = [
+        'Step #',
+        'Process Name / Operation Description',
+        'Machine, Device, Jig, Tools',
+        'Product / Process Characteristic',
+        'Special Char',
+        'Methods of Control',
+        'Sample Size / Freq',
+        'Control Method',
+        'Reaction Plan'
+      ];
+      rowsData = (data || []).map((row: any, index: number) => [
+        String(row.stepNumber || index + 1),
+        row.processStepName || '—',
+        row.machineEquipment || '—',
+        row.characteristic || '—',
+        row.specialChar || '—',
+        row.methodOfControl || '—',
+        row.sampleSizeFreq || '—',
+        row.controlMethod || '—',
+        row.reactionPlan || '—',
+      ]);
+    }
+
+    const tableRowsHtml = rowsData.map(row => `
+      <tr>
+        ${row.map(cell => `<td style="border: 0.5pt solid #cbd5e1; padding: 6px; font-size: 11px;">${cell}</td>`).join('')}
+      </tr>
+    `).join('');
+
+    const pdfHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${projectName} — ${getDocTypeName()}</title>
+          <style>
+            @page { size: landscape; margin: 10mm; }
+            body { font-family: Arial, sans-serif; margin: 10px; color: #1e293b; position: relative; }
+            h2 { color: #0f172a; margin-bottom: 4px; }
+            p { color: #64748b; font-size: 12px; margin-top: 0; margin-bottom: 12px; }
+            table { border-collapse: collapse; width: 100%; font-size: 11px; margin-top: 10px; }
+            th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; }
+            th { background-color: #0b5563; color: #ffffff; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .meta-table { margin-bottom: 16px; width: 100%; border-collapse: collapse; }
+            .meta-table td { padding: 5px 8px; font-size: 11px; }
+            .watermark {
+              position: fixed;
+              top: 35%;
+              left: 10%;
+              width: 80%;
+              text-align: center;
+              font-size: 5rem;
+              font-weight: 900;
+              color: rgba(203, 213, 225, 0.35);
+              transform: rotate(-30deg);
+              pointer-events: none;
+              z-index: 9999;
+              letter-spacing: 0.1em;
+              text-transform: uppercase;
+            }
+          </style>
+        </head>
+        <body>
+          ${watermark ? `<div class="watermark">${watermark}</div>` : ''}
+          <h2>${projectName} — ${getDocTypeName()}</h2>
+          <p>Exported on: ${new Date().toLocaleDateString()}</p>
+          ${project ? `
+            <table class="meta-table">
+              <tr>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Company Name:</td>
+                <td>${project.organisationName || '—'}</td>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Customer Name:</td>
+                <td>${project.customer || '—'}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Manufacturing Plant:</td>
+                <td>${project.organisationPlant || '—'}</td>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Document Number:</td>
+                <td>${getDerivedDocNumber()}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Subject (Part Name):</td>
+                <td>${project.partName || '—'}</td>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Part Number:</td>
+                <td>${project.orgPartNumber || '—'}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Revision / Status:</td>
+                <td>Rev ${project.revisionNumber || '1.0'} (${getStatusLabel()})</td>
+                <td style="font-weight: bold; background-color: #f1f5f9;">Origination Date:</td>
+                <td>${project.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'}</td>
+              </tr>
+            </table>
+          ` : ''}
+          <table>
+            <thead>
+              <tr>
+                ${headers.map(h => `<th>${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRowsHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(pdfHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Export Excel Document</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>Export Document</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <FormControl>
@@ -976,9 +1174,17 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           )}
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ p: 2.5, pt: 0 }}>
+      <DialogActions sx={{ p: 2.5, pt: 0, gap: 1 }}>
         <Button onClick={onClose} variant="outlined">
           Cancel
+        </Button>
+        <Button
+          onClick={handleExportPdf}
+          variant="contained"
+          color="primary"
+          startIcon={<DownloadIcon />}
+        >
+          Download PDF (.pdf)
         </Button>
         <Button
           onClick={handleExportExcel}

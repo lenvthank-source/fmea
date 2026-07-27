@@ -21,7 +21,7 @@ import {
   ImportWorkElementPackageDto,
 } from './repository.dto';
 
-@Controller('api/v1/repository')
+@Controller('repository')
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class RepositoryController {
   constructor(private readonly repositoryService: RepositoryService) {}

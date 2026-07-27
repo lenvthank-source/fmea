@@ -19,6 +19,13 @@ import {
   Stack,
   IconButton,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
@@ -262,48 +269,61 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                 Enter multiple functions below. All functions will be added under this {PARENT_LABELS[parentType]}.
               </Typography>
 
-              {rows.map((row, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1.5fr 1fr auto',
-                    gap: 1.5,
-                    alignItems: 'center',
-                    p: 1.5,
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                  }}
-                >
-                  <TextFieldAny
-                    label={`Function #${idx + 1} Narration`}
-                    value={row.narration}
-                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="e.g. Provide structural support to assembly..."
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  <TextFieldAny
-                    label="Optional Description / Spec"
-                    value={row.description}
-                    onChange={(e: any) => handleRowChange(idx, 'description', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="e.g. Must withstand 500 N load..."
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  <IconButton
-                    color="error"
-                    size="small"
-                    onClick={() => handleRemoveRow(idx)}
-                    disabled={rows.length <= 1}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
+              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: '#1b5e20' }}>
+                    <TableRow>
+                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #2e7d32', minWidth: 240 }}>
+                        Function / Requirement Narration
+                      </TableCell>
+                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #2e7d32', minWidth: 200 }}>
+                        Description / Specification (Optional)
+                      </TableCell>
+                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                        Action
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map((row, idx) => (
+                      <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                        <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TextFieldAny
+                            value={row.narration}
+                            onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                            placeholder="e.g. Provide structural support to assembly..."
+                            size="small"
+                            fullWidth
+                            variant="outlined"
+                            sx={{ bgcolor: '#ffffff' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TextFieldAny
+                            value={row.description}
+                            onChange={(e: any) => handleRowChange(idx, 'description', e.target.value)}
+                            placeholder="e.g. Must withstand 500 N load..."
+                            size="small"
+                            fullWidth
+                            variant="outlined"
+                            sx={{ bgcolor: '#ffffff' }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ p: 1, textAlign: 'center' }}>
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => handleRemoveRow(idx)}
+                            disabled={rows.length <= 1}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               <Button
                 startIcon={<AddIcon />}
@@ -312,7 +332,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                 onClick={handleAddRow}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Add Another Function
+                + Add Row
               </Button>
             </Stack>
           )}

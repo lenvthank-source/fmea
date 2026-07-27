@@ -300,7 +300,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth={role === 'cause' && activeTab === 1 ? 'lg' : 'md'}
       fullWidth
       sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #d32f2f' } }}
     >
@@ -439,172 +439,156 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         {!editMode && activeTab === 1 && (
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              Enter multiple failure {roleTitle.toLowerCase()} entries below.
+              Enter multiple failure {roleTitle.toLowerCase()} entries in the spreadsheet table below. Click "+ Add Row" to append more entries.
             </Typography>
 
-            {role === 'effect' ? (
-              /* Horizontal rows for Failure Effects */
-              rows.map((row, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '2.5fr 1fr auto',
-                    gap: 1.5,
-                    alignItems: 'center',
-                    p: 1.5,
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                  }}
-                >
-                  <TextFieldAny
-                    label={`Effect #${idx + 1} Narration`}
-                    value={row.narration}
-                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="Describe failure effect..."
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  <RatingDropdown
-                    label="Severity (S)"
-                    ratingType="severity"
-                    value={row.severityRating}
-                    onChange={(val) => handleRowChange(idx, 'severityRating', val)}
-                  />
-                  <IconButton
-                    color="error"
-                    size="small"
-                    onClick={() => handleRemoveRow(idx)}
-                    disabled={rows.length <= 1}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))
-            ) : role === 'mode' ? (
-              /* Horizontal rows for Failure Modes */
-              rows.map((row, idx) => (
-                <Box
-                  key={idx}
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr auto',
-                    gap: 1.5,
-                    alignItems: 'center',
-                    p: 1.5,
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                  }}
-                >
-                  <TextFieldAny
-                    label={`Failure Mode #${idx + 1} Narration`}
-                    value={row.narration}
-                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="Describe failure mode..."
-                    InputLabelProps={{ shrink: true }}
-                  />
-                  <IconButton
-                    color="error"
-                    size="small"
-                    onClick={() => handleRemoveRow(idx)}
-                    disabled={rows.length <= 1}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))
-            ) : (
-              /* Accordions for Failure Causes */
-              rows.map((row, idx) => (
-                <Accordion key={idx} defaultExpanded variant="outlined" sx={{ bgcolor: '#ffffff' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 1 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        Failure Cause #{idx + 1}: {row.narration.trim() || '(Empty narration)'}
-                      </Typography>
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveRow(idx);
-                        }}
-                        disabled={rows.length <= 1}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ pt: 1 }}>
-                    <Stack spacing={2}>
-                      <TextFieldAny
-                        label="Failure Cause Narration"
-                        value={row.narration}
-                        onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                        multiline
-                        rows={2}
-                        fullWidth
-                        size="small"
-                        placeholder="Describe failure cause..."
-                        InputLabelProps={{ shrink: true }}
-                      />
-
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                        <RatingDropdown
-                          label="Occurrence (O) Rating"
-                          ratingType="occurrence"
-                          value={row.occurrenceRating}
-                          onChange={(val) => handleRowChange(idx, 'occurrenceRating', val)}
-                        />
-                        <RatingDropdown
-                          label="Detection (D) Rating"
-                          ratingType="detection"
-                          value={row.detectionRating}
-                          onChange={(val) => handleRowChange(idx, 'detectionRating', val)}
-                        />
-                      </Box>
-
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gap: 2 }}>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#0b5563' }}>
+                  <TableRow>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 200 }}>
+                      {role === 'cause' ? 'Failure Cause Narration' : role === 'effect' ? 'Failure Effect Narration' : 'Failure Mode Narration'}
+                    </TableCell>
+                    {role === 'effect' && (
+                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 110 }}>
+                        SEV
+                      </TableCell>
+                    )}
+                    {role === 'cause' && (
+                      <>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 180 }}>
+                          Current Prevention Control
+                        </TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 90 }}>
+                          OCC
+                        </TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 180 }}>
+                          Current Detection Control
+                        </TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 90 }}>
+                          DET
+                        </TableCell>
+                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 130 }}>
+                          Filter Code
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map((row, idx) => (
+                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                      {/* Narration Cell */}
+                      <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
                         <TextFieldAny
-                          label="Prevention Control"
-                          value={row.currentControlPrevention}
-                          onChange={(e: any) => handleRowChange(idx, 'currentControlPrevention', e.target.value)}
+                          value={row.narration}
+                          onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                          placeholder={`Enter ${roleTitle.toLowerCase()}...`}
                           size="small"
                           fullWidth
-                          placeholder="e.g. Error proofing fixture"
-                          InputLabelProps={{ shrink: true }}
+                          variant="outlined"
+                          sx={{ bgcolor: '#ffffff' }}
                         />
+                      </TableCell>
 
-                        <TextFieldAny
-                          label="Detection Control"
-                          value={row.currentControlDetection}
-                          onChange={(e: any) => handleRowChange(idx, 'currentControlDetection', e.target.value)}
-                          size="small"
-                          fullWidth
-                          placeholder="e.g. Vision camera inspection"
-                          InputLabelProps={{ shrink: true }}
-                        />
+                      {/* Effect Severity Rating */}
+                      {role === 'effect' && (
+                        <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <RatingDropdown
+                            ratingType="severity"
+                            value={row.severityRating}
+                            onChange={(val) => handleRowChange(idx, 'severityRating', val)}
+                            size="small"
+                          />
+                        </TableCell>
+                      )}
 
-                        <TextFieldAny
-                          label="Filter Code"
-                          value={row.filterCode}
-                          onChange={(e: any) => handleRowChange(idx, 'filterCode', e.target.value)}
+                      {/* Cause Ratings & Controls */}
+                      {role === 'cause' && (
+                        <>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                            <TextFieldAny
+                              value={row.currentControlPrevention}
+                              onChange={(e: any) => handleRowChange(idx, 'currentControlPrevention', e.target.value)}
+                              placeholder="Prevention control..."
+                              size="small"
+                              fullWidth
+                              variant="outlined"
+                              sx={{ bgcolor: '#ffffff' }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                            <RatingDropdown
+                              ratingType="occurrence"
+                              value={row.occurrenceRating}
+                              onChange={(val) => handleRowChange(idx, 'occurrenceRating', val)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                            <TextFieldAny
+                              value={row.currentControlDetection}
+                              onChange={(e: any) => handleRowChange(idx, 'currentControlDetection', e.target.value)}
+                              placeholder="Detection control..."
+                              size="small"
+                              fullWidth
+                              variant="outlined"
+                              sx={{ bgcolor: '#ffffff' }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                            <RatingDropdown
+                              ratingType="detection"
+                              value={row.detectionRating}
+                              onChange={(val) => handleRowChange(idx, 'detectionRating', val)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                            <TextFieldAny
+                              value={row.filterCode}
+                              onChange={(e: any) => handleRowChange(idx, 'filterCode', e.target.value)}
+                              placeholder="Filter code..."
+                              size="small"
+                              fullWidth
+                              variant="outlined"
+                              sx={{ bgcolor: '#ffffff' }}
+                            />
+                          </TableCell>
+                        </>
+                      )}
+
+                      {/* Action Cell */}
+                      <TableCell sx={{ p: 1, textAlign: 'center' }}>
+                        <IconButton
+                          color="error"
                           size="small"
-                          fullWidth
-                          placeholder="e.g. FC-01"
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      </Box>
-                    </Stack>
-                  </AccordionDetails>
-                </Accordion>
-              ))
-            )}
+                          onClick={() => handleRemoveRow(idx)}
+                          disabled={rows.length <= 1}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Button
+              startIcon={<AddIcon />}
+              variant="outlined"
+              size="small"
+              onClick={handleAddRow}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              + Add Row
+            </Button>
+          </Stack>
+        )}
 
             <Button
               startIcon={<AddIcon />}

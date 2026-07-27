@@ -3,7 +3,7 @@ import { AuditLogService } from './audit-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
-@Controller('api/v1')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}

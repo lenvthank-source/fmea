@@ -18,6 +18,13 @@ import {
   InputLabel,
   Alert,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -192,27 +199,51 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
             <Typography variant="body2" color="text.secondary">
               Enter multiple work element names below. Each row will be added to this process step.
             </Typography>
-            {multipleNames.map((name, idx) => (
-              <Box key={idx} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <TextField
-                  label={`Work Element #${idx + 1}`}
-                  fullWidth
-                  size="small"
-                  value={name}
-                  onChange={(e) => handleRowChange(idx, e.target.value)}
-                />
-                <IconButton
-                  color="error"
-                  size="small"
-                  onClick={() => handleRemoveRow(idx)}
-                  disabled={multipleNames.length <= 1}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            ))}
+
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#0284c7' }}>
+                  <TableRow>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #0369a1' }}>
+                      Work Element Name
+                    </TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {multipleNames.map((name, idx) => (
+                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                      <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                        <TextField
+                          value={name}
+                          onChange={(e) => handleRowChange(idx, e.target.value)}
+                          placeholder="e.g. CNC Machine, Operator..."
+                          size="small"
+                          fullWidth
+                          variant="outlined"
+                          sx={{ bgcolor: '#ffffff' }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ p: 1, textAlign: 'center' }}>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => handleRemoveRow(idx)}
+                          disabled={multipleNames.length <= 1}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
             <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={handleAddRow} sx={{ alignSelf: 'flex-start' }}>
-              Add Another Row
+              + Add Row
             </Button>
           </Stack>
         )}
