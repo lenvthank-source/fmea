@@ -9,22 +9,75 @@ import type { RequestWithUser } from '../auth/interfaces/request-with-user.inter
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
+  // --- Static / Admin Routes (Must come BEFORE parameterized :id routes) ---
+
   @Get()
   @Permissions('project.view')
   async findAll(@Request() req: RequestWithUser, @Query('status') status?: string) {
     return this.projectService.findAll(req.user.tenantId, status);
   }
 
-  @Get(':id')
-  @Permissions('project.view')
-  async findOne(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.projectService.findOne(req.user.tenantId, id, true);
-  }
-
   @Post()
   @Permissions('project.create')
   async create(@Request() req: RequestWithUser, @Body() dto: CreateProjectDto) {
     return this.projectService.create(req.user.tenantId, req.user.sub, dto);
+  }
+
+  @Get('admin/revisions')
+  @Permissions('admin.config')
+  async adminGetRevisions(@Request() req: RequestWithUser) {
+    return this.projectService.adminGetRevisions(req.user.tenantId);
+  }
+
+  @Delete('admin/revisions/:revisionId')
+  @Permissions('admin.config')
+  async adminDeleteRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.adminDeleteRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  @Patch('revisions/:revisionId')
+  @Permissions('project.edit')
+  async updateRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+    @Body() dto: {
+      revisionNumber?: string;
+      summary?: string;
+      changeDescription?: string;
+      effectiveFrom?: string;
+      effectiveTo?: string;
+    },
+  ) {
+    return this.projectService.updateRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+  }
+
+  @Delete('revisions/:revisionId')
+  @Permissions('admin.config')
+  async deleteRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.deleteRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  @Post('revisions/:revisionId/activate')
+  @Permissions('project.edit')
+  async switchActiveRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.switchActiveRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  // --- Parameterized :id Routes ---
+
+  @Get(':id')
+  @Permissions('project.view')
+  async findOne(@Request() req: RequestWithUser, @Param('id') id: string) {
+    return this.projectService.findOne(req.user.tenantId, id, true);
   }
 
   @Patch(':id')
@@ -92,56 +145,5 @@ export class ProjectController {
     @Param('revisionId') revisionId: string,
   ) {
     return this.projectService.getRevisionDetail(req.user.tenantId, revisionId);
-  }
-
-  @Patch('revisions/:revisionId')
-  @Permissions('project.edit')
-  async updateRevision(
-    @Request() req: RequestWithUser,
-    @Param('revisionId') revisionId: string,
-    @Body() dto: {
-      revisionNumber?: string;
-      summary?: string;
-      changeDescription?: string;
-      effectiveFrom?: string;
-      effectiveTo?: string;
-    },
-  ) {
-    return this.projectService.updateRevision(req.user.tenantId, req.user.sub, revisionId, dto);
-  }
-
-  @Delete('revisions/:revisionId')
-  @Permissions('admin.config')
-  async deleteRevision(
-    @Request() req: RequestWithUser,
-    @Param('revisionId') revisionId: string,
-  ) {
-    return this.projectService.deleteRevision(req.user.tenantId, req.user.sub, revisionId);
-  }
-
-  @Delete('admin/revisions/:revisionId')
-  @Permissions('admin.config')
-  async adminDeleteRevision(
-    @Request() req: RequestWithUser,
-    @Param('revisionId') revisionId: string,
-  ) {
-    return this.projectService.adminDeleteRevision(req.user.tenantId, req.user.sub, revisionId);
-  }
-
-  @Get('admin/revisions')
-  @Permissions('admin.config')
-  async adminGetRevisions(
-    @Request() req: RequestWithUser,
-  ) {
-    return this.projectService.adminGetRevisions(req.user.tenantId);
-  }
-
-  @Post('revisions/:revisionId/activate')
-  @Permissions('project.edit')
-  async switchActiveRevision(
-    @Request() req: RequestWithUser,
-    @Param('revisionId') revisionId: string,
-  ) {
-    return this.projectService.switchActiveRevision(req.user.tenantId, req.user.sub, revisionId);
   }
 }

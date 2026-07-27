@@ -28,6 +28,10 @@ export class ProjectService {
   }
 
   async findOne(tenantId: string, id: string, allowArchived = false) {
+    if (!id || typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      throw new NotFoundException('Project not found');
+    }
+
     const project = await this.prisma.project.findUnique({
       where: { id },
     });
