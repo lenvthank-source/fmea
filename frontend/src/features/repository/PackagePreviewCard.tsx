@@ -1,8 +1,7 @@
 import React from 'react';
 import { Box, Typography, Chip, Accordion, AccordionSummary, AccordionDetails, Stack } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { TREE_COLORS, TREE_ASSETS } from '../shared/fmeaTreeStyles';
 
 interface PackagePreviewCardProps {
   packageData: any; // { functions: [{ name, description, failures: [...] }] }
@@ -14,9 +13,17 @@ export const PackagePreviewCard: React.FC<PackagePreviewCardProps> = ({ packageD
 
   return (
     <Box sx={{ border: '1px solid #e2e8f0', borderRadius: 2, p: 2, bgcolor: '#f8fafc' }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#1e293b' }}>
-        Package Structure Preview: {packageName}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Box
+          component="img"
+          src={TREE_ASSETS.workElement}
+          alt="Work Element"
+          sx={{ width: 22, height: 22, objectFit: 'contain' }}
+        />
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '15px', color: TREE_COLORS.nodeText.workElem }}>
+          Package Structure: {packageName}
+        </Typography>
+      </Box>
 
       {functions.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
@@ -28,8 +35,16 @@ export const PackagePreviewCard: React.FC<PackagePreviewCardProps> = ({ packageD
             <Accordion key={index} defaultExpanded variant="outlined" sx={{ bgcolor: '#ffffff' }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AccountTreeIcon fontSize="small" color="primary" />
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  <Box
+                    component="img"
+                    src={TREE_ASSETS.function}
+                    alt="Function"
+                    sx={{ width: 20, height: 20, objectFit: 'contain' }}
+                  />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, fontSize: '15px', color: TREE_COLORS.nodeText.function }}
+                  >
                     {fn.name || `Function ${index + 1}`}
                   </Typography>
                   <Chip
@@ -66,8 +81,16 @@ export const PackagePreviewCard: React.FC<PackagePreviewCardProps> = ({ packageD
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <WarningAmberIcon fontSize="small" sx={{ color: '#d97706' }} />
-                          <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                          <Box
+                            component="img"
+                            src={TREE_ASSETS.failure}
+                            alt="Failure"
+                            sx={{ width: 18, height: 18, objectFit: 'contain' }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{ fontSize: '14px', fontWeight: 600, color: TREE_COLORS.nodeText.failure }}
+                          >
                             {fail.name}
                           </Typography>
                         </Box>

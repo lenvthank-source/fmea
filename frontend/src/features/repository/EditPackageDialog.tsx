@@ -25,6 +25,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { RatingDropdown } from '../pfmea/components/RatingDropdown';
 import { API_BASE_URL } from '../../config';
+import { TREE_COLORS, TREE_TYPOGRAPHY, TREE_ASSETS } from '../shared/fmeaTreeStyles';
 
 interface EditPackageDialogProps {
   open: boolean;
@@ -186,7 +187,23 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold', color: '#0f172a', borderBottom: '1px solid #e2e8f0' }}>
+      <DialogTitle
+        sx={{
+          fontWeight: 700,
+          fontSize: '16px',
+          color: TREE_COLORS.nodeText.workElem,
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+        }}
+      >
+        <Box
+          component="img"
+          src={TREE_ASSETS.workElement}
+          alt="Work Element"
+          sx={{ width: 24, height: 24, objectFit: 'contain' }}
+        />
         Edit Work Element Package — {pkg?.name}
       </DialogTitle>
       <DialogContent sx={{ pt: 2.5 }}>
@@ -230,9 +247,24 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
             functions.map((fn, fnIdx) => (
               <Paper key={fnIdx} variant="outlined" sx={{ p: 2, bgcolor: '#ffffff', borderRadius: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                    Function #{fnIdx + 1}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      component="img"
+                      src={TREE_ASSETS.function}
+                      alt="Function"
+                      sx={{ width: 22, height: 22, objectFit: 'contain' }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: TREE_COLORS.nodeText.function,
+                      }}
+                    >
+                      Function #{fnIdx + 1}
+                    </Typography>
+                  </Box>
                   <IconButton color="error" size="small" onClick={() => handleRemoveFunction(fnIdx)} disabled={functions.length <= 1}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -257,9 +289,25 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
                   />
                 </Box>
 
-                <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#64748b', display: 'block', mb: 1 }}>
-                  Nested Failure Causes for Function #{fnIdx + 1}:
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Box
+                    component="img"
+                    src={TREE_ASSETS.failure}
+                    alt="Failure"
+                    sx={{ width: 20, height: 20, objectFit: 'contain' }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: TREE_COLORS.nodeText.failure,
+                      display: 'block',
+                    }}
+                  >
+                    Nested Failure Causes for Function #{fnIdx + 1}:
+                  </Typography>
+                </Box>
 
                 <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden', mb: 1.5 }}>
                   <Table size="small">
