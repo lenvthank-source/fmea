@@ -18,6 +18,13 @@ import {
   AccordionDetails,
   IconButton,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -586,18 +593,6 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
               sx={{ alignSelf: 'flex-start' }}
             >
               + Add Row
-            </Button>
-          </Stack>
-        )}
-
-            <Button
-              startIcon={<AddIcon />}
-              variant="outlined"
-              size="small"
-              onClick={handleAddRow}
-              sx={{ alignSelf: 'flex-start' }}
-            >
-              Add Another Failure {roleTitle}
             </Button>
           </Stack>
         )}
