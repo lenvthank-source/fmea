@@ -20,16 +20,27 @@ export class RepositoryService {
       throw new BadRequestException('User ID is missing from authentication token');
     }
 
+    const isAdmin =
+      (user.roles || []).includes('Admin') ||
+      (user.permissions || []).includes('admin.config') ||
+      (user.permissions || []).includes('admin.users');
+
+    const status = isAdmin ? 'approved' : 'pending';
+    const reviewedById = isAdmin ? userId : null;
+    const reviewedAt = isAdmin ? new Date() : null;
+
     return this.prisma.workElementPackage.create({
       data: {
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         packageData: dto.packageData,
-        status: 'pending',
+        status,
         contributorId: userId,
         contributorName: user.name || user.email || 'Unknown User',
         contributorTenantId: user.tenantId,
         sourceProjectId: dto.sourceProjectId || null,
+        reviewedById,
+        reviewedAt,
       },
     });
   }
