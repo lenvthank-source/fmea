@@ -266,46 +266,42 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                 <Box
                   key={idx}
                   sx={{
-                    p: 2,
+                    display: 'grid',
+                    gridTemplateColumns: '1.5fr 1fr auto',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    p: 1.5,
                     border: '1px solid #e2e8f0',
                     borderRadius: 2,
                     bgcolor: '#f8fafc',
-                    position: 'relative',
                   }}
                 >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                      Function #{idx + 1}
-                    </Typography>
-                    <IconButton
-                      color="error"
-                      size="small"
-                      onClick={() => handleRemoveRow(idx)}
-                      disabled={rows.length <= 1}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                  <Stack spacing={1.5}>
-                    <TextFieldAny
-                      label="Function / Requirement Narration"
-                      value={row.narration}
-                      onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                      size="small"
-                      fullWidth
-                      placeholder="e.g. Provide structural support to assembly..."
-                      InputLabelProps={{ shrink: true }}
-                    />
-                    <TextFieldAny
-                      label="Optional Description / Specification"
-                      value={row.description}
-                      onChange={(e: any) => handleRowChange(idx, 'description', e.target.value)}
-                      size="small"
-                      fullWidth
-                      placeholder="e.g. Must withstand 500 N load..."
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Stack>
+                  <TextFieldAny
+                    label={`Function #${idx + 1} Narration`}
+                    value={row.narration}
+                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g. Provide structural support to assembly..."
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextFieldAny
+                    label="Optional Description / Spec"
+                    value={row.description}
+                    onChange={(e: any) => handleRowChange(idx, 'description', e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g. Must withstand 500 N load..."
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => handleRemoveRow(idx)}
+                    disabled={rows.length <= 1}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </Box>
               ))}
 

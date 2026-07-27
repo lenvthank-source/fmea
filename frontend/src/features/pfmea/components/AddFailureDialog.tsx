@@ -341,25 +341,39 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         {/* Single Mode or Edit Mode */}
         {(editMode || activeTab === 0) && (
           <Stack spacing={2}>
-            <TextFieldAny
-              label={`Failure ${roleTitle} Narration`}
-              value={narration}
-              onChange={(e: any) => setNarration(e.target.value)}
-              multiline
-              rows={3}
-              fullWidth
-              size="small"
-              placeholder={`Describe how this function fails (${roleTitle})...`}
-              autoFocus
-              InputLabelProps={{ shrink: true }}
-            />
-
-            {role === 'effect' && (
-              <RatingDropdown
-                label="Severity (S) Rating"
-                ratingType="severity"
-                value={severityRating}
-                onChange={setSeverityRating}
+            {role === 'effect' ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: 2, alignItems: 'flex-start' }}>
+                <TextFieldAny
+                  label="Failure Effect Narration"
+                  value={narration}
+                  onChange={(e: any) => setNarration(e.target.value)}
+                  multiline
+                  rows={2}
+                  fullWidth
+                  size="small"
+                  placeholder="Describe how this function fails (Effect)..."
+                  autoFocus
+                  InputLabelProps={{ shrink: true }}
+                />
+                <RatingDropdown
+                  label="Severity (S) Rating"
+                  ratingType="severity"
+                  value={severityRating}
+                  onChange={setSeverityRating}
+                />
+              </Box>
+            ) : (
+              <TextFieldAny
+                label={`Failure ${roleTitle} Narration`}
+                value={narration}
+                onChange={(e: any) => setNarration(e.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+                size="small"
+                placeholder={`Describe how this function fails (${roleTitle})...`}
+                autoFocus
+                InputLabelProps={{ shrink: true }}
               />
             )}
 
@@ -385,35 +399,37 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                   />
                 </Box>
 
-                <TextFieldAny
-                  label="Prevention Control"
-                  value={currentControlPrevention}
-                  onChange={(e: any) => setCurrentControlPrevention(e.target.value)}
-                  size="small"
-                  fullWidth
-                  placeholder="e.g. Preventive maintenance, Error proofing fixture"
-                  InputLabelProps={{ shrink: true }}
-                />
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gap: 2 }}>
+                  <TextFieldAny
+                    label="Prevention Control"
+                    value={currentControlPrevention}
+                    onChange={(e: any) => setCurrentControlPrevention(e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g. Preventive maintenance"
+                    InputLabelProps={{ shrink: true }}
+                  />
 
-                <TextFieldAny
-                  label="Detection Control"
-                  value={currentControlDetection}
-                  onChange={(e: any) => setCurrentControlDetection(e.target.value)}
-                  size="small"
-                  fullWidth
-                  placeholder="e.g. Vision camera inspection, 100% check"
-                  InputLabelProps={{ shrink: true }}
-                />
+                  <TextFieldAny
+                    label="Detection Control"
+                    value={currentControlDetection}
+                    onChange={(e: any) => setCurrentControlDetection(e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g. Vision camera inspection"
+                    InputLabelProps={{ shrink: true }}
+                  />
 
-                <TextFieldAny
-                  label="Filter Code (Optional)"
-                  value={filterCode}
-                  onChange={(e: any) => setFilterCode(e.target.value)}
-                  size="small"
-                  fullWidth
-                  placeholder="e.g. FC-01"
-                  InputLabelProps={{ shrink: true }}
-                />
+                  <TextFieldAny
+                    label="Filter Code (Optional)"
+                    value={filterCode}
+                    onChange={(e: any) => setFilterCode(e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="e.g. FC-01"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Box>
               </Stack>
             )}
           </Stack>
@@ -423,69 +439,137 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         {!editMode && activeTab === 1 && (
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              Enter multiple failure {roleTitle.toLowerCase()} entries. Expand each card to enter S/O/D ratings and controls.
+              Enter multiple failure {roleTitle.toLowerCase()} entries below.
             </Typography>
 
-            {rows.map((row, idx) => (
-              <Accordion key={idx} defaultExpanded variant="outlined" sx={{ bgcolor: '#ffffff' }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      Failure {roleTitle} #{idx + 1}: {row.narration.trim() || '(Empty narration)'}
-                    </Typography>
-                    <IconButton
-                      color="error"
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveRow(idx);
-                      }}
-                      disabled={rows.length <= 1}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </AccordionSummary>
-                <AccordionDetails sx={{ pt: 1 }}>
-                  <Stack spacing={2}>
-                    <TextFieldAny
-                      label={`Failure ${roleTitle} Narration`}
-                      value={row.narration}
-                      onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
-                      multiline
-                      rows={2}
-                      fullWidth
-                      size="small"
-                      placeholder={`Describe failure ${roleTitle.toLowerCase()}...`}
-                      InputLabelProps={{ shrink: true }}
-                    />
-
-                    {role === 'effect' && (
-                      <RatingDropdown
-                        label="Severity (S) Rating"
-                        ratingType="severity"
-                        value={row.severityRating}
-                        onChange={(val) => handleRowChange(idx, 'severityRating', val)}
+            {role === 'effect' ? (
+              /* Horizontal rows for Failure Effects */
+              rows.map((row, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '2.5fr 1fr auto',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    p: 1.5,
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                  }}
+                >
+                  <TextFieldAny
+                    label={`Effect #${idx + 1} Narration`}
+                    value={row.narration}
+                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="Describe failure effect..."
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <RatingDropdown
+                    label="Severity (S)"
+                    ratingType="severity"
+                    value={row.severityRating}
+                    onChange={(val) => handleRowChange(idx, 'severityRating', val)}
+                  />
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => handleRemoveRow(idx)}
+                    disabled={rows.length <= 1}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))
+            ) : role === 'mode' ? (
+              /* Horizontal rows for Failure Modes */
+              rows.map((row, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr auto',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    p: 1.5,
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                  }}
+                >
+                  <TextFieldAny
+                    label={`Failure Mode #${idx + 1} Narration`}
+                    value={row.narration}
+                    onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                    size="small"
+                    fullWidth
+                    placeholder="Describe failure mode..."
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => handleRemoveRow(idx)}
+                    disabled={rows.length <= 1}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))
+            ) : (
+              /* Accordions for Failure Causes */
+              rows.map((row, idx) => (
+                <Accordion key={idx} defaultExpanded variant="outlined" sx={{ bgcolor: '#ffffff' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 1 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        Failure Cause #{idx + 1}: {row.narration.trim() || '(Empty narration)'}
+                      </Typography>
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveRow(idx);
+                        }}
+                        disabled={rows.length <= 1}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 1 }}>
+                    <Stack spacing={2}>
+                      <TextFieldAny
+                        label="Failure Cause Narration"
+                        value={row.narration}
+                        onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
+                        multiline
+                        rows={2}
+                        fullWidth
+                        size="small"
+                        placeholder="Describe failure cause..."
+                        InputLabelProps={{ shrink: true }}
                       />
-                    )}
 
-                    {role === 'cause' && (
-                      <Stack spacing={2}>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                          <RatingDropdown
-                            label="Occurrence (O) Rating"
-                            ratingType="occurrence"
-                            value={row.occurrenceRating}
-                            onChange={(val) => handleRowChange(idx, 'occurrenceRating', val)}
-                          />
-                          <RatingDropdown
-                            label="Detection (D) Rating"
-                            ratingType="detection"
-                            value={row.detectionRating}
-                            onChange={(val) => handleRowChange(idx, 'detectionRating', val)}
-                          />
-                        </Box>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                        <RatingDropdown
+                          label="Occurrence (O) Rating"
+                          ratingType="occurrence"
+                          value={row.occurrenceRating}
+                          onChange={(val) => handleRowChange(idx, 'occurrenceRating', val)}
+                        />
+                        <RatingDropdown
+                          label="Detection (D) Rating"
+                          ratingType="detection"
+                          value={row.detectionRating}
+                          onChange={(val) => handleRowChange(idx, 'detectionRating', val)}
+                        />
+                      </Box>
 
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gap: 2 }}>
                         <TextFieldAny
                           label="Prevention Control"
                           value={row.currentControlPrevention}
@@ -515,12 +599,12 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                           placeholder="e.g. FC-01"
                           InputLabelProps={{ shrink: true }}
                         />
-                      </Stack>
-                    )}
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                      </Box>
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              ))
+            )}
 
             <Button
               startIcon={<AddIcon />}
