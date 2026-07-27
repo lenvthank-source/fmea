@@ -13,15 +13,18 @@ import {
   Alert,
   CircularProgress,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Divider,
+  Collapse,
+  Chip,
+  Tooltip,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  KeyboardArrowRight as CollapseChevron,
+  KeyboardArrowDown as ExpandChevron,
+  UnfoldMore as ExpandAllIcon,
+  UnfoldLess as CollapseAllIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { RatingDropdown } from '../pfmea/components/RatingDropdown';
 import { API_BASE_URL } from '../../config';
@@ -44,6 +47,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [functions, setFunctions] = useState<any[]>([]);
+  const [expandedFunctions, setExpandedFunctions] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,10 +70,34 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
         })),
       }));
       setFunctions(clonedFunctions);
+
+      // Expand all functions by default
+      const initialExpanded: Record<number, boolean> = {};
+      clonedFunctions.forEach((_: any, idx: number) => {
+        initialExpanded[idx] = true;
+      });
+      setExpandedFunctions(initialExpanded);
     }
   }, [pkg]);
 
+  const toggleFunctionExpand = (fnIdx: number) => {
+    setExpandedFunctions((prev) => ({ ...prev, [fnIdx]: !prev[fnIdx] }));
+  };
+
+  const handleExpandAll = () => {
+    const allExpanded: Record<number, boolean> = {};
+    functions.forEach((_, idx) => {
+      allExpanded[idx] = true;
+    });
+    setExpandedFunctions(allExpanded);
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedFunctions({});
+  };
+
   const handleAddFunction = () => {
+    const newFnIdx = functions.length;
     setFunctions([
       ...functions,
       {
@@ -78,6 +106,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
         failures: [
           {
             name: '',
+            severity: null,
             occurrence: null,
             detection: null,
             preventionControl: '',
@@ -87,6 +116,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
         ],
       },
     ]);
+    setExpandedFunctions((prev) => ({ ...prev, [newFnIdx]: true }));
   };
 
   const handleRemoveFunction = (fnIdx: number) => {
@@ -106,6 +136,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
       ...failures,
       {
         name: '',
+        severity: null,
         occurrence: null,
         detection: null,
         preventionControl: '',
@@ -114,6 +145,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
       },
     ];
     setFunctions(updated);
+    setExpandedFunctions((prev) => ({ ...prev, [fnIdx]: true }));
   };
 
   const handleRemoveFailure = (fnIdx: number, failIdx: number) => {
@@ -132,7 +164,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Package name is required');
+      setError('Work Element Package name is required');
       return;
     }
 
@@ -187,235 +219,363 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      {/* Header Banner matching PFMEA Structure Tree Header */}
       <DialogTitle
         sx={{
+          bgcolor: '#0f172a',
+          color: '#ffffff',
           fontWeight: 700,
           fontSize: '16px',
-          color: TREE_COLORS.nodeText.workElem,
-          borderBottom: '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
         }}
       >
-        <Box
-          component="img"
-          src={TREE_ASSETS.workElement}
-          alt="Work Element"
-          sx={{ width: 24, height: 24, objectFit: 'contain' }}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            component="img"
+            src={TREE_ASSETS.workElement}
+            alt="Work Element"
+            sx={{ width: 26, height: 26, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}
+          />
+          <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 700, color: '#ffffff' }}>
+            Work Element Package Tree Editor — {name || pkg?.name}
+          </Typography>
+        </Box>
+        <Chip
+          label="PFMEA Structure Tree View"
+          size="small"
+          sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#ffffff', fontWeight: 600, fontSize: '0.75rem' }}
         />
-        Edit Work Element Package — {pkg?.name}
       </DialogTitle>
-      <DialogContent sx={{ pt: 2.5 }}>
+
+      <DialogContent sx={{ pt: 2.5, bgcolor: '#f8fafc' }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+        {/* Action Toolbar matching PfmeaStructureTree */}
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 2.5, bgcolor: '#ffffff', borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddFunction}
+              >
+                + Add Function
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              <Tooltip title="Expand All Tree Nodes">
+                <Button size="small" variant="outlined" startIcon={<ExpandAllIcon />} onClick={handleExpandAll}>
+                  Expand All
+                </Button>
+              </Tooltip>
+              <Tooltip title="Collapse All Tree Nodes">
+                <Button size="small" variant="outlined" startIcon={<CollapseAllIcon />} onClick={handleCollapseAll}>
+                  Collapse All
+                </Button>
+              </Tooltip>
+            </Stack>
+          </Box>
+        </Paper>
+
         <Stack spacing={2.5}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <TextFieldAny
-              label="Work Element Package Name"
-              value={name}
-              onChange={(e: any) => setName(e.target.value)}
-              fullWidth
-              size="small"
-              required
-            />
-            <TextFieldAny
-              label="Description / Category"
-              value={description}
-              onChange={(e: any) => setDescription(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Box>
+          {/* ROOT NODE: Work Element Package (Level 1 Root) */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: TREE_COLORS.selectedBg,
+              borderLeft: `5px solid ${TREE_COLORS.selectedBorder}`,
+              borderRadius: 2,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <Box
+                component="img"
+                src={TREE_ASSETS.workElement}
+                alt="Work Element Root"
+                sx={{ width: 24, height: 24, objectFit: 'contain' }}
+              />
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: TREE_COLORS.nodeText.workElem,
+                }}
+              >
+                Work Element (Package Root)
+              </Typography>
+              <Chip label={`${functions.length} functions`} size="small" color="primary" sx={{ height: 20, fontSize: '0.7rem' }} />
+            </Box>
 
-          <Divider />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextFieldAny
+                label="Work Element Name"
+                value={name}
+                onChange={(e: any) => setName(e.target.value)}
+                fullWidth
+                size="small"
+                required
+                sx={{ bgcolor: '#ffffff', borderRadius: 1 }}
+              />
+              <TextFieldAny
+                label="Description / Category"
+                value={description}
+                onChange={(e: any) => setDescription(e.target.value)}
+                fullWidth
+                size="small"
+                sx={{ bgcolor: '#ffffff', borderRadius: 1 }}
+              />
+            </Box>
+          </Paper>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#0f172a' }}>
-              Package Functions & Failure Causes
-            </Typography>
-            <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={handleAddFunction}>
-              + Add Function
-            </Button>
-          </Box>
-
+          {/* BRANCH NODES: Functions & Nested Failures */}
           {functions.length === 0 ? (
-            <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', bgcolor: '#f8fafc' }}>
-              <Typography color="text.secondary">No functions in this package. Click "+ Add Function" to create one.</Typography>
+            <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', bgcolor: '#ffffff', borderRadius: 2 }}>
+              <Typography color="text.secondary">No functions in this package. Click "+ Add Function" above to add one.</Typography>
             </Paper>
           ) : (
-            functions.map((fn, fnIdx) => (
-              <Paper key={fnIdx} variant="outlined" sx={{ p: 2, bgcolor: '#ffffff', borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      component="img"
-                      src={TREE_ASSETS.function}
-                      alt="Function"
-                      sx={{ width: 22, height: 22, objectFit: 'contain' }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        fontSize: '15px',
-                        fontWeight: 600,
-                        color: TREE_COLORS.nodeText.function,
-                      }}
-                    >
-                      Function #{fnIdx + 1}
-                    </Typography>
-                  </Box>
-                  <IconButton color="error" size="small" onClick={() => handleRemoveFunction(fnIdx)} disabled={functions.length <= 1}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
+            functions.map((fn, fnIdx) => {
+              const isExpanded = Boolean(expandedFunctions[fnIdx]);
+              const failCount = (fn.failures || []).length;
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 2, mb: 2 }}>
-                  <TextFieldAny
-                    label="Function Narration"
-                    value={fn.name}
-                    onChange={(e: any) => handleFunctionChange(fnIdx, 'name', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="e.g. Maintaining pressing length..."
-                  />
-                  <TextFieldAny
-                    label="Description / Spec (Optional)"
-                    value={fn.description}
-                    onChange={(e: any) => handleFunctionChange(fnIdx, 'description', e.target.value)}
-                    size="small"
-                    fullWidth
-                    placeholder="e.g. Spec tolerance ± 0.1 mm..."
-                  />
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Box
-                    component="img"
-                    src={TREE_ASSETS.failure}
-                    alt="Failure"
-                    sx={{ width: 20, height: 20, objectFit: 'contain' }}
-                  />
-                  <Typography
-                    variant="caption"
+              return (
+                <Box
+                  key={fnIdx}
+                  sx={{
+                    ml: 3,
+                    pl: 2,
+                    borderLeft: `2px solid ${TREE_COLORS.connectorLine}`,
+                    position: 'relative',
+                  }}
+                >
+                  {/* FUNCTION NODE HEADER */}
+                  <Paper
+                    variant="outlined"
                     sx={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: TREE_COLORS.nodeText.failure,
-                      display: 'block',
+                      p: 2,
+                      bgcolor: '#ffffff',
+                      borderRadius: 2,
+                      borderLeft: `4px solid ${TREE_COLORS.iconBorder.function}`,
+                      transition: 'all 0.2s ease',
+                      '&:hover': { bgcolor: TREE_COLORS.hoverBg },
                     }}
                   >
-                    Nested Failure Causes for Function #{fnIdx + 1}:
-                  </Typography>
-                </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <IconButton size="small" onClick={() => toggleFunctionExpand(fnIdx)} sx={{ color: TREE_COLORS.chevron }}>
+                          {isExpanded ? <ExpandChevron /> : <CollapseChevron />}
+                        </IconButton>
 
-                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden', mb: 1.5 }}>
-                  <Table size="small">
-                    <TableHead sx={{ bgcolor: '#0f172a' }}>
-                      <TableRow sx={{ bgcolor: '#0f172a' }}>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', minWidth: 180 }}>
-                          Failure Cause Narration
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', minWidth: 160 }}>
-                          Prevention Control
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', width: 85 }}>
-                          OCC
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', minWidth: 160 }}>
-                          Detection Control
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', width: 85 }}>
-                          DET
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #334155', minWidth: 110 }}>
-                          Filter Code
-                        </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', width: 50, textAlign: 'center' }}>
-                          Action
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {(fn.failures || []).map((fail: any, failIdx: number) => (
-                        <TableRow key={failIdx} sx={{ bgcolor: failIdx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <TextFieldAny
-                              value={fail.name}
-                              onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'name', e.target.value)}
-                              placeholder="Cause narration..."
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <TextFieldAny
-                              value={fail.preventionControl}
-                              onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'preventionControl', e.target.value)}
-                              placeholder="Prevention..."
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <RatingDropdown
-                              ratingType="occurrence"
-                              value={fail.occurrence}
-                              onChange={(val) => handleFailureChange(fnIdx, failIdx, 'occurrence', val)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <TextFieldAny
-                              value={fail.detectionControl}
-                              onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'detectionControl', e.target.value)}
-                              placeholder="Detection..."
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <RatingDropdown
-                              ratingType="detection"
-                              value={fail.detection}
-                              onChange={(val) => handleFailureChange(fnIdx, failIdx, 'detection', val)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, borderRight: '1px solid #e2e8f0' }}>
-                            <TextFieldAny
-                              value={fail.filterCode}
-                              onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'filterCode', e.target.value)}
-                              placeholder="FC-01..."
-                              size="small"
-                              fullWidth
-                            />
-                          </TableCell>
-                          <TableCell sx={{ p: 0.8, textAlign: 'center' }}>
-                            <IconButton
-                              color="error"
-                              size="small"
-                              onClick={() => handleRemoveFailure(fnIdx, failIdx)}
-                              disabled={(fn.failures || []).length <= 1}
+                        <Box
+                          component="img"
+                          src={TREE_ASSETS.function}
+                          alt="Function"
+                          sx={{ width: 22, height: 22, objectFit: 'contain' }}
+                        />
+
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            color: TREE_COLORS.nodeText.function,
+                          }}
+                        >
+                          Function #{fnIdx + 1} {fn.name ? `— ${fn.name}` : ''}
+                        </Typography>
+
+                        <Chip
+                          label={`${failCount} cause${failCount !== 1 ? 's' : ''}`}
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          sx={{ height: 20, fontSize: '0.7rem' }}
+                        />
+                      </Box>
+
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="success"
+                          startIcon={<AddIcon />}
+                          onClick={() => handleAddFailure(fnIdx)}
+                        >
+                          + Add Cause
+                        </Button>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => handleRemoveFunction(fnIdx)}
+                          disabled={functions.length <= 1}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                    </Box>
+
+                    {/* Function Narration & Spec Controls */}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 2, ml: 4 }}>
+                      <TextFieldAny
+                        label="Function / Requirement Narration"
+                        value={fn.name}
+                        onChange={(e: any) => handleFunctionChange(fnIdx, 'name', e.target.value)}
+                        size="small"
+                        fullWidth
+                        placeholder="e.g. Maintaining pressing length..."
+                      />
+                      <TextFieldAny
+                        label="Description / Specification (Optional)"
+                        value={fn.description}
+                        onChange={(e: any) => handleFunctionChange(fnIdx, 'description', e.target.value)}
+                        size="small"
+                        fullWidth
+                        placeholder="e.g. Tolerance ± 0.1 mm..."
+                      />
+                    </Box>
+
+                    {/* FAILURE CAUSE LEAF NODES (Collapsible) */}
+                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                      <Box sx={{ mt: 2, ml: 4 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: TREE_COLORS.nodeText.failure,
+                            display: 'block',
+                            mb: 1.5,
+                          }}
+                        >
+                          Nested Failure Causes for Function #{fnIdx + 1}:
+                        </Typography>
+
+                        <Stack spacing={1.5}>
+                          {(fn.failures || []).map((fail: any, failIdx: number) => (
+                            <Paper
+                              key={failIdx}
+                              variant="outlined"
+                              sx={{
+                                p: 1.5,
+                                bgcolor: failIdx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                                borderLeft: `4px solid ${TREE_COLORS.iconBorder.failure}`,
+                                borderRadius: 1.5,
+                                ml: 2,
+                                pl: 2,
+                                borderLeftStyle: 'solid',
+                              }}
                             >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Box
+                                    component="img"
+                                    src={TREE_ASSETS.failure}
+                                    alt="Failure Cause"
+                                    sx={{ width: 18, height: 18, objectFit: 'contain' }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      color: TREE_COLORS.nodeText.failure,
+                                    }}
+                                  >
+                                    Failure Cause #{failIdx + 1}
+                                  </Typography>
+                                </Box>
+                                <IconButton
+                                  color="error"
+                                  size="small"
+                                  onClick={() => handleRemoveFailure(fnIdx, failIdx)}
+                                  disabled={(fn.failures || []).length <= 1}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
 
-                <Button startIcon={<AddIcon />} size="small" variant="text" onClick={() => handleAddFailure(fnIdx)}>
-                  + Add Failure Cause to Function #{fnIdx + 1}
-                </Button>
-              </Paper>
-            ))
+                              {/* Extensive Failure Cause Input Grid */}
+                              <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr', gap: 1.5 }}>
+                                <TextFieldAny
+                                  label="Failure Cause Narration"
+                                  value={fail.name}
+                                  onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'name', e.target.value)}
+                                  placeholder="Cause narration..."
+                                  size="small"
+                                  fullWidth
+                                />
+                                <TextFieldAny
+                                  label="Prevention Control"
+                                  value={fail.preventionControl}
+                                  onChange={(e: any) =>
+                                    handleFailureChange(fnIdx, failIdx, 'preventionControl', e.target.value)
+                                  }
+                                  placeholder="Prevention..."
+                                  size="small"
+                                  fullWidth
+                                />
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                    OCC
+                                  </Typography>
+                                  <RatingDropdown
+                                    ratingType="occurrence"
+                                    value={fail.occurrence}
+                                    onChange={(val) => handleFailureChange(fnIdx, failIdx, 'occurrence', val)}
+                                    size="small"
+                                  />
+                                </Box>
+                                <TextFieldAny
+                                  label="Detection Control"
+                                  value={fail.detectionControl}
+                                  onChange={(e: any) =>
+                                    handleFailureChange(fnIdx, failIdx, 'detectionControl', e.target.value)
+                                  }
+                                  placeholder="Detection..."
+                                  size="small"
+                                  fullWidth
+                                />
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                    DET
+                                  </Typography>
+                                  <RatingDropdown
+                                    ratingType="detection"
+                                    value={fail.detection}
+                                    onChange={(val) => handleFailureChange(fnIdx, failIdx, 'detection', val)}
+                                    size="small"
+                                  />
+                                </Box>
+                                <TextFieldAny
+                                  label="Filter Code"
+                                  value={fail.filterCode}
+                                  onChange={(e: any) => handleFailureChange(fnIdx, failIdx, 'filterCode', e.target.value)}
+                                  placeholder="FC-01..."
+                                  size="small"
+                                  fullWidth
+                                />
+                              </Box>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Collapse>
+                  </Paper>
+                </Box>
+              );
+            })
           )}
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+      <DialogActions sx={{ px: 3, py: 2, bgcolor: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
         <Button onClick={onClose} disabled={loading} color="inherit">
           Cancel
         </Button>
@@ -426,7 +586,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
           color="primary"
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
-          {loading ? 'Saving...' : 'Save Package Changes'}
+          {loading ? 'Saving Package Changes...' : 'Save Package Tree Changes'}
         </Button>
       </DialogActions>
     </Dialog>
