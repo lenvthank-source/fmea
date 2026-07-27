@@ -15,6 +15,10 @@ export class RepositoryService {
    * Submit a new work element package for review (status = 'pending')
    */
   async submitPackage(dto: CreateWorkElementPackageDto, user: any) {
+    if (user?.isGuest || (user?.email && user.email.toLowerCase().startsWith('guest'))) {
+      throw new ForbiddenException('Guest accounts have read-only access to repository packages');
+    }
+
     const userId = user?.sub || user?.id || user?.userId;
     if (!userId) {
       throw new BadRequestException('User ID is missing from authentication token');

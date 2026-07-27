@@ -32,22 +32,26 @@ import {
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
   Delete as DeleteIcon,
-  Download as ImportIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { PackagePreviewCard } from './PackagePreviewCard';
-import { ImportTargetDialog } from './ImportTargetDialog';
 import { EditPackageDialog } from './EditPackageDialog';
 
 export const RepositoryPage: React.FC = () => {
   const { token, user } = useAuth();
+  const isGuest = Boolean(
+    user?.isGuest ||
+      user?.roles?.includes('Guest') ||
+      (user?.email && user.email.toLowerCase().startsWith('guest'))
+  );
   const isAdmin = Boolean(
-    user?.roles?.includes('Admin') ||
-      user?.permissions?.includes('admin.config') ||
-      user?.permissions?.includes('admin.users') ||
-      (user?.email && user.email.includes('lenvthank'))
+    !isGuest &&
+      (user?.roles?.includes('Admin') ||
+        user?.permissions?.includes('admin.config') ||
+        user?.permissions?.includes('admin.users') ||
+        (user?.email && user.email.includes('lenvthank')))
   );
 
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -58,9 +62,9 @@ export const RepositoryPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Selected package for preview / import / edit / rejection
+  // Selected package for preview / edit / rejection
+  const [previewPackage, setPreviewPackage] = useState<any | null>(null);
   const [editingPackage, setEditingPackage] = useState<any | null>(null);
-  const [importingPackage, setImportingPackage] = useState<any | null>(null);
   const [rejectingPackageId, setRejectingPackageId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
@@ -261,22 +265,22 @@ export const RepositoryPage: React.FC = () => {
                               <Button
                                 size="small"
                                 variant="outlined"
-                                color="primary"
-                                startIcon={<EditIcon />}
-                                onClick={() => setEditingPackage(pkg)}
+                                onClick={() => setPreviewPackage(previewPackage?.id === pkg.id ? null : pkg)}
                               >
-                                Edit
+                                {previewPackage?.id === pkg.id ? 'Hide Structure' : 'View Structure'}
                               </Button>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="primary"
-                                startIcon={<ImportIcon />}
-                                onClick={() => setImportingPackage(pkg)}
-                              >
-                                Import
-                              </Button>
-                              {isAdmin && (
+                              {!isGuest && (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<EditIcon />}
+                                  onClick={() => setEditingPackage(pkg)}
+                                >
+                                  Edit
+                                </Button>
+                              )}
+                              {!isGuest && isAdmin && (
                                 <IconButton size="small" color="error" onClick={() => handleDelete(pkg.id)}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
@@ -284,6 +288,13 @@ export const RepositoryPage: React.FC = () => {
                             </Stack>
                           </TableCell>
                         </TableRow>
+                        {previewPackage?.id === pkg.id && (
+                          <TableRow>
+                            <TableCell colSpan={6} sx={{ bgcolor: '#fafafa', p: 2 }}>
+                              <PackagePreviewCard packageData={pkg.packageData} packageName={pkg.name} />
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </React.Fragment>
                     );
                   })}
