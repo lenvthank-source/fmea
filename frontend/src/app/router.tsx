@@ -18,6 +18,7 @@ import { PillarPage } from '../features/content/PillarPage';
 import { IndustryFmeaPage } from '../features/programmatic/IndustryFmeaPage';
 import { CompetitorVsPage } from '../features/programmatic/CompetitorVsPage';
 import { GlossaryPage } from '../features/programmatic/GlossaryPage';
+import { RepositoryPage } from '../features/repository/RepositoryPage';
 
 import { Box, CircularProgress } from '@mui/material';
 
@@ -82,6 +83,7 @@ export const AppRouter: React.FC = () => {
         <Route path="projects/:projectId/linkage" element={<LinkageMap />} />
         <Route path="projects/:projectId/settings" element={<ProjectSettings />} />
         <Route path="actions" element={<ActionsDashboard />} />
+        <Route path="repository" element={<RepositoryPage />} />
         <Route path="admin" element={<AdminPanel />} />
       </Route>
 

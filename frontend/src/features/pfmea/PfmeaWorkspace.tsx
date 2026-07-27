@@ -17,6 +17,7 @@ import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
+import { MultiAddWorkElementDialog } from './components/MultiAddWorkElementDialog';
 import { FailureLinkageModal } from './components/FailureLinkageModal';
 import { FailureDetailWindow } from './components/FailureDetailWindow';
 
@@ -100,12 +101,9 @@ export const PfmeaWorkspace: React.FC = () => {
   const [importPromptOpen, setImportPromptOpen] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  // Generic Tree Element Add Dialog states
-  const [treeAddType, setTreeAddType] = useState<'workElement' | 'function' | 'failure' | null>(null);
+  // Tree Element Add Dialog states
   const [treeAddTargetStepId, setTreeAddTargetStepId] = useState<string | null>(null);
-  const [treeAddWorkElementName, setTreeAddWorkElementName] = useState<string | null>(null);
-  const [treeAddFunctionName, setTreeAddFunctionName] = useState<string | null>(null);
-  const [treeAddValue, setTreeAddValue] = useState('');
+  const [multiAddWeDialogOpen, setMultiAddWeDialogOpen] = useState(false);
 
   // Exporter Dialog state
   const [exporterOpen, setExporterOpen] = useState(false);
@@ -386,10 +384,110 @@ export const PfmeaWorkspace: React.FC = () => {
 
   const handleAddWorkElementFromTree = (stepId: string) => {
     setTreeAddTargetStepId(stepId);
-    setTreeAddWorkElementName(null);
-    setTreeAddFunctionName(null);
-    setTreeAddType('workElement');
-    setTreeAddValue('');
+    setMultiAddWeDialogOpen(true);
+  };
+
+  const handleConfirmAddWorkElementSingle = async (name: string) => {
+    if (!treeAddTargetStepId) return;
+    const step = steps.find(s => s.id === treeAddTargetStepId);
+    if (!step) return;
+
+    let currentWe: string[] = [];
+    if (step.machinesEquipmentDocs) {
+      if (Array.isArray(step.machinesEquipmentDocs)) {
+        currentWe = [...step.machinesEquipmentDocs];
+      } else if (typeof step.machinesEquipmentDocs === 'string') {
+        try { currentWe = JSON.parse(step.machinesEquipmentDocs); } catch { currentWe = [step.machinesEquipmentDocs]; }
+      }
+    }
+
+    if (!currentWe.includes(name)) {
+      currentWe.push(name);
+      await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ machinesEquipmentDocs: currentWe }),
+      });
+      await fetchData();
+    }
+  };
+
+  const handleConfirmAddWorkElementsMultiple = async (names: string[]) => {
+    if (!treeAddTargetStepId) return;
+    const step = steps.find(s => s.id === treeAddTargetStepId);
+    if (!step) return;
+
+    let currentWe: string[] = [];
+    if (step.machinesEquipmentDocs) {
+      if (Array.isArray(step.machinesEquipmentDocs)) {
+        currentWe = [...step.machinesEquipmentDocs];
+      } else if (typeof step.machinesEquipmentDocs === 'string') {
+        try { currentWe = JSON.parse(step.machinesEquipmentDocs); } catch { currentWe = [step.machinesEquipmentDocs]; }
+      }
+    }
+
+    let updated = false;
+    for (const name of names) {
+      if (!currentWe.includes(name)) {
+        currentWe.push(name);
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ machinesEquipmentDocs: currentWe }),
+      });
+      await fetchData();
+    }
+  };
+
+  const handleSubmitWorkElementToRepository = async (stepId: string, workElementName: string) => {
+    try {
+      const targetParentId = `${stepId}::${workElementName}`;
+      const weFunctions = structureFunctions.filter(sf => sf.parentType === 'work_element' && sf.parentId === targetParentId);
+
+      const packageData = {
+        functions: weFunctions.map(sf => ({
+          name: sf.narration,
+          description: sf.description || null,
+          failures: (sf.failures || []).map((f: any) => ({
+            name: f.narration,
+            severity: f.severityRating,
+            occurrence: f.occurrenceRating,
+            detection: f.detectionRating,
+            preventionControl: f.currentControlPrevention,
+            detectionControl: f.currentControlDetection,
+            filterCode: f.filterCode,
+          })),
+        })),
+      };
+
+      const res = await fetch(`${API_BASE_URL}/repository/packages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: workElementName,
+          description: `Work element package from project`,
+          packageData,
+          sourceProjectId: projectId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to submit package to repository');
+      }
+
+      alert(`Work element "${workElementName}" has been submitted to the global repository for approval!`);
+    } catch (err: any) {
+      alert(err.message || 'Error submitting to repository');
+    }
   };
 
   const handleAddFunctionFromTree = (stepId: string | null, workElementName?: string | null) => {
@@ -678,135 +776,7 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
-  const handleConfirmAddTreeElement = async () => {
-    if (!treeAddType || !treeAddValue.trim()) return;
-    const value = treeAddValue.trim();
-    setTreeAddType(null);
-    setTreeAddValue('');
-    setError(null);
 
-    try {
-      if (treeAddType === 'workElement') {
-        if (!treeAddTargetStepId) throw new Error('Step target is required for Work Element');
-        const step = steps.find(s => s.id === treeAddTargetStepId);
-        if (!step) throw new Error('Step not found');
-        
-        let existingWe: string[] = [];
-        if (Array.isArray(step.machinesEquipmentDocs)) {
-          existingWe = step.machinesEquipmentDocs;
-        } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
-          try {
-            const parsed = JSON.parse(step.machinesEquipmentDocs);
-            existingWe = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
-          } catch {
-            existingWe = [step.machinesEquipmentDocs];
-          }
-        }
-        const updatedWe = [...existingWe, value];
-
-        const response = await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ machinesEquipmentDocs: updatedWe })
-        });
-        if (!response.ok) throw new Error('Failed to save Work Element to Process Step');
-      } else {
-        // Find or create PFMEA Row matching:
-        // - processStepId === treeAddTargetStepId
-        // - workElementName === treeAddWorkElementName
-        // - (if adding failure, we also want the row to have the given function name!)
-        let row = rows.find(r => 
-          r.processStepId === treeAddTargetStepId && 
-          r.workElementName === treeAddWorkElementName &&
-          (treeAddType !== 'failure' || r.functions?.some(f => f.name === treeAddFunctionName))
-        );
-
-        if (!row) {
-          const nextRowNumber = rows.length > 0 ? Math.max(...rows.map((r) => r.rowNumber)) + 1 : 1;
-          const createResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              processStepId: treeAddTargetStepId || undefined,
-              workElementName: treeAddWorkElementName || undefined,
-              rowNumber: nextRowNumber,
-            }),
-          });
-          if (!createResponse.ok) {
-            let backendMsg = 'Failed to initialize analysis row.';
-            try {
-              const errBody = await createResponse.json();
-              backendMsg = errBody?.message || backendMsg;
-            } catch { /* ignore parse errors */ }
-            throw new Error(backendMsg);
-          }
-          const newRow = await createResponse.json();
-          row = {
-            ...newRow,
-            functions: [],
-            requirements: [],
-            failureModes: [],
-            effects: [],
-            causes: [],
-            controls: [],
-            characteristics: [],
-          };
-          
-          // If we created a new row because we are adding a failure, we must copy the function name to it first!
-          if (treeAddType === 'failure' && treeAddFunctionName && row) {
-            await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({ functions: [treeAddFunctionName] })
-            });
-            // Update local object
-            row.functions = [{ name: treeAddFunctionName }];
-          }
-        }
-
-        if (!row) throw new Error('Failed to resolve FMEA row');
-
-        if (treeAddType === 'function') {
-          const existingFuncs = row.functions?.map((f: any) => f.name) || [];
-          const updatedFuncs = [...existingFuncs, value];
-          const response = await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ functions: updatedFuncs })
-          });
-          if (!response.ok) throw new Error('Failed to save Function');
-        } else if (treeAddType === 'failure') {
-          const existingFms = row.failureModes?.map((fm: any) => fm.name) || [];
-          const updatedFms = [...existingFms, value];
-          const response = await fetch(`${API_BASE_URL}/pfmea-rows/${row.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ failureModes: updatedFms })
-          });
-          if (!response.ok) throw new Error('Failed to save Failure Mode');
-        }
-      }
-
-      await fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Error occurred while adding tree element.');
-    }
-  };
 
   const handleDeleteRow = async (rowId: string) => {
     if (!window.confirm('Are you sure you want to delete this analysis row? This action is permanent.')) return;
@@ -1274,6 +1244,7 @@ export const PfmeaWorkspace: React.FC = () => {
               unlinked: unlinkedFailureModes
             }}
             onSyncPfd={handleImportPfdSteps}
+            onSubmitToRepository={handleSubmitWorkElementToRepository}
           />
         );
       })() : activeTab === 'table' ? (
@@ -1867,38 +1838,7 @@ export const PfmeaWorkspace: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Generic Add Tree Element Dialog */}
-      <Dialog open={treeAddType !== null} onClose={() => setTreeAddType(null)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Add {treeAddType === 'workElement' ? 'Work Element' : treeAddType === 'function' ? 'Function' : 'Failure'}
-        </DialogTitle>
-        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Description / Name"
-              value={treeAddValue}
-              onChange={(e) => setTreeAddValue(e.target.value)}
-              fullWidth
-              size="small"
-              required
-              autoFocus
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setTreeAddType(null)} variant="outlined">
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirmAddTreeElement} 
-            variant="contained" 
-            color="primary"
-            disabled={!treeAddValue.trim()}
-          >
-            Add Element
-          </Button>
-        </DialogActions>
-      </Dialog>
+
 
       <ReportExporter
         open={exporterOpen}
@@ -1929,6 +1869,19 @@ export const PfmeaWorkspace: React.FC = () => {
           failureModeId={detailWindowFailureModeId}
           token={token}
           onRefresh={() => fetchData()}
+        />
+      )}
+
+      {/* Multi-Add Work Element Dialog (with Repository Import tab) */}
+      {treeAddTargetStepId && (
+        <MultiAddWorkElementDialog
+          open={multiAddWeDialogOpen}
+          onClose={() => { setMultiAddWeDialogOpen(false); setTreeAddTargetStepId(null); }}
+          processStepId={treeAddTargetStepId}
+          revisionId={pfmeaRevisionId || undefined}
+          onConfirmSingle={handleConfirmAddWorkElementSingle}
+          onConfirmMultiple={handleConfirmAddWorkElementsMultiple}
+          onImportSuccess={() => fetchData()}
         />
       )}
 

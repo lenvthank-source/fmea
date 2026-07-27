@@ -17,6 +17,7 @@ import {
   Build as DfmeaIcon,
   Link as LinkageIcon,
   AssignmentTurnedIn as ActionsIcon,
+  CollectionsBookmark as RepositoryIcon,
   ExpandLess,
   ExpandMore,
   FiberManualRecord as BulletIcon
@@ -114,6 +115,7 @@ export const AppShell: React.FC = () => {
 
   const globalMenuItems = [
     { text: 'Projects', icon: <FolderIcon />, path: '/app/projects' },
+    { text: 'Work Element Repository', icon: <RepositoryIcon />, path: '/app/repository' },
     { text: 'My Actions', icon: <AssignmentIcon />, path: '/app/actions' },
     { text: 'Administration', icon: <AdminIcon />, path: '/app/admin', permission: 'admin.users' },
   ];

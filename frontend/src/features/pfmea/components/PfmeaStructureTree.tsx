@@ -20,6 +20,7 @@ import {
   KeyboardArrowDown as ExpandIcon,
   Link as LinkIcon,
   Info as DetailsIcon,
+  CloudUpload as SubmitRepoIcon,
 } from '@mui/icons-material';
 import { TREE_COLORS, TREE_TYPOGRAPHY, TREE_ASSETS } from '../../shared/fmeaTreeStyles';
 
@@ -65,6 +66,7 @@ interface PfmeaStructureTreeProps {
     unlinked: number;
   };
   onSyncPfd?: () => void;
+  onSubmitToRepository?: (stepId: string, workElementName: string) => void;
 }
 
 // Crisp HD Icon Component (24px HD)
@@ -114,9 +116,10 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   onOpenLinkageModal,
   onOpenDetailWindow,
   onEditNode,
-  structureFunctions,
+  structureFunctions = [],
   linkageStats,
   onSyncPfd,
+  onSubmitToRepository,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ root: true });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -662,6 +665,13 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                       <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
                                     </IconButton>
                                   </Tooltip>
+                                  {onSubmitToRepository && (
+                                    <Tooltip title="Submit to Repository">
+                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onSubmitToRepository(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #cbd5e1', '&:hover': { bgcolor: '#f1f5f9' } }}>
+                                        <SubmitRepoIcon sx={{ fontSize: '0.9rem', color: '#0284c7' }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
                                   <Tooltip title="Delete Work Element">
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDeleteNode(weNodeId); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fecaca', '&:hover': { bgcolor: '#fee2e2' } }}>
                                       <DeleteIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />

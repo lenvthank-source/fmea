@@ -28,6 +28,15 @@ export class StructureFailureController {
     return this.service.createFailure(req.user.tenantId, dto);
   }
 
+  @Post('batch')
+  @Permissions('pfmea.edit')
+  createBatch(
+    @Request() req: RequestWithUser,
+    @Body() dtos: CreateStructureFailureDto[],
+  ) {
+    return this.service.createFailuresBatch(req.user.tenantId, dtos);
+  }
+
   @Get()
   @Permissions('pfmea.view')
   list(

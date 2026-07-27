@@ -764,3 +764,23 @@ model UserFeedback {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   @@map("user_feedback")
 }
+
+model WorkElementPackage {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String    @db.VarChar(255)
+  description         String?   @db.Text
+  status              String    @default("pending") @db.VarChar(20) // 'pending','approved','rejected'
+  packageData         Json      @map("package_data")
+  contributorId       String    @map("contributor_id") @db.Uuid
+  contributorName     String    @map("contributor_name") @db.VarChar(255)
+  contributorTenantId String    @map("contributor_tenant_id") @db.Uuid
+  reviewedById        String?   @map("reviewed_by_id") @db.Uuid
+  reviewedAt          DateTime? @map("reviewed_at") @db.Timestamptz
+  rejectionReason     String?   @map("rejection_reason") @db.Text
+  sourceProjectId     String?   @map("source_project_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([status])
+  @@map("work_element_package")
+}

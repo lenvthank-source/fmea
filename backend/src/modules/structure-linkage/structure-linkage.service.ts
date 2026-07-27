@@ -44,6 +44,16 @@ export class StructureLinkageService {
     });
   }
 
+  async createFunctionsBatch(tenantId: string, dtos: CreateStructureFunctionDto[]) {
+    if (!dtos || dtos.length === 0) return [];
+    const results: any[] = [];
+    for (const dto of dtos) {
+      const res = await this.createFunction(tenantId, dto);
+      results.push(res);
+    }
+    return results;
+  }
+
   async getFunctions(
     tenantId: string,
     parentType: string,
@@ -146,6 +156,16 @@ export class StructureLinkageService {
         filterCode: dto.filterCode ?? null,
       },
     });
+  }
+
+  async createFailuresBatch(tenantId: string, dtos: CreateStructureFailureDto[]) {
+    if (!dtos || dtos.length === 0) return [];
+    const results: any[] = [];
+    for (const dto of dtos) {
+      const res = await this.createFailure(tenantId, dto);
+      results.push(res);
+    }
+    return results;
   }
 
   async getFailures(tenantId: string, functionId: string) {

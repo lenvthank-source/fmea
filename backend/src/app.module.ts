@@ -15,6 +15,7 @@ import { StructureLinkageModule } from './modules/structure-linkage/structure-li
 import { UserModule } from './modules/user/user.module';
 import { ControlPlanModule } from './modules/control-plan/control-plan.module';
 import { AuditLogModule } from './modules/audit/audit-log.module';
+import { RepositoryModule } from './modules/repository/repository.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AuditLogModule } from './modules/audit/audit-log.module';
     StructureLinkageModule,
     UserModule,
     AuditLogModule,
+    RepositoryModule,
   ],
   controllers: [AppController],
   providers: [

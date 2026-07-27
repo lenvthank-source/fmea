@@ -28,6 +28,15 @@ export class StructureFunctionController {
     return this.service.createFunction(req.user.tenantId, dto);
   }
 
+  @Post('batch')
+  @Permissions('pfmea.edit')
+  createBatch(
+    @Request() req: RequestWithUser,
+    @Body() dtos: CreateStructureFunctionDto[],
+  ) {
+    return this.service.createFunctionsBatch(req.user.tenantId, dtos);
+  }
+
   @Get()
   @Permissions('pfmea.view')
   list(
