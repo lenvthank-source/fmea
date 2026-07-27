@@ -25,7 +25,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { RatingDropdown } from '../pfmea/components/RatingDropdown';
 import { API_BASE_URL } from '../../config';
-import { TREE_COLORS, TREE_TYPOGRAPHY, TREE_ASSETS } from '../shared/fmeaTreeStyles';
+import { TREE_COLORS, TREE_ASSETS } from '../shared/fmeaTreeStyles';
 
 interface EditPackageDialogProps {
   open: boolean;
