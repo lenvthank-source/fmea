@@ -15,13 +15,18 @@ export class RepositoryService {
    * Submit a new work element package for review (status = 'pending')
    */
   async submitPackage(dto: CreateWorkElementPackageDto, user: any) {
+    const userId = user?.sub || user?.id || user?.userId;
+    if (!userId) {
+      throw new BadRequestException('User ID is missing from authentication token');
+    }
+
     return this.prisma.workElementPackage.create({
       data: {
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         packageData: dto.packageData,
         status: 'pending',
-        contributorId: user.id,
+        contributorId: userId,
         contributorName: user.name || user.email || 'Unknown User',
         contributorTenantId: user.tenantId,
         sourceProjectId: dto.sourceProjectId || null,
@@ -77,11 +82,13 @@ export class RepositoryService {
    */
   async approvePackage(id: string, adminUser: any) {
     const pkg = await this.getPackageById(id);
+    const adminId = adminUser?.sub || adminUser?.id || adminUser?.userId || null;
+
     return this.prisma.workElementPackage.update({
       where: { id },
       data: {
         status: 'approved',
-        reviewedById: adminUser.id,
+        reviewedById: adminId,
         reviewedAt: new Date(),
         rejectionReason: null,
       },
@@ -93,11 +100,13 @@ export class RepositoryService {
    */
   async rejectPackage(id: string, dto: RejectWorkElementPackageDto, adminUser: any) {
     await this.getPackageById(id);
+    const adminId = adminUser?.sub || adminUser?.id || adminUser?.userId || null;
+
     return this.prisma.workElementPackage.update({
       where: { id },
       data: {
         status: 'rejected',
-        reviewedById: adminUser.id,
+        reviewedById: adminId,
         reviewedAt: new Date(),
         rejectionReason: dto.rejectionReason.trim(),
       },

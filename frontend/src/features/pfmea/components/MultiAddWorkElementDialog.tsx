@@ -202,12 +202,12 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
 
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
               <Table size="small">
-                <TableHead sx={{ bgcolor: '#0284c7' }}>
-                  <TableRow>
-                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #0369a1' }}>
+                <TableHead sx={{ bgcolor: '#0f172a' }}>
+                  <TableRow sx={{ bgcolor: '#0f172a' }}>
+                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155' }}>
                       Work Element Name
                     </TableCell>
-                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
                       Action
                     </TableCell>
                   </TableRow>

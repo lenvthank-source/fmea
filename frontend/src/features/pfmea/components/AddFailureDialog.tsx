@@ -447,36 +447,36 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
 
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
               <Table size="small">
-                <TableHead sx={{ bgcolor: '#0b5563' }}>
-                  <TableRow>
-                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 200 }}>
+                <TableHead sx={{ bgcolor: '#0f172a' }}>
+                  <TableRow sx={{ bgcolor: '#0f172a' }}>
+                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 200 }}>
                       {role === 'cause' ? 'Failure Cause Narration' : role === 'effect' ? 'Failure Effect Narration' : 'Failure Mode Narration'}
                     </TableCell>
                     {role === 'effect' && (
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 110 }}>
+                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 110 }}>
                         SEV
                       </TableCell>
                     )}
                     {role === 'cause' && (
                       <>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 180 }}>
+                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 180 }}>
                           Current Prevention Control
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 90 }}>
+                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 90 }}>
                           OCC
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 180 }}>
+                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 180 }}>
                           Current Detection Control
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', width: 90 }}>
+                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 90 }}>
                           DET
                         </TableCell>
-                        <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #147285', minWidth: 130 }}>
+                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 130 }}>
                           Filter Code
                         </TableCell>
                       </>
                     )}
-                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
                       Action
                     </TableCell>
                   </TableRow>

@@ -57,7 +57,8 @@ export class RepositoryController {
    */
   @Get('packages/my-submissions')
   async listMySubmissions(@Request() req: any) {
-    return this.repositoryService.listMySubmissions(req.user.id);
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
+    return this.repositoryService.listMySubmissions(userId);
   }
 
   /**

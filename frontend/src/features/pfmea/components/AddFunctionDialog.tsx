@@ -271,15 +271,15 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
 
               <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
                 <Table size="small">
-                  <TableHead sx={{ bgcolor: '#1b5e20' }}>
-                    <TableRow>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #2e7d32', minWidth: 240 }}>
+                  <TableHead sx={{ bgcolor: '#0f172a' }}>
+                    <TableRow sx={{ bgcolor: '#0f172a' }}>
+                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 240 }}>
                         Function / Requirement Narration
                       </TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', borderRight: '1px solid #2e7d32', minWidth: 200 }}>
+                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 200 }}>
                         Description / Specification (Optional)
                       </TableCell>
-                      <TableCell sx={{ color: '#ffffff', fontWeight: 'bold', width: 50, textAlign: 'center' }}>
+                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
                         Action
                       </TableCell>
                     </TableRow>
