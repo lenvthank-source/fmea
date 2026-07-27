@@ -431,18 +431,7 @@ export const RepositoryPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Import Target Dialog */}
-      {importingPackage && (
-        <ImportTargetDialog
-          open={Boolean(importingPackage)}
-          onClose={() => setImportingPackage(null)}
-          packageId={importingPackage.id}
-          packageName={importingPackage.name}
-          onSuccess={() => {
-            alert(`Work element "${importingPackage.name}" successfully imported!`);
-          }}
-        />
-      )}
+
 
       {/* Edit Package Dialog */}
       {editingPackage && (
