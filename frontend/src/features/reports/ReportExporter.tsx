@@ -966,7 +966,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         let symbolsText = '—';
         if (step.category) {
           const meta = getPfdIconMeta(step.category);
-          symbolsText = `${meta.symbol} (${meta.label})`;
+          symbolsText = `${meta.sym} (${meta.label})`;
         }
         let machinesText = '—';
         if (Array.isArray(step.machinesEquipmentDocs) && step.machinesEquipmentDocs.length > 0) {

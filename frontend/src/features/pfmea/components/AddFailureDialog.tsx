@@ -13,9 +13,6 @@ import {
   Divider,
   Tabs,
   Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   IconButton,
   Alert,
   Table,
@@ -27,7 +24,6 @@ import {
   Paper,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
