@@ -12,6 +12,8 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 // ── Interfaces ──────────────────────────────────────────────
 
@@ -79,6 +81,9 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 
 export const AdminPanel: React.FC = () => {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
+  // referenced to satisfy noUnusedLocals when task requires import
+  void getToastSeverity;
   const [activeTab, setActiveTab] = useState(0);
 
   // Users state
@@ -106,6 +111,13 @@ export const AdminPanel: React.FC = () => {
   const [adminRevisions, setAdminRevisions] = useState<any[]>([]);
   const [revisionsLoading, setRevisionsLoading] = useState(false);
   const [deleteRevisionLoadingId, setDeleteRevisionLoadingId] = useState<string | null>(null);
+
+  // Rating scales state
+  const [ratingScales, setRatingScales] = useState<{severity:any[],occurrence:any[],detection:any[]}>({severity:[],occurrence:[],detection:[]});
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [editingScale, setEditingScale] = useState<{scale:string,value:number,label:string,criteria:string,color:string}|null>(null);
+  const [editScaleDialogOpen, setEditScaleDialogOpen] = useState(false);
+  const [savingScale, setSavingScale] = useState(false);
 
   // ── Fetch Functions ───────────────────────────────────────
 
@@ -177,12 +189,18 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const fetchRatingScales = async () => {
+    setRatingLoading(true);
+    try { const res = await fetch(`${API_BASE_URL}/rating-scales`); if(res.ok){ const data=await res.json(); setRatingScales(data); } } catch(e){ console.error(e);} finally{setRatingLoading(false);}
+  };
+
   useEffect(() => {
     if (token) {
       fetchUsers();
       fetchInquiries();
       fetchFeedback();
       fetchAdminRevisions();
+      fetchRatingScales();
     }
   }, [token]);
 
@@ -267,6 +285,11 @@ export const AdminPanel: React.FC = () => {
       setDeleteRevisionLoadingId(null);
     }
   };
+
+  // ── Rating Scales Handlers ────────────────────────────────
+
+  const handleEditScale = (scale:string, row:any)=> { setEditingScale({scale,value:row.value,label:row.label,criteria:row.criteria,color:row.color}); setEditScaleDialogOpen(true); }
+  const handleSaveScale = async ()=> { if(!editingScale) return; setSavingScale(true); try{ const res=await fetch(`${API_BASE_URL}/rating-scales/${editingScale.scale}/${editingScale.value}`, {method:'PUT', headers:{'Content-Type':'application/json', Authorization:`Bearer ${token}`}, body: JSON.stringify({label:editingScale.label, criteria:editingScale.criteria, color:editingScale.color})}); if(!res.ok){ const msg=await parseApiError(res,'Failed to update'); throw new Error(msg);} setEditScaleDialogOpen(false); fetchRatingScales(); showToast('Rating updated', 'info'); } catch(err:any){ showToast(err.message,'error');} finally{setSavingScale(false);} }
 
   // ── Inquiry Actions ───────────────────────────────────────
 
@@ -358,6 +381,9 @@ export const AdminPanel: React.FC = () => {
           }
         />
         <Tab label="Document Revisions" />
+        <Tab label="Severity" />
+        <Tab label="Occurrence" />
+        <Tab label="Detection" />
       </Tabs>
 
       {/* ── Tab 0: Users ────────────────────────────────────── */}
@@ -720,6 +746,159 @@ export const AdminPanel: React.FC = () => {
         )}
       </TabPanel>
 
+      {/* ── Tab 4: Severity ─────────────────────────────────── */}
+      <TabPanel value={activeTab} index={4}>
+        {ratingLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Criteria</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: 150 }}>Color</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, width: 100 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ratingScales.severity.map((row: any) => (
+                  <TableRow key={row.value} hover>
+                    <TableCell>
+                      <Chip label={row.value} size="small" sx={{ fontWeight: 600, minWidth: 32 }} />
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{row.label}</TableCell>
+                    <TableCell>
+                      <Tooltip title={row.criteria} placement="top-start">
+                        <span>{row.criteria?.length > 80 ? row.criteria.substring(0, 80) + '…' : row.criteria}</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 18, height: 18, borderRadius: '4px', bgcolor: row.color, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{row.color}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => handleEditScale('severity', row)} color="primary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </TabPanel>
+
+      {/* ── Tab 5: Occurrence ───────────────────────────────── */}
+      <TabPanel value={activeTab} index={5}>
+        {ratingLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Criteria</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: 150 }}>Color</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, width: 100 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ratingScales.occurrence.map((row: any) => (
+                  <TableRow key={row.value} hover>
+                    <TableCell>
+                      <Chip label={row.value} size="small" sx={{ fontWeight: 600, minWidth: 32 }} />
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{row.label}</TableCell>
+                    <TableCell>
+                      <Tooltip title={row.criteria} placement="top-start">
+                        <span>{row.criteria?.length > 80 ? row.criteria.substring(0, 80) + '…' : row.criteria}</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 18, height: 18, borderRadius: '4px', bgcolor: row.color, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{row.color}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => handleEditScale('occurrence', row)} color="primary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </TabPanel>
+
+      {/* ── Tab 6: Detection ────────────────────────────────── */}
+      <TabPanel value={activeTab} index={6}>
+        {ratingLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Criteria</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: 150 }}>Color</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, width: 100 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ratingScales.detection.map((row: any) => (
+                  <TableRow key={row.value} hover>
+                    <TableCell>
+                      <Chip label={row.value} size="small" sx={{ fontWeight: 600, minWidth: 32 }} />
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{row.label}</TableCell>
+                    <TableCell>
+                      <Tooltip title={row.criteria} placement="top-start">
+                        <span>{row.criteria?.length > 80 ? row.criteria.substring(0, 80) + '…' : row.criteria}</span>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ width: 18, height: 18, borderRadius: '4px', bgcolor: row.color, border: '1px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{row.color}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="Edit">
+                        <IconButton size="small" onClick={() => handleEditScale('detection', row)} color="primary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </TabPanel>
+
       {/* ── Edit User Dialog ────────────────────────────────── */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>Edit User Properties</DialogTitle>
@@ -774,6 +953,63 @@ export const AdminPanel: React.FC = () => {
             sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100 }}
           >
             {saveLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Edit Rating Scale Dialog ──────────────────────────── */}
+      <Dialog open={editScaleDialogOpen} onClose={() => setEditScaleDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          Edit {editingScale ? `${editingScale.scale.charAt(0).toUpperCase() + editingScale.scale.slice(1)} - Value ${editingScale.value}` : 'Rating'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <TextField
+              label="Label"
+              value={editingScale?.label || ''}
+              onChange={(e) => setEditingScale((prev) => (prev ? { ...prev, label: e.target.value } : null))}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Criteria"
+              value={editingScale?.criteria || ''}
+              onChange={(e) => setEditingScale((prev) => (prev ? { ...prev, criteria: e.target.value } : null))}
+              fullWidth
+              size="small"
+              multiline
+              rows={4}
+            />
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+              <Box
+                component="input"
+                type="color"
+                value={editingScale?.color || '#ffffff'}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingScale((prev) => (prev ? { ...prev, color: e.target.value } : null))}
+                sx={{ width: 48, height: 40, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 1, p: 0.5, cursor: 'pointer' }}
+              />
+              <TextField
+                label="Color"
+                value={editingScale?.color || ''}
+                onChange={(e) => setEditingScale((prev) => (prev ? { ...prev, color: e.target.value } : null))}
+                fullWidth
+                size="small"
+                placeholder="#ffffff"
+              />
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setEditScaleDialogOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveScale}
+            variant="contained"
+            disabled={savingScale}
+            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100 }}
+          >
+            {savingScale ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>

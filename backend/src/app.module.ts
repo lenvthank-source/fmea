@@ -22,6 +22,7 @@ import { AuditLogService } from './modules/audit/audit-log.service';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { QueuesModule } from './queues/queues.module';
 import { CommonModule } from './common/common.module';
+import { RatingConfigModule } from './modules/rating-config/rating-config.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CommonModule } from './common/common.module';
     UserModule,
     AuditLogModule,
     RepositoryModule,
+    RatingConfigModule,
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 300,

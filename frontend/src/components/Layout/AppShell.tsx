@@ -15,8 +15,6 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   Build as DfmeaIcon,
-  Link as LinkageIcon,
-  AssignmentTurnedIn as ActionsIcon,
   CollectionsBookmark as RepositoryIcon,
   ExpandLess,
   ExpandMore,
@@ -409,8 +407,6 @@ export const AppShell: React.FC = () => {
                     </ListItem>
 
                     {renderListItem({ text: 'Control Plan', icon: <CpIcon />, path: `/app/projects/${projectId}/control-plan` })}
-                    {renderListItem({ text: 'Action Tracker', icon: <ActionsIcon />, path: `/app/actions?projectId=${projectId}` })}
-                    {renderListItem({ text: 'Linkage Map', icon: <LinkageIcon />, path: `/app/projects/${projectId}/linkage` })}
                     {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/app/projects/${projectId}/settings` })}
                   </>
                 ) : (

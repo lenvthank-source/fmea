@@ -170,18 +170,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [token]);
 
-  // Keep-alive background ping to keep backend and database awake while the app is open
+  // Keep-alive ping — only when authenticated and tab visible, to avoid cold-start contention on login
   useEffect(() => {
-    // Ping immediately on mount to wake up the server/db
-    fetch(`${API_URL}/health`).catch((err) => console.warn('Initial keep-awake ping failed:', err));
-
-    // Ping every 3 minutes (180,000 ms)
+    if (!token) return;
+    if (document.hidden) return;
     const interval = setInterval(() => {
+      if (document.hidden) return;
       fetch(`${API_URL}/health`).catch((err) => console.warn('Background keep-awake ping failed:', err));
-    }, 180000);
-
+    }, 300000); // 5 min, less aggressive
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
   const login = async (email: string, password: string, subdomain: string, name?: string) => {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -203,22 +201,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setToken(accessToken);
     
-    // Fetch fresh user data with permissions from server
-    const meData = await fetchMe(accessToken);
-    if (meData) {
-      setUser(meData);
+    // Use session from login response if available (avoids extra /auth/me round-trip)
+    if (data.session) {
+      setUser(data.session);
     } else {
-      // Fallback to JWT claims if /me fails
-      const claims = parseJwt(accessToken);
-      setUser({
-        id: claims.sub,
-        email: claims.email,
-        name: data.user?.name || claims.name || claims.email,
-        tenantId: claims.tenant_id || claims.tenantId,
-        roles: claims.roles || [],
-        permissions: claims.permissions || [],
-        isGuest: false,
-      });
+      const meData = await fetchMe(accessToken);
+      if (meData) {
+        setUser(meData);
+      } else {
+        const claims = parseJwt(accessToken);
+        setUser({
+          id: claims.sub,
+          email: claims.email,
+          name: data.user?.name || claims.name || claims.email,
+          tenantId: claims.tenant_id || claims.tenantId,
+          roles: claims.roles || [],
+          permissions: claims.permissions || [],
+          isGuest: false,
+        });
+      }
     }
   };
 
@@ -241,22 +242,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setToken(accessToken);
     
-    // Fetch fresh user data with permissions from server
-    const meData = await fetchMe(accessToken);
-    if (meData) {
-      setUser({ ...meData, isGuest: true });
+    if (data.session) {
+      setUser({ ...data.session, isGuest: true });
     } else {
-      // Fallback to JWT claims if /me fails
-      const claims = parseJwt(accessToken);
-      setUser({
-        id: claims.sub,
-        email: claims.email,
-        name: data.user?.name || claims.name || claims.email,
-        tenantId: claims.tenant_id || claims.tenantId,
-        roles: claims.roles || [],
-        permissions: claims.permissions || [],
-        isGuest: true,
-      });
+      const meData = await fetchMe(accessToken);
+      if (meData) {
+        setUser({ ...meData, isGuest: true });
+      } else {
+        const claims = parseJwt(accessToken);
+        setUser({
+          id: claims.sub,
+          email: claims.email,
+          name: data.user?.name || claims.name || claims.email,
+          tenantId: claims.tenant_id || claims.tenantId,
+          roles: claims.roles || [],
+          permissions: claims.permissions || [],
+          isGuest: true,
+        });
+      }
     }
   };
 

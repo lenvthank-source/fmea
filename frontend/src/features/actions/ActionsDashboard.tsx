@@ -46,6 +46,7 @@ import { calculateAP } from '../pfmea/utils/apCalculator';
 import { API_BASE_URL } from '../../config';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
+import { unwrapPaginated } from '../../lib/pagination';
 
 interface User {
   id: string;
@@ -172,8 +173,9 @@ export const ActionsDashboard: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (projRes.ok) {
-          const projData = await projRes.json();
-          setProjects(projData);
+          const payload = await projRes.json();
+          const { data } = unwrapPaginated<Project>(payload);
+          setProjects(Array.isArray(data) ? data : []);
         }
 
         // Fetch users in tenant
@@ -181,8 +183,9 @@ export const ActionsDashboard: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (userRes.ok) {
-          const userData = await userRes.json();
-          setUsers(userData);
+          const payload = await userRes.json();
+          const { data } = unwrapPaginated<User>(payload);
+          setUsers(Array.isArray(data) ? data : Array.isArray(payload) ? payload : []);
         }
       } catch (err: any) {
         console.error('Failed to load initial configuration', err);

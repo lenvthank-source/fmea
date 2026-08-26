@@ -164,6 +164,8 @@ model Project {
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([tenantId, status, createdAt(sort: Desc)])
+  @@index([tenantId, createdById])
   @@map("project")
 }
 
@@ -783,4 +785,32 @@ model WorkElementPackage {
 
   @@index([status])
   @@map("work_element_package")
+}
+
+// ── Rating Scales (Admin editable S/O/D criteria) — Simple Groups (global) ──
+model SeverityScale {
+  value    Int    @id
+  label    String @db.VarChar(100)
+  criteria String @db.Text
+  color    String @default("#64748b") @db.VarChar(20)
+
+  @@map("severity_scale")
+}
+
+model OccurrenceScale {
+  value    Int    @id
+  label    String @db.VarChar(100)
+  criteria String @db.Text
+  color    String @default("#64748b") @db.VarChar(20)
+
+  @@map("occurrence_scale")
+}
+
+model DetectionScale {
+  value    Int    @id
+  label    String @db.VarChar(100)
+  criteria String @db.Text
+  color    String @default("#64748b") @db.VarChar(20)
+
+  @@map("detection_scale")
 }

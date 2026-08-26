@@ -889,19 +889,14 @@ export const PfdWorkspace: React.FC = () => {
                     <Typography color="text.secondary" sx={{ mb: 2 }}>
                       No process steps added yet.
                     </Typography>
-                    <Fab
-                      color="primary"
-                      variant="extended"
+                    <Button
+                      variant="contained"
                       onClick={handleOpenAddDrawer}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        boxShadow: '0 4px 14px 0 rgba(13, 148, 136, 0.4)',
-                      }}
+                      startIcon={<AddIcon />}
+                      sx={{ textTransform: 'none', fontWeight: 'bold' }}
                     >
-                      <AddIcon sx={{ mr: 1 }} />
                       Add First Step
-                    </Fab>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ) : (

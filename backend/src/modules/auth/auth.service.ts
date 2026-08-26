@@ -364,11 +364,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Update last login
-    await this.prisma.user.update({
+    // Update last login — fire-and-forget to not block login
+    void this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
-    });
+    }).catch(() => {});
 
     // 4. Extract roles and permissions
     const roles = user.userRoles.map((ur) => ur.role.name);
@@ -400,6 +400,15 @@ export class AuthService {
         id: tenant.id,
         name: tenant.name,
         subdomain: tenant.subdomain,
+      },
+      session: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        tenantId: tenant.id,
+        roles,
+        permissions,
+        isGuest: user.isGuest || false,
       },
       ...tokens,
     };
