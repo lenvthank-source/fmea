@@ -4,7 +4,7 @@ import {
   Box, Tabs, Tab, Button, Paper, TableContainer, Table, TableHead,
   TableRow, TableCell, TableBody, IconButton, Stack, Typography,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Alert, CircularProgress, Select, MenuItem, Collapse
+  Alert, CircularProgress, Select, MenuItem, Collapse, TablePagination
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -23,6 +23,7 @@ import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
+import { unwrapPaginated } from '../../lib/pagination';
 
 interface PfmeaRow {
   id: string;
@@ -70,6 +71,9 @@ export const DfmeaWorkspace: React.FC = () => {
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [total, setTotal] = useState(0);
 
   // Expanded Rows state
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -213,15 +217,17 @@ export const DfmeaWorkspace: React.FC = () => {
       setSteps(stepsData);
 
       // 2. Fetch FMEA rows
-      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${dfmeaRevisionId}/pfmea-rows`, {
+      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${dfmeaRevisionId}/pfmea-rows?page=${page}&limit=${limit}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!rowsResponse.ok) {
         const msg = await parseApiError(rowsResponse, 'Failed to load DFMEA analysis rows');
         throw new Error(msg);
       }
-      const rowsData = await rowsResponse.json();
-      setRows(rowsData);
+      const payload = await rowsResponse.json();
+      const { data, total: t } = unwrapPaginated<PfmeaRow>(payload);
+      setRows(data);
+      setTotal(t);
     } catch (err: any) {
       const msg = err.message || 'Could not load DFMEA workspace data.';
       setError(msg);
@@ -235,7 +241,9 @@ export const DfmeaWorkspace: React.FC = () => {
     if (dfmeaRevisionId) {
       fetchData();
     }
-  }, [dfmeaRevisionId]);
+  }, [dfmeaRevisionId, page, limit]);
+
+  useEffect(() => { setPage(1); }, [dfmeaRevisionId]);
 
   const handleAddRow = async () => {
     if (!selectedStepId) return;
@@ -577,6 +585,7 @@ export const DfmeaWorkspace: React.FC = () => {
           onAddFailure={handleAddFailureFromTree}
         />
       ) : (
+        <>
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
           <Table aria-label="DFMEA rows grid" size="small">
             <TableHead>
@@ -894,6 +903,16 @@ export const DfmeaWorkspace: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page-1}
+          onPageChange={(_,newPage)=> setPage(newPage+1)}
+          rowsPerPage={limit}
+          onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
+          rowsPerPageOptions={[10,25,50]}
+        />
+        </>
       )}
 
       {/* Row Editor Drawer */}

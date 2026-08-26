@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { ControlPlanRowService } from './control-plan-row.service';
 import { CreateCpRowDto } from './dto/create-cp-row.dto';
 import { UpdateCpRowDto } from './dto/update-cp-row.dto';
@@ -11,8 +11,13 @@ export class ControlPlanRowController {
 
   @Get('revisions/:id/control-plan-rows')
   @Permissions('pfmea.view') // Reusing pfmea.view permission for CP
-  async findAllRows(@Request() req: RequestWithUser, @Param('id') revisionId: string) {
-    return this.cpRowService.findAllRows(req.user.tenantId, revisionId);
+  async findAllRows(
+    @Request() req: RequestWithUser,
+    @Param('id') revisionId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(25), ParseIntPipe) limit?: number,
+  ) {
+    return this.cpRowService.findAllRows(req.user.tenantId, revisionId, page, limit);
   }
 
   @Post('revisions/:id/control-plan-rows')

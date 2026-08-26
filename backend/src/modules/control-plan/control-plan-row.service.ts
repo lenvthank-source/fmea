@@ -49,24 +49,32 @@ export class ControlPlanRowService {
     return row;
   }
 
-  async findAllRows(tenantId: string, revisionId: string) {
+  async findAllRows(tenantId: string, revisionId: string, page?: number, limit?: number) {
     await this.verifyRevisionAccess(tenantId, revisionId);
 
-    const rows = await this.prisma.controlPlanRow.findMany({
-      where: { revisionId },
-      include: {
-        processStep: true,
-        characteristic: true,
-        pfmeaRows: {
-          include: {
-            pfmeaRow: true,
+    const skip = page && limit ? (page - 1) * limit : undefined;
+    const take = limit;
+
+    const [rows, total] = await Promise.all([
+      this.prisma.controlPlanRow.findMany({
+        where: { revisionId },
+        include: {
+          processStep: true,
+          characteristic: true,
+          pfmeaRows: {
+            include: {
+              pfmeaRow: true,
+            },
           },
         },
-      },
-      orderBy: { rowNumber: 'asc' },
-    });
+        orderBy: { rowNumber: 'asc' },
+        skip,
+        take,
+      }),
+      this.prisma.controlPlanRow.count({ where: { revisionId } }),
+    ]);
 
-    return rows.map((r) => ({
+    const data = rows.map((r) => ({
       id: r.id,
       revisionId: r.revisionId,
       processStepId: r.processStepId,
@@ -87,6 +95,8 @@ export class ControlPlanRowService {
       characteristic: r.characteristic,
       linkedPfmeaRows: r.pfmeaRows.map((link) => link.pfmeaRow),
     }));
+
+    return { data, total, page: page || 1, limit: limit || total || data.length };
   }
 
   async createRow(tenantId: string, revisionId: string, dto: CreateCpRowDto) {

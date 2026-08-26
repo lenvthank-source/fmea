@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
-  Grid
+  Grid, TablePagination
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -29,6 +29,7 @@ import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
+import { unwrapPaginated } from '../../lib/pagination';
 
 interface ProcessStep {
   id: string;
@@ -93,6 +94,9 @@ export const PfmeaWorkspace: React.FC = () => {
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [total, setTotal] = useState(0);
 
 
   // Dialog and Drawer states
@@ -318,15 +322,17 @@ export const PfmeaWorkspace: React.FC = () => {
         }
       }
 
-      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
+      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows?page=${page}&limit=${limit}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!rowsResponse.ok) {
         const msg = await parseApiError(rowsResponse, 'Failed to load PFMEA analysis rows');
         throw new Error(msg);
       }
-      const rowsData = await rowsResponse.json();
-      setRows(rowsData);
+      const payload = await rowsResponse.json();
+      const { data, total: t } = unwrapPaginated<PfmeaRow>(payload);
+      setRows(data);
+      setTotal(t);
 
       // Fetch structure functions
       const structRes = await fetch(`${API_BASE_URL}/structure-functions/project/${projectId}`, {
@@ -378,7 +384,9 @@ export const PfmeaWorkspace: React.FC = () => {
     if (pfmeaRevisionId && pfdRevisionId) {
       fetchData();
     }
-  }, [pfmeaRevisionId, pfdRevisionId]);
+  }, [pfmeaRevisionId, pfdRevisionId, page, limit]);
+
+  useEffect(() => { setPage(1); }, [pfmeaRevisionId, pfdRevisionId]);
 
   const handleAddRow = async () => {
     if (!selectedStepId) return;
@@ -1339,6 +1347,7 @@ export const PfmeaWorkspace: React.FC = () => {
           />
         );
       })() : activeTab === 'table' ? (
+        <>
         <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
@@ -1603,6 +1612,16 @@ export const PfmeaWorkspace: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page-1}
+          onPageChange={(_,newPage)=> setPage(newPage+1)}
+          rowsPerPage={limit}
+          onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
+          rowsPerPageOptions={[10,25,50]}
+        />
+        </>
       ) : (
         /* Func/Fail Chains View */
         <Paper sx={{ p: 4, border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', boxShadow: 'none' }}>

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { PfmeaRowService } from './pfmea-row.service';
 import { CreatePfmeaRowDto } from './dto/create-pfmea-row.dto';
 import { UpdatePfmeaRowDto } from './dto/update-pfmea-row.dto';
@@ -14,8 +14,8 @@ export class PfmeaRowController {
   async findAllRows(
     @Request() req: RequestWithUser,
     @Param('id') revisionId: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(25), ParseIntPipe) limit?: number,
   ) {
     return this.pfmeaRowService.findAllRows(req.user.tenantId, revisionId, page, limit);
   }

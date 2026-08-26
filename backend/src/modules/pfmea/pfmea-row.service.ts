@@ -125,6 +125,8 @@ export class PfmeaRowService {
       controls: r.controls.map((c) => c.control),
       characteristics: r.characteristics.map((c) => c.characteristic),
     }));
+
+    return { data, total, page: page || 1, limit: limit || total || data.length };
   }
 
   async createRow(tenantId: string, userId: string, revisionId: string, dto: CreatePfmeaRowDto) {

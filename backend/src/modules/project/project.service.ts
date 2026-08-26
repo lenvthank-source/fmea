@@ -19,7 +19,7 @@ export class ProjectService {
     private auditLogService: AuditLogService,
   ) {}
 
-  async findAll(tenantId: string, status?: string, page?: number, limit?: number, userId?: string) {
+  async findAll(tenantId: string, status?: string, page?: number, limit?: number, userId?: string, search?: string) {
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit;
     const where: any = {
@@ -30,6 +30,16 @@ export class ProjectService {
     // If userId is provided (for guest users), filter by createdById
     if (userId) {
       where.createdById = userId;
+    }
+
+    if (search && search.trim()) {
+      const s = search.trim();
+      where.OR = [
+        { partName: { contains: s, mode: 'insensitive' } },
+        { orgPartNumber: { contains: s, mode: 'insensitive' } },
+        { customer: { contains: s, mode: 'insensitive' } },
+        { name: { contains: s, mode: 'insensitive' } },
+      ];
     }
     
     const [data, total] = await Promise.all([

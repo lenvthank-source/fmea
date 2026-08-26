@@ -5,7 +5,7 @@ import {
   Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
   TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab,
   Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup,
-  FormControl, InputLabel, Select, Checkbox
+  FormControl, InputLabel, Select, Checkbox, Pagination
 } from '@mui/material';
 import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon, GridView as GridIcon, ViewList as ListIcon, Folder as FolderIcon, ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
@@ -15,6 +15,7 @@ import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
+import { unwrapPaginated } from '../../lib/pagination';
 
 interface Project {
   id: string;
@@ -62,6 +63,10 @@ export const ProjectList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(9);
+  const [total, setTotal] = useState(0);
+  const [searchInput, setSearchInput] = useState('');
 
   // Wizard Dialog State
   const [open, setOpen] = useState(false);
@@ -129,18 +134,21 @@ export const ProjectList: React.FC = () => {
   useEffect(() => {
     if (step === 3 && !documentNumber) {
       const year = new Date().getFullYear();
-      const count = String(projects.length + 1).padStart(4, '0');
+      const count = String(total + 1).padStart(4, '0');
       setDocumentNumber(`DOC-${year}-${count}`);
     }
-  }, [step, projects.length]);
+  }, [step, total]);
 
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
     try {
-      const url = activeTab === 'archived'
-        ? `${API_BASE_URL}/projects?status=archived`
-        : `${API_BASE_URL}/projects`;
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', String(limit));
+      if (activeTab === 'archived') params.set('status', 'archived');
+      if (searchQuery) params.set('search', searchQuery);
+      const url = `${API_BASE_URL}/projects?${params.toString()}`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -150,8 +158,10 @@ export const ProjectList: React.FC = () => {
         const msg = await parseApiError(response, 'Failed to load projects');
         throw new Error(msg);
       }
-      const data = await response.json();
+      const payload = await response.json();
+      const { data, total: t } = unwrapPaginated<Project>(payload);
       setProjects(data);
+      setTotal(t);
     } catch (err: any) {
       const msg = err.message || 'An error occurred';
       setError(msg);
@@ -162,10 +172,19 @@ export const ProjectList: React.FC = () => {
   };
 
   useEffect(() => {
+    const h = setTimeout(() => { setPage(1); setSearchQuery(searchInput); }, 350);
+    return () => clearTimeout(h);
+  }, [searchInput]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  useEffect(() => {
     if (token) {
       fetchProjects();
     }
-  }, [token, activeTab]);
+  }, [token, activeTab, page, limit, searchQuery]);
 
   const handleDeleteProject = async () => {
     if (!deleteTargetId) return;
@@ -179,7 +198,10 @@ export const ProjectList: React.FC = () => {
         const msg = await parseApiError(res, 'Failed to delete project');
         throw new Error(msg);
       }
+      // keep local optimistic update but also refresh from server to fix pagination total
       setProjects(prev => prev.filter(p => p.id !== deleteTargetId));
+      setTotal(prev => Math.max(0, prev - 1));
+      fetchProjects();
     } catch (err: any) {
       const msg = err.message || 'Failed to delete project';
       setError(msg);
@@ -623,8 +645,8 @@ export const ProjectList: React.FC = () => {
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="Search part name or number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             size="small"
             variant="outlined"
             sx={{ 
@@ -668,11 +690,7 @@ export const ProjectList: React.FC = () => {
       )}
 
       {(() => {
-        const filteredProjects = projects.filter((p) => {
-          const nameMatch = (p.partName || '').toLowerCase().includes(searchQuery.toLowerCase());
-          const numberMatch = (p.orgPartNumber || '').toLowerCase().includes(searchQuery.toLowerCase());
-          return nameMatch || numberMatch;
-        });
+        const filteredProjects = projects; // already filtered server-side via ?search
 
         return loading ? (
           <DashboardSkeleton showMascot={!token} />
@@ -691,6 +709,7 @@ export const ProjectList: React.FC = () => {
             )}
           </Box>
         ) : viewMode === 'grid' ? (
+          <>
           <Grid container spacing={3}>
             {filteredProjects.map((project) => {
               const docType = project.documentTypes?.[0] || 'Prototype';
@@ -843,7 +862,14 @@ export const ProjectList: React.FC = () => {
               );
             })}
           </Grid>
+          <Box sx={{ display:'flex', justifyContent:'center', mt:3, alignItems:'center', gap:2, flexWrap:'wrap' }}>
+            <Pagination count={Math.max(1, Math.ceil(total/limit))} page={page} onChange={(_,v)=> setPage(v)} color="primary" />
+            <FormControl size="small" sx={{ minWidth:110 }}><InputLabel>Per page</InputLabel><Select value={limit} label="Per page" onChange={e=> {setLimit(Number(e.target.value)); setPage(1);}}>{[9,12,24,48].map(n=> <MenuItem key={n} value={n}>{n}</MenuItem>)}</Select></FormControl>
+            <Typography variant="caption" color="text.secondary">{total} projects</Typography>
+          </Box>
+          </>
         ) : (
+          <>
           <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
             <Table>
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
@@ -926,6 +952,12 @@ export const ProjectList: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+          <Box sx={{ display:'flex', justifyContent:'center', mt:3, alignItems:'center', gap:2, flexWrap:'wrap' }}>
+            <Pagination count={Math.max(1, Math.ceil(total/limit))} page={page} onChange={(_,v)=> setPage(v)} color="primary" />
+            <FormControl size="small" sx={{ minWidth:110 }}><InputLabel>Per page</InputLabel><Select value={limit} label="Per page" onChange={e=> {setLimit(Number(e.target.value)); setPage(1);}}>{[9,12,24,48].map(n=> <MenuItem key={n} value={n}>{n}</MenuItem>)}</Select></FormControl>
+            <Typography variant="caption" color="text.secondary">{total} projects</Typography>
+          </Box>
+          </>
         );
       })()}
 

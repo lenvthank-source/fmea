@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -16,11 +16,12 @@ export class ProjectController {
   async findAll(
     @Request() req: RequestWithUser,
     @Query('status') status?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit?: number,
+    @Query('search') search?: string,
   ) {
     const userId = req.user.isGuest ? req.user.sub : undefined;
-    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId);
+    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId, search);
   }
 
   @Post()
