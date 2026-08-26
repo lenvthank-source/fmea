@@ -61,7 +61,11 @@ export type PfmeaFieldKey =
   | 'filterCode'
   | 'preventionAction'
   | 'detectionAction'
+  | 'responsibility'
+  | 'targetDate'
   | 'responsibilityTargetDate'
+  | 'actionTaken'
+  | 'completionDate'
   | 'actionTakenCompletionDate'
   | 'revisedSeverity'
   | 'revisedOccurrence'
@@ -131,8 +135,12 @@ const FIELD_OPTIONS: { value: PfmeaFieldKey | 'ignore'; label: string }[] = [
   { value: 'filterCode', label: '4. Filter Code / Special Char' },
   { value: 'preventionAction', label: '5. Prevention Action' },
   { value: 'detectionAction', label: '5. Detection Action' },
-  { value: 'responsibilityTargetDate', label: '5. Responsibility & Target Date' },
-  { value: 'actionTakenCompletionDate', label: '5. Action Taken & Date' },
+  { value: 'responsibility', label: '5. Responsibility' },
+  { value: 'targetDate', label: '5. Target Date' },
+  { value: 'responsibilityTargetDate', label: '5. Responsibility & Target Date (Combined)' },
+  { value: 'actionTaken', label: '5. Action Taken' },
+  { value: 'completionDate', label: '5. Completion Date' },
+  { value: 'actionTakenCompletionDate', label: '5. Action Taken & Date (Combined)' },
   { value: 'revisedSeverity', label: '5. Revised SEV (1-10)' },
   { value: 'revisedOccurrence', label: '5. Revised OCC (1-10)' },
   { value: 'revisedDetection', label: '5. Revised DET (1-10)' },
@@ -202,20 +210,49 @@ const EXACT_HEADER_SYNONYMS: Record<PfmeaFieldKey, string[]> = {
   filterCode: ['fc', 'filter code', 'classification', 'special char', 'class'],
   preventionAction: ['prevention action', 'preventive action', 'proposed prevention action'],
   detectionAction: ['detection action', 'proposed detection action'],
+  responsibility: [
+    'responsibility',
+    'responsible person',
+    'person responsible',
+    'responsible',
+    'owner',
+    'assignee',
+    'resp',
+  ],
+  targetDate: [
+    'target date',
+    'target completion date',
+    'due date',
+    'planned date',
+    'target',
+  ],
   responsibilityTargetDate: [
     'responsibility and target date',
     'responsibility target date',
     'responsibility & target date',
     'resp & target date',
-    'responsibility',
-    'target date',
+    'resp & target',
+    'responsibility/target date',
+  ],
+  actionTaken: [
+    'action taken',
+    'actions taken',
+    'corrective action taken',
+    'action taken / status',
+    'action details',
+  ],
+  completionDate: [
+    'completion date',
+    'actual completion date',
+    'actual date',
+    'completed date',
   ],
   actionTakenCompletionDate: [
     'action taken and completion date',
     'action taken completion date',
     'action taken & completion date',
-    'action taken',
-    'completion date',
+    'action taken & date',
+    'action taken/date',
   ],
   revisedSeverity: ['sev revised', 'revised sev', 'after sev', 'sev after', 'revised s'],
   revisedOccurrence: ['occ revised', 'revised occ', 'after occ', 'occ after', 'revised o'],
@@ -224,6 +261,66 @@ const EXACT_HEADER_SYNONYMS: Record<PfmeaFieldKey, string[]> = {
   status: ['status', 'action status', 'row status'],
   notes: ['remarks', 'notes', 'comments', 'remark'],
 };
+
+export function parseFlexibleDate(val: any): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val;
+  }
+  const str = String(val).trim();
+  if (!str) return null;
+
+  // 1. Excel numeric serial date (e.g. 44804 for 2022-08-31)
+  const num = Number(str);
+  if (!isNaN(num) && num > 20000 && num < 100000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const d = new Date(excelEpoch.getTime() + num * 86400000);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // 2. Format: DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY (e.g. 31-08-2022)
+  const dmyMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10) - 1;
+    const year = parseInt(dmyMatch[3], 10);
+    if (day > 0 && day <= 31 && month >= 0 && month < 12) {
+      const d = new Date(Date.UTC(year, month, day));
+      if (!isNaN(d.getTime())) return d;
+    } else if (month >= 12 && day <= 12) {
+      const actualMonth = day - 1;
+      const actualDay = month + 1;
+      const d = new Date(Date.UTC(year, actualMonth, actualDay));
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 3. Format: YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (ymdMatch) {
+    const year = parseInt(ymdMatch[1], 10);
+    const month = parseInt(ymdMatch[2], 10) - 1;
+    const day = parseInt(ymdMatch[3], 10);
+    if (day > 0 && day <= 31 && month >= 0 && month < 12) {
+      const d = new Date(Date.UTC(year, month, day));
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 4. Standard Date parsing fallback
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  return null;
+}
+
+export function formatDateIso(val: any): string {
+  const d = parseFlexibleDate(val);
+  if (!d) return '';
+  return d.toISOString().split('T')[0];
+}
 
 function normalizeHeader(s: string): string {
   return s
@@ -248,8 +345,9 @@ function extractDateAndText(val: string): { text: string; date: string } {
   if (!trimmed) return { text: '', date: '' };
   const dateMatch = trimmed.match(/(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})/);
   if (dateMatch) {
-    const date = dateMatch[1];
-    const text = trimmed.replace(date, '').replace(/[\n\r,;-]+/g, ' ').trim();
+    const rawDate = dateMatch[1];
+    const text = trimmed.replace(rawDate, '').replace(/[\n\r,;-]+/g, ' ').trim();
+    const date = formatDateIso(rawDate) || rawDate;
     return { text, date };
   }
   return { text: trimmed, date: '' };
@@ -527,16 +625,28 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
           case 'detectionAction':
             draft.detectionAction = val;
             break;
+          case 'responsibility':
+            draft.responsibility = val;
+            break;
+          case 'targetDate':
+            draft.targetDate = formatDateIso(val) || val;
+            break;
           case 'responsibilityTargetDate': {
             const { text, date } = extractDateAndText(val);
-            draft.responsibility = text;
-            draft.targetDate = date;
+            if (text) draft.responsibility = text;
+            if (date) draft.targetDate = date;
             break;
           }
+          case 'actionTaken':
+            draft.actionTaken = val;
+            break;
+          case 'completionDate':
+            draft.completionDate = formatDateIso(val) || val;
+            break;
           case 'actionTakenCompletionDate': {
             const { text, date } = extractDateAndText(val);
-            draft.actionTaken = text;
-            draft.completionDate = date;
+            if (text) draft.actionTaken = text;
+            if (date) draft.completionDate = date;
             break;
           }
           case 'revisedSeverity':
@@ -628,9 +738,9 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
           preventionAction: r.preventionAction || null,
           detectionAction: r.detectionAction || null,
           responsibility: r.responsibility || null,
-          targetDate: r.targetDate || null,
+          targetDate: r.targetDate ? (formatDateIso(r.targetDate) || null) : null,
           actionTaken: r.actionTaken || null,
-          completionDate: r.completionDate || null,
+          completionDate: r.completionDate ? (formatDateIso(r.completionDate) || null) : null,
           revisedSeverity: r.revisedSeverity,
           revisedOccurrence: r.revisedOccurrence,
           revisedDetection: r.revisedDetection,

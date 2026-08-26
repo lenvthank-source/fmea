@@ -6,6 +6,69 @@ import { ImportPfmeaRowItemDto } from './dto/import-pfmea-rows.dto';
 import { calculateAP } from './ap-calculator';
 import { RevisionGuard } from '../../common/revision-guard';
 
+export function parseFlexibleDate(val: any): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val;
+  }
+  const str = String(val).trim();
+  if (!str) return null;
+
+  // 1. Excel numeric serial date (e.g. 44804 for 2022-08-31)
+  const num = Number(str);
+  if (!isNaN(num) && num > 20000 && num < 100000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const d = new Date(excelEpoch.getTime() + num * 86400000);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // 2. Format: DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY (e.g. 31-08-2022)
+  const dmyMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10) - 1;
+    const year = parseInt(dmyMatch[3], 10);
+    if (day > 0 && day <= 31 && month >= 0 && month < 12) {
+      const d = new Date(Date.UTC(year, month, day));
+      if (!isNaN(d.getTime())) return d;
+    } else if (month >= 12 && day <= 12) {
+      const actualMonth = day - 1;
+      const actualDay = month + 1;
+      const d = new Date(Date.UTC(year, actualMonth, actualDay));
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 3. Format: YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (ymdMatch) {
+    const year = parseInt(ymdMatch[1], 10);
+    const month = parseInt(ymdMatch[2], 10) - 1;
+    const day = parseInt(ymdMatch[3], 10);
+    if (day > 0 && day <= 31 && month >= 0 && month < 12) {
+      const d = new Date(Date.UTC(year, month, day));
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 4. Standard Date parsing fallback
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  return null;
+}
+
+export function sanitizeAp(val: any): string | null {
+  if (!val) return null;
+  const str = String(val).trim().toUpperCase();
+  if (str.startsWith('H')) return 'H';
+  if (str.startsWith('M')) return 'M';
+  if (str.startsWith('L')) return 'L';
+  return null;
+}
+
 @Injectable()
 export class PfmeaRowService {
   constructor(
@@ -433,9 +496,9 @@ export class PfmeaRowService {
           preventionAction: dto.preventionAction !== undefined ? dto.preventionAction : row.preventionAction,
           detectionAction: dto.detectionAction !== undefined ? dto.detectionAction : row.detectionAction,
           responsibility: dto.responsibility !== undefined ? dto.responsibility : row.responsibility,
-          targetDate: dto.targetDate !== undefined ? (dto.targetDate ? new Date(dto.targetDate) : null) : row.targetDate,
+          targetDate: dto.targetDate !== undefined ? parseFlexibleDate(dto.targetDate) : row.targetDate,
           actionTaken: dto.actionTaken !== undefined ? dto.actionTaken : row.actionTaken,
-          completionDate: dto.completionDate !== undefined ? (dto.completionDate ? new Date(dto.completionDate) : null) : row.completionDate,
+          completionDate: dto.completionDate !== undefined ? parseFlexibleDate(dto.completionDate) : row.completionDate,
           revisedSeverity: dto.revisedSeverity !== undefined ? dto.revisedSeverity : row.revisedSeverity,
           revisedOccurrence: dto.revisedOccurrence !== undefined ? dto.revisedOccurrence : row.revisedOccurrence,
           revisedDetection: dto.revisedDetection !== undefined ? dto.revisedDetection : row.revisedDetection,
@@ -801,15 +864,15 @@ export class PfmeaRowService {
         }
 
         // 2. Risk evaluations
-        const S = dto.severity ? Number(dto.severity) : null;
-        const O = dto.occurrence ? Number(dto.occurrence) : null;
-        const D = dto.detection ? Number(dto.detection) : null;
-        const calculatedAp = (S && O && D) ? calculateAP(S, O, D) : (dto.ap || null);
+        const S = (dto.severity && !isNaN(Number(dto.severity))) ? Math.min(10, Math.max(1, Math.round(Number(dto.severity)))) : null;
+        const O = (dto.occurrence && !isNaN(Number(dto.occurrence))) ? Math.min(10, Math.max(1, Math.round(Number(dto.occurrence)))) : null;
+        const D = (dto.detection && !isNaN(Number(dto.detection))) ? Math.min(10, Math.max(1, Math.round(Number(dto.detection)))) : null;
+        const calculatedAp = (S && O && D) ? calculateAP(S, O, D) : sanitizeAp(dto.ap);
 
-        const revS = dto.revisedSeverity ? Number(dto.revisedSeverity) : null;
-        const revO = dto.revisedOccurrence ? Number(dto.revisedOccurrence) : null;
-        const revD = dto.revisedDetection ? Number(dto.revisedDetection) : null;
-        const calculatedRevAp = (revS && revO && revD) ? calculateAP(revS, revO, revD) : (dto.revisedAp || null);
+        const revS = (dto.revisedSeverity && !isNaN(Number(dto.revisedSeverity))) ? Math.min(10, Math.max(1, Math.round(Number(dto.revisedSeverity)))) : null;
+        const revO = (dto.revisedOccurrence && !isNaN(Number(dto.revisedOccurrence))) ? Math.min(10, Math.max(1, Math.round(Number(dto.revisedOccurrence)))) : null;
+        const revD = (dto.revisedDetection && !isNaN(Number(dto.revisedDetection))) ? Math.min(10, Math.max(1, Math.round(Number(dto.revisedDetection)))) : null;
+        const calculatedRevAp = (revS && revO && revD) ? calculateAP(revS, revO, revD) : sanitizeAp(dto.revisedAp);
 
         // 3. Create PfmeaRow
         const rowData = {
@@ -825,9 +888,9 @@ export class PfmeaRowService {
           preventionAction: dto.preventionAction || null,
           detectionAction: dto.detectionAction || null,
           responsibility: dto.responsibility || null,
-          targetDate: dto.targetDate ? new Date(dto.targetDate) : null,
+          targetDate: parseFlexibleDate(dto.targetDate),
           actionTaken: dto.actionTaken || null,
-          completionDate: dto.completionDate ? new Date(dto.completionDate) : null,
+          completionDate: parseFlexibleDate(dto.completionDate),
           revisedSeverity: revS,
           revisedOccurrence: revO,
           revisedDetection: revD,
