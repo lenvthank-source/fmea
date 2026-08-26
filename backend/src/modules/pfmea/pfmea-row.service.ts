@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePfmeaRowDto } from './dto/create-pfmea-row.dto';
 import { UpdatePfmeaRowDto } from './dto/update-pfmea-row.dto';
+import { ImportPfmeaRowItemDto } from './dto/import-pfmea-rows.dto';
 import { calculateAP } from './ap-calculator';
 import { RevisionGuard } from '../../common/revision-guard';
 
@@ -718,6 +719,313 @@ export class PfmeaRowService {
       return { success: true, syncedCount: processedRowIds.size };
     }, {
       timeout: 30000
+    });
+  }
+
+  async importPfmeaRowsBatch(
+    tenantId: string,
+    userId: string,
+    revisionId: string,
+    dtos: ImportPfmeaRowItemDto[],
+    mode: 'build' | 'update' = 'build',
+  ) {
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
+    const pfmeaRevision = await this.verifyRevisionAccess(tenantId, revisionId);
+    const projectId = pfmeaRevision.document.projectId;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Find or create default ProcessItem container
+      let processItem = await tx.processItem.findFirst({
+        where: { projectId, tenantId },
+      });
+      if (!processItem) {
+        processItem = await tx.processItem.create({
+          data: {
+            tenantId,
+            projectId,
+            name: 'Process Flow Items',
+            description: 'Default process flow container',
+          },
+        });
+      }
+
+      // If build new mode, delete existing rows in this revision
+      if (mode === 'build') {
+        await tx.pfmeaRow.deleteMany({ where: { revisionId } });
+      }
+
+      // Pre-fetch all process steps in this revision
+      let steps = await tx.processStep.findMany({
+        where: { revisionId },
+      });
+
+      const stepMapByNameOrNum = new Map<string, any>();
+      for (const s of steps) {
+        stepMapByNameOrNum.set(s.stepNumber.toLowerCase().trim(), s);
+        stepMapByNameOrNum.set(s.name.toLowerCase().trim(), s);
+        stepMapByNameOrNum.set(`${s.stepNumber} ${s.name}`.toLowerCase().trim(), s);
+        stepMapByNameOrNum.set(`${s.stepNumber} - ${s.name}`.toLowerCase().trim(), s);
+      }
+
+      let rowNumber = 1;
+      let nextStepSeq = steps.length + 1;
+
+      for (let i = 0; i < dtos.length; i++) {
+        const dto = dtos[i];
+
+        // 1. Resolve or create ProcessStep
+        let stepRecord: any = null;
+        const rawStepStr = (dto.processStep || '').trim();
+        if (rawStepStr) {
+          stepRecord = stepMapByNameOrNum.get(rawStepStr.toLowerCase());
+          if (!stepRecord) {
+            const match = rawStepStr.match(/^((?:OP|Step|Process|ST|Oper)?\s*#?\s*\d+[A-Za-z]?)\s*[:\-–—.]?\s*(.*)$/i);
+            const parsedNum = match && match[1] ? match[1].trim() : `OP${(steps.length + 1) * 10}`;
+            const parsedName = match && match[2] ? match[2].trim() : rawStepStr;
+
+            stepRecord = await tx.processStep.create({
+              data: {
+                revisionId,
+                processItemId: processItem.id,
+                stepNumber: parsedNum,
+                name: parsedName || rawStepStr,
+                stepType: 'operation',
+                sequenceOrder: nextStepSeq++,
+              },
+            });
+            steps.push(stepRecord);
+            stepMapByNameOrNum.set(rawStepStr.toLowerCase(), stepRecord);
+            stepMapByNameOrNum.set(stepRecord.stepNumber.toLowerCase().trim(), stepRecord);
+            stepMapByNameOrNum.set(stepRecord.name.toLowerCase().trim(), stepRecord);
+          }
+        }
+
+        // 2. Risk evaluations
+        const S = dto.severity ? Number(dto.severity) : null;
+        const O = dto.occurrence ? Number(dto.occurrence) : null;
+        const D = dto.detection ? Number(dto.detection) : null;
+        const calculatedAp = (S && O && D) ? calculateAP(S, O, D) : (dto.ap || null);
+
+        const revS = dto.revisedSeverity ? Number(dto.revisedSeverity) : null;
+        const revO = dto.revisedOccurrence ? Number(dto.revisedOccurrence) : null;
+        const revD = dto.revisedDetection ? Number(dto.revisedDetection) : null;
+        const calculatedRevAp = (revS && revO && revD) ? calculateAP(revS, revO, revD) : (dto.revisedAp || null);
+
+        // 3. Create PfmeaRow
+        const rowData = {
+          revisionId,
+          processStepId: stepRecord ? stepRecord.id : null,
+          workElementName: dto.workElementName || null,
+          rowNumber: rowNumber++,
+          severity: S,
+          occurrence: O,
+          detection: D,
+          ap: calculatedAp,
+          filterCode: dto.filterCode || null,
+          preventionAction: dto.preventionAction || null,
+          detectionAction: dto.detectionAction || null,
+          responsibility: dto.responsibility || null,
+          targetDate: dto.targetDate ? new Date(dto.targetDate) : null,
+          actionTaken: dto.actionTaken || null,
+          completionDate: dto.completionDate ? new Date(dto.completionDate) : null,
+          revisedSeverity: revS,
+          revisedOccurrence: revO,
+          revisedDetection: revD,
+          revisedAp: calculatedRevAp,
+          status: dto.status || 'Open',
+          notes: dto.notes || null,
+          createdById: userId,
+        };
+
+        const pfmeaRow = await tx.pfmeaRow.create({
+          data: rowData,
+        });
+        const rowId = pfmeaRow.id;
+
+        // 4. Link Function
+        if (dto.function && dto.function.trim()) {
+          const fnName = dto.function.trim();
+          let func = await tx.function.findFirst({
+            where: { tenantId, name: { equals: fnName, mode: 'insensitive' } },
+          });
+          if (!func) {
+            func = await tx.function.create({
+              data: { tenantId, name: fnName, isTemplate: false },
+            });
+          }
+          await tx.pfmeaRowFunction.create({
+            data: { pfmeaRowId: rowId, functionId: func.id },
+          });
+
+          // Sync structure_function if step exists
+          if (stepRecord) {
+            let sf = await tx.structureFunction.findFirst({
+              where: {
+                tenantId,
+                projectId,
+                parentType: 'process_step',
+                parentId: stepRecord.id,
+                narration: { equals: fnName, mode: 'insensitive' },
+              },
+            });
+            if (!sf) {
+              sf = await tx.structureFunction.create({
+                data: {
+                  tenantId,
+                  projectId,
+                  parentType: 'process_step',
+                  parentId: stepRecord.id,
+                  narration: fnName,
+                  location: 'your_plant',
+                },
+              });
+            }
+
+            // 5. Link Failure Mode
+            if (dto.failureMode && dto.failureMode.trim()) {
+              const fmName = dto.failureMode.trim();
+              let fm = await tx.failureMode.findFirst({
+                where: { tenantId, name: { equals: fmName, mode: 'insensitive' } },
+              });
+              if (!fm) {
+                fm = await tx.failureMode.create({
+                  data: { tenantId, name: fmName, isTemplate: false },
+                });
+              }
+              await tx.pfmeaRowFailureMode.create({
+                data: { pfmeaRowId: rowId, failureModeId: fm.id },
+              });
+
+              // Create structure failure mode under function
+              let sMode = await tx.structureFailure.findFirst({
+                where: {
+                  functionId: sf.id,
+                  role: 'mode',
+                  narration: { equals: fmName, mode: 'insensitive' },
+                },
+              });
+              if (!sMode) {
+                sMode = await tx.structureFailure.create({
+                  data: {
+                    functionId: sf.id,
+                    role: 'mode',
+                    narration: fmName,
+                  },
+                });
+              }
+
+              // 6. Link Failure Effect
+              if (dto.failureEffect && dto.failureEffect.trim()) {
+                const effName = dto.failureEffect.trim();
+                let eff = await tx.effect.findFirst({
+                  where: { tenantId, name: { equals: effName, mode: 'insensitive' } },
+                });
+                if (!eff) {
+                  eff = await tx.effect.create({
+                    data: { tenantId, name: effName, isTemplate: false },
+                  });
+                }
+                await tx.pfmeaRowEffect.create({
+                  data: { pfmeaRowId: rowId, effectId: eff.id },
+                });
+
+                // Create structure failure effect under project/system function if available
+                let sEffect = await tx.structureFailure.findFirst({
+                  where: {
+                    role: 'effect',
+                    narration: { equals: effName, mode: 'insensitive' },
+                  },
+                });
+                if (!sEffect) {
+                  sEffect = await tx.structureFailure.create({
+                    data: {
+                      functionId: sf.id,
+                      role: 'effect',
+                      narration: effName,
+                      severityRating: S,
+                    },
+                  });
+                }
+              }
+
+              // 7. Link Failure Cause & Controls
+              if (dto.failureCause && dto.failureCause.trim()) {
+                const causeName = dto.failureCause.trim();
+                let cause = await tx.cause.findFirst({
+                  where: { tenantId, name: { equals: causeName, mode: 'insensitive' } },
+                });
+                if (!cause) {
+                  cause = await tx.cause.create({
+                    data: { tenantId, name: causeName, isTemplate: false },
+                  });
+                }
+                await tx.pfmeaRowCause.create({
+                  data: { pfmeaRowId: rowId, causeId: cause.id },
+                });
+
+                // Create structure failure cause under function
+                let sCause = await tx.structureFailure.findFirst({
+                  where: {
+                    functionId: sf.id,
+                    role: 'cause',
+                    narration: { equals: causeName, mode: 'insensitive' },
+                  },
+                });
+                if (!sCause) {
+                  sCause = await tx.structureFailure.create({
+                    data: {
+                      functionId: sf.id,
+                      role: 'cause',
+                      narration: causeName,
+                      occurrenceRating: O,
+                      detectionRating: D,
+                      currentControlPrevention: dto.preventionControl || null,
+                      currentControlDetection: dto.detectionControl || null,
+                      filterCode: dto.filterCode || null,
+                    },
+                  });
+                }
+
+                // Link Prevention Control
+                if (dto.preventionControl && dto.preventionControl.trim()) {
+                  const ctrlName = dto.preventionControl.trim();
+                  let ctrl = await tx.control.findFirst({
+                    where: { tenantId, type: 'prevention', name: { equals: ctrlName, mode: 'insensitive' } },
+                  });
+                  if (!ctrl) {
+                    ctrl = await tx.control.create({
+                      data: { tenantId, type: 'prevention', name: ctrlName, isTemplate: false },
+                    });
+                  }
+                  await tx.pfmeaRowControl.create({
+                    data: { pfmeaRowId: rowId, controlId: ctrl.id },
+                  });
+                }
+
+                // Link Detection Control
+                if (dto.detectionControl && dto.detectionControl.trim()) {
+                  const ctrlName = dto.detectionControl.trim();
+                  let ctrl = await tx.control.findFirst({
+                    where: { tenantId, type: 'detection', name: { equals: ctrlName, mode: 'insensitive' } },
+                  });
+                  if (!ctrl) {
+                    ctrl = await tx.control.create({
+                      data: { tenantId, type: 'detection', name: ctrlName, isTemplate: false },
+                    });
+                  }
+                  await tx.pfmeaRowControl.create({
+                    data: { pfmeaRowId: rowId, controlId: ctrl.id },
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return { success: true, count: dtos.length };
+    }, {
+      timeout: 60000,
     });
   }
 

@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
   DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
-  Grid, TablePagination
+  Grid, TablePagination, Slider
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
   Close as CloseIcon,
+  CloudUpload as UploadIcon,
+  ChevronLeft as LeftIcon,
+  ChevronRight as RightIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -21,6 +24,7 @@ import { MultiAddWorkElementDialog } from './components/MultiAddWorkElementDialo
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { FailureLinkageModal } from './components/FailureLinkageModal';
 import { FailureDetailWindow } from './components/FailureDetailWindow';
+import { PfmeaExcelImportWizard } from './components/PfmeaExcelImportWizard';
 
 
 import { useResponsive } from '../../hooks/useResponsive';
@@ -114,6 +118,56 @@ export const PfmeaWorkspace: React.FC = () => {
   // Tree Element Add Dialog states
   const [treeAddTargetStepId, setTreeAddTargetStepId] = useState<string | null>(null);
   const [multiAddWeDialogOpen, setMultiAddWeDialogOpen] = useState(false);
+
+  // PFMEA Excel Import Wizard state
+  const [pfmeaImportOpen, setPfmeaImportOpen] = useState(false);
+
+  // Floating horizontal scrollbar controller states
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    if (!tableContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    if (maxScroll > 0) {
+      setScrollProgress(Math.round((scrollLeft / maxScroll) * 100));
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < maxScroll - 5);
+    } else {
+      setScrollProgress(0);
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [rows, activeTab, updateScrollState]);
+
+  const handleScrollBy = (amount: number) => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollToPercent = (pct: number) => {
+    if (tableContainerRef.current) {
+      const { scrollWidth, clientWidth } = tableContainerRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      tableContainerRef.current.scrollTo({ left: (pct / 100) * maxScroll, behavior: 'smooth' });
+    }
+  };
 
   // Exporter Dialog state
   const [exporterOpen, setExporterOpen] = useState(false);
@@ -1341,6 +1395,15 @@ export const PfmeaWorkspace: React.FC = () => {
         </Tabs>
         
         <Stack direction="row" spacing={1.5} sx={{ mt: isMobile ? 1.5 : 0 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<UploadIcon />}
+            onClick={() => setPfmeaImportOpen(true)}
+            sx={{ fontWeight: 700, textTransform: 'none' }}
+          >
+            Import PFMEA
+          </Button>
           <Button variant="outlined" color="primary" onClick={() => setExporterOpen(true)}>
             Export FMEA
           </Button>
@@ -1406,7 +1469,11 @@ export const PfmeaWorkspace: React.FC = () => {
         );
       })() : activeTab === 'table' ? (
         <>
-        <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
+        <TableContainer
+          ref={tableContainerRef}
+          component={Paper}
+          sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none', position: 'relative' }}
+        >
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
               <TableRow>
@@ -1696,6 +1763,124 @@ export const PfmeaWorkspace: React.FC = () => {
           onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
           rowsPerPageOptions={[10,25,50]}
         />
+
+        {/* Floating Sleek Horizontal Scroll Controller */}
+        {(canScrollLeft || canScrollRight) && (
+          <Box
+            sx={{
+              position: 'sticky',
+              bottom: 16,
+              zIndex: 20,
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              mt: -6,
+              mb: 1,
+            }}
+          >
+            <Paper
+              elevation={4}
+              sx={{
+                pointerEvents: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 2,
+                py: 0.75,
+                borderRadius: '9999px',
+                background: 'rgba(255, 255, 255, 0.88)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(203, 213, 225, 0.85)',
+                boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  background: 'rgba(255, 255, 255, 0.96)',
+                  boxShadow: '0 15px 30px -5px rgba(15, 23, 42, 0.2)',
+                },
+              }}
+            >
+              <Tooltip title="Scroll Left">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleScrollBy(-350)}
+                    disabled={!canScrollLeft}
+                    sx={{
+                      bgcolor: canScrollLeft ? '#F1F5F9' : 'transparent',
+                      '&:hover': { bgcolor: '#E2E8F0' },
+                    }}
+                  >
+                    <LeftIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 180 }}>
+                <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
+                  Pan Grid
+                </Typography>
+                <Slider
+                  size="small"
+                  value={scrollProgress}
+                  onChange={(_, val) => handleScrollToPercent(val as number)}
+                  aria-label="Horizontal scroll position"
+                  sx={{
+                    color: 'primary.main',
+                    height: 4,
+                    '& .MuiSlider-thumb': {
+                      width: 12,
+                      height: 12,
+                      transition: '0.2s',
+                      '&:before': { boxShadow: '0 2px 8px rgba(0,0,0,0.16)' },
+                    },
+                  }}
+                />
+                <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', minWidth: 32, textAlign: 'right' }}>
+                  {scrollProgress}%
+                </Typography>
+              </Box>
+
+              <Tooltip title="Scroll Right">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleScrollBy(350)}
+                    disabled={!canScrollRight}
+                    sx={{
+                      bgcolor: canScrollRight ? '#F1F5F9' : 'transparent',
+                      '&:hover': { bgcolor: '#E2E8F0' },
+                    }}
+                  >
+                    <RightIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              {/* Quick Jump Anchors */}
+              <Stack direction="row" spacing={0.5} sx={{ borderLeft: '1px solid #E2E8F0', pl: 1 }}>
+                <Chip
+                  label="Steps"
+                  size="small"
+                  onClick={() => handleScrollToPercent(0)}
+                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress < 25 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress < 25 ? '#1D4ED8' : '#64748B' }}
+                />
+                <Chip
+                  label="SOD Risk"
+                  size="small"
+                  onClick={() => handleScrollToPercent(35)}
+                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 25 && scrollProgress < 65 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress >= 25 && scrollProgress < 65 ? '#1D4ED8' : '#64748B' }}
+                />
+                <Chip
+                  label="Actions"
+                  size="small"
+                  onClick={() => handleScrollToPercent(80)}
+                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 65 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress >= 65 ? '#1D4ED8' : '#64748B' }}
+                />
+              </Stack>
+            </Paper>
+          </Box>
+        )}
         </>
       ) : (
         /* Func/Fail Chains View */
@@ -2109,6 +2294,19 @@ export const PfmeaWorkspace: React.FC = () => {
           initialFilterCode={structFailInitialFilterCode}
         />
       )}
+      {token && pfmeaRevisionId && (
+        <PfmeaExcelImportWizard
+          open={pfmeaImportOpen}
+          onClose={() => setPfmeaImportOpen(false)}
+          revisionId={pfmeaRevisionId}
+          token={token}
+          onImportSuccess={() => {
+            fetchData();
+            showToast('PFMEA imported successfully!', 'success');
+          }}
+        />
+      )}
+
       {confirmState && (
         <ConfirmDialog open={confirmState.open} onClose={() => setConfirmState(null)} onConfirm={confirmState.onConfirm} title={confirmState.title} message={confirmState.message} detail={confirmState.detail} severity="warning" />
       )}

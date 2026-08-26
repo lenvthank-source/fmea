@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, Defa
 import { PfmeaRowService } from './pfmea-row.service';
 import { CreatePfmeaRowDto } from './dto/create-pfmea-row.dto';
 import { UpdatePfmeaRowDto } from './dto/update-pfmea-row.dto';
+import { ImportPfmeaPayloadDto } from './dto/import-pfmea-rows.dto';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
@@ -28,6 +29,22 @@ export class PfmeaRowController {
     @Body() dto: CreatePfmeaRowDto,
   ) {
     return this.pfmeaRowService.createRow(req.user.tenantId, req.user.sub, revisionId, dto);
+  }
+
+  @Post('revisions/:id/pfmea-rows/batch-import')
+  @Permissions('pfmea.edit')
+  async batchImportRows(
+    @Request() req: RequestWithUser,
+    @Param('id') revisionId: string,
+    @Body() dto: ImportPfmeaPayloadDto,
+  ) {
+    return this.pfmeaRowService.importPfmeaRowsBatch(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+      dto.rows,
+      dto.mode || 'build',
+    );
   }
 
   @Patch('pfmea-rows/:rowId')

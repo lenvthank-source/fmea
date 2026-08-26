@@ -2,8 +2,8 @@ import { IsIn, IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validato
 
 export class CreateStepDto {
   @IsString()
-  @IsNotEmpty()
-  stepNumber: string;
+  @IsOptional()
+  stepNumber?: string;
 
   @IsString()
   name: string;

@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.3.3.md` — AIAG-VDA 2019 22-column PFMEA Excel Import Wizard, PFD stepNumber fix & multi-format parsing, Add Failure Cause field interchange, dropdown menu downward anchor & scroll, wizard >85% table viewport optimization, PFMEA floating horizontal scrollbar
 - `v0.3.2.md` — PFD Detached domain terminology, minimalist close-to-click warning dialog, PFD wizard polish, linkage 3px dividers, dynamic Report status, upward modal shift & downward dropdown anchoring
 - `v0.3.1.md` — PFD Excel import .xls universal SheetJS parser, Failure Linkage 3-column flow + bezier curves, 2px slate visual divider, button double '+' cleanup, fluid glassmorphic styling
 - `v0.3.0.md` — Session persistence+72h sliding, PFD Import wiring, Linkage blink rAF fix, delete ConfirmDialog everywhere (multi-value/unlink), revision guards+timestamps, `.agents` restructure (data-model/api-contracts/permissions/deployment/versioning) + AGENTS.md §6 (no CLAUDE/GEMINI/.cursor)

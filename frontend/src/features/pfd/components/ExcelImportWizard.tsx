@@ -34,7 +34,6 @@ import {
   Upload as UploadIcon,
   Download as DownloadIcon,
   AutoAwesome as AutoMapIcon,
-  Visibility as PreviewIcon,
   Save as SaveIcon,
   Info as InfoIcon,
   ArrowForward as ArrowForwardIcon,
@@ -45,6 +44,7 @@ import {
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
 import { getPfdIconMeta } from '../utils/pfdIconMap';
+import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
 
 interface ProcessStep {
   id: string;
@@ -60,6 +60,8 @@ interface ProcessStep {
 }
 
 type PfdFieldKey = 
+  | 'stepNumber'
+  | 'stepName'
   | 'stepNumberName' 
   | 'incomingVariation' 
   | 'specialCharacteristics' 
@@ -105,7 +107,9 @@ interface DiffResult {
 }
 
 const FIELD_OPTIONS: { value: PfdFieldKey | 'ignore'; label: string }[] = [
-  { value: 'stepNumberName', label: 'Step # & Name (split)' },
+  { value: 'stepNumberName', label: 'Step # & Name (combined split)' },
+  { value: 'stepNumber', label: 'Step # / OP #' },
+  { value: 'stepName', label: 'Process Description / Name' },
   { value: 'incomingVariation', label: 'Incoming Source of Variation' },
   { value: 'specialCharacteristics', label: 'Special Char. Class' },
   { value: 'flowIcon:trans', label: 'Flow: TRANS. (⇨)' },
@@ -124,11 +128,20 @@ const FIELD_OPTIONS: { value: PfdFieldKey | 'ignore'; label: string }[] = [
 ];
 
 const EXACT_HEADER_SYNONYMS: Record<PfdFieldKey, string[]> = {
+  stepNumber: [
+    'step #', 'step no', 'step number', 'op #', 'op no', 'operation #', 'operation no', 'operation number', 'process #', 'process no', 'op'
+  ],
+  stepName: [
+    'process description', 'process name', 'operation description', 'operation name', 'step description', 'step name', 'process'
+  ],
   stepNumberName: [
     'process # & description',
     'process # and description',
     'process #&description',
     'process no & description',
+    'process description / operation',
+    'op # & description',
+    'op # and description',
   ],
   incomingVariation: [
     'incoming source of variation',
@@ -196,11 +209,36 @@ function autoMapHeader(header: string): { target: PfdFieldKey | 'ignore'; confid
 }
 
 function parseStepNumberAndName(cell: string): { stepNumber: string; name: string } {
-  const trimmed = cell.trim();
-  const match = trimmed.match(/^(\w+\d+)\s+(.+)$/);
-  if (match) {
-    return { stepNumber: match[1], name: match[2] };
+  const trimmed = (cell || '').trim();
+  if (!trimmed) return { stepNumber: '', name: '' };
+
+  // Case 1: "OP # 01 ...", "OP# 10A ...", "OP 20 ...", "Step 10: ...", "Process 05 ..."
+  const opMatch = trimmed.match(/^((?:OP|Step|Process|ST|Oper|Operation)\s*#?\s*\d+[A-Za-z]?)\s*[:\-–—.)]?\s*(.*)$/i);
+  if (opMatch) {
+    return {
+      stepNumber: opMatch[1].trim(),
+      name: opMatch[2].trim() || opMatch[1].trim(),
+    };
   }
+
+  // Case 2: Numeric prefixes like "10 - ...", "10. ...", "10) ...", "01 ..."
+  const numMatch = trimmed.match(/^(\d+(?:\.\d+)?[A-Za-z]?)\s*[:\-–—.)]\s*(.+)$/);
+  if (numMatch) {
+    return {
+      stepNumber: numMatch[1].trim(),
+      name: numMatch[2].trim(),
+    };
+  }
+
+  // Case 3: Code prefix with hyphen/underscore like "OP-10 Cutting", "ST_01 Inward"
+  const codeMatch = trimmed.match(/^([A-Za-z0-9_\-#]+)\s*[:\-–—]\s*(.+)$/);
+  if (codeMatch) {
+    return {
+      stepNumber: codeMatch[1].trim(),
+      name: codeMatch[2].trim(),
+    };
+  }
+
   return { stepNumber: '', name: trimmed };
 }
 
@@ -214,6 +252,10 @@ function splitMultiline(str: string): string[] {
 
 function getFieldValue(step: DraftStep, field: PfdFieldKey): string {
   switch (field) {
+    case 'stepNumber':
+      return step.stepNumber;
+    case 'stepName':
+      return step.name;
     case 'stepNumberName':
       return `${step.stepNumber} ${step.name}`.trim();
     case 'incomingVariation':
@@ -437,9 +479,24 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     if (!parsedData) return;
     const { headers, rows } = parsedData;
     const steps: DraftStep[] = rows.map((row) => {
+      let stepNumber = '';
+      let name = '';
+
       const stepNumberNameHeader = headers.find((h) => columnMapping[h] === 'stepNumberName');
-      const stepNumberNameCell = stepNumberNameHeader ? row[stepNumberNameHeader] || '' : '';
-      const { stepNumber, name } = parseStepNumberAndName(stepNumberNameCell);
+      const stepNumHeader = headers.find((h) => columnMapping[h] === 'stepNumber');
+      const stepNameHeader = headers.find((h) => columnMapping[h] === 'stepName');
+
+      if (stepNumberNameHeader && row[stepNumberNameHeader]) {
+        const parsed = parseStepNumberAndName(row[stepNumberNameHeader]);
+        stepNumber = parsed.stepNumber;
+        name = parsed.name;
+      }
+      if (stepNumHeader && row[stepNumHeader]) {
+        stepNumber = row[stepNumHeader].trim();
+      }
+      if (stepNameHeader && row[stepNameHeader]) {
+        name = row[stepNameHeader].trim();
+      }
 
       const step: DraftStep = {
         include: true,
@@ -462,6 +519,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         const val = row[h] || '';
         if (!val) continue;
         switch (target) {
+          case 'stepNumber':
+          case 'stepName':
           case 'stepNumberName':
             // already handled
             break;
@@ -490,6 +549,19 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       }
       return step;
     });
+
+    // Ensure every step has a valid non-empty stepNumber & name
+    let nextAutoStep = 10;
+    steps.forEach((s) => {
+      if (!s.stepNumber || !s.stepNumber.trim()) {
+        s.stepNumber = `OP${nextAutoStep < 100 ? nextAutoStep : nextAutoStep}`;
+        nextAutoStep += 10;
+      }
+      if (!s.name || !s.name.trim()) {
+        s.name = `Process Step ${s.stepNumber}`;
+      }
+    });
+
     setDraftSteps(steps);
     // Select all by default
     const allSelected = new Set(steps.map((_, i) => i));
@@ -636,17 +708,21 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     try {
       if (mode === 'build') {
         // Batch create
-        const batchDtos = toImport.map((s) => ({
-          stepNumber: s.stepNumber,
-          name: s.name,
-          stepType: 'operation',
-          incomingVariation: s.incomingVariation ? splitMultiline(s.incomingVariation) : [],
-          specialCharacteristics: s.specialCharacteristics || null,
-          flowIcons: s.flowIcons,
-          machinesEquipmentDocs: s.machinesEquipmentDocs ? splitMultiline(s.machinesEquipmentDocs) : [],
-          desiredOutcome: s.desiredOutcome || null,
-          processCharacteristics: s.processCharacteristics || null,
-        }));
+        const batchDtos = toImport.map((s, i) => {
+          const stepNum = s.stepNumber?.trim() || `OP${(i + 1) * 10}`;
+          const stepName = s.name?.trim() || `Process Step ${stepNum}`;
+          return {
+            stepNumber: stepNum,
+            name: stepName,
+            stepType: 'operation',
+            incomingVariation: s.incomingVariation ? splitMultiline(s.incomingVariation) : [],
+            specialCharacteristics: s.specialCharacteristics || null,
+            flowIcons: s.flowIcons,
+            machinesEquipmentDocs: s.machinesEquipmentDocs ? splitMultiline(s.machinesEquipmentDocs) : [],
+            desiredOutcome: s.desiredOutcome || null,
+            processCharacteristics: s.processCharacteristics || null,
+          };
+        });
 
         setImportProgress({ current: 0, total: batchDtos.length, status: 'Creating steps...' });
         const res = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps/batch`, {
@@ -670,10 +746,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         setImportProgress({ current: 0, total: newSteps.length + updateSteps.length, status: 'Creating new steps...' });
         for (let i = 0; i < newSteps.length; i++) {
           const s = newSteps[i].draftStep!;
-          setImportProgress({ current: i + 1, total: newSteps.length + updateSteps.length, status: `Creating step ${s.stepNumber || s.name}...` });
+          const stepNum = s.stepNumber?.trim() || `OP${(i + 1) * 10}`;
+          const stepName = s.name?.trim() || `Process Step ${stepNum}`;
+          setImportProgress({ current: i + 1, total: newSteps.length + updateSteps.length, status: `Creating step ${stepNum}...` });
           const dto = {
-            stepNumber: s.stepNumber,
-            name: s.name,
+            stepNumber: stepNum,
+            name: stepName,
             stepType: 'operation',
             incomingVariation: s.incomingVariation ? splitMultiline(s.incomingVariation) : [],
             specialCharacteristics: s.specialCharacteristics || null,
@@ -689,16 +767,18 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           });
           if (!res.ok) {
             const err = await res.json();
-            throw new Error(`Failed to create ${s.stepNumber || s.name}: ${err.message}`);
+            throw new Error(`Failed to create ${stepNum}: ${err.message}`);
           }
         }
 
         for (let i = 0; i < updateSteps.length; i++) {
           const s = updateSteps[i];
-          setImportProgress({ current: newSteps.length + i + 1, total: newSteps.length + updateSteps.length, status: `Updating step ${s.existingStep?.stepNumber}...` });
+          const stepNum = s.draftStep!.stepNumber?.trim() || s.existingStep?.stepNumber || `OP${(i + 1) * 10}`;
+          const stepName = s.draftStep!.name?.trim() || s.existingStep?.name || `Process Step ${stepNum}`;
+          setImportProgress({ current: newSteps.length + i + 1, total: newSteps.length + updateSteps.length, status: `Updating step ${stepNum}...` });
           const dto = {
-            stepNumber: s.draftStep!.stepNumber,
-            name: s.draftStep!.name,
+            stepNumber: stepNum,
+            name: stepName,
             stepType: 'operation',
             incomingVariation: s.draftStep!.incomingVariation ? splitMultiline(s.draftStep!.incomingVariation) : [],
             specialCharacteristics: s.draftStep!.specialCharacteristics || null,
@@ -714,7 +794,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           });
           if (!res.ok) {
             const err = await res.json();
-            throw new Error(`Failed to update ${s.existingStep?.stepNumber}: ${err.message}`);
+            throw new Error(`Failed to update ${stepNum}: ${err.message}`);
           }
         }
       }
@@ -868,41 +948,38 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     ),
     // Step 2: Map Columns
     (
-      <Stack spacing={3} sx={{ mt: 2, maxHeight: 600, overflow: 'auto' }}>
-        <Alert severity="info" sx={{ mb: 1 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <InfoIcon fontSize="small" />
-            <Typography variant="body2">
-              Map Excel columns to PFD fields. Auto-mapped columns show <Chip label="auto" size="small" color="success" variant="outlined" />.
-              Use dropdown to correct any mismatches.
-            </Typography>
-          </Stack>
-        </Alert>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 500 }}>
+            Map Excel columns to PFD fields. Auto-mapped columns are verified.
+          </Typography>
+        </Box>
         {parsedData && (
-          <TableContainer component={Paper} sx={{ maxHeight: 450, overflow: 'auto' }}>
-            <Table size="small">
+          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+            <Table size="small" stickyHeader>
               <TableHead>
-                <TableRow>
-                  <TableCell style={{ minWidth: 300, fontWeight: 'bold' }}>Excel Column (Detected)</TableCell>
-                  <TableCell style={{ minWidth: 250, fontWeight: 'bold' }}>Map To</TableCell>
-                  <TableCell style={{ width: 80, fontWeight: 'bold', textAlign: 'center' }}>Status</TableCell>
+                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
+                  <TableCell sx={{ minWidth: 300, fontWeight: 700, bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Excel Column (Detected)</TableCell>
+                  <TableCell sx={{ minWidth: 250, fontWeight: 700, bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Map To</TableCell>
+                  <TableCell sx={{ width: 90, fontWeight: 700, bgcolor: '#F1F5F9', textAlign: 'center' }}>Status</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {parsedData.headers.map((header) => {
                   const { confidence } = autoMapHeader(header);
                   return (
-                    <TableRow key={header} sx={{ '&:last-child td': { border: 0 } }}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>{header}</Typography>
-                        <Typography variant="caption" color="text.secondary">{parsedData!.rows[0]?.[header] || '—'}</Typography>
+                    <TableRow key={header} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A' }}>{header}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>Sample: {parsedData!.rows[0]?.[header] || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <FormControl size="small" fullWidth sx={{ minWidth: 220 }}>
                           <Select
                             value={columnMapping[header] || 'ignore'}
                             onChange={(e) => handleMappingChange(header, e.target.value as PfdFieldKey | 'ignore')}
                             label="Map To"
+                            MenuProps={{ ...dialogSelectMenuProps, autoFocus: false, disableAutoFocusItem: true }}
                           >
                             {FIELD_OPTIONS.map((opt) => (
                               <MenuItem key={opt.value} value={opt.value}>
@@ -912,13 +989,14 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                           </Select>
                         </FormControl>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ borderBottom: '1px solid #E2E8F0' }}>
                         <Chip
                           label={confidence === 'auto' ? 'Auto' : 'Manual'}
                           size="small"
                           color={confidence === 'auto' ? 'success' : 'default'}
                           variant="outlined"
                           icon={confidence === 'auto' ? <AutoMapIcon fontSize="small" /> : <EditIcon fontSize="small" />}
+                          sx={{ fontWeight: 700 }}
                         />
                       </TableCell>
                     </TableRow>
@@ -928,62 +1006,53 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             </Table>
           </TableContainer>
         )}
-      </Stack>
+      </Box>
     ),
     // Step 3: Select Rows
     (
-      <Stack spacing={3} sx={{ mt: 2 }}>
-        {error && <Alert severity="error">{error}</Alert>}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Select rows to import ({selectedRows.size} of {draftSteps.length} selected)
-          </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        {error && <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>{error}</Alert>}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+            <RadioGroup value={mode} onChange={(e) => handleModeChange(e.target.value as 'build' | 'update')} row>
+              <FCL value="build" control={<Radio size="small" />} label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Build New PFD</Typography>} />
+              <FCL value="update" control={<Radio size="small" />} label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Update Existing PFD (Diff)</Typography>} disabled={!revisionId} />
+            </RadioGroup>
+            <Chip label={`${selectedRows.size} of ${draftSteps.length} rows selected`} size="small" sx={{ fontWeight: 700, bgcolor: '#EFF6FF', color: '#1D4ED8' }} />
+          </Stack>
           <Button
             variant="outlined"
             size="small"
             onClick={toggleSelectAll}
             startIcon={selectedRows.size === getVisibleSteps().length ? <RemoveIcon /> : <AddIcon />}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             {selectedRows.size === getVisibleSteps().length ? 'Deselect All' : 'Select All Visible'}
           </Button>
         </Box>
-        <RadioGroup value={mode} onChange={(e) => handleModeChange(e.target.value as 'build' | 'update')} row sx={{ mb: 1 }}>
-          <FCL value="build" control={<Radio />} label="Build New PFD" labelPlacement="end" />
-          <FCL value="update" control={<Radio />} label="Update Existing PFD (Diff)" labelPlacement="end" disabled={!revisionId} />
-        </RadioGroup>
         {mode === 'update' && !revisionId && (
-          <Alert severity="warning">No PFD revision available. Switch to Build New mode.</Alert>
+          <Alert severity="warning" sx={{ mb: 1, py: 0.5 }}>No PFD revision available. Switch to Build New mode.</Alert>
         )}
-        <Alert severity="info" sx={{ mb: 1 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <PreviewIcon fontSize="small" />
-            <Typography variant="body2">
-              {mode === 'build' 
-                ? 'All selected rows will create new PFD steps.' 
-                : 'Selected rows will be compared against existing PFD. New steps created, updates applied per row.'}
-            </Typography>
-          </Stack>
-        </Alert>
         {draftSteps.length > 0 && (
-          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
-            <Table size="small">
+          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>
+                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>
                     <Checkbox
                       checked={getVisibleSteps().length > 0 && getVisibleSteps().every((_, idx) => selectedRows.has(idx + page * rowsPerPage))}
                       indeterminate={selectedRows.size > 0 && selectedRows.size < getVisibleSteps().length}
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Step #</TableCell>
-                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Process Description</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Incoming Variation</TableCell>
-                  <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Spec. Class</TableCell>
-                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Flow Symbols</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Machines/Equipment/Docs</TableCell>
-                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Desired Outcome</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1' }}>Process Characteristics</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Step #</TableCell>
+                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Description</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Incoming Variation</TableCell>
+                  <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Spec. Class</TableCell>
+                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Flow Symbols</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Machines/Equipment/Docs</TableCell>
+                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Desired Outcome</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Characteristics</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1048,28 +1117,24 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
           rowsPerPageOptions={[25, 50, 100]}
+          sx={{ borderTop: '1px solid #E2E8F0', minHeight: 40 }}
         />
-      </Stack>
+      </Box>
     ),
     // Step 4: Diff Preview (update) or Confirm (build)
     mode === 'build' ? (
-      <Stack spacing={3} sx={{ mt: 2 }}>
-        <Alert severity="info">
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <InfoIcon fontSize="small" />
-            <Typography variant="body2">
-              {draftSteps.filter((_, i) => selectedRows.has(i)).length} new steps will be created.
-            </Typography>
-          </Stack>
-        </Alert>
-        <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
-          <Table size="small">
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Chip label={`${draftSteps.filter((_, i) => selectedRows.has(i)).length} new steps will be created`} color="primary" sx={{ fontWeight: 700 }} />
+        </Box>
+        <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+          <Table size="small" stickyHeader>
             <TableHead>
-              <TableRow>
-                <TableCell style={{ fontWeight: 'bold' }}>Step #</TableCell>
-                <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
-                <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
-                <TableCell style={{ minWidth: 130, fontWeight: 'bold', textAlign: 'center' }}>Flow Symbols</TableCell>
+              <TableRow sx={{ bgcolor: '#F1F5F9' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Step #</TableCell>
+                <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Process Description</TableCell>
+                <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Spec. Class</TableCell>
+                <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', textAlign: 'center' }}>Flow Symbols</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1077,52 +1142,60 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                 .filter((_, i) => selectedRows.has(i))
                 .map((step) => (
                   <TableRow key={step.stepNumber || step.name}>
-                    <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{step.stepNumber || 'Auto'}</Typography></TableCell>
-                    <TableCell><Typography variant="body2">{step.name}</Typography></TableCell>
-                    <TableCell><Typography variant="body2">{step.specialCharacteristics || '—'}</Typography></TableCell>
-                    <TableCell align="center">
+                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{step.stepNumber || 'Auto'}</Typography></TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{step.name}</Typography></TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{step.specialCharacteristics || '—'}</Typography></TableCell>
+                    <TableCell align="center" sx={{ borderBottom: '1px solid #E2E8F0' }}>
                       {Object.entries(step.flowIcons).filter(([, v]) => v).map(([k]) => {
                         const m = getPfdIconMeta(k);
-                        return <span key={k} style={{ marginRight: 4 }}>{m.sym} {m.short}</span>;
+                        return <span key={k} style={{ marginRight: 4, fontFamily: 'monospace', fontWeight: 600 }}>{m.sym} {m.short}</span>;
                       })}
                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Stack>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     ) : (
-      <Stack spacing={3} sx={{ mt: 2 }}>
-        {error && <Alert severity="error">{error}</Alert>}
-        {diffResults.length === 0 && (
-          <Alert severity="info">No existing PFD steps to compare against.</Alert>
-        )}
-        <Box sx={{ display: 'flex', gap: 2, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Diff Summary:</Typography>
-          <Chip label={`New: ${diffResults.filter((d) => d.status === 'new').length}`} color="success" size="small" variant="outlined" />
-          <Chip label={`Update: ${diffResults.filter((d) => d.status === 'update').length}`} color="warning" size="small" variant="outlined" />
-          <Chip label={`Unchanged: ${diffResults.filter((d) => d.status === 'unchanged').length}`} color="default" size="small" variant="outlined" />
-          <Chip label={`Missing: ${diffResults.filter((d) => d.status === 'missing').length}`} color="error" size="small" variant="outlined" />
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        {error && <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>{error}</Alert>}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>Diff Summary:</Typography>
+            <Chip label={`New: ${diffResults.filter((d) => d.status === 'new').length}`} color="success" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+            <Chip label={`Update: ${diffResults.filter((d) => d.status === 'update').length}`} color="warning" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+            <Chip label={`Unchanged: ${diffResults.filter((d) => d.status === 'unchanged').length}`} color="default" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+            <Chip label={`Missing: ${diffResults.filter((d) => d.status === 'missing').length}`} color="error" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+          </Stack>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={toggleSelectAll}
+            startIcon={selectedRows.size === diffResults.filter((d) => d.status !== 'missing').length ? <RemoveIcon /> : <AddIcon />}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            {selectedRows.size === diffResults.filter((d) => d.status !== 'missing').length ? 'Deselect All' : 'Select All'}
+          </Button>
         </Box>
         {diffResults.length > 0 && (
-          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 500, overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
-            <Table size="small">
+          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>
+                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>
                     <Checkbox
                       checked={diffResults.length > 0 && diffResults.every((d, i) => d.status !== 'missing' && selectedRows.has(i))}
                       indeterminate={selectedRows.size > 0 && selectedRows.size < diffResults.filter((d) => d.status !== 'missing').length}
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Status</TableCell>
-                  <TableCell sx={{ minWidth: 80, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Step #</TableCell>
-                  <TableCell sx={{ minWidth: 220, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Process Description</TableCell>
-                  <TableCell sx={{ minWidth: 110, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Spec. Class</TableCell>
-                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Flow Symbols</TableCell>
-                  <TableCell sx={{ minWidth: 260, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1' }}>Changes</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Status</TableCell>
+                  <TableCell sx={{ minWidth: 80, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Step #</TableCell>
+                  <TableCell sx={{ minWidth: 220, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Description</TableCell>
+                  <TableCell sx={{ minWidth: 110, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Spec. Class</TableCell>
+                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Flow Symbols</TableCell>
+                  <TableCell sx={{ minWidth: 260, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Changes</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1158,15 +1231,23 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                         <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
                       </TableCell>
                       <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        {result.status === 'new' && <Chip label="New" color="success" size="small" sx={{ fontWeight: 700 }} />}
-                        {result.status === 'update' && <Chip label="Update" color="warning" size="small" sx={{ fontWeight: 700 }} />}
-                        {result.status === 'unchanged' && <Chip label="Unchanged" color="default" size="small" variant="outlined" sx={{ fontWeight: 600 }} />}
+                        <Chip
+                          label={result.status === 'new' ? 'New' : result.status === 'update' ? 'Update' : 'Unchanged'}
+                          color={result.status === 'new' ? 'success' : result.status === 'update' ? 'warning' : 'default'}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontWeight: 700 }}
+                        />
                       </TableCell>
                       <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{draft.stepNumber || 'Auto'}</Typography>
                       </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ color: '#1E293B' }}>{draft.name}</Typography></TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{draft.specialCharacteristics || '—'}</Typography></TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2">{draft.name || '—'}</Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2">{draft.specialCharacteristics || '—'}</Typography>
+                      </TableCell>
                       <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{symbolsText}</Typography></TableCell>
                       <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}>
                         {result.fieldDiffs && result.fieldDiffs.length > 0 && (
@@ -1215,15 +1296,16 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
           rowsPerPageOptions={[25, 50, 100]}
+          sx={{ borderTop: '1px solid #E2E8F0', minHeight: 40 }}
         />
-      </Stack>
+      </Box>
     ),
     // Step 5: Import
     (
-      <Stack spacing={3} sx={{ mt: 2, alignItems: 'center' }}>
+      <Stack spacing={3} sx={{ mt: 4, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <CircularProgress size={80} variant="determinate" value={importing ? (importProgress.current / importProgress.total) * 100 : 0} thickness={6} />
-        <Typography variant="h6" sx={{ mt: 2, textAlign: 'center' }}>
+        <Typography variant="h6" sx={{ mt: 2, textAlign: 'center', fontWeight: 700 }}>
           {importing ? `Importing... ${importProgress.current} / ${importProgress.total}` : 'Ready to Import'}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
@@ -1238,6 +1320,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               startIcon={<SaveIcon />}
               onClick={handleImport}
               disabled={selectedRows.size === 0 || importing}
+              sx={{ fontWeight: 700, px: 4 }}
             >
               {mode === 'build' ? 'Create Steps' : 'Apply Changes'}
             </Button>
@@ -1254,12 +1337,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       onClose={handleClose}
       maxWidth={false}
       fullWidth
-      sx={{ '& .MuiDialog-paper': { width: '95vw', maxWidth: '1400px', maxHeight: '95vh', overflow: 'hidden' } }}
+      sx={{ '& .MuiDialog-paper': { width: '96vw', maxWidth: '1600px', height: '92vh', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' } }}
     >
-      <DialogTitle sx={{ fontWeight: 'bold', px: 3, pt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle sx={{ fontWeight: 'bold', px: 3, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <UploadIcon sx={{ color: 'primary.main', fontSize: '1.5rem' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.3rem' }}>
+          <UploadIcon sx={{ color: 'primary.main', fontSize: '1.4rem' }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem' }}>
             Import PFD from Excel
           </Typography>
         </Stack>
@@ -1267,16 +1350,18 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           <Chip label={mode === 'build' ? 'Build New' : 'Update Existing'} color="primary" size="small" variant="outlined" sx={{ fontWeight: 700, bgcolor: '#FFFFFF' }} />
         )}
       </DialogTitle>
-      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F8FAFC' }}>
-        {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}
-        <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
+      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', bgcolor: '#F8FAFC' }}>
+        {error && <Alert severity="error" sx={{ m: 1.5, py: 0.5 }}>{error}</Alert>}
+        <Box sx={{ px: 3, pt: 1.5, pb: 1, borderBottom: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 0 }}>
             {stepLabels.map((label, idx) => (
               <Step key={idx} completed={idx < activeStep}>
-                <StepLabel>{label}</StepLabel>
+                <StepLabel sx={{ '& .MuiStepLabel-label': { fontSize: '0.8rem', mt: 0.25 } }}>{label}</StepLabel>
               </Step>
             ))}
           </Stepper>
+        </Box>
+        <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {stepContents[activeStep]}
         </Box>
       </DialogContent>
@@ -1298,6 +1383,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             size="large"
             startIcon={<SaveIcon />}
             onClick={handleImport}
+            sx={{ fontWeight: 700 }}
           >
             {mode === 'build' ? 'Create Steps' : 'Apply Changes'}
           </Button>

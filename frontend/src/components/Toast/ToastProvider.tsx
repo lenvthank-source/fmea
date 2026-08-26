@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Snackbar, Alert } from '@mui/material';
 
-type ToastSeverity = 'error' | 'warning' | 'info';
+type ToastSeverity = 'error' | 'warning' | 'info' | 'success';
 
 interface ToastContextType {
   showToast: (message: string, severity?: ToastSeverity) => void;
   showError: (message: string) => void;
   showWarning: (message: string) => void;
+  showSuccess?: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | null>(null);

@@ -394,21 +394,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                   Risk Ratings & Controls (Cause Level)
                 </Typography>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                  <RatingDropdown
-                    label="Occurrence (O) Rating"
-                    ratingType="occurrence"
-                    value={occurrenceRating}
-                    onChange={setOccurrenceRating}
-                  />
-                  <RatingDropdown
-                    label="Detection (D) Rating"
-                    ratingType="detection"
-                    value={detectionRating}
-                    onChange={setDetectionRating}
-                  />
-                </Box>
-
+                {/* ROW 1: Controls & Filter Code */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 0.8fr', gap: 2 }}>
                   <TextFieldAny
                     label="Prevention Control"
@@ -438,6 +424,22 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                     fullWidth
                     placeholder="e.g. FC-01"
                     InputLabelProps={{ shrink: true }}
+                  />
+                </Box>
+
+                {/* ROW 2: Occurrence & Detection Ratings */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <RatingDropdown
+                    label="Occurrence (O) Rating"
+                    ratingType="occurrence"
+                    value={occurrenceRating}
+                    onChange={setOccurrenceRating}
+                  />
+                  <RatingDropdown
+                    label="Detection (D) Rating"
+                    ratingType="detection"
+                    value={detectionRating}
+                    onChange={setDetectionRating}
                   />
                 </Box>
               </Stack>
