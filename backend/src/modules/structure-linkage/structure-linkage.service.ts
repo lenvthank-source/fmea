@@ -29,7 +29,7 @@ export class StructureLinkageService {
       throw new BadRequestException(`Invalid parentType: ${dto.parentType}`);
     }
 
-    return this.prisma.structureFunction.create({
+    const sf = await this.prisma.structureFunction.create({
       data: {
         tenantId,
         projectId: dto.projectId,
@@ -42,6 +42,39 @@ export class StructureLinkageService {
       },
       include: { failures: true },
     });
+
+    // If this is a work_element, also append its name to the PFD master step's machinesEquipmentDocs
+    if (dto.parentType === 'work_element' && dto.parentId) {
+      const parts = dto.parentId.split('::');
+      if (parts.length === 2) {
+        const stepId = parts[0];
+        const weName = parts[1];
+        // Find the master PFD step (linkedPfdStepId is null) that this shadow step links to
+        const shadowStep = await this.prisma.processStep.findUnique({
+          where: { id: stepId },
+          select: { linkedPfdStepId: true },
+        });
+        const masterStepId = shadowStep?.linkedPfdStepId || stepId;
+        
+        const masterStep = await this.prisma.processStep.findUnique({
+          where: { id: masterStepId },
+          select: { machinesEquipmentDocs: true },
+        });
+        if (masterStep) {
+          const currentWe = Array.isArray(masterStep.machinesEquipmentDocs) 
+            ? [...masterStep.machinesEquipmentDocs] 
+            : (masterStep.machinesEquipmentDocs ? [masterStep.machinesEquipmentDocs] : []);
+          if (!currentWe.includes(weName)) {
+            await this.prisma.processStep.update({
+              where: { id: masterStepId },
+              data: { machinesEquipmentDocs: [...currentWe, weName] },
+            });
+          }
+        }
+      }
+    }
+
+    return sf;
   }
 
   async createFunctionsBatch(tenantId: string, dtos: CreateStructureFunctionDto[]) {

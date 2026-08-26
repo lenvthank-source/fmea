@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 
 // ── Interfaces ──────────────────────────────────────────────
 
@@ -736,6 +737,7 @@ export const AdminPanel: React.FC = () => {
             <FormControl fullWidth size="small">
               <InputLabel>User Role</InputLabel>
               <Select
+                {...dialogSelectProps}
                 value={editRole}
                 label="User Role"
                 onChange={(e) => setEditRole(e.target.value)}
@@ -778,3 +780,5 @@ export const AdminPanel: React.FC = () => {
     </Box>
   );
 };
+
+export default AdminPanel;

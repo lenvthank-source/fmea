@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 
 interface ImportTargetDialogProps {
   open: boolean;
@@ -154,6 +155,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
           <FormControl fullWidth size="small">
             <InputLabel>Target Project</InputLabel>
             <Select
+              {...dialogSelectProps}
               value={selectedProjectId}
               label="Target Project"
               onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -171,6 +173,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
             <FormControl fullWidth size="small">
               <InputLabel>Target Process Step</InputLabel>
               <Select
+                {...dialogSelectProps}
                 value={selectedProcessStepId}
                 label="Target Process Step"
                 onChange={(e) => setSelectedProcessStepId(e.target.value)}

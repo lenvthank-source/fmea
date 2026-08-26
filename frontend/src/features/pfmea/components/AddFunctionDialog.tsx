@@ -46,7 +46,6 @@ interface AddFunctionDialogProps {
 
 interface FunctionRow {
   narration: string;
-  description: string;
 }
 
 const PARENT_LABELS: Record<string, string> = {
@@ -77,8 +76,8 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
 
   // Multiple mode state
   const [rows, setRows] = useState<FunctionRow[]>([
-    { narration: '', description: '' },
-    { narration: '', description: '' },
+    { narration: '' },
+    { narration: '' },
   ]);
 
   const [loading, setLoading] = useState(false);
@@ -94,8 +93,8 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
         setNarration('');
         setLocation('your_plant');
         setRows([
-          { narration: '', description: '' },
-          { narration: '', description: '' },
+          { narration: '' },
+          { narration: '' },
         ]);
         setActiveTab(0);
       }
@@ -111,7 +110,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
   };
 
   const handleAddRow = () => {
-    setRows((prev) => [...prev, { narration: '', description: '' }]);
+    setRows((prev) => [...prev, { narration: '' }]);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -177,7 +176,6 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
           parentType,
           parentId,
           narration: r.narration.trim(),
-          description: r.description.trim() || undefined,
           location: parentType === 'project' ? location : 'your_plant',
         }));
 
@@ -276,9 +274,6 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                       <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 240 }}>
                         Function / Requirement Narration
                       </TableCell>
-                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 200 }}>
-                        Description / Specification (Optional)
-                      </TableCell>
                       <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
                         Action
                       </TableCell>
@@ -292,17 +287,6 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                             value={row.narration}
                             onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
                             placeholder="e.g. Provide structural support to assembly..."
-                            size="small"
-                            fullWidth
-                            variant="outlined"
-                            sx={{ bgcolor: '#ffffff' }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
-                          <TextFieldAny
-                            value={row.description}
-                            onChange={(e: any) => handleRowChange(idx, 'description', e.target.value)}
-                            placeholder="e.g. Must withstand 500 N load..."
                             size="small"
                             fullWidth
                             variant="outlined"

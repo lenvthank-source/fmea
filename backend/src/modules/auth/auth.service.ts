@@ -290,6 +290,7 @@ export class AuthService {
         tenantId: tenant.id,
         roles: ['Admin'],
         permissions: dbPermissions.map((p) => p.code),
+        isGuest: false,
       });
 
       return {
@@ -386,6 +387,7 @@ export class AuthService {
       tenantId: tenant.id,
       roles,
       permissions,
+      isGuest: user.isGuest || false,
     });
 
     return {
@@ -467,6 +469,7 @@ export class AuthService {
         tenantId: user.tenantId,
         roles,
         permissions,
+        isGuest: user.isGuest || false,
       });
 
       return tokens;
@@ -601,6 +604,7 @@ export class AuthService {
         tenantId: tenant.id,
         roles: ['Quality Engineer'],
         permissions,
+        isGuest: true,
       });
 
       return {
@@ -648,6 +652,49 @@ export class AuthService {
         metadata: data.metadata || {},
       },
     });
+  }
+
+
+  async getMe(tenantId: string, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: { permission: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user || user.tenantId !== tenantId || user.status !== 'active') {
+      throw new NotFoundException('User not found');
+    }
+
+    const roles = user.userRoles.map((ur) => ur.role.name);
+    const permissionCodesSet = new Set<string>();
+    for (const ur of user.userRoles) {
+      for (const rp of ur.role.rolePermissions) {
+        permissionCodesSet.add(rp.permission.code);
+      }
+    }
+    const permissions = Array.from(permissionCodesSet);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      tenantId: user.tenantId,
+      roles,
+      permissions,
+      isGuest: user.isGuest,
+    };
   }
 
 }

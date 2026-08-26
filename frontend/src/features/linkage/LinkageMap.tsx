@@ -399,3 +399,5 @@ export const LinkageMap: React.FC = () => {
     </Box>
   );
 };
+
+export default LinkageMap;

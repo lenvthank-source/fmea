@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCpRowDto } from './dto/create-cp-row.dto';
 import { UpdateCpRowDto } from './dto/update-cp-row.dto';
+import { RevisionGuard } from '../../common/revision-guard';
 
 @Injectable()
 export class ControlPlanRowService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private revisionGuard: RevisionGuard,
+  ) {}
 
   private async verifyRevisionAccess(tenantId: string, revisionId: string) {
     const revision = await this.prisma.documentRevision.findUnique({
@@ -86,6 +90,7 @@ export class ControlPlanRowService {
   }
 
   async createRow(tenantId: string, revisionId: string, dto: CreateCpRowDto) {
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
     const revision = await this.verifyRevisionAccess(tenantId, revisionId);
 
     // Verify step exists
@@ -126,6 +131,7 @@ export class ControlPlanRowService {
   }
 
   async updateRow(tenantId: string, rowId: string, dto: UpdateCpRowDto) {
+    await this.revisionGuard.assertRevisionWritableByControlPlanRow(tenantId, rowId);
     const row = await this.verifyRowAccess(tenantId, rowId);
 
     if (dto.characteristicId) {
@@ -156,6 +162,7 @@ export class ControlPlanRowService {
   }
 
   async removeRow(tenantId: string, rowId: string) {
+    await this.revisionGuard.assertRevisionWritableByControlPlanRow(tenantId, rowId);
     await this.verifyRowAccess(tenantId, rowId);
 
     return this.prisma.controlPlanRow.delete({

@@ -4,11 +4,13 @@ import {
   ForbiddenException,
   BadRequestException,
   ConflictException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ProjectService {
@@ -17,14 +19,31 @@ export class ProjectService {
     private auditLogService: AuditLogService,
   ) {}
 
-  async findAll(tenantId: string, status?: string) {
-    return this.prisma.project.findMany({
-      where: {
-        tenantId,
-        status: status || { not: 'archived' },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(tenantId: string, status?: string, page?: number, limit?: number, userId?: string) {
+    const skip = page && limit ? (page - 1) * limit : undefined;
+    const take = limit;
+    const where: any = {
+      tenantId,
+      status: status || { not: 'archived' },
+    };
+    
+    // If userId is provided (for guest users), filter by createdById
+    if (userId) {
+      where.createdById = userId;
+    }
+    
+    const [data, total] = await Promise.all([
+      this.prisma.project.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.project.count({
+        where,
+      }),
+    ]);
+    return { data, total, page: page || 1, limit: limit || total };
   }
 
   async findOne(tenantId: string, id: string, allowArchived = false) {
@@ -324,6 +343,312 @@ export class ProjectService {
     });
   }
 
+async replicate(
+    tenantId: string,
+    userId: string,
+    sourceProjectId: string,
+    dto: {
+      name: string;
+      qualityHeaderOverrides: Partial<CreateProjectDto>;
+      includeTypes: string[];
+    }
+  ) {
+    // Verify source project exists and user has access
+    const sourceProject = await this.findOne(tenantId, sourceProjectId);
+    
+    // Check if source project has any documents of the requested types
+    const sourceDocuments = await this.prisma.document.findMany({
+      where: {
+        projectId: sourceProjectId,
+        tenantId,
+        type: { in: dto.includeTypes },
+      },
+      include: { revisions: { where: { status: { not: 'deleted' } }, take: 1, orderBy: { createdAt: 'desc' } } },
+    });
+
+    if (sourceDocuments.length === 0) {
+      throw new BadRequestException('Source project has no documents of the selected types');
+    }
+
+    // Check for guest user
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.isGuest) {
+      throw new ForbiddenException('Guest users cannot replicate projects');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Create the new project with overridden quality header
+      const project = await tx.project.create({
+        data: {
+          tenantId,
+          createdById: userId,
+          name: dto.name,
+          description: sourceProject.description,
+          customer: dto.qualityHeaderOverrides.customer ?? sourceProject.customer,
+          plantId: sourceProject.plantId,
+          productFamilyId: sourceProject.productFamilyId,
+          modelYear: dto.qualityHeaderOverrides.modelYear ?? sourceProject.modelYear,
+          status: 'active',
+
+          organisationName: dto.qualityHeaderOverrides.organisationName ?? sourceProject.organisationName,
+          organisationCode: dto.qualityHeaderOverrides.organisationCode ?? sourceProject.organisationCode,
+          orgPartNumber: dto.qualityHeaderOverrides.orgPartNumber ?? sourceProject.orgPartNumber,
+          organisationPlant: dto.qualityHeaderOverrides.organisationPlant ?? sourceProject.organisationPlant,
+          customerPartNumber: dto.qualityHeaderOverrides.customerPartNumber ?? sourceProject.customerPartNumber,
+          partName: dto.qualityHeaderOverrides.partName ?? sourceProject.partName,
+          keyContact: dto.qualityHeaderOverrides.keyContact ?? sourceProject.keyContact,
+          latestChangeLevel: dto.qualityHeaderOverrides.latestChangeLevel ?? sourceProject.latestChangeLevel,
+          drawingRevDate: dto.qualityHeaderOverrides.drawingRevDate ? new Date(dto.qualityHeaderOverrides.drawingRevDate) : null,
+          documentNumber: dto.qualityHeaderOverrides.documentNumber ?? '',
+          controlPlanNumber: dto.qualityHeaderOverrides.controlPlanNumber ?? sourceProject.controlPlanNumber,
+          assemblyLineNumber: dto.qualityHeaderOverrides.assemblyLineNumber ?? sourceProject.assemblyLineNumber,
+          originationDate: new Date(),
+          supplierApprovalDate: null,
+          otherApprovalDate: null,
+          documentTypes: dto.includeTypes,
+          cftMembers: dto.qualityHeaderOverrides.cftMembers ?? sourceProject.cftMembers,
+          customerEngApprover: dto.qualityHeaderOverrides.customerEngApprover ?? null,
+          customerEngApprovalDate: null,
+          customerQualApprover: dto.qualityHeaderOverrides.customerQualApprover ?? null,
+          customerQualApprovalDate: null,
+          otherApprover: dto.qualityHeaderOverrides.otherApprover ?? null,
+          otherApprovalDate2: null,
+          dwgNumber: dto.qualityHeaderOverrides.dwgNumber ?? sourceProject.dwgNumber,
+          dwgRevNoAndDate: dto.qualityHeaderOverrides.dwgRevNoAndDate ?? sourceProject.dwgRevNoAndDate,
+          preliminaryFinalFlag: 'preliminary',
+        },
+      });
+
+      // 2. Initialize documents - clone from source project
+      const stepIdMap = new Map<string, string>();
+
+      const orderedDocTypes = ['PFD', 'DFMEA', 'PFMEA', 'CONTROL_PLAN'].filter(type => dto.includeTypes.includes(type));
+
+      for (const type of orderedDocTypes) {
+        const sourceDoc = sourceDocuments.find(d => d.type === type);
+        if (!sourceDoc || !sourceDoc.revisions[0]) continue;
+        const sourceRevisionId = sourceDoc.revisions[0].id;
+
+        let docName = '';
+        if (type === 'PFD') docName = 'Process Flow Diagram';
+        else if (type === 'PFMEA') docName = 'Process FMEA';
+        else if (type === 'DFMEA') docName = 'Design FMEA';
+        else if (type === 'CONTROL_PLAN') docName = 'Control Plan';
+
+        // Create document
+        const document = await tx.document.create({
+          data: {
+            tenantId,
+            projectId: project.id,
+            type,
+            name: `${project.name} - ${docName}`,
+            status: 'active',
+            createdById: userId,
+          },
+        });
+
+        // Create initial draft revision
+        const revision = await tx.documentRevision.create({
+          data: {
+            documentId: document.id,
+            revisionNumber: '1.0',
+            status: 'draft',
+            summary: `Replicated from ${sourceDoc.name}`,
+            changeDescription: 'Replicated initial version from source project.',
+            createdById: userId,
+          },
+        });
+
+        await tx.document.update({
+          where: { id: document.id },
+          data: { currentRevisionId: revision.id },
+        });
+
+        // Clone content based on document type
+        if (type === 'PFD') {
+          const oldSteps = await tx.processStep.findMany({
+            where: { revisionId: sourceRevisionId },
+            orderBy: { sequenceOrder: 'asc' },
+          });
+          for (const step of oldSteps) {
+            const newStep = await tx.processStep.create({
+              data: {
+                revisionId: revision.id,
+                processItemId: step.processItemId,
+                stepNumber: step.stepNumber,
+                name: step.name,
+                description: step.description,
+                stepType: step.stepType,
+                sequenceOrder: step.sequenceOrder,
+                inputs: step.inputs,
+                outputs: step.outputs,
+                resources: step.resources,
+                incomingVariation: step.incomingVariation || undefined,
+                specialCharacteristics: step.specialCharacteristics,
+                flowIcons: step.flowIcons || undefined,
+                machinesEquipmentDocs: step.machinesEquipmentDocs || undefined,
+                desiredOutcome: step.desiredOutcome,
+                processCharacteristics: step.processCharacteristics,
+                linkedPfdStepId: null,
+                isOrphaned: step.isOrphaned,
+              },
+            });
+            stepIdMap.set(step.id, newStep.id);
+          }
+        } else if (type === 'PFMEA' || type === 'DFMEA') {
+          const oldRows = await tx.pfmeaRow.findMany({
+            where: { revisionId: sourceRevisionId },
+            include: {
+              functions: true,
+              requirements: true,
+              failureModes: true,
+              effects: true,
+              causes: true,
+              controls: true,
+              characteristics: true,
+            },
+            orderBy: { rowNumber: 'asc' },
+          });
+
+          for (const row of oldRows) {
+            const newStepId = row.processStepId ? stepIdMap.get(row.processStepId) : null;
+
+            const newRow = await tx.pfmeaRow.create({
+              data: {
+                revisionId: revision.id,
+                processStepId: newStepId || undefined,
+                workElementName: row.workElementName,
+                rowNumber: row.rowNumber,
+                severity: row.severity,
+                occurrence: row.occurrence,
+                detection: row.detection,
+                ap: row.ap,
+                filterCode: row.filterCode,
+                status: row.status,
+                accessLevel: row.accessLevel,
+                preventionAction: row.preventionAction,
+                detectionAction: row.detectionAction,
+                responsibility: row.responsibility,
+                targetDate: row.targetDate,
+                actionTaken: row.actionTaken,
+                completionDate: row.completionDate,
+                revisedSeverity: row.revisedSeverity,
+                revisedOccurrence: row.revisedOccurrence,
+                revisedDetection: row.revisedDetection,
+                revisedAp: row.revisedAp,
+                notes: row.notes,
+                createdById: userId,
+              },
+            });
+
+            // Copy relations
+            if (row.functions.length > 0) {
+              await tx.pfmeaRowFunction.createMany({
+                data: row.functions.map(f => ({
+                  pfmeaRowId: newRow.id,
+                  functionId: f.functionId,
+                }))
+              });
+            }
+            if (row.requirements.length > 0) {
+              await tx.pfmeaRowRequirement.createMany({
+                data: row.requirements.map(req => ({
+                  pfmeaRowId: newRow.id,
+                  requirementId: req.requirementId,
+                }))
+              });
+            }
+            if (row.failureModes.length > 0) {
+              await tx.pfmeaRowFailureMode.createMany({
+                data: row.failureModes.map(fm => ({
+                  pfmeaRowId: newRow.id,
+                  failureModeId: fm.failureModeId,
+                }))
+              });
+            }
+            if (row.effects.length > 0) {
+              await tx.pfmeaRowEffect.createMany({
+                data: row.effects.map(e => ({
+                  pfmeaRowId: newRow.id,
+                  effectId: e.effectId,
+                }))
+              });
+            }
+            if (row.causes.length > 0) {
+              await tx.pfmeaRowCause.createMany({
+                data: row.causes.map(c => ({
+                  pfmeaRowId: newRow.id,
+                  causeId: c.causeId,
+                }))
+              });
+            }
+            if (row.controls.length > 0) {
+              await tx.pfmeaRowControl.createMany({
+                data: row.controls.map(ctrl => ({
+                  pfmeaRowId: newRow.id,
+                  controlId: ctrl.controlId,
+                }))
+              });
+            }
+            if (row.characteristics.length > 0) {
+              await tx.pfmeaRowCharacteristic.createMany({
+                data: row.characteristics.map(char => ({
+                  pfmeaRowId: newRow.id,
+                  characteristicId: char.characteristicId,
+                }))
+              });
+            }
+          }
+        } else if (type === 'CONTROL_PLAN') {
+          const oldCpRows = await tx.controlPlanRow.findMany({
+            where: { revisionId: sourceRevisionId },
+            orderBy: { rowNumber: 'asc' },
+          });
+          for (const cpRow of oldCpRows) {
+            const newStepId = cpRow.processStepId ? stepIdMap.get(cpRow.processStepId) : null;
+            if (!newStepId && cpRow.processStepId) {
+              // Skip if PFD was not included in replication but CP row references a step
+              continue;
+            }
+
+            await tx.controlPlanRow.create({
+              data: {
+                revisionId: revision.id,
+                processStepId: newStepId || cpRow.processStepId,
+                characteristicId: cpRow.characteristicId,
+                rowNumber: cpRow.rowNumber,
+                specTolerance: cpRow.specTolerance,
+                measurementMethod: cpRow.measurementMethod,
+                sampleSize: cpRow.sampleSize,
+                frequency: cpRow.frequency,
+                controlType: cpRow.controlType,
+                controlMethod: cpRow.controlMethod,
+                reactionPlan: cpRow.reactionPlan,
+                responsible: cpRow.responsible,
+                notes: cpRow.notes,
+              },
+            });
+          }
+        }
+      }
+
+      // Audit log
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          entityType: 'project',
+          entityId: project.id,
+          action: 'replicate',
+          oldValue: { sourceProjectId, includeTypes: dto.includeTypes },
+          newValue: { newProjectId: project.id },
+        },
+      });
+
+      return project;
+    });
+  }
+
   async update(tenantId: string, id: string, dto: UpdateProjectDto) {
     // Verify ownership first
     await this.findOne(tenantId, id);
@@ -411,8 +736,17 @@ export class ProjectService {
       }
       nextRev = options.revisionNumber;
     } else {
-      // Auto-increment from the current project revision number
-      nextRev = (parseFloat(project.revisionNumber || '1.0') + 1.0).toFixed(1);
+      // Auto-increment using proper semver minor increment
+      // Parse current revision as major.minor, increment minor
+      const currentRev = project.revisionNumber || '1.0';
+      const parts = currentRev.split('.').map(Number);
+      if (parts.length !== 2 || parts.some(isNaN)) {
+        // Fallback if format is unexpected
+        nextRev = '1.1';
+      } else {
+        const [major, minor] = parts;
+        nextRev = `${major}.${minor + 1}`;
+      }
     }
 
     // Check for duplicate revision number across the project's documents
@@ -494,9 +828,18 @@ export class ProjectService {
           if (doc.type === 'PFMEA') {
             const oldRows = await tx.pfmeaRow.findMany({
               where: { revisionId: oldRevisionId },
+              include: {
+                functions: true,
+                requirements: true,
+                failureModes: true,
+                effects: true,
+                causes: true,
+                controls: true,
+                characteristics: true,
+              },
             });
             for (const row of oldRows) {
-              await tx.pfmeaRow.create({
+              const newRow = await tx.pfmeaRow.create({
                 data: {
                   revisionId: newRevision.id,
                   processStepId: row.processStepId,
@@ -523,6 +866,64 @@ export class ProjectService {
                   createdById: userId,
                 },
               });
+
+              // Copy relations
+              if (row.functions.length > 0) {
+                await tx.pfmeaRowFunction.createMany({
+                  data: row.functions.map(f => ({
+                    pfmeaRowId: newRow.id,
+                    functionId: f.functionId,
+                  }))
+                });
+              }
+              if (row.requirements.length > 0) {
+                await tx.pfmeaRowRequirement.createMany({
+                  data: row.requirements.map(req => ({
+                    pfmeaRowId: newRow.id,
+                    requirementId: req.requirementId,
+                  }))
+                });
+              }
+              if (row.failureModes.length > 0) {
+                await tx.pfmeaRowFailureMode.createMany({
+                  data: row.failureModes.map(fm => ({
+                    pfmeaRowId: newRow.id,
+                    failureModeId: fm.failureModeId,
+                  }))
+                });
+              }
+              if (row.effects.length > 0) {
+                await tx.pfmeaRowEffect.createMany({
+                  data: row.effects.map(e => ({
+                    pfmeaRowId: newRow.id,
+                    effectId: e.effectId,
+                  }))
+                });
+              }
+              if (row.causes.length > 0) {
+                await tx.pfmeaRowCause.createMany({
+                  data: row.causes.map(c => ({
+                    pfmeaRowId: newRow.id,
+                    causeId: c.causeId,
+                  }))
+                });
+              }
+              if (row.controls.length > 0) {
+                await tx.pfmeaRowControl.createMany({
+                  data: row.controls.map(ctrl => ({
+                    pfmeaRowId: newRow.id,
+                    controlId: ctrl.controlId,
+                  }))
+                });
+              }
+              if (row.characteristics.length > 0) {
+                await tx.pfmeaRowCharacteristic.createMany({
+                  data: row.characteristics.map(char => ({
+                    pfmeaRowId: newRow.id,
+                    characteristicId: char.characteristicId,
+                  }))
+                });
+              }
             }
           }
 
@@ -814,15 +1215,7 @@ export class ProjectService {
       await tx.controlPlanRow.deleteMany({ where: { revisionId } });
       await tx.approval.deleteMany({ where: { revisionId } });
 
-      // 3. Delete AuditLog entries related to this revision
-      await tx.auditLog.deleteMany({
-        where: {
-          tenantId,
-          entityId: revisionId
-        }
-      });
-
-      // 4. Delete ProjectRevision log entries matching this revision number and project
+      // 3. Delete ProjectRevision log entries matching this revision number and project
       await tx.projectRevision.deleteMany({
         where: {
           projectId: revision.document.projectId,
@@ -830,7 +1223,7 @@ export class ProjectService {
         }
       });
 
-      // 5. Delete the DocumentRevision itself
+      // 4. Delete the DocumentRevision itself
       await tx.documentRevision.delete({ where: { id: revisionId } });
     });
 
@@ -1023,5 +1416,228 @@ export class ProjectService {
     });
 
     return { activated: true, revisionId, revisionNumber: revision.revisionNumber };
+  }
+
+  // ===== Revision Approval Workflow =====
+
+  /**
+   * Submit a draft revision for approval
+   * Changes status from 'draft' to 'in_review'
+   */
+  async submitRevision(tenantId: string, userId: string, revisionId: string) {
+    const revision = await this.prisma.documentRevision.findUnique({
+      where: { id: revisionId },
+      include: {
+        document: {
+          select: { id: true, tenantId: true, projectId: true },
+        },
+      },
+    });
+
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    if (revision.document.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this revision');
+    }
+
+    if (revision.status !== 'draft') {
+      throw new BadRequestException('Only draft revisions can be submitted for approval');
+    }
+
+    const updated = await this.prisma.documentRevision.update({
+      where: { id: revisionId },
+      data: { status: 'in_review' },
+    });
+
+    await this.auditLogService.createEntry({
+      tenantId,
+      userId,
+      entityType: 'document_revision',
+      entityId: revisionId,
+      action: 'submit_for_approval',
+      newValue: { status: 'in_review' },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Approve a revision with e-signature (password + comment)
+   * Changes status from 'in_review' to 'approved' and locks the revision
+   */
+  async approveRevision(
+    tenantId: string,
+    userId: string,
+    revisionId: string,
+    dto: { password: string; comment: string },
+  ) {
+    const revision = await this.prisma.documentRevision.findUnique({
+      where: { id: revisionId },
+      include: {
+        document: {
+          select: { id: true, tenantId: true, projectId: true },
+        },
+      },
+    });
+
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    if (revision.document.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this revision');
+    }
+
+    if (revision.status !== 'in_review') {
+      throw new BadRequestException('Only revisions in review can be approved');
+    }
+
+    // Segregation of duties: submitter cannot approve their own revision
+    if (revision.createdById === userId) {
+      throw new ForbiddenException('You cannot approve your own revision (segregation of duties)');
+    }
+
+    // Verify user's password for e-signature
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('User not found or password not set');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password for e-signature');
+    }
+
+    // Update revision status to approved and lock it
+    const updated = await this.prisma.documentRevision.update({
+      where: { id: revisionId },
+      data: {
+        status: 'approved',
+        lockedAt: new Date(),
+        // Store approval metadata in a JSON field or separate table
+        // For now, we'll use the changeDescription field to store approval info
+        changeDescription: `${revision.changeDescription || ''}\n\n[APPROVED by ${userId} at ${new Date().toISOString()}: ${dto.comment}]`,
+      },
+    });
+
+    // Create approval record
+    await this.prisma.approval.create({
+      data: {
+        revisionId,
+        approverId: userId,
+        role: 'approver',
+        decision: 'approved',
+        comment: dto.comment,
+        decidedAt: new Date(),
+      },
+    });
+
+    // Audit log
+    await this.auditLogService.createEntry({
+      tenantId,
+      userId,
+      entityType: 'document_revision',
+      entityId: revisionId,
+      action: 'approve',
+      oldValue: { status: 'in_review' },
+      newValue: { status: 'approved', approvedBy: userId, comment: dto.comment },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Reject a revision with comment
+   */
+  async rejectRevision(
+    tenantId: string,
+    userId: string,
+    revisionId: string,
+    dto: { comment: string },
+  ) {
+    const revision = await this.prisma.documentRevision.findUnique({
+      where: { id: revisionId },
+      include: {
+        document: {
+          select: { id: true, tenantId: true, projectId: true },
+        },
+      },
+    });
+
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    if (revision.document.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this revision');
+    }
+
+    if (revision.status !== 'in_review') {
+      throw new BadRequestException('Only revisions in review can be rejected');
+    }
+
+    // Segregation of duties: submitter cannot reject their own revision
+    if (revision.createdById === userId) {
+      throw new ForbiddenException('You cannot reject your own revision (segregation of duties)');
+    }
+
+    const updated = await this.prisma.documentRevision.update({
+      where: { id: revisionId },
+      data: {
+        status: 'rejected',
+        changeDescription: `${revision.changeDescription || ''}\n\n[REJECTED by ${userId} at ${new Date().toISOString()}: ${dto.comment}]`,
+      },
+    });
+
+    await this.prisma.approval.create({
+      data: {
+        revisionId,
+        approverId: userId,
+        role: 'approver',
+        decision: 'rejected',
+        comment: dto.comment,
+        decidedAt: new Date(),
+      },
+    });
+
+    await this.auditLogService.createEntry({
+      tenantId,
+      userId,
+      entityType: 'document_revision',
+      entityId: revisionId,
+      action: 'reject',
+      oldValue: { status: 'in_review' },
+      newValue: { status: 'rejected', rejectedBy: userId, comment: dto.comment },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Verify revision is locked (approved) and cannot be modified
+   */
+  async assertRevisionWritable(tenantId: string, revisionId: string) {
+    const revision = await this.prisma.documentRevision.findUnique({
+      where: { id: revisionId },
+      select: { lockedAt: true, status: true, document: { select: { tenantId: true } } },
+    });
+
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
+    if (revision.document.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this revision');
+    }
+
+    if (revision.lockedAt !== null) {
+      throw new BadRequestException('Cannot modify a locked (approved) revision');
+    }
+
+    if (revision.status !== 'draft') {
+      throw new BadRequestException('Only draft revisions can be modified');
+    }
   }
 }

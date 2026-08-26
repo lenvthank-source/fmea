@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -16,6 +16,11 @@ import { UserModule } from './modules/user/user.module';
 import { ControlPlanModule } from './modules/control-plan/control-plan.module';
 import { AuditLogModule } from './modules/audit/audit-log.module';
 import { RepositoryModule } from './modules/repository/repository.module';
+import { AuditInterceptor } from './common/audit.interceptor';
+import { PrismaService } from './prisma/prisma.service';
+import { AuditLogService } from './modules/audit/audit-log.service';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
   imports: [
@@ -31,6 +36,11 @@ import { RepositoryModule } from './modules/repository/repository.module';
     UserModule,
     AuditLogModule,
     RepositoryModule,
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 300,
+    }]),
+    QueuesModule,
   ],
   controllers: [AppController],
   providers: [
@@ -43,6 +53,12 @@ import { RepositoryModule } from './modules/repository/repository.module';
       provide: APP_GUARD,
       useClass: PermissionGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
+    },
+    PrismaService,
+    AuditLogService,
   ],
 })
 export class AppModule {}

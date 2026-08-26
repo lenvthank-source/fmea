@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../config';
+import { dialogSelectProps } from '../../../theme/muiSelectConfig';
 import {
   Drawer,
   Box,
@@ -555,7 +556,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
                 fullWidth
               />
               <FormControl size="small" sx={{ width: 150 }}>
-                <Select value={newControlType} onChange={(e) => setNewControlType(e.target.value)}>
+                <Select {...dialogSelectProps} value={newControlType} onChange={(e) => setNewControlType(e.target.value)}>
                   <MenuItem value="prevention">Prevention</MenuItem>
                   <MenuItem value="detection">Detection</MenuItem>
                 </Select>
@@ -594,7 +595,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
                 fullWidth
               />
               <FormControl size="small" sx={{ width: 150 }}>
-                <Select value={newCharClass} onChange={(e) => setNewCharClass(e.target.value)}>
+                <Select {...dialogSelectProps} value={newCharClass} onChange={(e) => setNewCharClass(e.target.value)}>
                   <MenuItem value="standard">Standard</MenuItem>
                   <MenuItem value="special">Special</MenuItem>
                   <MenuItem value="critical">Critical</MenuItem>
@@ -613,7 +614,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
           <Stack direction="row" spacing={2}>
             <FormControl size="small" fullWidth>
               <InputLabel>Access Level</InputLabel>
-              <Select value={accessLevel} label="Access Level" onChange={(e) => setAccessLevel(e.target.value)}>
+              <Select {...dialogSelectProps} value={accessLevel} label="Access Level" onChange={(e) => setAccessLevel(e.target.value)}>
                 <MenuItem value="public">Public</MenuItem>
                 <MenuItem value="confidential">Confidential</MenuItem>
                 <MenuItem value="restricted">Restricted</MenuItem>
@@ -622,7 +623,7 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
 
             <FormControl size="small" fullWidth>
               <InputLabel>Status</InputLabel>
-              <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
+              <Select {...dialogSelectProps} value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
                 <MenuItem value="draft">Draft</MenuItem>
                 <MenuItem value="reviewed">Reviewed</MenuItem>
                 <MenuItem value="approved">Approved</MenuItem>

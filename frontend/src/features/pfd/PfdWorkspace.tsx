@@ -1996,6 +1996,8 @@ export const PfdWorkspace: React.FC = () => {
   );
 };
 
+export default PfdWorkspace;
+
 // Flow Icons column definitions
 const FLOW_ICON_COLUMNS: Record<string, { label: string; short: string; sym: string; name: string }> = {
   trans: { label: 'TRANS.', short: 'TRNS', sym: '⇨', name: 'Transport' },

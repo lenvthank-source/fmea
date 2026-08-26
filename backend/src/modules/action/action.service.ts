@@ -321,4 +321,24 @@ export class ActionService {
       where: { id: evidenceId },
     });
   }
+
+  async getEvidencePresignedUrl(tenantId: string, evidenceId: string) {
+    const evidence = await this.prisma.actionEvidence.findUnique({
+      where: { id: evidenceId },
+      include: {
+        action: true,
+      },
+    });
+
+    if (!evidence) {
+      throw new NotFoundException('Evidence not found');
+    }
+
+    if (evidence.action.tenantId !== tenantId) {
+      throw new ForbiddenException('You do not have access to this action evidence');
+    }
+
+    const url = await this.r2Service.getPresignedUrl(evidence.fileUrl);
+    return { url };
+  }
 }

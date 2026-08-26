@@ -1128,3 +1128,5 @@ export const ActionsDashboard: React.FC = () => {
     </Box>
   );
 };
+
+export default ActionsDashboard;

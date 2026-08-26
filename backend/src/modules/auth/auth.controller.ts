@@ -68,7 +68,7 @@ export class AuthController {
 
   @Get('me')
   async getProfile(@Request() req: RequestWithUser) {
-    return req.user;
+    return this.authService.getMe(req.user.tenantId, req.user.sub);
   }
 
   @Get('users')

@@ -203,6 +203,8 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       const HEADER_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
       const COL_WIDTHS = [9, 22, 26, 10, 20, 26, 30, 30];
       const CENTERED_COLS = [0, 3]; // Step #, Spec Class
+      const firstRowIdx = 1;
+      const lastColIdx = 8;
 
       const allBorders = (style: Partial<import('exceljs').Border> = BORDER_THIN): Partial<import('exceljs').Borders> => ({
         top: style, left: style, bottom: style, right: style
@@ -242,6 +244,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       titleCell.value = project?.organisationName?.toUpperCase() || 'PADMINI VNA MECHATRONICS PRIVATE LIMITED';
       titleCell.font = { name: FONT, size: 14, bold: true };
       titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      titleCell.border = allBorders();
       ws.getRow(1).height = 22;
 
       ws.mergeCells('A2:H2');
@@ -249,6 +252,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       subtitleCell.value = 'Process Flow Diagram (PFD)';
       subtitleCell.font = { name: FONT, size: 12, bold: true };
       subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      subtitleCell.border = allBorders();
       ws.getRow(2).height = 20;
 
       ws.mergeCells('A3:H3');
@@ -256,6 +260,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       statusCell.value = `(${getStatusLabel() || 'Prototype'})`;
       statusCell.font = { name: FONT, size: 11, italic: true };
       statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      statusCell.border = allBorders();
       ws.getRow(3).height = 20;
 
       // ---- INFO GRID (Rows 4-9) ----
@@ -363,36 +368,28 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         r++;
       });
 
-      const lastDataRow = r - 1;
-
-      // Apply outer medium border around the entire table (header → last data row)
-      for (let c = 1; c <= 8; c++) {
-        const topCell = ws.getRow(headerRowIdx).getCell(c);
-        topCell.border = { ...topCell.border, top: BORDER_THICK };
-        const bottomCell = ws.getRow(lastDataRow).getCell(c);
-        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
-      }
-      for (let rr = headerRowIdx; rr <= lastDataRow; rr++) {
-        const leftCell = ws.getRow(rr).getCell(1);
-        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
-        const rightCell = ws.getRow(rr).getCell(8);
-        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
-      }
+      // We'll apply the outer border after the signature row is written
 
       // ---- LEGEND ROW ----
       r += 1; // spacer row
       ws.mergeCells(`A${r}:H${r}`);
+      const spacerCell = ws.getCell(`A${r}`);
+      spacerCell.border = allBorders(); // add border to spacer row
+
+      r += 1;
+      ws.mergeCells(`A${r}:H${r}`);
       const legendCell = ws.getCell(`A${r}`);
       legendCell.value =
-        'LEGEND:  Transportation: TRNS (⇨)  |  Storage: STR (▽)  |  Work-In Progress: WIP (⊙)  |  ' +
-        'Operation: OPER (○)  |  Inspection: INSP (▭)  |  Decision: DEC (◇)  |  Rework: REW (⬠)  |  Reject: REJ (⬡)';
+        'LEGEND:  Transportation: TRNS (⇨)  |  Storage: STR (▽)  |  Work-In Progress: WIP (☉)  |  ' +
+        'Operation: OPER (◯)  |  Inspection: INSP (□)  |  Decision: DEC (◇)  |  Rework: REW (Ⓡ)  |  Reject: REJ (✕)';
       legendCell.font = { name: FONT, size: 10, italic: true };
       legendCell.alignment = { horizontal: 'left', vertical: 'middle' };
+      legendCell.border = allBorders(); // add border to legend row
       ws.getRow(r).height = 20;
 
       // ---- SIGNATURE ROW (3 fields) ----
       r += 1;
-      // Prepared By: (A:B), blank (C), Checked By: (D:E), blank (F), Approved By: (G:H)
+      // Prepared By: (A:B), Checked By: (C:D), Approved By: (E:F), Approved By 2: (G:H) — spec A:B, C:D, E:F, G:H
       ws.mergeCells(`A${r}:B${r}`);
       const prepCell = ws.getCell(`A${r}`);
       prepCell.value = 'Prepared By:';
@@ -400,27 +397,42 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       prepCell.border = allBorders();
 
-      const prepBlank = ws.getCell(`C${r}`);
-      prepBlank.border = allBorders();
-
-      ws.mergeCells(`D${r}:E${r}`);
-      const checkCell = ws.getCell(`D${r}`);
+      ws.mergeCells(`C${r}:D${r}`);
+      const checkCell = ws.getCell(`C${r}`);
       checkCell.value = 'Checked By:';
       checkCell.font = { name: FONT, size: 11, bold: true };
       checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       checkCell.border = allBorders();
 
-      const checkBlank = ws.getCell(`F${r}`);
-      checkBlank.border = allBorders();
-
-      ws.mergeCells(`G${r}:H${r}`);
-      const approveCell = ws.getCell(`G${r}`);
+      ws.mergeCells(`E${r}:F${r}`);
+      const approveCell = ws.getCell(`E${r}`);
       approveCell.value = 'Approved By:';
       approveCell.font = { name: FONT, size: 11, bold: true };
       approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       approveCell.border = allBorders();
 
+      ws.mergeCells(`G${r}:H${r}`);
+      const approveCell2 = ws.getCell(`G${r}`);
+      approveCell2.value = 'Approved By:';
+      approveCell2.font = { name: FONT, size: 11, bold: true };
+      approveCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      approveCell2.border = allBorders();
+
       ws.getRow(r).height = 25;
+
+      // ---- APPLY OUTER THICK BORDER TO WHOLE USED RANGE (A1:H<r>) ----
+      for (let c = 1; c <= lastColIdx; c++) {
+        const topCell = ws.getRow(firstRowIdx).getCell(c);
+        topCell.border = { ...topCell.border, top: BORDER_THICK };
+        const bottomCell = ws.getRow(r).getCell(c);
+        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
+      }
+      for (let rr = firstRowIdx; rr <= r; rr++) {
+        const leftCell = ws.getRow(rr).getCell(1);
+        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
+        const rightCell = ws.getRow(rr).getCell(lastColIdx);
+        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
+      }
 
       // ---- PRINT SETUP ----
       ws.pageSetup.printArea = `A1:H${r}`;
@@ -527,6 +539,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       titleCell.value = project?.organisationName?.toUpperCase() || 'ORGANISATION NAME';
       titleCell.font = { name: FONT, size: 14, bold: true };
       titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      titleCell.border = allBorders();
       ws.getRow(1).height = 22;
 
       ws.mergeCells(`A2:${LAST_COL_LETTER}2`);
@@ -534,6 +547,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       subtitleCell.value = 'Process Failure Mode & Effects Analysis (PFMEA)';
       subtitleCell.font = { name: FONT, size: 12, bold: true };
       subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      subtitleCell.border = allBorders();
       ws.getRow(2).height = 20;
 
       ws.mergeCells(`A3:${LAST_COL_LETTER}3`);
@@ -541,6 +555,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       statusCell.value = `(${getStatusLabel() || 'Prototype'})`;
       statusCell.font = { name: FONT, size: 11, italic: true };
       statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      statusCell.border = allBorders();
       ws.getRow(3).height = 20;
 
       // ---- INFO GRID (Rows 4-9) — 6 rows × 4 fields spanning 24 columns ----
@@ -696,47 +711,64 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         r++;
       });
 
-      const lastDataRow = r - 1;
-
-      // Apply outer medium border around entire table (header → last data row)
-      for (let c = 1; c <= TOTAL_COLS; c++) {
-        const topCell = ws.getRow(headerRowIdx).getCell(c);
-        topCell.border = { ...topCell.border, top: BORDER_THICK };
-        const bottomCell = ws.getRow(lastDataRow).getCell(c);
-        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
-      }
-      for (let rr = headerRowIdx; rr <= lastDataRow; rr++) {
-        const leftCell = ws.getRow(rr).getCell(1);
-        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
-        const rightCell = ws.getRow(rr).getCell(TOTAL_COLS);
-        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
-      }
+      // Apply outer medium border around the ENTIRE used range (title block through signature)
+      const firstRowIdx = 1;
+      const lastColIdx = TOTAL_COLS;
+      // We'll apply outer border after signature row is written
 
       // ---- SIGNATURE ROW ----
       r += 1; // spacer row
-      // Prepared By: (A:H), Checked By: (I:P), Approved By: (Q:X)
-      ws.mergeCells(`A${r}:H${r}`);
+      // Add borders to spacer row across all columns
+      for (let c = 1; c <= TOTAL_COLS; c++) {
+        const spacerCell = ws.getRow(r).getCell(c);
+        spacerCell.border = allBorders();
+      }
+
+      r += 1;
+      // Prepared By: (A:F), Checked By: (G:L), Approved By: (M:R), Approved By 2: (S:X) — spec A:B, C:D, E:F, G:H per 24 cols
+      ws.mergeCells(`A${r}:F${r}`);
       const prepCell = ws.getCell(`A${r}`);
       prepCell.value = 'Prepared By:';
       prepCell.font = { name: FONT, size: 11, bold: true };
       prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       prepCell.border = allBorders();
 
-      ws.mergeCells(`I${r}:P${r}`);
-      const checkCell = ws.getCell(`I${r}`);
+      ws.mergeCells(`G${r}:L${r}`);
+      const checkCell = ws.getCell(`G${r}`);
       checkCell.value = 'Checked By:';
       checkCell.font = { name: FONT, size: 11, bold: true };
       checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       checkCell.border = allBorders();
 
-      ws.mergeCells(`Q${r}:${LAST_COL_LETTER}${r}`);
-      const approveCell = ws.getCell(`Q${r}`);
+      ws.mergeCells(`M${r}:R${r}`);
+      const approveCell = ws.getCell(`M${r}`);
       approveCell.value = 'Approved By:';
       approveCell.font = { name: FONT, size: 11, bold: true };
       approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       approveCell.border = allBorders();
 
+      ws.mergeCells(`S${r}:${LAST_COL_LETTER}${r}`);
+      const approveCell2 = ws.getCell(`S${r}`);
+      approveCell2.value = 'Approved By:';
+      approveCell2.font = { name: FONT, size: 11, bold: true };
+      approveCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+      approveCell2.border = allBorders();
+
       ws.getRow(r).height = 25;
+
+      // ---- APPLY OUTER THICK BORDER TO WHOLE USED RANGE (A1:X<r>) ----
+      for (let c = 1; c <= lastColIdx; c++) {
+        const topCell = ws.getRow(firstRowIdx).getCell(c);
+        topCell.border = { ...topCell.border, top: BORDER_THICK };
+        const bottomCell = ws.getRow(r).getCell(c);
+        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
+      }
+      for (let rr = firstRowIdx; rr <= r; rr++) {
+        const leftCell = ws.getRow(rr).getCell(1);
+        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
+        const rightCell = ws.getRow(rr).getCell(lastColIdx);
+        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
+      }
 
       // ---- PRINT SETUP ----
       ws.pageSetup.printArea = `A1:${LAST_COL_LETTER}${r}`;

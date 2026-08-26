@@ -1,10 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { ActionService } from './action.service';
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
+import type { Multer } from 'multer';
 
 @Controller()
 export class ActionController {
@@ -44,7 +46,15 @@ export class ActionController {
   async uploadEvidence(
     @Request() req: RequestWithUser,
     @Param('actionId') actionId: string,
-    @UploadedFile() file: any,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 50 * 1024 * 1024 }), // 50MB
+          new FileTypeValidator({ fileType: /(pdf|png|jpeg|jpg)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
     @Body('description') description?: string,
   ) {
     return this.actionService.addEvidence(
@@ -63,5 +73,11 @@ export class ActionController {
   @Permissions('pfmea.edit')
   async removeEvidence(@Request() req: RequestWithUser, @Param('evidenceId') evidenceId: string) {
     return this.actionService.removeEvidence(req.user.tenantId, evidenceId);
+  }
+
+  @Get('actions/evidence/:evidenceId/url')
+  @Permissions('pfmea.view')
+  async getEvidencePresignedUrl(@Request() req: RequestWithUser, @Param('evidenceId') evidenceId: string) {
+    return this.actionService.getEvidencePresignedUrl(req.user.tenantId, evidenceId);
   }
 }

@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { ReportExporter } from '../reports/ReportExporter';
 
@@ -655,6 +656,7 @@ export const ControlPlanWorkspace: React.FC = () => {
             <FormControl fullWidth size="small">
               <InputLabel>Process Step</InputLabel>
               <Select
+                {...dialogSelectProps}
                 value={selectedStepId}
                 label="Process Step"
                 onChange={(e) => setSelectedStepId(e.target.value)}
@@ -670,6 +672,7 @@ export const ControlPlanWorkspace: React.FC = () => {
             <FormControl fullWidth size="small">
               <InputLabel>Control Type</InputLabel>
               <Select
+                {...dialogSelectProps}
                 value={controlType}
                 label="Control Type"
                 onChange={(e) => setControlType(e.target.value)}
@@ -710,3 +713,5 @@ export const ControlPlanWorkspace: React.FC = () => {
     </Box>
   );
 };
+
+export default ControlPlanWorkspace;

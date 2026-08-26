@@ -19,6 +19,7 @@ import { PfmeaRowEditor } from '../pfmea/components/PfmeaRowEditor';
 import { DfmeaStructureTree } from './components/DfmeaStructureTree';
 import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DocumentHeader } from '../../components/DocumentHeader';
 
 interface PfmeaRow {
@@ -871,6 +872,7 @@ export const DfmeaWorkspace: React.FC = () => {
         <DialogContent sx={{ minWidth: 350 }}>
           <Stack spacing={2} sx={{ mt: 1.5 }}>
             <Select
+              {...dialogSelectProps}
               value={selectedStepId}
               onChange={(e) => setSelectedStepId(e.target.value as string)}
               displayEmpty
@@ -909,6 +911,7 @@ export const DfmeaWorkspace: React.FC = () => {
               size="small"
             />
             <Select
+              {...dialogSelectProps}
               value={actionOwnerId}
               onChange={(e) => setActionOwnerId(e.target.value as string)}
               displayEmpty
@@ -932,6 +935,7 @@ export const DfmeaWorkspace: React.FC = () => {
               } as any)}
             />
             <Select
+              {...dialogSelectProps}
               value={actionPriority}
               onChange={(e) => setActionPriority(e.target.value as string)}
               fullWidth
@@ -1001,3 +1005,5 @@ export const DfmeaWorkspace: React.FC = () => {
     </Box>
   );
 };
+
+export default DfmeaWorkspace;

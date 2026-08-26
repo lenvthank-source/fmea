@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
 
 interface StepFormDialogProps {
   open: boolean;
@@ -118,6 +119,7 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
             variant="outlined"
             margin="normal"
             required
+            slotProps={{ select: { MenuProps: dialogSelectMenuProps } }}
           >
             {STEP_TYPES.map((option) => (
               <MenuItem key={option.value} value={option.value}>

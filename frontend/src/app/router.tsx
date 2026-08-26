@@ -1,37 +1,29 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { AppShell } from '../components/Layout/AppShell';
 import { ProjectList } from '../features/projects/ProjectList';
 import { ProjectSettings } from '../features/projects/ProjectSettings';
-import { PfdWorkspace } from '../features/pfd/PfdWorkspace';
-import { PfmeaWorkspace } from '../features/pfmea/PfmeaWorkspace';
-import { DfmeaWorkspace } from '../features/dfmea/DfmeaWorkspace';
-import { ControlPlanWorkspace } from '../features/control-plan/ControlPlanWorkspace';
-import { ActionsDashboard } from '../features/actions/ActionsDashboard';
-import { LinkageMap } from '../features/linkage/LinkageMap';
-import { Login } from '../features/auth/Login';
-import { AdminPanel } from '../features/admin/AdminPanel';
 import { LandingPage } from '../features/landing/LandingPage';
 import { InitializingWorkspace } from '../features/auth/InitializingWorkspace';
 import { PillarPage } from '../features/content/PillarPage';
 import { IndustryFmeaPage } from '../features/programmatic/IndustryFmeaPage';
 import { CompetitorVsPage } from '../features/programmatic/CompetitorVsPage';
 import { GlossaryPage } from '../features/programmatic/GlossaryPage';
-import { RepositoryPage } from '../features/repository/RepositoryPage';
+import { RequirePermission } from '../components/RequirePermission';
+import { Login } from '../features/auth/Login';
 
-import { Box, CircularProgress } from '@mui/material';
+const PfdWorkspace = lazy(() => import('../features/pfd/PfdWorkspace'));
+const PfmeaWorkspace = lazy(() => import('../features/pfmea/PfmeaWorkspace'));
+const DfmeaWorkspace = lazy(() => import('../features/dfmea/DfmeaWorkspace'));
+const ControlPlanWorkspace = lazy(() => import('../features/control-plan/ControlPlanWorkspace'));
+const ActionsDashboard = lazy(() => import('../features/actions/ActionsDashboard'));
+const AdminPanel = lazy(() => import('../features/admin/AdminPanel'));
+const LinkageMap = lazy(() => import('../features/linkage/LinkageMap'));
+const RepositoryPage = lazy(() => import('../features/repository/RepositoryPage'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f8fafc' }}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
+  const { token } = useAuth();
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -76,15 +68,21 @@ export const AppRouter: React.FC = () => {
       >
         <Route index element={<Navigate to="/app/projects" replace />} />
         <Route path="projects" element={<ProjectList />} />
-        <Route path="projects/:projectId/pfd" element={<PfdWorkspace />} />
-        <Route path="projects/:projectId/pfmea" element={<PfmeaWorkspace />} />
-        <Route path="projects/:projectId/dfmea" element={<DfmeaWorkspace />} />
-        <Route path="projects/:projectId/control-plan" element={<ControlPlanWorkspace />} />
-        <Route path="projects/:projectId/linkage" element={<LinkageMap />} />
+        <Route path="projects/:projectId/pfd" element={<Suspense fallback={<div>Loading...</div>}><PfdWorkspace /></Suspense>} />
+        <Route path="projects/:projectId/pfmea" element={<Suspense fallback={<div>Loading...</div>}><PfmeaWorkspace /></Suspense>} />
+        <Route path="projects/:projectId/dfmea" element={<Suspense fallback={<div>Loading...</div>}><DfmeaWorkspace /></Suspense>} />
+        <Route path="projects/:projectId/control-plan" element={<Suspense fallback={<div>Loading...</div>}><ControlPlanWorkspace /></Suspense>} />
+        <Route path="projects/:projectId/linkage" element={<Suspense fallback={<div>Loading...</div>}><LinkageMap /></Suspense>} />
         <Route path="projects/:projectId/settings" element={<ProjectSettings />} />
-        <Route path="actions" element={<ActionsDashboard />} />
-        <Route path="repository" element={<RepositoryPage />} />
-        <Route path="admin" element={<AdminPanel />} />
+        <Route path="actions" element={<Suspense fallback={<div>Loading...</div>}><ActionsDashboard /></Suspense>} />
+        <Route path="repository" element={<Suspense fallback={<div>Loading...</div>}><RepositoryPage /></Suspense>} />
+        <Route path="admin" element={
+        <RequirePermission permission="admin.config">
+          <Suspense fallback={<div>Loading...</div>}>
+            <AdminPanel />
+          </Suspense>
+        </RequirePermission>
+      } />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

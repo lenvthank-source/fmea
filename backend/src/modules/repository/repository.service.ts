@@ -163,23 +163,38 @@ export class RepositoryService {
       throw new BadRequestException('Only approved packages can be imported into PFMEA');
     }
 
-    const step = await this.prisma.processStep.findFirst({
+    // Find the step - try the given revision first
+    let step = await this.prisma.processStep.findFirst({
       where: { id: dto.processStepId, revisionId: dto.revisionId },
     });
+    
+    // If not found, or if it's a PFMEA shadow revision, find the PFD master revision
     if (!step) {
       throw new NotFoundException(`Process step ${dto.processStepId} not found in revision ${dto.revisionId}`);
     }
 
-    // 1. Append package name to machinesEquipmentDocs
+    // Find the PFD master step (linkedPfdStepId is null for master)
+    let masterStep = step;
+    if (step.linkedPfdStepId) {
+      const foundMaster = await this.prisma.processStep.findUnique({
+        where: { id: step.linkedPfdStepId },
+      });
+      if (foundMaster) masterStep = foundMaster;
+    }
+    
+    // Use the master step for work element tracking
+    const targetStep = masterStep;
+
+    // 1. Append package name to machinesEquipmentDocs on MASTER step
     let currentWe: string[] = [];
-    if (step.machinesEquipmentDocs) {
-      if (Array.isArray(step.machinesEquipmentDocs)) {
-        currentWe = [...(step.machinesEquipmentDocs as string[])];
-      } else if (typeof step.machinesEquipmentDocs === 'string') {
+    if (targetStep.machinesEquipmentDocs) {
+      if (Array.isArray(targetStep.machinesEquipmentDocs)) {
+        currentWe = [...(targetStep.machinesEquipmentDocs as string[])];
+      } else if (typeof targetStep.machinesEquipmentDocs === 'string') {
         try {
-          currentWe = JSON.parse(step.machinesEquipmentDocs as string);
+          currentWe = JSON.parse(targetStep.machinesEquipmentDocs as string);
         } catch {
-          currentWe = [step.machinesEquipmentDocs as string];
+          currentWe = [targetStep.machinesEquipmentDocs as string];
         }
       }
     }
@@ -187,9 +202,30 @@ export class RepositoryService {
     if (!currentWe.includes(pkg.name)) {
       currentWe.push(pkg.name);
       await this.prisma.processStep.update({
-        where: { id: step.id },
+        where: { id: targetStep.id },
         data: { machinesEquipmentDocs: currentWe },
       });
+    }
+
+    // Also update the shadow step if different
+    if (step.id !== targetStep.id && step.machinesEquipmentDocs) {
+      let shadowWe: string[] = [];
+      if (Array.isArray(step.machinesEquipmentDocs)) {
+        shadowWe = [...(step.machinesEquipmentDocs as string[])];
+      } else if (typeof step.machinesEquipmentDocs === 'string') {
+        try {
+          shadowWe = JSON.parse(step.machinesEquipmentDocs as string);
+        } catch {
+          shadowWe = [step.machinesEquipmentDocs as string];
+        }
+      }
+      if (!shadowWe.includes(pkg.name)) {
+        shadowWe.push(pkg.name);
+        await this.prisma.processStep.update({
+          where: { id: step.id },
+          data: { machinesEquipmentDocs: shadowWe },
+        });
+      }
     }
 
     // 2. Extract functions & failures from packageData

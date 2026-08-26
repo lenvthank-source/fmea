@@ -7,10 +7,11 @@ import {
   Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup,
   FormControl, InputLabel, Select, Checkbox
 } from '@mui/material';
-import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon, GridView as GridIcon, ViewList as ListIcon, Folder as FolderIcon } from '@mui/icons-material';
+import { Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon, GridView as GridIcon, ViewList as ListIcon, Folder as FolderIcon, ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
 
 interface Project {
@@ -254,6 +255,45 @@ export const ProjectList: React.FC = () => {
     setOtherApprover(project.otherApprover || '');
     setOtherApprovalDate2(project.otherApprovalDate2 ? new Date(project.otherApprovalDate2).toISOString().split('T')[0] : '');
     
+    setOpen(true);
+    setStep(1);
+    setCreateError(null);
+  };
+
+  const handleDuplicateClick = (project: Project) => {
+    setIsEditing(false);
+    setEditingProjectId(null);
+    setName(`${project.partName || project.name || 'Untitled'} — copy`);
+    setDescription(project.description || '');
+    setCustomer('');
+    setModelYear(project.modelYear || '');
+    setDocumentTypes(project.documentTypes || ['Prototype']);
+    setOrganisationName(project.organisationName || '');
+    setOrganisationCode(project.organisationCode || '');
+    setOrgPartNumber('');
+    setOrganisationPlant(project.organisationPlant || '');
+    setCustomerPartNumber('');
+    setPartName(project.partName || '');
+    setKeyContact(project.keyContact || '');
+    setLatestChangeLevel(project.latestChangeLevel || '');
+    setDrawingRevDate('');
+    setDwgNumber(project.dwgNumber || '');
+    setDwgRevNoAndDate(project.dwgRevNoAndDate || '');
+    setPreliminaryFinalFlag('preliminary');
+    setDocumentNumber('');
+    setControlPlanNumber(project.controlPlanNumber || '');
+    setAssemblyLineNumber(project.assemblyLineNumber || '');
+    setOriginationDate(new Date().toISOString().split('T')[0]);
+    setSupplierApprovalDate('');
+    setCftMembers(project.cftMembers || []);
+    setCustomerEngApprover(project.customerEngApprover || '');
+    setCustomerEngApprovalDate('');
+    setCustomerQualApprover(project.customerQualApprover || '');
+    setCustomerQualApprovalDate('');
+    setOtherApprover(project.otherApprover || '');
+    setOtherApprovalDate2('');
+    setSourceProjectId(project.id);
+    setImportTypes(['PFD', 'PFMEA', 'DFMEA', 'CONTROL_PLAN']);
     setOpen(true);
     setStep(1);
     setCreateError(null);
@@ -886,6 +926,20 @@ export const ProjectList: React.FC = () => {
               <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
               <ListItemText>Edit Project</ListItemText>
             </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                const selectedProj = projects.find(p => p.id === menuProjectId);
+                if (selectedProj) {
+                  handleDuplicateClick(selectedProj);
+                }
+                setMenuAnchor(null);
+                setMenuProjectId(null);
+              }}
+            >
+              <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+              <ListItemText>Duplicate for new customer</ListItemText>
+            </MenuItem>
             
             <MenuItem
               onClick={() => {
@@ -1047,6 +1101,7 @@ export const ProjectList: React.FC = () => {
                           <FormControl fullWidth size="small">
                             <InputLabel>Select Project to Import From</InputLabel>
                             <Select
+                              {...dialogSelectProps}
                               value={sourceProjectId}
                               onChange={(e) => {
                                 const val = e.target.value as string;

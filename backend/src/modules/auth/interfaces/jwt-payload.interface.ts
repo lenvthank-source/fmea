@@ -4,4 +4,5 @@ export interface JwtPayload {
   tenantId: string;   // Tenant ID
   roles: string[];    // User Roles
   permissions: string[]; // User Permissions
+  isGuest?: boolean;  // Is Guest User
 }

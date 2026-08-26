@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
+import { RevisionGuard } from '../../common/revision-guard';
 
 @Injectable()
 export class PfdService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private revisionGuard: RevisionGuard,
+  ) {}
 
   private async verifyRevisionAccess(tenantId: string, revisionId: string) {
     const revision = await this.prisma.documentRevision.findUnique({
@@ -56,6 +60,7 @@ export class PfdService {
 
   async createStep(tenantId: string, revisionId: string, dto: CreateStepDto) {
     const revision = await this.verifyRevisionAccess(tenantId, revisionId);
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
 
     // Resolve or create a default ProcessItem for the project
     let processItemId = dto.processItemId;
@@ -138,6 +143,7 @@ export class PfdService {
   }
 
   async updateStep(tenantId: string, stepId: string, dto: UpdateStepDto) {
+    await this.revisionGuard.assertRevisionWritableByStep(tenantId, stepId);
     const step = await this.verifyStepAccess(tenantId, stepId);
 
     if (dto.stepNumber && dto.stepNumber !== step.stepNumber) {
@@ -187,6 +193,7 @@ export class PfdService {
   }
 
   async removeStep(tenantId: string, stepId: string) {
+    await this.revisionGuard.assertRevisionWritableByStep(tenantId, stepId);
     const step = await this.verifyStepAccess(tenantId, stepId);
 
     // If it's a master PFD step, mark downstream steps as orphaned instead of cascade deleting them
@@ -218,7 +225,7 @@ export class PfdService {
   }
 
   async importSteps(tenantId: string, targetRevisionId: string, sourceRevisionId: string) {
-    await this.verifyRevisionAccess(tenantId, targetRevisionId);
+    await this.revisionGuard.assertRevisionWritable(tenantId, targetRevisionId);
     await this.verifyRevisionAccess(tenantId, sourceRevisionId);
 
     const sourceSteps = await this.prisma.processStep.findMany({
@@ -282,7 +289,7 @@ export class PfdService {
   }
 
   async reorderSteps(tenantId: string, revisionId: string, orderedStepIds: string[]) {
-    await this.verifyRevisionAccess(tenantId, revisionId);
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
 
     return this.prisma.$transaction(
       orderedStepIds.map((id, index) =>
@@ -292,5 +299,104 @@ export class PfdService {
         }),
       ),
     );
+  }
+
+  async createStepsBatch(tenantId: string, revisionId: string, dtos: CreateStepDto[]) {
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
+    const revision = await this.verifyRevisionAccess(tenantId, revisionId);
+
+    // Resolve or create a default ProcessItem for the project
+    let processItemId: string | undefined;
+    const firstDto = dtos[0];
+    if (firstDto?.processItemId) {
+      processItemId = firstDto.processItemId;
+    } else {
+      let processItem = await this.prisma.processItem.findFirst({
+        where: { projectId: revision.document.projectId, tenantId },
+      });
+      if (!processItem) {
+        processItem = await this.prisma.processItem.create({
+          data: {
+            tenantId,
+            projectId: revision.document.projectId,
+            name: 'Process Flow Items',
+            description: 'Default process flow structure container',
+          },
+        });
+      }
+      processItemId = processItem.id;
+    }
+
+    // Get existing steps to calculate sequence orders and step numbers
+    const existingSteps = await this.prisma.processStep.findMany({
+      where: { revisionId },
+      orderBy: { sequenceOrder: 'asc' },
+      select: { stepNumber: true, sequenceOrder: true },
+    });
+    const existingStepNumbers = new Set(existingSteps.map(s => s.stepNumber));
+    let maxSequenceOrder = existingSteps.length > 0 ? Math.max(...existingSteps.map(s => s.sequenceOrder)) : 0;
+
+    // Compute base prefix and max numeric value for step numbers
+    let prefix = 'OP';
+    let maxVal = 0;
+    for (const num of existingSteps.map(s => s.stepNumber)) {
+      const match = num.match(/(\D*)(\d+)/);
+      if (match) {
+        const p = match[1];
+        const val = parseInt(match[2], 10);
+        if (val > maxVal) {
+          maxVal = val;
+          if (p) prefix = p;
+        }
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const createdSteps: any[] = [];
+      let sequenceOrder = maxSequenceOrder;
+      let nextVal = maxVal;
+
+      for (const dto of dtos) {
+        // Determine step number
+        let stepNumber = dto.stepNumber;
+        if (!stepNumber) {
+          nextVal += 10;
+          if (nextVal === 10 && maxVal === 0 && existingSteps.length > 0) {
+            nextVal = (existingSteps.length + 1) * 10;
+          }
+          stepNumber = `${prefix}${nextVal}`;
+          while (existingStepNumbers.has(stepNumber)) {
+            nextVal += 10;
+            stepNumber = `${prefix}${nextVal}`;
+          }
+        }
+        existingStepNumbers.add(stepNumber);
+
+        sequenceOrder++;
+
+        const step = await tx.processStep.create({
+          data: {
+            revisionId,
+            processItemId,
+            stepNumber,
+            name: dto.name || '',
+            stepType: dto.stepType || 'operation',
+            inputs: dto.inputs,
+            outputs: dto.outputs,
+            resources: dto.resources,
+            sequenceOrder,
+
+            incomingVariation: dto.incomingVariation || [],
+            specialCharacteristics: dto.specialCharacteristics,
+            flowIcons: dto.flowIcons || {},
+            machinesEquipmentDocs: dto.machinesEquipmentDocs || [],
+            desiredOutcome: dto.desiredOutcome || dto.outputs,
+            processCharacteristics: dto.processCharacteristics,
+          },
+        });
+        createdSteps.push(step);
+      }
+      return createdSteps;
+    });
   }
 }

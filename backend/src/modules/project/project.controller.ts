@@ -13,14 +13,34 @@ export class ProjectController {
 
   @Get()
   @Permissions('project.view')
-  async findAll(@Request() req: RequestWithUser, @Query('status') status?: string) {
-    return this.projectService.findAll(req.user.tenantId, status);
+  async findAll(
+    @Request() req: RequestWithUser,
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    const userId = req.user.isGuest ? req.user.sub : undefined;
+    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId);
   }
 
   @Post()
   @Permissions('project.create')
   async create(@Request() req: RequestWithUser, @Body() dto: CreateProjectDto) {
     return this.projectService.create(req.user.tenantId, req.user.sub, dto);
+  }
+
+  @Post(':id/replicate')
+  @Permissions('project.create')
+  async replicate(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() dto: {
+      name: string;
+      qualityHeaderOverrides: Partial<CreateProjectDto>;
+      includeTypes: ('PFD' | 'PFMEA' | 'DFMEA' | 'CONTROL_PLAN')[];
+    },
+  ) {
+    return this.projectService.replicate(req.user.tenantId, req.user.sub, id, dto);
   }
 
   @Get('admin/revisions')
@@ -145,5 +165,34 @@ export class ProjectController {
     @Param('revisionId') revisionId: string,
   ) {
     return this.projectService.getRevisionDetail(req.user.tenantId, revisionId);
+  }
+
+  @Post(':id/revisions/:revisionId/submit')
+  @Permissions('project.edit')
+  async submitRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+  ) {
+    return this.projectService.submitRevision(req.user.tenantId, req.user.sub, revisionId);
+  }
+
+  @Post(':id/revisions/:revisionId/approve')
+  @Permissions('revision.approve')
+  async approveRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+    @Body() dto: { password: string; comment: string },
+  ) {
+    return this.projectService.approveRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+  }
+
+  @Post(':id/revisions/:revisionId/reject')
+  @Permissions('revision.review')
+  async rejectRevision(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+    @Body() dto: { comment: string },
+  ) {
+    return this.projectService.rejectRevision(req.user.tenantId, req.user.sub, revisionId, dto);
   }
 }

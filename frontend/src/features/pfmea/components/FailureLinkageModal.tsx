@@ -3,12 +3,15 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Stack, Checkbox,
   CircularProgress, Alert,
-  Grid, Collapse
+  Grid, Collapse, Tooltip, IconButton
 } from '@mui/material';
 import {
   Link as LinkIcon,
   KeyboardArrowRight as CollapseIcon,
   KeyboardArrowDown as ExpandIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  CropFree as CropFreeIcon,
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
 import { TREE_COLORS, TREE_ASSETS } from '../../shared/fmeaTreeStyles';
@@ -101,6 +104,57 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [links, setLinks] = useState<SvgLink[]>([]);
 
+  // Zoom & Pan state
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomFactor = 1.1;
+    let newZoom = zoom;
+    if (e.deltaY < 0) {
+      newZoom = Math.min(zoom * zoomFactor, 2.5);
+    } else {
+      newZoom = Math.max(zoom / zoomFactor, 0.3);
+    }
+    // Zoom to cursor position
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (containerRect) {
+      const cursorX = e.clientX - containerRect.left - panX;
+      const cursorY = e.clientY - containerRect.top - panY;
+      const newPanX = e.clientX - containerRect.left - cursorX * (newZoom / zoom);
+      const newPanY = e.clientY - containerRect.top - cursorY * (newZoom / zoom);
+      setPanX(newPanX);
+      setPanY(newPanY);
+    }
+    setZoom(newZoom);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPanX(e.clientX - dragStart.x);
+    setPanY(e.clientY - dragStart.y);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleResetZoom = () => {
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+  };
+
   useEffect(() => {
     if (!open || !failureModeId || !token) return;
     setLoading(true);
@@ -165,9 +219,9 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     if (!modeEl) return;
 
     const modeRect = modeEl.getBoundingClientRect();
-    const modeLeftX = modeRect.left - containerRect.left;
-    const modeRightX = modeRect.left - containerRect.left + modeRect.width;
-    const modeY = modeRect.top - containerRect.top + modeRect.height / 2;
+    const modeLeftX = (modeRect.left - containerRect.left - panX) / zoom;
+    const modeRightX = (modeRect.left - containerRect.left + modeRect.width - panX) / zoom;
+    const modeY = (modeRect.top - containerRect.top + modeRect.height / 2 - panY) / zoom;
 
     const newLinks: SvgLink[] = [];
 
@@ -177,8 +231,8 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
       if (el) {
         const r = el.getBoundingClientRect();
         newLinks.push({
-          x1: r.left - containerRect.left + r.width,
-          y1: r.top - containerRect.top + r.height / 2,
+          x1: (r.left - containerRect.left + r.width - panX) / zoom,
+          y1: (r.top - containerRect.top + r.height / 2 - panY) / zoom,
           x2: modeLeftX,
           y2: modeY,
           color: TREE_COLORS.nodeText.process // Blue #1D4ED8
@@ -194,8 +248,8 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
         newLinks.push({
           x1: modeRightX,
           y1: modeY,
-          x2: r.left - containerRect.left,
-          y2: r.top - containerRect.top + r.height / 2,
+          x2: (r.left - containerRect.left - panX) / zoom,
+          y2: (r.top - containerRect.top + r.height / 2 - panY) / zoom,
           color: TREE_COLORS.nodeText.function // Forest Green #15803D
         });
       }
@@ -204,9 +258,54 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     setLinks(newLinks);
   };
 
+  // Fit to view when data loads or selection changes
+  const fitToView = () => {
+    if (!containerRef.current || !data) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    // Collect all element bounding boxes
+    const elements: DOMRect[] = [];
+    
+    selectedEffects.forEach(eff => {
+      const el = document.getElementById(`selected-eff-${eff.id}`);
+      if (el) elements.push(el.getBoundingClientRect());
+    });
+    selectedCauses.forEach(cause => {
+      const el = document.getElementById(`selected-cause-${cause.id}`);
+      if (el) elements.push(el.getBoundingClientRect());
+    });
+    const modeEl = document.getElementById('linkage-mode-box');
+    if (modeEl) elements.push(modeEl.getBoundingClientRect());
+
+    if (elements.length === 0) return;
+
+    const minX = Math.min(...elements.map(e => e.left - containerRect.left));
+    const minY = Math.min(...elements.map(e => e.top - containerRect.top));
+    const maxX = Math.max(...elements.map(e => e.left - containerRect.left + e.width));
+    const maxY = Math.max(...elements.map(e => e.top - containerRect.top + e.height));
+
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    const padding = 40;
+
+    const scaleX = (containerWidth - padding * 2) / contentWidth;
+    const scaleY = (containerHeight - padding * 2) / contentHeight;
+    const newZoom = Math.min(scaleX, scaleY, 2.5, 1); // cap at 1 for initial fit
+
+    const newPanX = containerWidth / 2 - (minX + maxX) / 2 * newZoom;
+    const newPanY = containerHeight / 2 - (minY + maxY) / 2 * newZoom;
+
+    setZoom(newZoom);
+    setPanX(newPanX);
+    setPanY(newPanY);
+  };
+
   useEffect(() => {
     if (!open || !data) return;
     updateCoords();
+    fitToView();
     const timers = [
       setTimeout(updateCoords, 50),
       setTimeout(updateCoords, 150),
@@ -218,7 +317,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
       timers.forEach(clearTimeout);
       window.removeEventListener('resize', updateCoords);
     };
-  }, [selectedEffectIds, selectedCauseIds, data, open]);
+  }, [selectedEffectIds, selectedCauseIds, data, open, zoom, panX, panY]);
 
   // Group items by parent function
   const groupEffectsByFunction = () => {
@@ -273,13 +372,44 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
             
             {/* LEFT PANE (~70% Width): Live Linkage Network Diagram */}
             <Grid size={8} sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 3, position: 'relative', overflow: 'hidden', borderRight: '1px solid #E2E8F0' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '1.05rem' }}>
-                🔗 Failure Linkage Network Diagram
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '1.05rem' }}>
+                  🔗 Failure Linkage Network Diagram
+                </Typography>
+                {/* Zoom Toolbar */}
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <Tooltip title="Zoom In">
+                    <IconButton size="small" onClick={() => setZoom(z => Math.min(z + 0.15, 2.5))} sx={{ p: 0.25 }}>
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Zoom Out">
+                    <IconButton size="small" onClick={() => setZoom(z => Math.max(z - 0.15, 0.3))} sx={{ p: 0.25 }}>
+                      <RemoveIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={`Zoom: ${Math.round(zoom * 100)}%`}>
+                    <IconButton size="small" onClick={handleResetZoom} sx={{ p: 0.25 }}>
+                      <CropFreeIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
               
-              <Box ref={containerRef} sx={{ flex: 1, display: 'flex', width: '100%', position: 'relative', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}>
-                {/* SVG CONNECTOR LINES */}
-                <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
+              <Box
+                ref={containerRef}
+                sx={{ flex: 1, display: 'flex', width: '100%', position: 'relative', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}
+                onWheel={handleWheel}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+              >
+                {/* Transform wrapper for zoom/pan */}
+                <Box sx={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: '0 0', width: '100%' }}>
+                  {/* SVG CONNECTOR LINES */}
+                  <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
                   {links.map((link, idx) => {
                     const midX = (link.x1 + link.x2) / 2;
                     const d = `M ${link.x1} ${link.y1} C ${midX} ${link.y1}, ${midX} ${link.y2}, ${link.x2} ${link.y2}`;
@@ -388,6 +518,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                     ))
                   )}
                 </Stack>
+              </Box>
               </Box>
             </Grid>
 

@@ -3,10 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePfmeaRowDto } from './dto/create-pfmea-row.dto';
 import { UpdatePfmeaRowDto } from './dto/update-pfmea-row.dto';
 import { calculateAP } from './ap-calculator';
+import { RevisionGuard } from '../../common/revision-guard';
 
 @Injectable()
 export class PfmeaRowService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private revisionGuard: RevisionGuard,
+  ) {}
 
   private async verifyRevisionAccess(tenantId: string, revisionId: string) {
     const revision = await this.prisma.documentRevision.findUnique({
@@ -46,40 +50,48 @@ export class PfmeaRowService {
     return row;
   }
 
-  async findAllRows(tenantId: string, revisionId: string) {
+  async findAllRows(tenantId: string, revisionId: string, page?: number, limit?: number) {
     await this.verifyRevisionAccess(tenantId, revisionId);
 
-    const rows = await this.prisma.pfmeaRow.findMany({
-      where: { revisionId },
-      include: {
-        processStep: true,
-        functions: {
-          include: { function: true },
+    const skip = page && limit ? (page - 1) * limit : undefined;
+    const take = limit;
+
+    const [rows, total] = await Promise.all([
+      this.prisma.pfmeaRow.findMany({
+        where: { revisionId },
+        include: {
+          processStep: true,
+          functions: {
+            include: { function: true },
+          },
+          requirements: {
+            include: { requirement: true },
+          },
+          failureModes: {
+            include: { failureMode: true },
+          },
+          effects: {
+            include: { effect: true },
+          },
+          causes: {
+            include: { cause: true },
+          },
+          controls: {
+            include: { control: true },
+          },
+          characteristics: {
+            include: { characteristic: true },
+          },
         },
-        requirements: {
-          include: { requirement: true },
-        },
-        failureModes: {
-          include: { failureMode: true },
-        },
-        effects: {
-          include: { effect: true },
-        },
-        causes: {
-          include: { cause: true },
-        },
-        controls: {
-          include: { control: true },
-        },
-        characteristics: {
-          include: { characteristic: true },
-        },
-      },
-      orderBy: { rowNumber: 'asc' },
-    });
+        orderBy: { rowNumber: 'asc' },
+        skip,
+        take,
+      }),
+      this.prisma.pfmeaRow.count({ where: { revisionId } }),
+    ]);
 
     // Flatten the response so the frontend receives plain entity arrays
-    return rows.map((r) => ({
+    const data = rows.map((r) => ({
       id: r.id,
       revisionId: r.revisionId,
       processStepId: r.processStepId,
@@ -116,6 +128,7 @@ export class PfmeaRowService {
   }
 
   async createRow(tenantId: string, userId: string, revisionId: string, dto: CreatePfmeaRowDto) {
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
     const pfmeaRevision = await this.verifyRevisionAccess(tenantId, revisionId);
 
     if (dto.processStepId) {
@@ -152,6 +165,7 @@ export class PfmeaRowService {
   }
 
   async updateRow(tenantId: string, rowId: string, dto: UpdatePfmeaRowDto) {
+    await this.revisionGuard.assertRevisionWritableByRow(tenantId, rowId);
     const row = await this.verifyRowAccess(tenantId, rowId);
 
     // Recalculate AP
@@ -429,6 +443,7 @@ export class PfmeaRowService {
   }
 
   async removeRow(tenantId: string, rowId: string) {
+    await this.revisionGuard.assertRevisionWritableByRow(tenantId, rowId);
     await this.verifyRowAccess(tenantId, rowId);
 
     return this.prisma.pfmeaRow.delete({

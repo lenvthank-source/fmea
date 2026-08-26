@@ -447,3 +447,5 @@ export const RepositoryPage: React.FC = () => {
     </Box>
   );
 };
+
+export default RepositoryPage;

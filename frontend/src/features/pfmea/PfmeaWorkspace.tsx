@@ -18,6 +18,7 @@ import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { AddFunctionDialog } from './components/AddFunctionDialog';
 import { AddFailureDialog } from './components/AddFailureDialog';
 import { MultiAddWorkElementDialog } from './components/MultiAddWorkElementDialog';
+import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { FailureLinkageModal } from './components/FailureLinkageModal';
 import { FailureDetailWindow } from './components/FailureDetailWindow';
 
@@ -34,6 +35,7 @@ interface ProcessStep {
   stepType: string;
   machinesEquipmentDocs?: any;
   isOrphaned?: boolean;
+  linkedPfdStepId?: string | null;
 }
 
 interface PfmeaRow {
@@ -403,11 +405,32 @@ export const PfmeaWorkspace: React.FC = () => {
 
     if (!currentWe.includes(name)) {
       currentWe.push(name);
+      // Update shadow step
       await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ machinesEquipmentDocs: currentWe }),
       });
+      // Also update master PFD step if linked
+      if (step.linkedPfdStepId) {
+        let masterWe: string[] = [];
+        const masterStep = pfdSteps.find(s => s.id === step.linkedPfdStepId);
+        if (masterStep?.machinesEquipmentDocs) {
+          if (Array.isArray(masterStep.machinesEquipmentDocs)) {
+            masterWe = [...masterStep.machinesEquipmentDocs];
+          } else if (typeof masterStep.machinesEquipmentDocs === 'string') {
+            try { masterWe = JSON.parse(masterStep.machinesEquipmentDocs); } catch { masterWe = [masterStep.machinesEquipmentDocs]; }
+          }
+        }
+        if (!masterWe.includes(name)) {
+          masterWe.push(name);
+          await fetch(`${API_BASE_URL}/pfd-steps/${step.linkedPfdStepId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ machinesEquipmentDocs: masterWe }),
+          });
+        }
+      }
       await fetchData();
     }
   };
@@ -435,11 +458,34 @@ export const PfmeaWorkspace: React.FC = () => {
     }
 
     if (updated) {
+      // Update shadow step
       await fetch(`${API_BASE_URL}/pfd-steps/${treeAddTargetStepId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ machinesEquipmentDocs: currentWe }),
       });
+      // Also update master PFD step if linked
+      if (step.linkedPfdStepId) {
+        let masterWe: string[] = [];
+        const masterStep = pfdSteps.find(s => s.id === step.linkedPfdStepId);
+        if (masterStep?.machinesEquipmentDocs) {
+          if (Array.isArray(masterStep.machinesEquipmentDocs)) {
+            masterWe = [...masterStep.machinesEquipmentDocs];
+          } else if (typeof masterStep.machinesEquipmentDocs === 'string') {
+            try { masterWe = JSON.parse(masterStep.machinesEquipmentDocs); } catch { masterWe = [masterStep.machinesEquipmentDocs]; }
+          }
+        }
+        for (const name of names) {
+          if (!masterWe.includes(name)) {
+            masterWe.push(name);
+          }
+        }
+        await fetch(`${API_BASE_URL}/pfd-steps/${step.linkedPfdStepId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ machinesEquipmentDocs: masterWe }),
+        });
+      }
       await fetchData();
     }
   };
@@ -1572,6 +1618,7 @@ export const PfmeaWorkspace: React.FC = () => {
             <FormControl fullWidth size="small">
               <InputLabel>Process Step</InputLabel>
               <Select
+                {...dialogSelectProps}
                 value={selectedStepId}
                 label="Process Step"
                 onChange={(e) => setSelectedStepId(e.target.value)}
@@ -1926,3 +1973,5 @@ export const PfmeaWorkspace: React.FC = () => {
     </Box>
   );
 };
+
+export default PfmeaWorkspace;

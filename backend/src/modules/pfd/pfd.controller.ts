@@ -25,6 +25,16 @@ export class PfdController {
     return this.pfdService.createStep(req.user.tenantId, revisionId, dto);
   }
 
+  @Post('revisions/:id/pfd-steps/batch')
+  @Permissions('pfmea.edit')
+  async createStepsBatch(
+    @Request() req: RequestWithUser,
+    @Param('id') revisionId: string,
+    @Body() dtos: CreateStepDto[],
+  ) {
+    return this.pfdService.createStepsBatch(req.user.tenantId, revisionId, dtos);
+  }
+
   @Post('revisions/:id/import-pfd-steps')
   @Permissions('pfmea.edit')
   async importPfdSteps(

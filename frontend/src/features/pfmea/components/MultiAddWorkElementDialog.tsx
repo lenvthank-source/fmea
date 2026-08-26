@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../auth/AuthContext';
 import { API_BASE_URL } from '../../../config';
+import { dialogSelectProps } from '../../../theme/muiSelectConfig';
 import { PackagePreviewCard } from '../../repository/PackagePreviewCard';
 
 interface MultiAddWorkElementDialogProps {
@@ -262,6 +263,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
                 <FormControl fullWidth size="small">
                   <InputLabel>Select Work Element Package</InputLabel>
                   <Select
+                    {...dialogSelectProps}
                     value={selectedPackageId}
                     label="Select Work Element Package"
                     onChange={(e) => setSelectedPackageId(e.target.value)}

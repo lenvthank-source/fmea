@@ -1,5 +1,6 @@
 import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Typography, Box } from '@mui/material';
+import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
 
 const severityCriteria: Record<number, string> = {
   10: 'Safety/regulatory — without warning',
@@ -74,6 +75,7 @@ export const RatingDropdown: React.FC<RatingDropdownProps> = ({
     <FormControl size={size} fullWidth={fullWidth} required={required}>
       {!hideLabel && <InputLabel>{label || defaultLabel}</InputLabel>}
       <Select
+        MenuProps={dialogSelectMenuProps}
         value={value ?? ''}
         label={hideLabel ? undefined : (label || defaultLabel)}
         onChange={(e) => {

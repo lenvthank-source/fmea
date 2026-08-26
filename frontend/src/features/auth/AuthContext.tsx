@@ -13,7 +13,6 @@ export interface UserSession {
 interface AuthContextType {
   token: string | null;
   user: UserSession | null;
-  loading: boolean;
   login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
   guestLogin: () => Promise<void>;
   logout: () => void;
@@ -47,7 +46,6 @@ const originalFetch = window.fetch;
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSession | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const refreshAccessToken = async (): Promise<boolean> => {
     const savedRefreshToken = localStorage.getItem('refresh_token');
@@ -55,77 +53,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
       return false;
     }
-    try {
-      const response = await originalFetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: savedRefreshToken }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const accessToken = data.access_token;
-        const claims = parseJwt(accessToken);
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        setToken(accessToken);
-        setUser({
-          id: claims.sub,
-          email: claims.email,
-          name: data.user?.name || claims.name || claims.email,
-          tenantId: claims.tenant_id || claims.tenantId,
-          roles: claims.roles || [],
-          permissions: claims.permissions || [],
-          isGuest: false,
+
+    const refreshPromise = (async () => {
+      try {
+        const response = await originalFetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: savedRefreshToken }),
         });
-        return true;
-      } else {
+        if (response.ok) {
+          const data = await response.json();
+          const accessToken = data.access_token;
+          localStorage.setItem('token', accessToken);
+          localStorage.setItem('refresh_token', data.refresh_token);
+          setToken(accessToken);
+          
+          // Fetch fresh user data with permissions from server
+          const meResponse = await fetch(`${API_URL}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+          });
+          if (meResponse.ok) {
+            const meData = await meResponse.json();
+            setUser(meData);
+          } else {
+            // Fallback to JWT claims if /me fails
+            const claims = parseJwt(accessToken);
+            setUser({
+              id: claims.sub,
+              email: claims.email,
+              name: claims.name || claims.email,
+              tenantId: claims.tenant_id || claims.tenantId,
+              roles: claims.roles || [],
+              permissions: claims.permissions || [],
+              isGuest: false,
+            });
+          }
+          return true;
+        } else {
+          logout();
+          return false;
+        }
+      } catch (err) {
+        console.error('Token refresh failed:', err);
         logout();
         return false;
       }
-    } catch (err) {
-      console.error('Token refresh failed:', err);
-      logout();
-      return false;
-    }
+    })();
+
+    return refreshPromise;
   };
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const savedToken = localStorage.getItem('token');
-      const savedRefreshToken = localStorage.getItem('refresh_token');
-
-      if (savedToken) {
-        const claims = parseJwt(savedToken);
-        if (claims && claims.exp * 1000 > Date.now() + 30000) {
-          setToken(savedToken);
-          setUser({
-            id: claims.sub,
-            email: claims.email,
-            name: claims.name || claims.email,
-            tenantId: claims.tenant_id || claims.tenantId,
-            roles: claims.roles || [],
-            permissions: claims.permissions || [],
-            isGuest: false,
-          });
-          setLoading(false);
-          return;
-        }
+  // Fetch fresh user data with permissions from server
+  const fetchMe = async (token: string): Promise<UserSession | null> => {
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        return await response.json();
       }
-
-      if (savedRefreshToken) {
-        const success = await refreshAccessToken();
-        if (success) {
-          setLoading(false);
-          return;
-        }
-      }
-
-      logout();
-      setLoading(false);
-    };
-
-    initAuth();
-  }, []);
+    } catch (err) {
+      console.error('Failed to fetch /me:', err);
+    }
+    return null;
+  };
 
   // Background token refresh check
   useEffect(() => {
@@ -206,21 +197,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const data = await response.json();
     const accessToken = data.access_token;
-    const claims = parseJwt(accessToken);
 
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refresh_token', data.refresh_token);
     
     setToken(accessToken);
-    setUser({
-      id: claims.sub,
-      email: claims.email,
-      name: data.user.name,
-      tenantId: claims.tenant_id || claims.tenantId,
-      roles: claims.roles || [],
-      permissions: claims.permissions || [],
-      isGuest: false,
-    });
+    
+    // Fetch fresh user data with permissions from server
+    const meData = await fetchMe(accessToken);
+    if (meData) {
+      setUser(meData);
+    } else {
+      // Fallback to JWT claims if /me fails
+      const claims = parseJwt(accessToken);
+      setUser({
+        id: claims.sub,
+        email: claims.email,
+        name: data.user?.name || claims.name || claims.email,
+        tenantId: claims.tenant_id || claims.tenantId,
+        roles: claims.roles || [],
+        permissions: claims.permissions || [],
+        isGuest: false,
+      });
+    }
   };
 
   const guestLogin = async () => {
@@ -236,21 +235,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const data = await response.json();
     const accessToken = data.access_token;
-    const claims = parseJwt(accessToken);
 
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refresh_token', data.refresh_token);
     
     setToken(accessToken);
-    setUser({
-      id: claims.sub,
-      email: claims.email,
-      name: data.user.name,
-      tenantId: claims.tenant_id || claims.tenantId,
-      roles: claims.roles || [],
-      permissions: claims.permissions || [],
-      isGuest: true,
-    });
+    
+    // Fetch fresh user data with permissions from server
+    const meData = await fetchMe(accessToken);
+    if (meData) {
+      setUser({ ...meData, isGuest: true });
+    } else {
+      // Fallback to JWT claims if /me fails
+      const claims = parseJwt(accessToken);
+      setUser({
+        id: claims.sub,
+        email: claims.email,
+        name: data.user?.name || claims.name || claims.email,
+        tenantId: claims.tenant_id || claims.tenantId,
+        roles: claims.roles || [],
+        permissions: claims.permissions || [],
+        isGuest: true,
+      });
+    }
   };
 
 
@@ -270,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, guestLogin, logout, hasPermission }}>
+    <AuthContext.Provider value={{ token, user, login, guestLogin, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
