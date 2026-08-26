@@ -312,7 +312,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
       onClose={handleClose}
       maxWidth={role === 'cause' && activeTab === 1 ? 'lg' : 'md'}
       fullWidth
-      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #d32f2f' } }}
+      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #d32f2f', transform: 'translateY(-36px)', m: 2 } }}
     >
       <DialogTitle sx={{ color: '#d32f2f', fontWeight: 'bold', pt: 2.5, pb: 1 }}>
         {editMode ? 'Edit' : 'Add'} Failure {roleTitle}

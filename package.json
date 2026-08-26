@@ -1,6 +1,6 @@
 {
   "name": "proj-fmea",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Multi-tenant, cloud-native AI-assisted FMEA platform",
   "scripts": {
     "podman:up": "podman play kube fmea-pod.yaml",

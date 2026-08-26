@@ -177,7 +177,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
   const selectedPkg = approvedPackages.find((p) => p.id === selectedPackageId);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { transform: 'translateY(-36px)', m: 2 } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Add Work Element (4M)</DialogTitle>
       <DialogContent>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>

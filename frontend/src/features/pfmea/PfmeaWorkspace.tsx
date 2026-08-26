@@ -199,8 +199,58 @@ export const PfmeaWorkspace: React.FC = () => {
     }
   };
 
+  const getDynamicRowStatus = (row: PfmeaRow): { label: string; color: string; bg: string } => {
+    const s = (row.status || '').toLowerCase();
+    if (['closed', 'approved'].includes(s)) {
+      return { label: 'Closed', color: '#15803D', bg: '#DCFCE7' };
+    }
+    if (['verified'].includes(s)) {
+      return { label: 'Verified', color: '#0369A1', bg: '#E0F2FE' };
+    }
+    if (['completed'].includes(s)) {
+      return { label: 'Completed', color: '#0F766E', bg: '#CCFBF1' };
+    }
+    if (['in progress', 'in_progress', 'reviewed'].includes(s)) {
+      return { label: 'In Progress', color: '#B45309', bg: '#FEF3C7' };
+    }
+    if (['open'].includes(s)) {
+      return { label: 'Open', color: '#DC2626', bg: '#FEE2E2' };
+    }
+
+    // Derive dynamically from backward-dependent action fields
+    const hasActionPlanned = Boolean(
+      (row.preventionAction && row.preventionAction.trim()) ||
+      (row.detectionAction && row.detectionAction.trim()) ||
+      (row.responsibility && row.responsibility.trim()) ||
+      (row.targetDate && row.targetDate.trim())
+    );
+    const hasActionTaken = Boolean(row.actionTaken && row.actionTaken.trim());
+    const hasCompletionDate = Boolean(row.completionDate && row.completionDate.trim());
+    const hasRevisedRatings = Boolean(row.revisedSeverity || row.revisedOccurrence || row.revisedDetection);
+
+    if (!hasActionPlanned && !hasActionTaken && !hasCompletionDate && !hasRevisedRatings) {
+      return { label: '—', color: '#64748B', bg: 'transparent' };
+    }
+
+    if (hasActionTaken && hasCompletionDate && hasRevisedRatings) {
+      return { label: 'Completed', color: '#0F766E', bg: '#CCFBF1' };
+    }
+
+    if (hasActionTaken || hasCompletionDate) {
+      return { label: 'In Progress', color: '#B45309', bg: '#FEF3C7' };
+    }
+
+    if (hasActionPlanned) {
+      return { label: 'Open', color: '#DC2626', bg: '#FEE2E2' };
+    }
+
+    return { label: '—', color: '#64748B', bg: 'transparent' };
+  };
+
   const openManageAction = (row: PfmeaRow) => {
     setManageActionRowId(row.id);
+    const dynamicStatus = getDynamicRowStatus(row).label;
+    const initialStatus = dynamicStatus === '—' ? 'Open' : dynamicStatus;
     setManageActionForm({
       preventionAction: row.preventionAction || '',
       detectionAction: row.detectionAction || '',
@@ -208,7 +258,7 @@ export const PfmeaWorkspace: React.FC = () => {
       targetDate: row.targetDate ? row.targetDate.split('T')[0] : '',
       completionDate: row.completionDate ? row.completionDate.split('T')[0] : '',
       responsibility: row.responsibility || '',
-      status: row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open',
+      status: initialStatus,
       revisedSeverity: row.revisedSeverity ? String(row.revisedSeverity) : '',
       revisedOccurrence: row.revisedOccurrence ? String(row.revisedOccurrence) : '',
       revisedDetection: row.revisedDetection ? String(row.revisedDetection) : '',
@@ -234,6 +284,7 @@ export const PfmeaWorkspace: React.FC = () => {
           targetDate: manageActionForm.targetDate || null,
           completionDate: manageActionForm.completionDate || null,
           responsibility: manageActionForm.responsibility || null,
+          status: manageActionForm.status || null,
           revisedSeverity: manageActionForm.revisedSeverity ? Number(manageActionForm.revisedSeverity) : null,
           revisedOccurrence: manageActionForm.revisedOccurrence ? Number(manageActionForm.revisedOccurrence) : null,
           revisedDetection: manageActionForm.revisedDetection ? Number(manageActionForm.revisedDetection) : null,
@@ -926,7 +977,7 @@ export const PfmeaWorkspace: React.FC = () => {
     let confirmMsg = `Are you sure you want to delete the process step "${step.stepNumber} - ${step.name}"?`;
     let detail: string | undefined;
     if (step.isOrphaned) {
-      detail = 'This step is orphaned (original PFD step was deleted). All associated analysis data will be removed.';
+      detail = 'This step is detached from the PFD (original PFD process step was deleted). All associated analysis data will be removed.';
     } else if (assocRows.length > 0) {
       detail = `This will also delete ${assocRows.length} associated FMEA analysis row(s).`;
     }
@@ -1574,10 +1625,27 @@ export const PfmeaWorkspace: React.FC = () => {
                       <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>{getApBadge(row.revisedAp || null)}</TableCell>
 
                       {/* Status */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>
-                          {row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open'}
-                        </Typography>
+                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
+                        {(() => {
+                          const st = getDynamicRowStatus(row);
+                          if (st.label === '—') {
+                            return <Typography sx={{ fontSize: '0.85rem', color: '#94A3B8' }}>—</Typography>;
+                          }
+                          return (
+                            <Chip
+                              label={st.label}
+                              size="small"
+                              sx={{
+                                height: 22,
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                color: st.color,
+                                bgcolor: st.bg,
+                                border: `1px solid ${st.color}40`,
+                              }}
+                            />
+                          );
+                        })()}
                       </TableCell>
 
                       {/* Remarks */}

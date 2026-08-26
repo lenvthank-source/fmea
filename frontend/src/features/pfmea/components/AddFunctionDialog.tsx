@@ -218,7 +218,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
       onClose={handleClose}
       maxWidth="md"
       fullWidth
-      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #2e7d32' } }}
+      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #2e7d32', transform: 'translateY(-36px)', m: 2 } }}
     >
       <DialogTitle sx={{ color: '#2e7d32', fontWeight: 'bold', pt: 2.5, pb: 1 }}>
         {editMode ? 'Edit' : 'Add'} Function / Requirement — {PARENT_LABELS[parentType]}

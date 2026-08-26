@@ -563,11 +563,11 @@ export const ControlPlanWorkspace: React.FC = () => {
                       )}
                       {row.processStep?.isOrphaned && (
                         <Chip
-                          label="Orphaned"
+                          label="PFD Detached"
                           size="small"
                           color="error"
                           variant="outlined"
-                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
+                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5, fontWeight: 700 }}
                         />
                       )}
                     </Stack>

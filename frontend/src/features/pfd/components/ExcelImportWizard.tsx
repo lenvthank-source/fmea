@@ -965,25 +965,25 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           </Stack>
         </Alert>
         {draftSteps.length > 0 && (
-          <TableContainer component={Paper} sx={{ maxHeight: 500, overflow: 'auto' }}>
+          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400, overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
             <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell style={{ width: 50 }}>
+                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
+                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>
                     <Checkbox
-                      checked={getVisibleSteps().length > 0 && getVisibleSteps().every((_, i) => selectedRows.has(i + page * rowsPerPage))}
+                      checked={getVisibleSteps().length > 0 && getVisibleSteps().every((_, idx) => selectedRows.has(idx + page * rowsPerPage))}
                       indeterminate={selectedRows.size > 0 && selectedRows.size < getVisibleSteps().length}
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
-                  <TableCell style={{ fontWeight: 'bold' }}>Step #</TableCell>
-                  <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
-                  <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Incoming Variation</TableCell>
-                  <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
-                  <TableCell style={{ minWidth: 130, fontWeight: 'bold', textAlign: 'center' }}>Flow Symbols</TableCell>
-                  <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Machines/Equipment/Docs</TableCell>
-                  <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Desired Outcome</TableCell>
-                  <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Process Characteristics</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Step #</TableCell>
+                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Process Description</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Incoming Variation</TableCell>
+                  <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Spec. Class</TableCell>
+                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Flow Symbols</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Machines/Equipment/Docs</TableCell>
+                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Desired Outcome</TableCell>
+                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1' }}>Process Characteristics</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1006,31 +1006,31 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       onClick={() => toggleRowSelection(globalIdx)}
                       sx={{ cursor: 'pointer' }}
                     >
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{step.stepNumber || '—'}</Typography>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{step.stepNumber || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{step.name || '—'}</Typography>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2" sx={{ color: '#1E293B' }}>{step.name || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2" color="text.secondary">{step.incomingVariation || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2">{step.specialCharacteristics || '—'}</Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{symbolsText}</Typography>
+                      <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{symbolsText}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2" color="text.secondary">{step.machinesEquipmentDocs || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2" color="text.secondary">{step.desiredOutcome || '—'}</Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}>
                         <Typography variant="body2" color="text.secondary">{step.processCharacteristics || '—'}</Typography>
                       </TableCell>
                     </TableRow>
@@ -1106,39 +1106,39 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           <Chip label={`Missing: ${diffResults.filter((d) => d.status === 'missing').length}`} color="error" size="small" variant="outlined" />
         </Box>
         {diffResults.length > 0 && (
-          <TableContainer component={Paper} sx={{ maxHeight: 500, overflow: 'auto' }}>
+          <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 500, overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
             <Table size="small">
               <TableHead>
-                <TableRow>
-                  <TableCell style={{ width: 50 }}>
+                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
+                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>
                     <Checkbox
                       checked={diffResults.length > 0 && diffResults.every((d, i) => d.status !== 'missing' && selectedRows.has(i))}
                       indeterminate={selectedRows.size > 0 && selectedRows.size < diffResults.filter((d) => d.status !== 'missing').length}
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
-                  <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell style={{ minWidth: 80, fontWeight: 'bold' }}>Step #</TableCell>
-                  <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
-                  <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
-                  <TableCell style={{ minWidth: 130, fontWeight: 'bold', textAlign: 'center' }}>Flow Symbols</TableCell>
-                  <TableCell style={{ fontWeight: 'bold' }}>Changes</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Status</TableCell>
+                  <TableCell sx={{ minWidth: 80, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Step #</TableCell>
+                  <TableCell sx={{ minWidth: 220, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Process Description</TableCell>
+                  <TableCell sx={{ minWidth: 110, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Spec. Class</TableCell>
+                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1' }}>Flow Symbols</TableCell>
+                  <TableCell sx={{ minWidth: 260, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1' }}>Changes</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {diffResults.map((result, idx) => {
                   if (result.status === 'missing') {
                     return (
-                      <TableRow key={`missing-${idx}`} sx={{ opacity: 0.5 }}>
-                        <TableCell><Checkbox disabled /></TableCell>
-                        <TableCell>
-                          <Chip label="Missing" color="error" size="small" variant="outlined" />
+                      <TableRow key={`missing-${idx}`} sx={{ opacity: 0.7, bgcolor: '#FEF2F2' }}>
+                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Checkbox disabled /></TableCell>
+                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                          <Chip label="Missing" color="error" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
                         </TableCell>
-                        <TableCell><Typography variant="body2">{result.existingStep?.stepNumber}</Typography></TableCell>
-                        <TableCell><Typography variant="body2" color="text.secondary">{result.existingStep?.name}</Typography></TableCell>
-                        <TableCell><Typography variant="body2">{result.existingStep?.specialCharacteristics || '—'}</Typography></TableCell>
-                        <TableCell align="center"><Typography variant="body2" color="text.secondary">—</Typography></TableCell>
-                        <TableCell><Typography variant="body2" color="text.secondary">Exists in PFD but not in Excel</Typography></TableCell>
+                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{result.existingStep?.stepNumber}</Typography></TableCell>
+                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="text.secondary">{result.existingStep?.name}</Typography></TableCell>
+                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{result.existingStep?.specialCharacteristics || '—'}</Typography></TableCell>
+                        <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="text.secondary">—</Typography></TableCell>
+                        <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="error.main" sx={{ fontWeight: 600 }}>Exists in PFD but missing from Excel file</Typography></TableCell>
                       </TableRow>
                     );
                   }
@@ -1154,37 +1154,50 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                     : '—';
                   return (
                     <TableRow key={idx} hover selected={isSelected} onClick={() => toggleRowSelection(idx)} sx={{ cursor: 'pointer' }}>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
                         <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
                       </TableCell>
-                      <TableCell>
-                        {result.status === 'new' && <Chip label="New" color="success" size="small" />}
-                        {result.status === 'update' && <Chip label="Update" color="warning" size="small" />}
-                        {result.status === 'unchanged' && <Chip label="Unchanged" color="default" size="small" variant="outlined" />}
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        {result.status === 'new' && <Chip label="New" color="success" size="small" sx={{ fontWeight: 700 }} />}
+                        {result.status === 'update' && <Chip label="Update" color="warning" size="small" sx={{ fontWeight: 700 }} />}
+                        {result.status === 'unchanged' && <Chip label="Unchanged" color="default" size="small" variant="outlined" sx={{ fontWeight: 600 }} />}
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{draft.stepNumber || 'Auto'}</Typography>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{draft.stepNumber || 'Auto'}</Typography>
                       </TableCell>
-                      <TableCell><Typography variant="body2">{draft.name}</Typography></TableCell>
-                      <TableCell><Typography variant="body2">{draft.specialCharacteristics || '—'}</Typography></TableCell>
-                      <TableCell align="center"><Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{symbolsText}</Typography></TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ color: '#1E293B' }}>{draft.name}</Typography></TableCell>
+                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{draft.specialCharacteristics || '—'}</Typography></TableCell>
+                      <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{symbolsText}</Typography></TableCell>
+                      <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}>
                         {result.fieldDiffs && result.fieldDiffs.length > 0 && (
-                          <Stack spacing={0.25}>
+                          <Stack spacing={0.75}>
                             {result.fieldDiffs.map((fd) => (
-                              <Chip
+                              <Box
                                 key={fd.field}
-                                label={`${fd.field}: "${fd.old}" → "${fd.new}"`}
-                                size="small"
-                                color="warning"
-                                variant="outlined"
-                                sx={{ maxWidth: 300 }}
-                              />
+                                sx={{
+                                  p: 0.75,
+                                  borderRadius: 1.5,
+                                  bgcolor: '#FFFBEB',
+                                  border: '1px solid #FDE68A',
+                                }}
+                              >
+                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, color: '#92400E', mb: 0.25 }}>
+                                  {fd.field}:
+                                </Typography>
+                                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', wordBreak: 'break-word', lineHeight: 1.3 }}>
+                                  <span style={{ textDecoration: 'line-through', color: '#DC2626', marginRight: 6 }}>
+                                    "{fd.old || '(empty)'}"
+                                  </span>
+                                  ➔ <span style={{ fontWeight: 700, color: '#0F766E' }}>
+                                    "{fd.new}"
+                                  </span>
+                                </Typography>
+                              </Box>
                             ))}
                           </Stack>
                         )}
-                        {result.fieldDiffs?.length === 0 && (
-                          <Typography variant="body2" color="text.secondary">No changes</Typography>
+                        {(!result.fieldDiffs || result.fieldDiffs.length === 0) && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.85rem' }}>No changes</Typography>
                         )}
                       </TableCell>
                     </TableRow>
@@ -1250,7 +1263,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             Import PFD from Excel
           </Typography>
         </Stack>
-        <Chip label={mode === 'build' ? 'Build New' : 'Update Existing'} color="primary" size="small" variant="outlined" />
+        {activeStep >= 2 && (
+          <Chip label={mode === 'build' ? 'Build New' : 'Update Existing'} color="primary" size="small" variant="outlined" sx={{ fontWeight: 700, bgcolor: '#FFFFFF' }} />
+        )}
       </DialogTitle>
       <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F8FAFC' }}>
         {error && <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>}

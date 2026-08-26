@@ -98,7 +98,7 @@ export class UpdatePfmeaRowDto {
   @IsOptional()
   revisedDetection?: number | null;
 
-  @IsIn(['draft', 'reviewed', 'approved', 'archived'])
+  @IsIn(['draft', 'reviewed', 'approved', 'archived', 'Open', 'In Progress', 'Completed', 'Verified', 'Closed', 'open', 'in_progress', 'completed', 'verified', 'closed'])
   @IsOptional()
   status?: string;
 

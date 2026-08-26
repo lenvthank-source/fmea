@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.3.2.md` — PFD Detached domain terminology, minimalist close-to-click warning dialog, PFD wizard polish, linkage 3px dividers, dynamic Report status, upward modal shift & downward dropdown anchoring
 - `v0.3.1.md` — PFD Excel import .xls universal SheetJS parser, Failure Linkage 3-column flow + bezier curves, 2px slate visual divider, button double '+' cleanup, fluid glassmorphic styling
 - `v0.3.0.md` — Session persistence+72h sliding, PFD Import wiring, Linkage blink rAF fix, delete ConfirmDialog everywhere (multi-value/unlink), revision guards+timestamps, `.agents` restructure (data-model/api-contracts/permissions/deployment/versioning) + AGENTS.md §6 (no CLAUDE/GEMINI/.cursor)
 - `v0.2.3.md` — Admin S/O/D editable (Severity/Occurrence/Detection simple groups), fix Actions D.map, Fab dedup, project nav cleanup, login perf (session-in-login, fire-and-forget lastLoginAt, B-tree indexes)

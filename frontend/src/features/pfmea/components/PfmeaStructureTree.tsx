@@ -485,8 +485,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                       <Typography sx={TREE_TYPOGRAPHY.process}>
                         {step.stepNumber} - {step.name || 'Untitled Step'}
                         {step.isOrphaned && (
-                          <Tooltip title="Linked PFD step has been deleted (Orphaned)">
-                            <Box component="span" sx={{ color: '#DC2626', ml: 1, fontSize: '0.75rem', fontWeight: 600 }}>[Orphaned]</Box>
+                          <Tooltip title="Linked PFD process step was deleted or detached from flow diagram">
+                            <Box component="span" sx={{ color: '#DC2626', ml: 1, fontSize: '0.75rem', fontWeight: 700 }}>[PFD Detached]</Box>
                           </Tooltip>
                         )}
                       </Typography>

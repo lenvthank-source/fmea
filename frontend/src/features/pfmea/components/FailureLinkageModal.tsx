@@ -421,8 +421,8 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 position: 'relative',
                 overflow: 'hidden',
                 bgcolor: '#F8FAFC',
-                borderRight: '2px solid #CBD5E1', // Crisp Sharp Slate Divider
-                boxShadow: 'inset -3px 0 8px rgba(15, 23, 42, 0.03)',
+                borderRight: '3px solid #94A3B8', // Bolder Sharp Slate Divider
+                boxShadow: 'inset -5px 0 12px rgba(15, 23, 42, 0.05)',
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, zIndex: 3 }}>
@@ -650,13 +650,15 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
               }}
             >
               {/* TOP SECTION: Connect Higher Level Failure (Effects) */}
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '2px solid #F1F5F9' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '1.05rem' }}>
-                  Connect Higher Level Failure
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontSize: '0.9rem' }}>
-                  Selected Failure: <strong>{data.mode.narration}</strong>
-                </Typography>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '3px solid #CBD5E1', bgcolor: '#FFFFFF' }}>
+                <Box sx={{ p: 1.25, px: 1.5, mb: 1.5, borderRadius: 2, bgcolor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.process, fontSize: '1.0rem' }}>
+                    🔗 Higher Level Failure (Effects)
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.82rem', mt: 0.25 }}>
+                    Link failure effects to: <strong>{data.mode.narration}</strong>
+                  </Typography>
+                </Box>
 
                 {Object.keys(groupedEffects).length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
@@ -729,10 +731,15 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
               </Box>
 
               {/* BOTTOM SECTION: Connect Lower Level Failure (Causes) */}
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '1.05rem' }}>
-                  Connect Lower Level Failure
-                </Typography>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, bgcolor: '#FFFFFF' }}>
+                <Box sx={{ p: 1.25, px: 1.5, mb: 1.5, borderRadius: 2, bgcolor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.workElem, fontSize: '1.0rem' }}>
+                    🔗 Lower Level Failure (Causes)
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.82rem', mt: 0.25 }}>
+                    Link root causes triggering: <strong>{data.mode.narration}</strong>
+                  </Typography>
+                </Box>
 
                 {Object.keys(groupedCauses).length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.9rem' }}>
