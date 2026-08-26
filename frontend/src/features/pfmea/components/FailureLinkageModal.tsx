@@ -15,6 +15,8 @@ import {
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
 import { TREE_COLORS, TREE_ASSETS } from '../../shared/fmeaTreeStyles';
+import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
+import { parseApiError } from '../../../lib/api';
 
 interface FailureItem {
   id: string;
@@ -90,6 +92,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   onSuccess,
   projectName: propProjectName,
 }) => {
+  const { showToast } = useToast();
   const [data, setData] = useState<CandidateData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -162,7 +165,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     fetch(`${API_BASE_URL}/failure-modes/${failureModeId}/linkage-candidates`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => { if (!r.ok) throw new Error('Failed to load linkage candidates'); return r.json(); })
+      .then(async r => { if (!r.ok) { const msg = await parseApiError(r, 'Failed to load linkage candidates'); throw new Error(msg); } return r.json(); })
       .then(d => {
         setData(d);
         setSelectedEffectIds(d.linkedEffectIds || []);
@@ -178,7 +181,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
         });
         setExpandedGroups(initExpanded);
       })
-      .catch(e => setError(e.message))
+      .catch((e: any) => { const msg = e.message || 'Failed to load linkage candidates'; setError(msg); showToast(msg, getToastSeverity(msg)); })
       .finally(() => setLoading(false));
   }, [open, failureModeId, token]);
 
@@ -199,11 +202,16 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ effectIds: selectedEffectIds, causeIds: selectedCauseIds }),
       });
-      if (!res.ok) throw new Error('Failed to save links');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to save links');
+        throw new Error(msg);
+      }
       onSuccess();
       onClose();
     } catch (e: any) {
-      setError(e.message);
+      const msg = e.message || 'Failed to save links';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setSaving(false);
     }

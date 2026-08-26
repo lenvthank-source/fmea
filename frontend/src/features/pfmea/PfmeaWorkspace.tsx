@@ -27,6 +27,8 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface ProcessStep {
   id: string;
@@ -76,6 +78,7 @@ interface PfmeaRow {
 export const PfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { showToast } = useToast();
   const { isMobile } = useResponsive();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'tree';
@@ -177,11 +180,14 @@ export const PfmeaWorkspace: React.FC = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to synchronize FMEA report view with structure tree.');
+        const msg = await parseApiError(response, 'Failed to synchronize FMEA report view with structure tree.');
+        throw new Error(msg);
       }
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not synchronize tree.');
+      const msg = err.message || 'Could not synchronize tree.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setSyncingTree(false);
     }
@@ -230,15 +236,17 @@ export const PfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Failed to save action data.');
+        const msg = await parseApiError(response, 'Failed to save action data.');
+        throw new Error(msg);
       }
 
       setManageActionOpen(false);
       setManageActionRowId(null);
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not save action data.');
+      const msg = err.message || 'Could not save action data.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -251,7 +259,10 @@ export const PfmeaWorkspace: React.FC = () => {
         const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error('Failed to resolve project document schemas.');
+        if (!response.ok) {
+          const msg = await parseApiError(response, 'Failed to resolve project document schemas.');
+          throw new Error(msg);
+        }
         const documents = await response.json();
 
         const pfmeaDoc = documents.find((doc: any) => doc.type === 'PFMEA');
@@ -267,7 +278,9 @@ export const PfmeaWorkspace: React.FC = () => {
         setPfmeaRevisionId(pfmeaDoc.currentRevisionId);
         setPfdRevisionId(pfdDoc.currentRevisionId);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while loading project context.');
+        const msg = err.message || 'An error occurred while loading project context.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         setLoading(false);
       }
     };
@@ -284,7 +297,10 @@ export const PfmeaWorkspace: React.FC = () => {
       const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!stepsResponse.ok) throw new Error('Failed to load Process Steps');
+      if (!stepsResponse.ok) {
+        const msg = await parseApiError(stepsResponse, 'Failed to load Process Steps');
+        throw new Error(msg);
+      }
       const stepsData = await stepsResponse.json();
       setSteps(stepsData);
 
@@ -305,7 +321,10 @@ export const PfmeaWorkspace: React.FC = () => {
       const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!rowsResponse.ok) throw new Error('Failed to load PFMEA analysis rows');
+      if (!rowsResponse.ok) {
+        const msg = await parseApiError(rowsResponse, 'Failed to load PFMEA analysis rows');
+        throw new Error(msg);
+      }
       const rowsData = await rowsResponse.json();
       setRows(rowsData);
 
@@ -318,7 +337,9 @@ export const PfmeaWorkspace: React.FC = () => {
         setStructureFunctions(structData);
       }
     } catch (err: any) {
-      setError(err.message || 'Could not load FMEA workspace data.');
+      const msg = err.message || 'Could not load FMEA workspace data.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -337,12 +358,17 @@ export const PfmeaWorkspace: React.FC = () => {
         },
         body: JSON.stringify({ sourceRevisionId: pfdRevisionId }),
       });
-      if (!res.ok) throw new Error('Failed to import process steps from PFD.');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to import process steps from PFD.');
+        throw new Error(msg);
+      }
       
       await fetchData();
       setImportPromptOpen(false);
     } catch (err: any) {
-      setError(err.message || 'Could not import steps.');
+      const msg = err.message || 'Could not import steps.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setImporting(false);
     }
@@ -374,13 +400,16 @@ export const PfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create FMEA row.');
+        const msg = await parseApiError(response, 'Failed to create FMEA row.');
+        throw new Error(msg);
       }
 
       await fetchData();
       setSelectedStepId('');
     } catch (err: any) {
-      setError(err.message || 'Error occurred while appending FMEA row.');
+      const msg = err.message || 'Error occurred while appending FMEA row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -526,13 +555,12 @@ export const PfmeaWorkspace: React.FC = () => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to submit package to repository');
+        const msg = await parseApiError(res, 'Failed to submit package to repository');
+        throw new Error(msg);
       }
-
-      alert(`Work element "${workElementName}" has been submitted to the global repository for approval!`);
     } catch (err: any) {
-      alert(err.message || 'Error submitting to repository');
+      const msg = err.message || 'Error submitting to repository';
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -603,14 +631,8 @@ export const PfmeaWorkspace: React.FC = () => {
           }),
         });
         if (!response.ok) {
-          let errMsg = 'API Error';
-          try {
-            const body = await response.json();
-            errMsg = body.message || JSON.stringify(body);
-          } catch {
-            errMsg = response.statusText || `${response.status}`;
-          }
-          throw new Error(errMsg);
+          const msg = await parseApiError(response, 'API Error');
+          throw new Error(msg);
         }
         const createdFunc = await response.json();
         fnNode = createdFunc;
@@ -623,7 +645,9 @@ export const PfmeaWorkspace: React.FC = () => {
           setStructureFunctions(freshFuncs);
         }
       } catch (err: any) {
-        setError(`Cannot add structure failure: Parent structure function not found in DB and auto-creation failed. Details: ${err.message}`);
+        const msg = `Cannot add structure failure: Parent structure function not found in DB and auto-creation failed. Details: ${err.message}`;
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         return;
       }
     }
@@ -834,12 +858,15 @@ export const PfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete FMEA row.');
+        const msg = await parseApiError(response, 'Failed to delete FMEA row.');
+        throw new Error(msg);
       }
 
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not delete FMEA row.');
+      const msg = err.message || 'Could not delete FMEA row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -867,7 +894,8 @@ export const PfmeaWorkspace: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
-          throw new Error(`Failed to delete FMEA row: ${r.rowNumber}`);
+          const msg = await parseApiError(response, `Failed to delete FMEA row: ${r.rowNumber}`);
+          throw new Error(msg);
         }
       }
 
@@ -878,13 +906,15 @@ export const PfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.message || 'Failed to delete process step.');
+        const msg = await parseApiError(response, 'Failed to delete process step.');
+        throw new Error(msg);
       }
 
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not delete process step.');
+      const msg = err.message || 'Could not delete process step.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -946,11 +976,16 @@ export const PfmeaWorkspace: React.FC = () => {
           },
           body: JSON.stringify({ machinesEquipmentDocs: updatedWe })
         });
-        if (!response.ok) throw new Error('Failed to update Process Step.');
+        if (!response.ok) {
+          const msg = await parseApiError(response, 'Failed to update Process Step.');
+          throw new Error(msg);
+        }
 
         await fetchData();
       } catch (err: any) {
-        setError(err.message || 'Could not delete work element.');
+        const msg = err.message || 'Could not delete work element.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
       }
       return;
     }
@@ -996,7 +1031,10 @@ export const PfmeaWorkspace: React.FC = () => {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to delete structure function.');
+          if (!response.ok) {
+            const msg = await parseApiError(response, 'Failed to delete structure function.');
+            throw new Error(msg);
+          }
         }
 
         const matchingRows = rows.filter(r => 
@@ -1026,7 +1064,9 @@ export const PfmeaWorkspace: React.FC = () => {
 
         await fetchData();
       } catch (err: any) {
-        setError(err.message || 'Could not delete function.');
+        const msg = err.message || 'Could not delete function.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
       }
       return;
     }
@@ -1096,7 +1136,10 @@ export const PfmeaWorkspace: React.FC = () => {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Failed to delete structure failure.');
+          if (!response.ok) {
+            const msg = await parseApiError(response, 'Failed to delete structure failure.');
+            throw new Error(msg);
+          }
         }
 
         const matchingRows = rows.filter(r => 
@@ -1120,7 +1163,9 @@ export const PfmeaWorkspace: React.FC = () => {
 
         await fetchData();
       } catch (err: any) {
-        setError(err.message || 'Could not delete failure.');
+        const msg = err.message || 'Could not delete failure.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
       }
       return;
     }

@@ -38,9 +38,12 @@ import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { PackagePreviewCard } from './PackagePreviewCard';
 import { EditPackageDialog } from './EditPackageDialog';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 export const RepositoryPage: React.FC = () => {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const isGuest = Boolean(
     user?.isGuest ||
       user?.roles?.includes('Guest') ||
@@ -103,7 +106,9 @@ export const RepositoryPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      setError('Failed to fetch repository packages');
+      const msg = (err as any)?.message || 'Failed to fetch repository packages';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -119,11 +124,18 @@ export const RepositoryPage: React.FC = () => {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to approve package');
+        throw new Error(msg);
+      }
       if (res.ok) {
         fetchData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const msg = err.message || 'Failed to approve package';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -138,13 +150,20 @@ export const RepositoryPage: React.FC = () => {
         },
         body: JSON.stringify({ rejectionReason }),
       });
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to reject package');
+        throw new Error(msg);
+      }
       if (res.ok) {
         setRejectingPackageId(null);
         setRejectionReason('');
         fetchData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const msg = err.message || 'Failed to reject package';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -155,11 +174,18 @@ export const RepositoryPage: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to delete repository package');
+        throw new Error(msg);
+      }
       if (res.ok) {
         fetchData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const msg = err.message || 'Failed to delete repository package';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 

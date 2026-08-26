@@ -39,6 +39,8 @@ import { API_BASE_URL } from '../../config';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { ReportExporter } from '../reports/ReportExporter';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface ProcessStep {
   id: string;
@@ -75,6 +77,7 @@ interface ControlPlanRow {
 export const ControlPlanWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { showToast } = useToast();
 
   // Project Document Revisions
   const [cpRevisionId, setCpRevisionId] = useState<string | null>(null);
@@ -119,7 +122,10 @@ export const ControlPlanWorkspace: React.FC = () => {
         const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error('Failed to resolve project document context.');
+        if (!response.ok) {
+          const msg = await parseApiError(response, 'Failed to resolve project document context.');
+          throw new Error(msg);
+        }
         const documents = await response.json();
 
         const cpDoc = documents.find((doc: any) => doc.type === 'CONTROL_PLAN');
@@ -130,7 +136,9 @@ export const ControlPlanWorkspace: React.FC = () => {
 
         setCpRevisionId(cpDoc.currentRevisionId);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while loading project context.');
+        const msg = err.message || 'An error occurred while loading project context.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         setLoading(false);
       }
     };
@@ -147,7 +155,10 @@ export const ControlPlanWorkspace: React.FC = () => {
       const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!rowsResponse.ok) throw new Error('Failed to load Control Plan rows');
+      if (!rowsResponse.ok) {
+        const msg = await parseApiError(rowsResponse, 'Failed to load Control Plan rows');
+        throw new Error(msg);
+      }
       const rowsData = await rowsResponse.json();
       setRows(rowsData);
 
@@ -179,7 +190,9 @@ export const ControlPlanWorkspace: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Could not load Control Plan workspace.');
+      const msg = err.message || 'Could not load Control Plan workspace.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -204,15 +217,17 @@ export const ControlPlanWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Synchronization failed.');
+        const msg = await parseApiError(response, 'Synchronization failed.');
+        throw new Error(msg);
       }
 
       const result = await response.json();
       setSuccess(result.message || 'Successfully synchronized Control Plan with FMEA.');
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'FMEA Control Plan synchronization failed.');
+      const msg = err.message || 'FMEA Control Plan synchronization failed.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setSyncing(false);
     }
@@ -230,15 +245,17 @@ export const ControlPlanWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Synchronization failed.');
+        const msg = await parseApiError(response, 'Synchronization failed.');
+        throw new Error(msg);
       }
 
       const result = await response.json();
       setSuccess(result.message || 'Successfully synchronized Control Plan with PFD.');
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'PFD Control Plan synchronization failed.');
+      const msg = err.message || 'PFD Control Plan synchronization failed.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setSyncing(false);
     }
@@ -269,7 +286,8 @@ export const ControlPlanWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create Control Plan row.');
+        const msg = await parseApiError(response, 'Failed to create Control Plan row.');
+        throw new Error(msg);
       }
 
       await fetchData();
@@ -277,7 +295,9 @@ export const ControlPlanWorkspace: React.FC = () => {
       setSelectedCharId('');
       setControlMethod('');
     } catch (err: any) {
-      setError(err.message || 'Error occurred while adding Control Plan row.');
+      const msg = err.message || 'Error occurred while adding Control Plan row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -302,10 +322,13 @@ export const ControlPlanWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save cell update.');
+        const msg = await parseApiError(response, 'Failed to save cell update.');
+        throw new Error(msg);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to update field. Reverting...');
+      const msg = err.message || 'Failed to update field. Reverting...';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
       fetchData(); // Rollback to server state
     }
   };
@@ -321,12 +344,15 @@ export const ControlPlanWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete row.');
+        const msg = await parseApiError(response, 'Failed to delete row.');
+        throw new Error(msg);
       }
 
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not delete Control Plan row.');
+      const msg = err.message || 'Could not delete Control Plan row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 

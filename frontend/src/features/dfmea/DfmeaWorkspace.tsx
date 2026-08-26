@@ -21,6 +21,8 @@ import { ReportExporter } from '../reports/ReportExporter';
 import { API_BASE_URL } from '../../config';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DocumentHeader } from '../../components/DocumentHeader';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface PfmeaRow {
   id: string;
@@ -55,6 +57,7 @@ interface ProcessStep {
 export const DfmeaWorkspace: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'tree';
 
@@ -109,8 +112,10 @@ export const DfmeaWorkspace: React.FC = () => {
           const data = await response.json();
           setUsers(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load tenant users', err);
+        const msg = err.message || 'Failed to load tenant users';
+        showToast(msg, getToastSeverity(msg));
       }
     };
     if (token) {
@@ -141,8 +146,8 @@ export const DfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Failed to create corrective action.');
+        const msg = await parseApiError(response, 'Failed to create corrective action.');
+        throw new Error(msg);
       }
 
       setActionDescription('');
@@ -152,7 +157,9 @@ export const DfmeaWorkspace: React.FC = () => {
       setSelectedRowForAction(null);
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not create corrective action.');
+      const msg = err.message || 'Could not create corrective action.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -165,7 +172,10 @@ export const DfmeaWorkspace: React.FC = () => {
         const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error('Failed to resolve project document schemas.');
+        if (!response.ok) {
+          const msg = await parseApiError(response, 'Failed to resolve project document schemas.');
+          throw new Error(msg);
+        }
         const documents = await response.json();
 
         const dfmeaDoc = documents.find((doc: any) => doc.type === 'DFMEA');
@@ -176,7 +186,9 @@ export const DfmeaWorkspace: React.FC = () => {
 
         setDfmeaRevisionId(dfmeaDoc.currentRevisionId);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while loading project context.');
+        const msg = err.message || 'An error occurred while loading project context.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         setLoading(false);
       }
     };
@@ -193,7 +205,10 @@ export const DfmeaWorkspace: React.FC = () => {
       const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${dfmeaRevisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!stepsResponse.ok) throw new Error('Failed to load System Elements');
+      if (!stepsResponse.ok) {
+        const msg = await parseApiError(stepsResponse, 'Failed to load System Elements');
+        throw new Error(msg);
+      }
       const stepsData = await stepsResponse.json();
       setSteps(stepsData);
 
@@ -201,11 +216,16 @@ export const DfmeaWorkspace: React.FC = () => {
       const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${dfmeaRevisionId}/pfmea-rows`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!rowsResponse.ok) throw new Error('Failed to load DFMEA analysis rows');
+      if (!rowsResponse.ok) {
+        const msg = await parseApiError(rowsResponse, 'Failed to load DFMEA analysis rows');
+        throw new Error(msg);
+      }
       const rowsData = await rowsResponse.json();
       setRows(rowsData);
     } catch (err: any) {
-      setError(err.message || 'Could not load DFMEA workspace data.');
+      const msg = err.message || 'Could not load DFMEA workspace data.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -237,13 +257,16 @@ export const DfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create FMEA row.');
+        const msg = await parseApiError(response, 'Failed to create FMEA row.');
+        throw new Error(msg);
       }
 
       await fetchData();
       setSelectedStepId('');
     } catch (err: any) {
-      setError(err.message || 'Error occurred while appending FMEA row.');
+      const msg = err.message || 'Error occurred while appending FMEA row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -308,7 +331,10 @@ export const DfmeaWorkspace: React.FC = () => {
           },
           body: JSON.stringify({ machinesEquipmentDocs: updatedWe })
         });
-        if (!response.ok) throw new Error('Failed to save Component Element');
+        if (!response.ok) {
+          const msg = await parseApiError(response, 'Failed to save Component Element');
+          throw new Error(msg);
+        }
       } else {
         // Find or create PFMEA Row matching:
         // - processStepId === treeAddTargetStepId
@@ -335,12 +361,8 @@ export const DfmeaWorkspace: React.FC = () => {
             }),
           });
           if (!createResponse.ok) {
-            let backendMsg = 'Failed to initialize analysis row.';
-            try {
-              const errBody = await createResponse.json();
-              backendMsg = errBody?.message || backendMsg;
-            } catch { /* ignore parse errors */ }
-            throw new Error(backendMsg);
+            const msg = await parseApiError(createResponse, 'Failed to initialize analysis row.');
+            throw new Error(msg);
           }
           const newRow = await createResponse.json();
           row = {
@@ -382,7 +404,10 @@ export const DfmeaWorkspace: React.FC = () => {
             },
             body: JSON.stringify({ functions: updatedFuncs })
           });
-          if (!response.ok) throw new Error('Failed to save Function');
+          if (!response.ok) {
+            const msg = await parseApiError(response, 'Failed to save Function');
+            throw new Error(msg);
+          }
         } else if (treeAddType === 'failure') {
           const existingFms = row.failureModes?.map((fm: any) => fm.name) || [];
           const updatedFms = [...existingFms, value];
@@ -394,13 +419,18 @@ export const DfmeaWorkspace: React.FC = () => {
             },
             body: JSON.stringify({ failureModes: updatedFms })
           });
-          if (!response.ok) throw new Error('Failed to save Failure Mode');
+          if (!response.ok) {
+            const msg = await parseApiError(response, 'Failed to save Failure Mode');
+            throw new Error(msg);
+          }
         }
       }
 
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Error occurred while adding tree element.');
+      const msg = err.message || 'Error occurred while adding tree element.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -414,12 +444,15 @@ export const DfmeaWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete FMEA row.');
+        const msg = await parseApiError(response, 'Failed to delete FMEA row.');
+        throw new Error(msg);
       }
 
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not delete FMEA row.');
+      const msg = err.message || 'Could not delete FMEA row.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -437,10 +470,15 @@ export const DfmeaWorkspace: React.FC = () => {
         },
         body: JSON.stringify(payload)
       });
-      if (!response.ok) throw new Error('Failed to update rating.');
+      if (!response.ok) {
+        const msg = await parseApiError(response, 'Failed to update rating.');
+        throw new Error(msg);
+      }
       await fetchData();
     } catch (err: any) {
-      setError(err.message || 'Could not update rating.');
+      const msg = err.message || 'Could not update rating.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -455,10 +493,15 @@ export const DfmeaWorkspace: React.FC = () => {
         },
         body: JSON.stringify(updatedData)
       });
-      if (!response.ok) throw new Error('Failed to update FMEA row details.');
+      if (!response.ok) {
+        const msg = await parseApiError(response, 'Failed to update FMEA row details.');
+        throw new Error(msg);
+      }
       await fetchData();
     } catch (err: any) {
-      throw new Error(err.message || 'Could not save modifications.');
+      const msg = err.message || 'Could not save modifications.';
+      showToast(msg, getToastSeverity(msg));
+      throw new Error(msg);
     }
   };
 

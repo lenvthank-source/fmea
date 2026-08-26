@@ -17,6 +17,8 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface ImportTargetDialogProps {
   open: boolean;
@@ -34,6 +36,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
   onSuccess,
 }) => {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedRevisionId, setSelectedRevisionId] = useState<string>('');
@@ -58,9 +61,11 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
           setProjects(Array.isArray(data) ? data : []);
           setLoadingProjects(false);
         })
-        .catch((err) => {
+        .catch((err: any) => {
           console.error(err);
-          setError('Failed to load projects');
+          const msg = err.message || 'Failed to load projects';
+          setError(msg);
+          showToast(msg, getToastSeverity(msg));
           setLoadingProjects(false);
         });
     }
@@ -126,15 +131,17 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to import package');
+        const msg = await parseApiError(res, 'Failed to import package');
+        throw new Error(msg);
       }
 
       setImporting(false);
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to import package');
+      const msg = err.message || 'Failed to import package';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
       setImporting(false);
     }
   };

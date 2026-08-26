@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
 import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface Project {
   id: string;
@@ -53,6 +55,7 @@ interface Project {
 
 export const ProjectList: React.FC = () => {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,12 +147,15 @@ export const ProjectList: React.FC = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to load projects');
+        const msg = await parseApiError(response, 'Failed to load projects');
+        throw new Error(msg);
       }
       const data = await response.json();
       setProjects(data);
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      const msg = err.message || 'An error occurred';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -169,10 +175,15 @@ export const ProjectList: React.FC = () => {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Failed to delete project');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to delete project');
+        throw new Error(msg);
+      }
       setProjects(prev => prev.filter(p => p.id !== deleteTargetId));
     } catch (err: any) {
-      setError(err.message || 'Failed to delete project');
+      const msg = err.message || 'Failed to delete project';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setDeleteLoading(false);
       setDeleteConfirmOpen(false);
@@ -190,10 +201,15 @@ export const ProjectList: React.FC = () => {
         },
         body: JSON.stringify({ status: 'archived' })
       });
-      if (!res.ok) throw new Error('Failed to archive project');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to archive project');
+        throw new Error(msg);
+      }
       fetchProjects();
     } catch (err: any) {
-      setError(err.message || 'Failed to archive project');
+      const msg = err.message || 'Failed to archive project';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -207,10 +223,15 @@ export const ProjectList: React.FC = () => {
         },
         body: JSON.stringify({ status: 'active' })
       });
-      if (!res.ok) throw new Error('Failed to restore project');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to restore project');
+        throw new Error(msg);
+      }
       fetchProjects();
     } catch (err: any) {
-      setError(err.message || 'Failed to restore project');
+      const msg = err.message || 'Failed to restore project';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -352,14 +373,16 @@ export const ProjectList: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Failed to update project');
+        const msg = await parseApiError(response, 'Failed to update project');
+        throw new Error(msg);
       }
 
       await fetchProjects();
       handleClose();
     } catch (err: any) {
-      setCreateError(err.message || 'Could not update project');
+      const msg = err.message || 'Could not update project';
+      setCreateError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setCreateLoading(false);
     }
@@ -498,14 +521,16 @@ export const ProjectList: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Failed to create project');
+        const msg = await parseApiError(response, 'Failed to create project');
+        throw new Error(msg);
       }
 
       await fetchProjects();
       handleClose();
     } catch (err: any) {
-      setCreateError(err.message || 'Could not create project');
+      const msg = err.message || 'Could not create project';
+      setCreateError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setCreateLoading(false);
     }

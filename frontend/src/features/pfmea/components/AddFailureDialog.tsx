@@ -29,6 +29,8 @@ import {
 } from '@mui/icons-material';
 import { RatingDropdown } from './RatingDropdown';
 import { API_BASE_URL } from '../../../config';
+import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
+import { parseApiError } from '../../../lib/api';
 
 interface AddFailureDialogProps {
   open: boolean;
@@ -77,6 +79,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   initialControlDetection = '',
   initialFilterCode = '',
 }) => {
+  const { showToast } = useToast();
   const TextFieldAny = TextField as any;
   const [activeTab, setActiveTab] = useState<number>(0); // 0: Single, 1: Multiple
 
@@ -244,14 +247,16 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           body: JSON.stringify(body),
         });
         if (!res.ok) {
-          const e = await res.json();
-          throw new Error(e.message || `Failed to ${editMode ? 'edit' : 'add'} failure`);
+          const msg = await parseApiError(res, `Failed to ${editMode ? 'edit' : 'add'} failure`);
+          throw new Error(msg);
         }
       } else {
         // Multiple mode batch submit
         const validRows = rows.filter((r) => r.narration.trim().length > 0);
         if (validRows.length === 0) {
-          setError('Please enter at least one failure narration.');
+          const msg = 'Please enter at least one failure narration.';
+          setError(msg);
+          showToast(msg, getToastSeverity(msg));
           setLoading(false);
           return;
         }
@@ -281,15 +286,17 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         });
 
         if (!res.ok) {
-          const e = await res.json();
-          throw new Error(e.message || 'Failed to add batch failures');
+          const msg = await parseApiError(res, 'Failed to add batch failures');
+          throw new Error(msg);
         }
       }
 
       handleClose();
       onSuccess();
     } catch (e: any) {
-      setError(e.message || `Failed to ${editMode ? 'edit' : 'add'} failure`);
+      const msg = e.message || `Failed to ${editMode ? 'edit' : 'add'} failure`;
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }

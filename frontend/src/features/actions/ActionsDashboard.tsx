@@ -44,6 +44,8 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { calculateAP } from '../pfmea/utils/apCalculator';
 import { API_BASE_URL } from '../../config';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface User {
   id: string;
@@ -119,6 +121,7 @@ interface ActionItem {
 
 export const ActionsDashboard: React.FC = () => {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -181,8 +184,10 @@ export const ActionsDashboard: React.FC = () => {
           const userData = await userRes.json();
           setUsers(userData);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load initial configuration', err);
+        const msg = err.message || 'Failed to load initial configuration';
+        showToast(msg, getToastSeverity(msg));
       }
     };
 
@@ -208,7 +213,8 @@ export const ActionsDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to retrieve action items');
+        const msg = await parseApiError(response, 'Failed to retrieve action items');
+        throw new Error(msg);
       }
 
       const data = await response.json();
@@ -220,7 +226,9 @@ export const ActionsDashboard: React.FC = () => {
         setActions(data);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred while loading actions.');
+      const msg = err.message || 'An error occurred while loading actions.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -305,15 +313,17 @@ export const ActionsDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Failed to update action');
+        const msg = await parseApiError(response, 'Failed to update action');
+        throw new Error(msg);
       }
 
       setSuccess('Action item updated successfully.');
       handleCloseDrawer();
       await fetchActions();
     } catch (err: any) {
-      setError(err.message || 'Failed to save action updates.');
+      const msg = err.message || 'Failed to save action updates.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -341,8 +351,8 @@ export const ActionsDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Failed to upload evidence file');
+        const msg = await parseApiError(response, 'Failed to upload evidence file');
+        throw new Error(msg);
       }
 
       const newEvidence = await response.json();
@@ -364,7 +374,9 @@ export const ActionsDashboard: React.FC = () => {
       setUploadFile(null);
       setUploadDescription('');
     } catch (err: any) {
-      setUploadError(err.message || 'Failed to upload evidence.');
+      const msg = err.message || 'Failed to upload evidence.';
+      setUploadError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setUploading(false);
     }
@@ -381,7 +393,8 @@ export const ActionsDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete evidence file');
+        const msg = await parseApiError(response, 'Failed to delete evidence file');
+        throw new Error(msg);
       }
 
       // Update drawer state
@@ -398,7 +411,9 @@ export const ActionsDashboard: React.FC = () => {
         );
       }
     } catch (err: any) {
-      setUploadError(err.message || 'Failed to delete evidence file.');
+      const msg = err.message || 'Failed to delete evidence file.';
+      setUploadError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 

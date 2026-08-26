@@ -21,11 +21,13 @@ import { PrismaService } from './prisma/prisma.service';
 import { AuditLogService } from './modules/audit/audit-log.service';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { QueuesModule } from './queues/queues.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    CommonModule,
     AuthModule,
     ProjectModule,
     PfdModule,

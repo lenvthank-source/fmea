@@ -13,6 +13,8 @@ import {
   Edit as EditIcon
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
+import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
+import { parseApiError } from '../../../lib/api';
 
 interface LinkAction {
   id: string;
@@ -66,6 +68,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
   token,
   onRefresh,
 }) => {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState(0);
   const [data, setData] = useState<ModeData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -136,13 +139,18 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
           remarks: actionForm.remarks || undefined,
         }),
       });
-      if (!res.ok) throw new Error('Failed to save action');
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to save action');
+        throw new Error(msg);
+      }
       setActionModalLinkId(null);
       setEditingActionId(null);
       loadData();
       onRefresh();
     } catch (e: any) {
-      setError(e.message);
+      const msg = e.message || 'Failed to save action';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -153,9 +161,9 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
     fetch(`${API_BASE_URL}/failure-modes/${failureModeId}/links`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(r => { if (!r.ok) throw new Error('Failed to load failure details'); return r.json(); })
+      .then(async r => { if (!r.ok) { const msg = await parseApiError(r, 'Failed to load failure details'); throw new Error(msg); } return r.json(); })
       .then(setData)
-      .catch(e => setError(e.message))
+      .catch((e: any) => { const msg = e.message || 'Failed to load failure details'; setError(msg); showToast(msg, getToastSeverity(msg)); })
       .finally(() => setLoading(false));
   };
 
@@ -171,8 +179,10 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       });
       loadData();
       onRefresh();
-    } catch {
-      setError('Failed to unlink');
+    } catch (e: any) {
+      const msg = (e as any)?.message || 'Failed to unlink';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -184,8 +194,10 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
         headers: { Authorization: `Bearer ${token}` },
       });
       loadData();
-    } catch {
-      setError('Failed to delete action');
+    } catch (e: any) {
+      const msg = (e as any)?.message || 'Failed to delete action';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 

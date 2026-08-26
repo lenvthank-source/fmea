@@ -15,6 +15,8 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface ProcessStep {
   id: string;
@@ -53,6 +55,7 @@ interface Action {
 export const LinkageMap: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +76,10 @@ export const LinkageMap: React.FC = () => {
         const docRes = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!docRes.ok) throw new Error('Failed to load project revisions context.');
+        if (!docRes.ok) {
+          const msg = await parseApiError(docRes, 'Failed to load project revisions context.');
+          throw new Error(msg);
+        }
         const documents = await docRes.json();
 
         const pfmeaDoc = documents.find((doc: any) => doc.type === 'PFMEA');
@@ -125,7 +131,9 @@ export const LinkageMap: React.FC = () => {
         setActions(actionsData);
         setStructureFunctions(structData);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while loading linkage map.');
+        const msg = err.message || 'An error occurred while loading linkage map.';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
       } finally {
         setLoading(false);
       }

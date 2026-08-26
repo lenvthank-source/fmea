@@ -35,6 +35,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { API_BASE_URL } from '../../../config';
 import { dialogSelectProps } from '../../../theme/muiSelectConfig';
 import { PackagePreviewCard } from '../../repository/PackagePreviewCard';
+import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
+import { parseApiError } from '../../../lib/api';
 
 interface MultiAddWorkElementDialogProps {
   open: boolean;
@@ -56,6 +58,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
   onImportSuccess,
 }) => {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<number>(0); // 0: Single, 1: Multiple, 2: Import from Repo
 
   // Single mode state
@@ -93,9 +96,11 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
           setApprovedPackages(Array.isArray(data) ? data : []);
           setLoadingPackages(false);
         })
-        .catch((err) => {
+        .catch((err: any) => {
           console.error(err);
-          setError('Failed to fetch repository packages');
+          const msg = err.message || 'Failed to fetch repository packages';
+          setError(msg);
+          showToast(msg, getToastSeverity(msg));
           setLoadingPackages(false);
         });
     }
@@ -130,7 +135,9 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
       onClose();
     } else if (activeTab === 2) {
       if (!selectedPackageId || !revisionId || !processStepId) {
-        setError('Please select a package to import.');
+        const msg = 'Please select a package to import.';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
         return;
       }
 
@@ -151,15 +158,17 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
         });
 
         if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.message || 'Failed to import package');
+          const msg = await parseApiError(res, 'Failed to import package');
+          throw new Error(msg);
         }
 
         setImporting(false);
         onImportSuccess();
         onClose();
       } catch (err: any) {
-        setError(err.message || 'Failed to import package');
+        const msg = err.message || 'Failed to import package';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         setImporting(false);
       }
     }

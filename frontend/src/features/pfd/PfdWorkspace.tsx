@@ -26,6 +26,8 @@ import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
 import { getPfdIconMeta } from './utils/pfdIconMap';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface ProcessStep {
   id: string;
@@ -162,6 +164,7 @@ export const PfdWorkspace: React.FC = () => {
   const TextFieldAny = TextField as any;
   const { projectId } = useParams<{ projectId: string }>();
   const { token } = useAuth();
+  const { showToast } = useToast();
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -294,7 +297,9 @@ export const PfdWorkspace: React.FC = () => {
         }
         setRevisionId(pfdDoc.currentRevisionId);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while loading project context');
+        const msg = err.message || 'An error occurred while loading project context';
+        setError(msg);
+        showToast(msg, getToastSeverity(msg));
         setLoading(false);
       }
     };
@@ -314,7 +319,9 @@ export const PfdWorkspace: React.FC = () => {
       const data = await response.json();
       setSteps(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load process steps');
+      const msg = err.message || 'Failed to load process steps';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
@@ -332,7 +339,7 @@ export const PfdWorkspace: React.FC = () => {
     setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: value } : s));
 
     try {
-      await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+      const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -340,8 +347,14 @@ export const PfdWorkspace: React.FC = () => {
         },
         body: JSON.stringify({ [fieldName]: value }),
       });
-    } catch (err) {
-      console.error('Error updating step inline:', err);
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to update step');
+        throw new Error(msg);
+      }
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update step';
+      showToast(msg, getToastSeverity(msg));
+      fetchSteps();
     }
   };
 
@@ -384,7 +397,7 @@ export const PfdWorkspace: React.FC = () => {
       setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
       try {
-        await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+        const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -392,8 +405,14 @@ export const PfdWorkspace: React.FC = () => {
           },
           body: JSON.stringify({ [fieldName]: valToSave }),
         });
-      } catch (err) {
-        console.error(err);
+        if (!res.ok) {
+          const msg = await parseApiError(res, 'Failed to update step');
+          throw new Error(msg);
+        }
+      } catch (err: any) {
+        const msg = err.message || 'Failed to update step';
+        showToast(msg, getToastSeverity(msg));
+        fetchSteps();
       }
     };
 
@@ -410,7 +429,7 @@ export const PfdWorkspace: React.FC = () => {
         setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
         
         try {
-          await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+          const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -418,8 +437,14 @@ export const PfdWorkspace: React.FC = () => {
             },
             body: JSON.stringify({ [fieldName]: valToSave }),
           });
-        } catch (err) {
-          console.error(err);
+          if (!res.ok) {
+            const msg = await parseApiError(res, 'Failed to update step');
+            throw new Error(msg);
+          }
+        } catch (err: any) {
+          const msg = err.message || 'Failed to update step';
+          showToast(msg, getToastSeverity(msg));
+          fetchSteps();
         }
 
         setTimeout(() => {
@@ -438,7 +463,7 @@ export const PfdWorkspace: React.FC = () => {
         setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
         try {
-          await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+          const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -446,8 +471,14 @@ export const PfdWorkspace: React.FC = () => {
             },
             body: JSON.stringify({ [fieldName]: valToSave }),
           });
-        } catch (err) {
-          console.error(err);
+          if (!res.ok) {
+            const msg = await parseApiError(res, 'Failed to update step');
+            throw new Error(msg);
+          }
+        } catch (err: any) {
+          const msg = err.message || 'Failed to update step';
+          showToast(msg, getToastSeverity(msg));
+          fetchSteps();
         }
 
         setTimeout(() => {
@@ -469,7 +500,7 @@ export const PfdWorkspace: React.FC = () => {
       setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
 
       try {
-        await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+        const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -477,8 +508,14 @@ export const PfdWorkspace: React.FC = () => {
           },
           body: JSON.stringify({ [fieldName]: valToSave }),
         });
-      } catch (err) {
-        console.error(err);
+        if (!res.ok) {
+          const msg = await parseApiError(res, 'Failed to update step');
+          throw new Error(msg);
+        }
+      } catch (err: any) {
+        const msg = err.message || 'Failed to update step';
+        showToast(msg, getToastSeverity(msg));
+        fetchSteps();
       }
     };
 
@@ -546,7 +583,7 @@ export const PfdWorkspace: React.FC = () => {
     setEditingFlowSymbolsStepId(null);
 
     try {
-      await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+      const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -554,8 +591,13 @@ export const PfdWorkspace: React.FC = () => {
         },
         body: JSON.stringify({ flowIcons: tempIcons, stepType })
       });
-    } catch (err) {
-      console.error(err);
+      if (!res.ok) {
+        const msg = await parseApiError(res, 'Failed to update flow icons');
+        throw new Error(msg);
+      }
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update flow icons';
+      showToast(msg, getToastSeverity(msg));
       fetchSteps(); // rollback
     }
   };
@@ -612,13 +654,16 @@ export const PfdWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create new process step');
+        const msg = await parseApiError(response, 'Failed to create new process step');
+        throw new Error(msg);
       }
 
       await fetchSteps();
       setAddOpen(false);
     } catch (err: any) {
-      setError(err.message || 'Could not create process step');
+      const msg = err.message || 'Could not create process step';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -648,12 +693,15 @@ export const PfdWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to duplicate step');
+        const msg = await parseApiError(response, 'Failed to duplicate step');
+        throw new Error(msg);
       }
 
       await fetchSteps();
     } catch (err: any) {
-      setError(err.message || 'Failed to duplicate step');
+      const msg = err.message || 'Failed to duplicate step';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -668,8 +716,8 @@ export const PfdWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || 'Failed to delete process step');
+        const msg = await parseApiError(response, 'Failed to delete process step');
+        throw new Error(msg);
       }
 
       await fetchSteps();
@@ -677,7 +725,9 @@ export const PfdWorkspace: React.FC = () => {
         setDetailsOpen(false);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to delete step');
+      const msg = err.message || 'Failed to delete step';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     }
   };
 
@@ -712,10 +762,13 @@ export const PfdWorkspace: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sync sequence order to server');
+        const msg = await parseApiError(response, 'Failed to sync sequence order to server');
+        throw new Error(msg);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to save sequence order');
+      const msg = err.message || 'Failed to save sequence order';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
       fetchSteps(); // rollback
     }
   };

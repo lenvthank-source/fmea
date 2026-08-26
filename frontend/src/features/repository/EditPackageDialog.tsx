@@ -29,6 +29,8 @@ import { useAuth } from '../auth/AuthContext';
 import { RatingDropdown } from '../pfmea/components/RatingDropdown';
 import { API_BASE_URL } from '../../config';
 import { TREE_COLORS, TREE_ASSETS } from '../shared/fmeaTreeStyles';
+import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
+import { parseApiError } from '../../lib/api';
 
 interface EditPackageDialogProps {
   open: boolean;
@@ -44,6 +46,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
   onSuccess,
 }) => {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [functions, setFunctions] = useState<any[]>([]);
@@ -164,7 +167,9 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError('Work Element Package name is required');
+      const msg = 'Work Element Package name is required';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
       return;
     }
 
@@ -202,14 +207,16 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to update package');
+        const msg = await parseApiError(res, 'Failed to update package');
+        throw new Error(msg);
       }
 
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update package');
+      const msg = err.message || 'Failed to update package';
+      setError(msg);
+      showToast(msg, getToastSeverity(msg));
     } finally {
       setLoading(false);
     }
