@@ -123,7 +123,6 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     } else {
       newZoom = Math.max(zoom / zoomFactor, 0.3);
     }
-    // Zoom to cursor position
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (containerRect) {
       const cursorX = e.clientX - containerRect.left - panX;
@@ -231,19 +230,19 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
     const modeRect = modeEl.getBoundingClientRect();
     const modeLeftX = (modeRect.left - containerRect.left - panX) / zoom;
-    const modeRightX = (modeRect.left - containerRect.left + modeRect.width - panX) / zoom;
-    const modeY = (modeRect.top - containerRect.top + modeRect.height / 2 - panY) / zoom;
+    const modeRightX = (modeRect.right - containerRect.left - panX) / zoom;
+    const modeY = (modeRect.top + modeRect.height / 2 - containerRect.top - panY) / zoom;
 
     const newLinks: SvgLink[] = [];
 
-    // Checked Effects coordinates
+    // Checked Effects coordinates: right edge of effect card to left edge of mode box
     selectedEffects.forEach(eff => {
       const el = document.getElementById(`selected-eff-${eff.id}`);
       if (el) {
         const r = el.getBoundingClientRect();
         newLinks.push({
-          x1: (r.left - containerRect.left + r.width - panX) / zoom,
-          y1: (r.top - containerRect.top + r.height / 2 - panY) / zoom,
+          x1: (r.right - containerRect.left - panX) / zoom,
+          y1: (r.top + r.height / 2 - containerRect.top - panY) / zoom,
           x2: modeLeftX,
           y2: modeY,
           color: TREE_COLORS.nodeText.process // Blue #1D4ED8
@@ -251,7 +250,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
       }
     });
 
-    // Checked Causes coordinates
+    // Checked Causes coordinates: right edge of mode box to left edge of cause card
     selectedCauses.forEach(cause => {
       const el = document.getElementById(`selected-cause-${cause.id}`);
       if (el) {
@@ -260,7 +259,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
           x1: modeRightX,
           y1: modeY,
           x2: (r.left - containerRect.left - panX) / zoom,
-          y2: (r.top - containerRect.top + r.height / 2 - panY) / zoom,
+          y2: (r.top + r.height / 2 - containerRect.top - panY) / zoom,
           color: TREE_COLORS.nodeText.function // Forest Green #15803D
         });
       }
@@ -269,16 +268,14 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     setLinks(newLinks);
   }, [data, selectedEffects, selectedCauses, zoom, panX, panY]);
 
-  // Fit to view once when data loads (avoid infinite loop by not depending on zoom/pan)
+  // Fit to view once when data loads
   const fitToView = useCallback(() => {
     if (!containerRef.current || !data) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const containerWidth = containerRect.width;
     const containerHeight = containerRect.height;
 
-    // Collect all element bounding boxes
     const elements: DOMRect[] = [];
-    
     selectedEffects.forEach(eff => {
       const el = document.getElementById(`selected-eff-${eff.id}`);
       if (el) elements.push(el.getBoundingClientRect());
@@ -294,35 +291,34 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
     const minX = Math.min(...elements.map(e => e.left - containerRect.left));
     const minY = Math.min(...elements.map(e => e.top - containerRect.top));
-    const maxX = Math.max(...elements.map(e => e.left - containerRect.left + e.width));
-    const maxY = Math.max(...elements.map(e => e.top - containerRect.top + e.height));
+    const maxX = Math.max(...elements.map(e => e.right - containerRect.left));
+    const maxY = Math.max(...elements.map(e => e.bottom - containerRect.top));
 
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
-    const padding = 40;
+    const padding = 32;
+
+    if (contentWidth <= 0 || contentHeight <= 0) return;
 
     const scaleX = (containerWidth - padding * 2) / contentWidth;
     const scaleY = (containerHeight - padding * 2) / contentHeight;
-    const newZoom = Math.min(scaleX, scaleY, 2.5, 1); // cap at 1 for initial fit
+    const newZoom = Math.min(scaleX, scaleY, 1);
 
-    const newPanX = containerWidth / 2 - (minX + maxX) / 2 * newZoom;
-    const newPanY = containerHeight / 2 - (minY + maxY) / 2 * newZoom;
+    const newPanX = (containerWidth - contentWidth * newZoom) / 2 - minX * newZoom;
+    const newPanY = (containerHeight - contentHeight * newZoom) / 2 - minY * newZoom;
 
-    // Only update if meaningfully different to avoid jitter
-    setZoom(prev => Math.abs(prev - newZoom) > 0.01 ? newZoom : prev);
-    setPanX(prev => Math.abs(prev - newPanX) > 1 ? newPanX : prev);
-    setPanY(prev => Math.abs(prev - newPanY) > 1 ? newPanY : prev);
+    setZoom(prev => (Math.abs(prev - newZoom) > 0.01 ? newZoom : prev));
+    setPanX(prev => (Math.abs(prev - newPanX) > 1 ? newPanX : prev));
+    setPanY(prev => (Math.abs(prev - newPanY) > 1 ? newPanY : prev));
   }, [data, selectedEffects, selectedCauses]);
 
   // One-time fit when opened or when data first loads
   useEffect(() => {
     if (!open || !data) return;
     if (hasFittedRef.current) return;
-    // Defer to next frame so DOM is laid out
     const id = requestAnimationFrame(() => {
       fitToView();
       hasFittedRef.current = true;
-      // Then update coords after fit
       requestAnimationFrame(() => updateCoords());
     });
     return () => cancelAnimationFrame(id);
@@ -333,14 +329,13 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     if (!open) setLinks([]);
   }, [open]);
 
-  // Recompute connectors when selection changes — rAF throttled, no zoom/pan write loop
+  // Recompute connectors when selection changes
   useEffect(() => {
     if (!open || !data) return;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       updateCoords();
     });
-    // Also schedule delayed passes to catch layout after Collapse animation
     const t1 = setTimeout(() => requestAnimationFrame(() => updateCoords()), 100);
     const t2 = setTimeout(() => requestAnimationFrame(() => updateCoords()), 350);
     const onResize = () => {
@@ -356,7 +351,6 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     };
   }, [selectedEffectIds, selectedCauseIds, data, open, updateCoords]);
 
-  // When user manually zooms/pans, just recompute coords (no fitToView)
   useEffect(() => {
     if (!open || !data) return;
     if (hasFittedRef.current) {
@@ -397,7 +391,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth={false} slotProps={{ paper: { sx: { width: '96vw', height: '94vh', m: 'auto', borderRadius: 3 } } }}>
-      {/* Dialog Header: Clean Professional Dark Slate */}
+      {/* Dialog Header */}
       <DialogTitle sx={{ bgcolor: '#0F172A', color: '#FFFFFF', px: 3, py: 2 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <LinkIcon sx={{ color: '#38BDF8', fontSize: '1.5rem' }} />
@@ -416,26 +410,39 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
         ) : data ? (
           <Grid container sx={{ flex: 1, height: '100%', overflow: 'hidden' }}>
             
-            {/* LEFT PANE (~70% Width): Live Linkage Network Diagram */}
-            <Grid size={8} sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 3, position: 'relative', overflow: 'hidden', borderRight: '1px solid #E2E8F0' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 2, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '1.05rem' }}>
+            {/* LEFT PANE (~68% Width): 3-Column Live Linkage Network Diagram */}
+            <Grid
+              size={{ xs: 12, md: 8 }}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                bgcolor: '#F8FAFC',
+                borderRight: '2px solid #CBD5E1', // Crisp Sharp Slate Divider
+                boxShadow: 'inset -3px 0 8px rgba(15, 23, 42, 0.03)',
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, zIndex: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.process, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '1.05rem' }}>
                   🔗 Failure Linkage Network Diagram
                 </Typography>
                 {/* Zoom Toolbar */}
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', gap: 0.5, bgcolor: '#FFFFFF', p: 0.5, borderRadius: 2, border: '1px solid #E2E8F0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   <Tooltip title="Zoom In">
-                    <IconButton size="small" onClick={() => setZoom(z => Math.min(z + 0.15, 2.5))} sx={{ p: 0.25 }}>
+                    <IconButton size="small" onClick={() => setZoom(z => Math.min(z + 0.15, 2.5))} sx={{ p: 0.5 }}>
                       <AddIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Zoom Out">
-                    <IconButton size="small" onClick={() => setZoom(z => Math.max(z - 0.15, 0.3))} sx={{ p: 0.25 }}>
+                    <IconButton size="small" onClick={() => setZoom(z => Math.max(z - 0.15, 0.3))} sx={{ p: 0.5 }}>
                       <RemoveIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title={`Zoom: ${Math.round(zoom * 100)}%`}>
-                    <IconButton size="small" onClick={handleResetZoom} sx={{ p: 0.25 }}>
+                  <Tooltip title={`Reset Zoom: ${Math.round(zoom * 100)}%`}>
+                    <IconButton size="small" onClick={handleResetZoom} sx={{ p: 0.5 }}>
                       <CropFreeIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -444,7 +451,16 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
               
               <Box
                 ref={containerRef}
-                sx={{ flex: 1, display: 'flex', width: '100%', position: 'relative', alignItems: 'center', justifyContent: 'space-between', zIndex: 2 }}
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  width: '100%',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 2,
+                }}
                 onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -452,128 +468,190 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                 onMouseLeave={handleMouseUp}
                 style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
               >
-                {/* Transform wrapper for zoom/pan */}
-                <Box sx={{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})`, transformOrigin: '0 0', width: '100%' }}>
-                  {/* SVG CONNECTOR LINES */}
-                  <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
-                  {links.map((link, idx) => {
-                    const midX = (link.x1 + link.x2) / 2;
-                    const d = `M ${link.x1} ${link.y1} C ${midX} ${link.y1}, ${midX} ${link.y2}, ${link.x2} ${link.y2}`;
-                    return (
-                      <g key={idx}>
-                        <path d={d} stroke={link.color} strokeWidth="3" fill="none" opacity="0.15" />
-                        <path d={d} stroke={link.color} strokeWidth="1.5" fill="none" opacity="0.85" />
-                      </g>
-                    );
-                  })}
-                </svg>
-
-                {/* Left Side: Floating Selected Effects (Higher Level) */}
-                <Stack spacing={2} sx={{ width: '32%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pr: 1 }}>
-                  {selectedEffects.length === 0 ? (
-                    <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
-                      <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary' }}>No higher level effects linked</Typography>
-                    </Box>
-                  ) : (
-                    selectedEffects.map(eff => (
-                      <Box
-                        key={eff.id}
-                        id={`selected-eff-${eff.id}`}
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          bgcolor: '#FFFFFF',
-                          border: '1px solid #E2E8F0',
-                          borderLeft: `4px solid ${TREE_COLORS.nodeText.failure}`,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5 }}>
-                          {propProjectName || eff.parentName || 'System Item'}
-                        </Typography>
-                        <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
-                          {eff.function?.narration}
-                        </Typography>
-                        <Typography sx={{ fontSize: '1.0rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
-                          {eff.narration}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
-                </Stack>
-
-                {/* Center: Selected MODE (Fixed Anchor) */}
-                <Box 
-                  id="linkage-mode-box"
-                  sx={{ 
-                    width: '32%', 
-                    zIndex: 2, 
-                    p: 2.5, 
-                    bgcolor: '#FFFFFF', 
-                    border: '1px solid #E2E8F0',
-                    borderTop: `4px solid ${TREE_COLORS.nodeText.process}`,
-                    borderRadius: 2.5, 
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-                    textAlign: 'center'
+                {/* Transform wrapper for zoom/pan: 3-column flex layout */}
+                <Box
+                  sx={{
+                    transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
+                    transformOrigin: '0 0',
+                    width: '100%',
+                    minHeight: '100%',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                    p: 2,
+                    gap: 3,
                   }}
                 >
-                  <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
-                    <TreeIcon iconSrc={TREE_ASSETS.processStep} size={28} />
-                    <Typography sx={{ fontSize: '0.98rem', fontWeight: 700, color: TREE_COLORS.nodeText.process }}>
-                      {data.mode.parentName || 'Process Step'}
-                    </Typography>
-                    <Typography sx={{ fontSize: '0.94rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
-                      {data.mode.function?.narration}
-                    </Typography>
-                    <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
-                      {data.mode.narration}
-                    </Typography>
-                  </Stack>
-                </Box>
+                  {/* SVG CONNECTOR LINES */}
+                  <svg
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                      overflow: 'visible',
+                    }}
+                  >
+                    {links.map((link, idx) => {
+                      const midX = (link.x1 + link.x2) / 2;
+                      const d = `M ${link.x1} ${link.y1} C ${midX} ${link.y1}, ${midX} ${link.y2}, ${link.x2} ${link.y2}`;
+                      return (
+                        <g key={idx}>
+                          <path d={d} stroke={link.color} strokeWidth="4" fill="none" opacity="0.18" />
+                          <path d={d} stroke={link.color} strokeWidth="2" fill="none" opacity="0.9" />
+                        </g>
+                      );
+                    })}
+                  </svg>
 
-                {/* Right Side: Floating Selected Causes (Lower Level) */}
-                <Stack spacing={2} sx={{ width: '32%', zIndex: 2, height: '100%', justifyContent: 'center', overflowY: 'auto', pl: 1 }}>
-                  {selectedCauses.length === 0 ? (
-                    <Box sx={{ p: 2, border: '1px dashed #CBD5E1', borderRadius: 2, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.7 }}>
-                      <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary' }}>No lower level causes linked</Typography>
-                    </Box>
-                  ) : (
-                    selectedCauses.map(cause => (
-                      <Box
-                        key={cause.id}
-                        id={`selected-cause-${cause.id}`}
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          bgcolor: '#FFFFFF',
-                          border: '1px solid #E2E8F0',
-                          borderLeft: `4px solid ${TREE_COLORS.nodeText.workElem}`,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.5 }}>
-                          {cause.parentName || 'Work Element'}
-                        </Typography>
-                        <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
-                          {cause.function?.narration}
-                        </Typography>
-                        <Typography sx={{ fontSize: '1.0rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
-                          {cause.narration}
+                  {/* Left Column (30% Width): Floating Selected Effects (Higher Level) */}
+                  <Stack
+                    spacing={2}
+                    sx={{
+                      width: '30%',
+                      minWidth: 220,
+                      zIndex: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {selectedEffects.length === 0 ? (
+                      <Box sx={{ p: 2.5, border: '1.5px dashed #CBD5E1', borderRadius: 2.5, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.8 }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary', fontWeight: 600 }}>
+                          No higher level effects linked
                         </Typography>
                       </Box>
-                    ))
-                  )}
-                </Stack>
-              </Box>
+                    ) : (
+                      selectedEffects.map(eff => (
+                        <Box
+                          key={eff.id}
+                          id={`selected-eff-${eff.id}`}
+                          sx={{
+                            p: 2,
+                            borderRadius: 2.5,
+                            bgcolor: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
+                            borderLeft: `4px solid ${TREE_COLORS.nodeText.failure}`,
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                            transition: 'transform 0.15s ease',
+                            '&:hover': { transform: 'translateX(2px)' },
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '0.92rem', fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5 }}>
+                            {propProjectName || eff.parentName || 'System Item'}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
+                            {eff.function?.narration}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.98rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
+                            {eff.narration}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Stack>
+
+                  {/* Center Column (32% Width): Selected MODE (Fixed Focal Anchor) */}
+                  <Box 
+                    id="linkage-mode-box"
+                    sx={{ 
+                      width: '32%',
+                      minWidth: 240,
+                      zIndex: 2, 
+                      p: 2.5, 
+                      bgcolor: '#FFFFFF', 
+                      border: '1px solid #CBD5E1',
+                      borderTop: `5px solid ${TREE_COLORS.nodeText.process}`,
+                      borderRadius: 3, 
+                      boxShadow: '0 6px 20px rgba(15, 23, 42, 0.08)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Stack spacing={0.75} sx={{ alignItems: 'center' }}>
+                      <TreeIcon iconSrc={TREE_ASSETS.processStep} size={30} />
+                      <Typography sx={{ fontSize: '1.0rem', fontWeight: 800, color: TREE_COLORS.nodeText.process }}>
+                        {data.mode.parentName || 'Process Step'}
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.92rem', fontWeight: 600, color: TREE_COLORS.nodeText.function }}>
+                        {data.mode.function?.narration}
+                      </Typography>
+                      <Typography sx={{ fontSize: '1.08rem', fontWeight: 800, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word', mt: 0.5 }}>
+                        {data.mode.narration}
+                      </Typography>
+                    </Stack>
+                  </Box>
+
+                  {/* Right Column (30% Width): Floating Selected Causes (Lower Level) */}
+                  <Stack
+                    spacing={2}
+                    sx={{
+                      width: '30%',
+                      minWidth: 220,
+                      zIndex: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {selectedCauses.length === 0 ? (
+                      <Box sx={{ p: 2.5, border: '1.5px dashed #CBD5E1', borderRadius: 2.5, textAlign: 'center', bgcolor: '#FFFFFF', opacity: 0.8 }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.9rem', color: 'text.secondary', fontWeight: 600 }}>
+                          No lower level causes linked
+                        </Typography>
+                      </Box>
+                    ) : (
+                      selectedCauses.map(cause => (
+                        <Box
+                          key={cause.id}
+                          id={`selected-cause-${cause.id}`}
+                          sx={{
+                            p: 2,
+                            borderRadius: 2.5,
+                            bgcolor: '#FFFFFF',
+                            border: '1px solid #E2E8F0',
+                            borderLeft: `4px solid ${TREE_COLORS.nodeText.workElem}`,
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                            transition: 'transform 0.15s ease',
+                            '&:hover': { transform: 'translateX(-2px)' },
+                          }}
+                        >
+                          <Typography sx={{ fontSize: '0.92rem', fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 0.5 }}>
+                            {cause.parentName || 'Work Element'}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: TREE_COLORS.nodeText.function, mb: 0.5 }}>
+                            {cause.function?.narration}
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.98rem', fontWeight: 700, color: TREE_COLORS.nodeText.failure, wordBreak: 'break-word' }}>
+                            {cause.narration}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Stack>
+                </Box>
               </Box>
             </Grid>
 
-            {/* RIGHT PANE (~30% Width): Dual Tree Selection Sidebar */}
-            <Grid size={4} sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#FFFFFF' }}>
-              
+            {/* RIGHT PANE (~32% Width): Dual Tree Selection Sidebar */}
+            <Grid
+              size={{ xs: 12, md: 4 }}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                bgcolor: '#FFFFFF',
+                borderLeft: '1px solid #E2E8F0',
+              }}
+            >
               {/* TOP SECTION: Connect Higher Level Failure (Effects) */}
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '1px solid #E2E8F0' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '1.05rem' }}>
+              <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5, borderBottom: '2px solid #F1F5F9' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.process, mb: 0.5, fontSize: '1.05rem' }}>
                   Connect Higher Level Failure
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2, fontSize: '0.9rem' }}>
@@ -594,7 +672,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                           direction="row" 
                           spacing={0.5} 
                           onClick={() => toggleGroup(fnName)}
-                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1.5, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
                         >
                           {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
                           <TreeIcon iconSrc={TREE_ASSETS.processStep} size={20} />
@@ -627,7 +705,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                                       py: 0.5,
                                       px: 0.75,
                                       my: 0.25,
-                                      borderRadius: 1,
+                                      borderRadius: 1.5,
                                       bgcolor: isChecked ? TREE_COLORS.selectedBg : 'transparent',
                                       borderLeft: isChecked ? `2px solid ${TREE_COLORS.nodeText.failure}` : '2px solid transparent',
                                       '&:hover': { bgcolor: TREE_COLORS.hoverBg }
@@ -652,7 +730,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
 
               {/* BOTTOM SECTION: Connect Lower Level Failure (Causes) */}
               <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '1.05rem' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: TREE_COLORS.nodeText.workElem, mb: 1.5, fontSize: '1.05rem' }}>
                   Connect Lower Level Failure
                 </Typography>
 
@@ -670,7 +748,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                           direction="row" 
                           spacing={0.5} 
                           onClick={() => toggleGroup(fnName)}
-                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
+                          sx={{ cursor: 'pointer', alignItems: 'center', py: 0.5, px: 0.5, borderRadius: 1.5, '&:hover': { bgcolor: TREE_COLORS.hoverBg } }}
                         >
                           {isExpanded ? <ExpandIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} /> : <CollapseIcon fontSize="small" sx={{ color: TREE_COLORS.chevron }} />}
                           <TreeIcon iconSrc={TREE_ASSETS.workElement} size={20} />
@@ -703,7 +781,7 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
                                       py: 0.5,
                                       px: 0.75,
                                       my: 0.25,
-                                      borderRadius: 1,
+                                      borderRadius: 1.5,
                                       bgcolor: isChecked ? TREE_COLORS.selectedBg : 'transparent',
                                       borderLeft: isChecked ? `2px solid ${TREE_COLORS.nodeText.workElem}` : '2px solid transparent',
                                       '&:hover': { bgcolor: TREE_COLORS.hoverBg }

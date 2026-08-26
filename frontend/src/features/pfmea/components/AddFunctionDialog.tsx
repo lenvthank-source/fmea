@@ -323,7 +323,7 @@ export const AddFunctionDialog: React.FC<AddFunctionDialogProps> = ({
                 onClick={handleAddRow}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                + Add Row
+                Add Row
               </Button>
             </Stack>
           )}

@@ -253,7 +253,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
             </TableContainer>
 
             <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={handleAddRow} sx={{ alignSelf: 'flex-start' }}>
-              + Add Row
+              Add Row
             </Button>
           </Stack>
         )}

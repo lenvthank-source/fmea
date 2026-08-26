@@ -73,14 +73,33 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           styleOverrides: {
             root: {
               borderRadius: 8,
-              padding: '8px 16px',
+              padding: '7px 15px',
               height: 36,
               fontSize: '0.875rem',
+              fontWeight: 600,
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: 'none',
               '&:hover': {
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                 transform: 'translateY(-1px)',
+              },
+            },
+            outlined: {
+              backgroundColor: 'rgba(255, 255, 255, 0.75)',
+              backdropFilter: 'blur(8px)',
+              borderColor: 'rgba(15, 23, 42, 0.14)',
+              color: '#0F172A',
+              '&:hover': {
+                backgroundColor: 'rgba(248, 250, 252, 0.95)',
+                borderColor: '#0D9488',
+                color: '#0D9488',
+                boxShadow: '0 4px 14px rgba(13, 148, 136, 0.12)',
+              },
+            },
+            contained: {
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(15, 23, 42, 0.15)',
               },
             },
           },

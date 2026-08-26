@@ -449,7 +449,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         {!editMode && activeTab === 1 && (
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              Enter multiple failure {roleTitle.toLowerCase()} entries in the spreadsheet table below. Click "+ Add Row" to append more entries.
+              Enter multiple failure {roleTitle.toLowerCase()} entries in the spreadsheet table below. Click "Add Row" to append more entries.
             </Typography>
 
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
@@ -595,7 +595,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
               onClick={handleAddRow}
               sx={{ alignSelf: 'flex-start' }}
             >
-              + Add Row
+              Add Row
             </Button>
           </Stack>
         )}

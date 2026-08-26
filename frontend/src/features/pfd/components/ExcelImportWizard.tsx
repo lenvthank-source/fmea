@@ -325,27 +325,58 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     setActiveStep(1);
     try {
       const arrayBuffer = await f.arrayBuffer();
-      const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
-      await wb.xlsx.load(arrayBuffer);
-      const ws = wb.worksheets[0];
-      if (!ws) throw new Error('No worksheet found');
+      const XLSX = await import('xlsx');
+      const wb = XLSX.read(arrayBuffer, { type: 'array' });
+      
+      if (!wb.SheetNames || wb.SheetNames.length === 0) {
+        throw new Error('No worksheet found in Excel file');
+      }
+
+      // Find the first sheet that has content
+      let ws: any = null;
+      let rawGrid: any[][] = [];
+      for (const sheetName of wb.SheetNames) {
+        const sheet = wb.Sheets[sheetName];
+        if (sheet) {
+          const grid = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '' });
+          if (grid && grid.length > 0) {
+            ws = sheet;
+            rawGrid = grid;
+            break;
+          }
+        }
+      }
+
+      if (!ws || rawGrid.length === 0) {
+        throw new Error('Worksheet is empty or has no readable rows');
+      }
 
       const headers: string[] = [];
       const rows: ParsedRow[] = [];
       let headerRowIndex = -1;
       let maxHeaderScore = 0;
 
-      // Scan first 15 rows to find header row
-      for (let r = 1; r <= Math.min(15, ws.rowCount); r++) {
-        const row = ws.getRow(r);
+      // Scan up to first 25 rows to find header row with synonym weight
+      for (let r = 0; r < Math.min(25, rawGrid.length); r++) {
+        const row = rawGrid[r];
+        if (!Array.isArray(row)) continue;
         let score = 0;
         const rowHeaders: string[] = [];
-        row.eachCell((cell, col) => {
-          const val = cell.text || String(cell.value || '');
-          rowHeaders[col - 1] = val;
-          if (val.trim()) score++;
+        row.forEach((cellVal, colIdx) => {
+          const val = String(cellVal || '').trim();
+          rowHeaders[colIdx] = val;
+          if (val) {
+            const norm = normalizeHeader(val);
+            for (const synonyms of Object.values(EXACT_HEADER_SYNONYMS)) {
+              if (synonyms.some((s) => normalizeHeader(s) === norm)) {
+                score += 3;
+                break;
+              }
+            }
+            score += 1;
+          }
         });
+
         if (score > maxHeaderScore) {
           maxHeaderScore = score;
           headers.length = 0;
@@ -354,33 +385,45 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         }
       }
 
-      if (headerRowIndex === -1 || headers.length === 0) {
+      if (headerRowIndex === -1 || headers.length === 0 || maxHeaderScore === 0) {
         throw new Error('Could not detect header row');
       }
 
+      // Clean trailing empty headers
+      while (headers.length > 0 && !headers[headers.length - 1]?.trim()) {
+        headers.pop();
+      }
+
+      const cleanHeaders = headers.map((h, i) => (h && h.trim() ? h.trim() : `Column ${i + 1}`));
+
       // Parse data rows
-      for (let r = headerRowIndex + 1; r <= ws.rowCount; r++) {
-        const row = ws.getRow(r);
+      for (let r = headerRowIndex + 1; r < rawGrid.length; r++) {
+        const row = rawGrid[r];
+        if (!Array.isArray(row)) continue;
         const rowData: ParsedRow = {};
         let hasData = false;
-        row.eachCell((cell, col) => {
-          const header = headers[col - 1] || `Column ${col}`;
-          const val = cell.text || String(cell.value || '');
-          if (val.trim()) hasData = true;
+        cleanHeaders.forEach((header, colIdx) => {
+          const val = String(row[colIdx] ?? '').trim();
+          if (val) hasData = true;
           rowData[header] = val;
         });
         if (hasData) rows.push(rowData);
       }
 
-      setParsedData({ headers, rows });
+      if (rows.length === 0) {
+        throw new Error('No data rows found below the detected header row');
+      }
+
+      setParsedData({ headers: cleanHeaders, rows });
       // Auto-map columns
       const autoMapping: ColumnMapping = {};
-      for (const h of headers) {
+      for (const h of cleanHeaders) {
         const { target } = autoMapHeader(h);
         autoMapping[h] = target;
       }
       setColumnMapping(autoMapping);
     } catch (err: any) {
+      console.error('PFD import error:', err);
       setError(err.message || 'Failed to parse Excel file');
       setActiveStep(0);
     }

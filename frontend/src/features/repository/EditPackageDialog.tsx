@@ -272,7 +272,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
                 startIcon={<AddIcon />}
                 onClick={handleAddFunction}
               >
-                + Add Function
+                Add Function
               </Button>
             </Stack>
             <Stack direction="row" spacing={1}>
@@ -346,7 +346,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
           {/* BRANCH NODES: Functions & Nested Failures */}
           {functions.length === 0 ? (
             <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', bgcolor: '#ffffff', borderRadius: 2 }}>
-              <Typography color="text.secondary">No functions in this package. Click "+ Add Function" above to add one.</Typography>
+              <Typography color="text.secondary">No functions in this package. Click "Add Function" above to add one.</Typography>
             </Paper>
           ) : (
             functions.map((fn, fnIdx) => {
@@ -416,7 +416,7 @@ export const EditPackageDialog: React.FC<EditPackageDialogProps> = ({
                           startIcon={<AddIcon />}
                           onClick={() => handleAddFailure(fnIdx)}
                         >
-                          + Add Cause
+                          Add Cause
                         </Button>
                         <IconButton
                           color="error"
