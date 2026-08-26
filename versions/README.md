@@ -1,0 +1,25 @@
+# Version & Change Ledger
+
+Human write short summaries. Coding agents parse this folder to reconstruct what changed between releases.
+
+## File naming rule
+- One file per release: `v<MAJOR>.<MINOR>.<PATCH>.md` (matching root `package.json#version`).
+
+## File template (keep fields in order)
+```
+# v<MAJOR>.<MINOR>.<PATCH> — <YYYY-MM-DD>
+## Summary     (2-4 human sentences)
+## Changes     (bullets grouped by: Features / Fixes / Refactors)
+## Files Touched (path:line — reason)
+## Schema/Migrations (none | Prisma file + model changes)
+## Breaking / Notes (none | migration steps, flags)
+```
+
+## Release index (newest first)
+- `v0.3.0.md` — Session persistence+72h sliding, PFD Import wiring, Linkage blink rAF fix, delete ConfirmDialog everywhere (multi-value/unlink), revision guards+timestamps, `.agents` restructure (data-model/api-contracts/permissions/deployment/versioning) + AGENTS.md §6 (no CLAUDE/GEMINI/.cursor)
+- `v0.2.3.md` — Admin S/O/D editable (Severity/Occurrence/Detection simple groups), fix Actions D.map, Fab dedup, project nav cleanup, login perf (session-in-login, fire-and-forget lastLoginAt, B-tree indexes)
+- `v0.2.2.md` — Fix `i.filter` crash + long-term pagination UI for projects and FMEA tables (server search, TablePagination, unwrapPaginated)
+- `v0.2.1.md` — Fix RevisionGuard DI crash (CommonModule) + global warning/error toasts for blocked/failed actions (bottom-center Snackbar, parseApiError)
+- `v0.2.0.md` — Excel Import Wizard, Project Replication, Work Element Retention, Failure Linkage Zoom/Pan, Revision Workflow, Semver Numbering, Guest Isolation, Security Hardening
+- `v0.1.0.md` — Project replication, dropdown fix, Excel export borders, Failure Linkage zoom/pan, work-element retention
+- `v0.0.0.md` — Baseline: introduced versioning system, no runtime change.

@@ -23,8 +23,13 @@ const LinkageMap = lazy(() => import('../features/linkage/LinkageMap'));
 const RepositoryPage = lazy(() => import('../features/repository/RepositoryPage'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAuth();
+  const { token, isHydrating } = useAuth() as any;
 
+  if (isHydrating) {
+    return <InitializingWorkspace />;
+  }
+
+  // After hydration, token null means no session (72h expired or cleared)
   if (!token) {
     return <Navigate to="/login" replace />;
   }

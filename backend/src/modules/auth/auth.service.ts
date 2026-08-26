@@ -364,10 +364,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Update last login — fire-and-forget to not block login
+    // Update last login/activity — fire-and-forget to not block login
     void this.prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: { lastLoginAt: new Date(), lastActivityAt: new Date() },
     }).catch(() => {});
 
     // 4. Extract roles and permissions
@@ -462,6 +462,22 @@ export class AuthService {
       if (!user || user.status !== 'active') {
         throw new UnauthorizedException('User not active');
       }
+
+      // 72h inactivity check — sliding window on lastActivityAt (or lastLoginAt fallback)
+      const lastActive = (user as any).lastActivityAt || (user as any).lastLoginAt || null;
+      if (lastActive) {
+        const elapsed = Date.now() - new Date(lastActive).getTime();
+        const INACTIVITY_TTL_MS = 72 * 60 * 60 * 1000;
+        if (elapsed > INACTIVITY_TTL_MS) {
+          throw new UnauthorizedException('Session expired after 72h inactivity — please login again');
+        }
+      }
+
+      // Bump lastActivityAt (fire-and-forget, throttled at caller; here refresh always bumps)
+      void this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastActivityAt: new Date() },
+      }).catch(() => {});
 
       const roles = user.userRoles.map((ur) => ur.role.name);
       const permissionCodesSet = new Set<string>();
@@ -684,6 +700,15 @@ export class AuthService {
 
     if (!user || user.tenantId !== tenantId || user.status !== 'active') {
       throw new NotFoundException('User not found');
+    }
+
+    // Throttled bump of lastActivityAt (>5min) — fire-and-forget
+    const lastActive = (user as any).lastActivityAt as Date | null;
+    if (!lastActive || Date.now() - new Date(lastActive).getTime() > 5 * 60 * 1000) {
+      void this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastActivityAt: new Date() },
+      }).catch(() => {});
     }
 
     const roles = user.userRoles.map((ur) => ur.role.name);

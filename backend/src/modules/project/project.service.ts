@@ -1314,6 +1314,15 @@ async replicate(
     if (revision.lockedAt !== null) {
       throw new BadRequestException('Cannot update a locked revision.');
     }
+    if (revision.status !== 'draft') {
+      throw new BadRequestException('Only draft revisions can be updated. Submit workflow must be used for status changes.');
+    }
+    // Validate effective dates
+    if (dto.effectiveFrom && dto.effectiveTo) {
+      const from = new Date(dto.effectiveFrom);
+      const to = new Date(dto.effectiveTo);
+      if (to < from) throw new BadRequestException('effectiveTo cannot be earlier than effectiveFrom');
+    }
 
     // If revision number is changing, validate format and uniqueness
     if (dto.revisionNumber && dto.revisionNumber !== revision.revisionNumber) {
@@ -1458,7 +1467,7 @@ async replicate(
 
     const updated = await this.prisma.documentRevision.update({
       where: { id: revisionId },
-      data: { status: 'in_review' },
+      data: { status: 'in_review', submittedAt: new Date() },
     });
 
     await this.auditLogService.createEntry({
@@ -1467,7 +1476,7 @@ async replicate(
       entityType: 'document_revision',
       entityId: revisionId,
       action: 'submit_for_approval',
-      newValue: { status: 'in_review' },
+      newValue: { status: 'in_review', submittedAt: updated.submittedAt },
     });
 
     return updated;
@@ -1520,15 +1529,17 @@ async replicate(
       throw new UnauthorizedException('Invalid password for e-signature');
     }
 
-    // Update revision status to approved and lock it
+    const now = new Date();
+    // Update revision status to approved and lock it — also set approvedAt for audit trail
     const updated = await this.prisma.documentRevision.update({
       where: { id: revisionId },
       data: {
         status: 'approved',
-        lockedAt: new Date(),
+        lockedAt: now,
+        approvedAt: now,
         // Store approval metadata in a JSON field or separate table
         // For now, we'll use the changeDescription field to store approval info
-        changeDescription: `${revision.changeDescription || ''}\n\n[APPROVED by ${userId} at ${new Date().toISOString()}: ${dto.comment}]`,
+        changeDescription: `${revision.changeDescription || ''}\n\n[APPROVED by ${userId} at ${now.toISOString()}: ${dto.comment}]`,
       },
     });
 

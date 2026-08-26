@@ -30,6 +30,7 @@ import { DocumentHeader } from '../../components/DocumentHeader';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
 import { unwrapPaginated } from '../../lib/pagination';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 interface ProcessStep {
   id: string;
@@ -139,6 +140,7 @@ export const PfmeaWorkspace: React.FC = () => {
   const [linkageModalFailureModeId, setLinkageModalFailureModeId] = useState<string | null>(null);
   const [detailWindowOpen, setDetailWindowOpen] = useState(false);
   const [detailWindowFailureModeId, setDetailWindowFailureModeId] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; message: string; detail?: string; onConfirm: () => void } | null>(null);
 
   // Structure-level function/failure dialog state
   const [structFuncDialogOpen, setStructFuncDialogOpen] = useState(false);
@@ -856,20 +858,18 @@ export const PfmeaWorkspace: React.FC = () => {
 
 
 
-  const handleDeleteRow = async (rowId: string) => {
-    if (!window.confirm('Are you sure you want to delete this analysis row? This action is permanent.')) return;
+  const doDeleteRow = async (rowId: string) => {
+    setConfirmState(null);
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/pfmea-rows/${rowId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!response.ok) {
         const msg = await parseApiError(response, 'Failed to delete FMEA row.');
         throw new Error(msg);
       }
-
       await fetchData();
     } catch (err: any) {
       const msg = err.message || 'Could not delete FMEA row.';
@@ -877,25 +877,23 @@ export const PfmeaWorkspace: React.FC = () => {
       showToast(msg, getToastSeverity(msg));
     }
   };
+  const handleDeleteRow = (rowId: string) => {
+    setConfirmState({
+      open: true,
+      title: 'Delete analysis row',
+      message: 'Are you sure you want to delete this analysis row?',
+      detail: 'This action is permanent.',
+      onConfirm: () => doDeleteRow(rowId),
+    });
+  };
 
-  const handleDeleteStep = async (stepId: string) => {
+  const doDeleteStep = async (stepId: string) => {
+    setConfirmState(null);
     const step = steps.find(s => s.id === stepId);
     if (!step) return;
-
     const assocRows = rows.filter(r => r.processStepId === stepId);
-    
-    let confirmMsg = `Are you sure you want to delete the process step "${step.stepNumber} - ${step.name}"?`;
-    if (step.isOrphaned) {
-      confirmMsg = `This process step is orphaned because the original PFD step was deleted. Deleting it will remove it from FMEA along with all associated analysis data. Do you want to delete it?`;
-    } else if (assocRows.length > 0) {
-      confirmMsg = `Deleting this process step will also delete all of its associated FMEA analysis rows (${assocRows.length} rows). Are you sure you want to proceed?`;
-    }
-
-    if (!window.confirm(confirmMsg)) return;
-
     setError(null);
     try {
-      // 1. Delete associated FMEA rows first (to bypass backend check in pfd-steps deletion)
       for (const r of assocRows) {
         const response = await fetch(`${API_BASE_URL}/pfmea-rows/${r.id}`, {
           method: 'DELETE',
@@ -906,24 +904,33 @@ export const PfmeaWorkspace: React.FC = () => {
           throw new Error(msg);
         }
       }
-
-      // 2. Delete the step itself
       const response = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!response.ok) {
         const msg = await parseApiError(response, 'Failed to delete process step.');
         throw new Error(msg);
       }
-
       await fetchData();
     } catch (err: any) {
       const msg = err.message || 'Could not delete process step.';
       setError(msg);
       showToast(msg, getToastSeverity(msg));
     }
+  };
+  const handleDeleteStep = (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    const assocRows = rows.filter(r => r.processStepId === stepId);
+    let confirmMsg = `Are you sure you want to delete the process step "${step.stepNumber} - ${step.name}"?`;
+    let detail: string | undefined;
+    if (step.isOrphaned) {
+      detail = 'This step is orphaned (original PFD step was deleted). All associated analysis data will be removed.';
+    } else if (assocRows.length > 0) {
+      detail = `This will also delete ${assocRows.length} associated FMEA analysis row(s).`;
+    }
+    setConfirmState({ open: true, title: 'Delete process step', message: confirmMsg, detail, onConfirm: () => doDeleteStep(stepId) });
   };
 
   const handleDeleteNode = async (nodeId: string) => {
@@ -2033,6 +2040,9 @@ export const PfmeaWorkspace: React.FC = () => {
           initialControlDetection={structFailInitialControlDetection}
           initialFilterCode={structFailInitialFilterCode}
         />
+      )}
+      {confirmState && (
+        <ConfirmDialog open={confirmState.open} onClose={() => setConfirmState(null)} onConfirm={confirmState.onConfirm} title={confirmState.title} message={confirmState.message} detail={confirmState.detail} severity="warning" />
       )}
     </Box>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Stack, Checkbox,
@@ -220,7 +220,10 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   const selectedEffects = data?.effects.filter(e => selectedEffectIds.includes(e.id)) || [];
   const selectedCauses = data?.causes.filter(c => selectedCauseIds.includes(c.id)) || [];
 
-  const updateCoords = () => {
+  const hasFittedRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+
+  const updateCoords = useCallback(() => {
     if (!containerRef.current || !data) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const modeEl = document.getElementById('linkage-mode-box');
@@ -264,10 +267,10 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     });
 
     setLinks(newLinks);
-  };
+  }, [data, selectedEffects, selectedCauses, zoom, panX, panY]);
 
-  // Fit to view when data loads or selection changes
-  const fitToView = () => {
+  // Fit to view once when data loads (avoid infinite loop by not depending on zoom/pan)
+  const fitToView = useCallback(() => {
     if (!containerRef.current || !data) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const containerWidth = containerRect.width;
@@ -305,27 +308,62 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
     const newPanX = containerWidth / 2 - (minX + maxX) / 2 * newZoom;
     const newPanY = containerHeight / 2 - (minY + maxY) / 2 * newZoom;
 
-    setZoom(newZoom);
-    setPanX(newPanX);
-    setPanY(newPanY);
-  };
+    // Only update if meaningfully different to avoid jitter
+    setZoom(prev => Math.abs(prev - newZoom) > 0.01 ? newZoom : prev);
+    setPanX(prev => Math.abs(prev - newPanX) > 1 ? newPanX : prev);
+    setPanY(prev => Math.abs(prev - newPanY) > 1 ? newPanY : prev);
+  }, [data, selectedEffects, selectedCauses]);
 
+  // One-time fit when opened or when data first loads
   useEffect(() => {
     if (!open || !data) return;
-    updateCoords();
-    fitToView();
-    const timers = [
-      setTimeout(updateCoords, 50),
-      setTimeout(updateCoords, 150),
-      setTimeout(updateCoords, 350)
-    ];
+    if (hasFittedRef.current) return;
+    // Defer to next frame so DOM is laid out
+    const id = requestAnimationFrame(() => {
+      fitToView();
+      hasFittedRef.current = true;
+      // Then update coords after fit
+      requestAnimationFrame(() => updateCoords());
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, data, fitToView, updateCoords]);
 
-    window.addEventListener('resize', updateCoords);
-    return () => {
-      timers.forEach(clearTimeout);
-      window.removeEventListener('resize', updateCoords);
+  useEffect(() => {
+    hasFittedRef.current = false;
+    if (!open) setLinks([]);
+  }, [open]);
+
+  // Recompute connectors when selection changes — rAF throttled, no zoom/pan write loop
+  useEffect(() => {
+    if (!open || !data) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      updateCoords();
+    });
+    // Also schedule delayed passes to catch layout after Collapse animation
+    const t1 = setTimeout(() => requestAnimationFrame(() => updateCoords()), 100);
+    const t2 = setTimeout(() => requestAnimationFrame(() => updateCoords()), 350);
+    const onResize = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => updateCoords());
     };
-  }, [selectedEffectIds, selectedCauseIds, data, open, zoom, panX, panY]);
+    window.addEventListener('resize', onResize);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [selectedEffectIds, selectedCauseIds, data, open, updateCoords]);
+
+  // When user manually zooms/pans, just recompute coords (no fitToView)
+  useEffect(() => {
+    if (!open || !data) return;
+    if (hasFittedRef.current) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => updateCoords());
+    }
+  }, [zoom, panX, panY, open, data, updateCoords]);
 
   // Group items by parent function
   const groupEffectsByFunction = () => {

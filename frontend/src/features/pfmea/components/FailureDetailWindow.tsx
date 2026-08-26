@@ -13,6 +13,7 @@ import {
   Edit as EditIcon
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
 import { parseApiError } from '../../../lib/api';
 
@@ -171,7 +172,10 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
     if (open) loadData();
   }, [open, failureModeId]);
 
-  const handleUnlink = async (linkId: string) => {
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; message: string; detail?: string; onConfirm: () => void } | null>(null);
+
+  const doUnlink = async (linkId: string) => {
+    setConfirmState(null);
     try {
       await fetch(`${API_BASE_URL}/failure-links/${linkId}`, {
         method: 'DELETE',
@@ -185,9 +189,18 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       showToast(msg, getToastSeverity(msg));
     }
   };
+  const handleUnlink = (linkId: string) => {
+    setConfirmState({
+      open: true,
+      title: 'Unlink failure',
+      message: 'Are you sure you want to unlink this failure? Associated actions may be removed.',
+      detail: 'This cannot be undone.',
+      onConfirm: () => doUnlink(linkId),
+    });
+  };
 
-  const handleDeleteAction = async (actionId: string) => {
-    if (!confirm('Delete this action?')) return;
+  const doDeleteAction = async (actionId: string) => {
+    setConfirmState(null);
     try {
       await fetch(`${API_BASE_URL}/link-actions/${actionId}`, {
         method: 'DELETE',
@@ -199,6 +212,14 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       setError(msg);
       showToast(msg, getToastSeverity(msg));
     }
+  };
+  const handleDeleteAction = (actionId: string) => {
+    setConfirmState({
+      open: true,
+      title: 'Delete action',
+      message: 'Are you sure you want to delete this action?',
+      onConfirm: () => doDeleteAction(actionId),
+    });
   };
 
   return (
@@ -636,6 +657,9 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+      {confirmState && (
+        <ConfirmDialog open={confirmState.open} onClose={() => setConfirmState(null)} onConfirm={confirmState.onConfirm} title={confirmState.title} message={confirmState.message} detail={confirmState.detail} severity="warning" />
+      )}
     </Dialog>
   );
 };

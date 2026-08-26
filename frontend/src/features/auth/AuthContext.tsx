@@ -13,6 +13,7 @@ export interface UserSession {
 interface AuthContextType {
   token: string | null;
   user: UserSession | null;
+  isHydrating: boolean;
   login: (email: string, password: string, subdomain: string, name?: string) => Promise<void>;
   guestLogin: () => Promise<void>;
   logout: () => void;
@@ -46,6 +47,7 @@ const originalFetch = window.fetch;
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSession | null>(null);
+  const [isHydrating, setIsHydrating] = useState(true);
 
   const refreshAccessToken = async (): Promise<boolean> => {
     const savedRefreshToken = localStorage.getItem('refresh_token');
@@ -104,10 +106,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Fetch fresh user data with permissions from server
-  const fetchMe = async (token: string): Promise<UserSession | null> => {
+  const fetchMe = async (tkn: string): Promise<UserSession | null> => {
     try {
       const response = await fetch(`${API_URL}/auth/me`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${tkn}` },
       });
       if (response.ok) {
         return await response.json();
@@ -117,6 +119,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return null;
   };
+
+  // Hydrate session from localStorage on mount — survives reload until 72h inactivity or cookies cleared
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    const savedRefresh = localStorage.getItem('refresh_token');
+    if (!savedToken && !savedRefresh) {
+      setIsHydrating(false);
+      return;
+    }
+    // If we have a token, try to restore it immediately (no flicker)
+    if (savedToken) {
+      const claims = parseJwt(savedToken);
+      const isExpired = claims ? claims.exp * 1000 < Date.now() - 5000 : true;
+      if (!isExpired) {
+        setToken(savedToken);
+        fetchMe(savedToken)
+          .then((me) => {
+            if (me) {
+              setUser(me);
+            } else if (claims) {
+              setUser({
+                id: claims.sub,
+                email: claims.email,
+                name: claims.name || claims.email,
+                tenantId: claims.tenant_id || claims.tenantId,
+                roles: claims.roles || [],
+                permissions: claims.permissions || [],
+                isGuest: !!claims.isGuest,
+              });
+            }
+            setIsHydrating(false);
+          })
+          .catch(() => {
+            // Fallback to refresh if /me failed
+            if (savedRefresh) {
+              refreshAccessToken().finally(() => setIsHydrating(false));
+            } else setIsHydrating(false);
+          });
+        return;
+      }
+    }
+    // Token expired/missing but refresh exists -> try silent refresh
+    if (savedRefresh) {
+      refreshAccessToken().finally(() => setIsHydrating(false));
+    } else {
+      // No valid token & no refresh -> clear stale storage
+      if (savedToken) {
+        try {
+          const c = parseJwt(savedToken);
+          if (!c || c.exp * 1000 < Date.now()) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+          }
+        } catch { /* ignore */ }
+      }
+      setIsHydrating(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Background token refresh check
   useEffect(() => {
@@ -280,7 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, guestLogin, logout, hasPermission }}>
+    <AuthContext.Provider value={{ token, user, isHydrating, login, guestLogin, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

@@ -15,6 +15,7 @@ import {
   KeyboardArrowDown as ExpandMoreIcon,
   KeyboardArrowRight as ChevronRightIcon,
   Download as DownloadIcon,
+  Upload as UploadIcon,
   Check as CheckIcon,
   Edit as EditIcon,
   CheckCircle as CheckCircleIcon
@@ -28,6 +29,8 @@ import { ReportExporter } from '../reports/ReportExporter';
 import { getPfdIconMeta } from './utils/pfdIconMap';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { ExcelImportWizard } from './components/ExcelImportWizard';
 
 interface ProcessStep {
   id: string;
@@ -212,6 +215,7 @@ export const PfdWorkspace: React.FC = () => {
   // Drawer for Detail Editing
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
   const [hoveredStepId, setHoveredStepId] = useState<string | null>(null);
 
@@ -237,6 +241,10 @@ export const PfdWorkspace: React.FC = () => {
   const [panY, setPanY] = useState(80);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Confirm dialog state (replaces window.confirm for all deletes)
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; message: string; detail?: string; onConfirm: () => void } | null>(null);
+  const [, setPendingMultiDelete] = useState<{ stepId: string; fieldName: string; idx: number; value: string } | null>(null);
 
   useEffect(() => {
     setZoom(isMobile ? 0.45 : isTablet ? 0.65 : 0.85);
@@ -275,6 +283,47 @@ export const PfdWorkspace: React.FC = () => {
     setZoom(1);
     setPanX(50);
     setPanY(80);
+  };
+
+  // Multi-value delete helpers — now require confirmation (was silent)
+  const executeMultiDelete = async (stepId: string, fieldName: 'incomingVariation' | 'machinesEquipmentDocs' | 'desiredOutcome' | 'processCharacteristics', idx: number) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    let items: string[] = [];
+    const val: any = (step as any)[fieldName];
+    if (Array.isArray(val)) items = val;
+    else if (typeof val === 'string' && val) {
+      if (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics') items = val.split('\n');
+      else { try { const p = JSON.parse(val); items = Array.isArray(p) ? p : [val]; } catch { items = [val]; } }
+    }
+    if (items.length <= 1) return;
+    const updated = [...items];
+    updated.splice(idx, 1);
+    const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics') ? updated.join('\n') : updated;
+    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } as any : s));
+    setConfirmState(null);
+    setPendingMultiDelete(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ [fieldName]: valToSave }),
+      });
+      if (!res.ok) { const msg = await parseApiError(res, 'Failed to update step'); throw new Error(msg); }
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update step';
+      showToast(msg, getToastSeverity(msg));
+      fetchSteps();
+    }
+  };
+  const requestMultiDelete = (stepId: string, fieldName: 'incomingVariation' | 'machinesEquipmentDocs' | 'desiredOutcome' | 'processCharacteristics', idx: number, value: string) => {
+    setPendingMultiDelete({ stepId, fieldName, idx, value });
+    setConfirmState({
+      open: true,
+      title: 'Remove entry',
+      message: `Remove "${(value || '').slice(0, 60)}" from ${fieldName}?`,
+      detail: 'This will update the PFD step immediately.',
+      onConfirm: () => executeMultiDelete(stepId, fieldName, idx),
+    });
   };
 
 
@@ -453,70 +502,13 @@ export const PfdWorkspace: React.FC = () => {
         }, 50);
       } else if (e.key === 'Backspace' && !items[idx] && items.length > 1) {
         e.preventDefault();
-        const updated = [...items];
-        updated.splice(idx, 1);
-        
-        const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
-          ? updated.join('\n')
-          : updated;
-
-        setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
-
-        try {
-          const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ [fieldName]: valToSave }),
-          });
-          if (!res.ok) {
-            const msg = await parseApiError(res, 'Failed to update step');
-            throw new Error(msg);
-          }
-        } catch (err: any) {
-          const msg = err.message || 'Failed to update step';
-          showToast(msg, getToastSeverity(msg));
-          fetchSteps();
-        }
-
-        setTimeout(() => {
-          const prevInput = document.getElementById(`${fieldName}-input-${stepId}-${Math.max(0, idx - 1)}`);
-          if (prevInput) (prevInput as HTMLInputElement).focus();
-        }, 50);
+        requestMultiDelete(stepId, fieldName, idx, items[idx]);
       }
     };
 
     const handleDelete = async (idx: number) => {
       if (items.length <= 1) return;
-      const updated = [...items];
-      updated.splice(idx, 1);
-      
-      const valToSave = (fieldName === 'desiredOutcome' || fieldName === 'processCharacteristics')
-        ? updated.join('\n')
-        : updated;
-
-      setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: valToSave } : s));
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ [fieldName]: valToSave }),
-        });
-        if (!res.ok) {
-          const msg = await parseApiError(res, 'Failed to update step');
-          throw new Error(msg);
-        }
-      } catch (err: any) {
-        const msg = err.message || 'Failed to update step';
-        showToast(msg, getToastSeverity(msg));
-        fetchSteps();
-      }
+      requestMultiDelete(stepId, fieldName, idx, items[idx]);
     };
 
     return (
@@ -705,30 +697,37 @@ export const PfdWorkspace: React.FC = () => {
     }
   };
 
-  // Delete step
-  const handleDeleteStep = async (stepId: string) => {
-    if (!window.confirm('Are you sure you want to delete this process step?')) return;
+  // Delete step — now via ConfirmDialog (was window.confirm)
+  const doDeleteStep = async (stepId: string) => {
     setError(null);
+    setConfirmState(null);
     try {
       const response = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!response.ok) {
         const msg = await parseApiError(response, 'Failed to delete process step');
         throw new Error(msg);
       }
-
       await fetchSteps();
-      if (selectedStep?.id === stepId) {
-        setDetailsOpen(false);
-      }
+      if (selectedStep?.id === stepId) setDetailsOpen(false);
     } catch (err: any) {
       const msg = err.message || 'Failed to delete step';
       setError(msg);
       showToast(msg, getToastSeverity(msg));
     }
+  };
+  const handleDeleteStep = (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    const label = step ? `${step.stepNumber} - ${step.name}`.trim() : stepId;
+    setConfirmState({
+      open: true,
+      title: 'Delete process step',
+      message: `Are you sure you want to delete "${label}"?`,
+      detail: 'Associated FMEA/Control-Plan rows may be affected. This cannot be undone.',
+      onConfirm: () => doDeleteStep(stepId),
+    });
   };
 
   // Reordering drag handlers
@@ -841,6 +840,15 @@ export const PfdWorkspace: React.FC = () => {
               sx={{ textTransform: 'none', fontWeight: 600 }}
             >
               Collapse All
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setImportOpen(true)}
+              startIcon={<UploadIcon />}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            >
+              Import PFD
             </Button>
             <Button
               variant="contained"
@@ -2040,6 +2048,25 @@ export const PfdWorkspace: React.FC = () => {
         data={steps}
         steps={steps}
       />
+      <ExcelImportWizard
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        revisionId={revisionId}
+        existingSteps={steps}
+        token={token}
+        onImportSuccess={fetchSteps}
+      />
+      {confirmState && (
+        <ConfirmDialog
+          open={confirmState.open}
+          onClose={() => setConfirmState(null)}
+          onConfirm={confirmState.onConfirm}
+          title={confirmState.title}
+          message={confirmState.message}
+          detail={confirmState.detail}
+          severity="warning"
+        />
+      )}
     </Box>
   );
 };
