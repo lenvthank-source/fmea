@@ -42,8 +42,8 @@ import {
   Deselect as RemoveIcon,
 } from '@mui/icons-material';
 import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { API_BASE_URL } from '../../../config';
+import { parseApiError } from '../../../lib/api';
 
 export type PfmeaFieldKey =
   | 'processStep'
@@ -642,18 +642,19 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
       };
 
       setImportProgress({ current: 0, total: toImport.length, status: 'Creating & synchronizing PFMEA rows...' });
+      const authToken = token || localStorage.getItem('token');
       const res = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfmea-rows/batch-import`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'PFMEA batch import failed');
+        const msg = await parseApiError(res, 'PFMEA batch import failed');
+        throw new Error(msg);
       }
 
       setImportProgress({ current: toImport.length, total: toImport.length, status: 'Done!' });
@@ -968,7 +969,6 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
     // Step 4: Import
     (
       <Stack spacing={3} sx={{ mt: 4, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        {error && <Alert severity="error">{error}</Alert>}
         <CircularProgress size={80} variant="determinate" value={importing ? (importProgress.current / importProgress.total) * 100 : 0} thickness={6} />
         <Typography variant="h6" sx={{ mt: 2, textAlign: 'center', fontWeight: 700 }}>
           {importing ? `Importing... ${importProgress.current} / ${importProgress.total}` : 'Ready to Import'}
