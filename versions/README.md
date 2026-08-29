@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.5.0.md` — Experience-store: HeroVideo 100vh black `Quality Engineered To Evolve` (Bubbledot + CloudFront video), Product/About(8 logos, no team)/Blog(headless+n8n)/Pricing/LearnHub + 18-URL sitemap + ergonomics bento `p:2` font preserved + public-try tenant/try-token/cap10 + RequestId + gitignore allow
 - `v0.4.0.md` — Portable mesh: head orchestrator + 10 specialist AGENT.md (tri-compat VS Code/Cursor/Opencode/Gemini/Antigravity), routing.md, blackboard.md bus, dispatch.py, .gemini mirrors, AGENTS.md §6.5, fencing hard
 - `v0.3.4.md` — Flexible date parser (DD-MM-YYYY, Excel serials, null fallback), dedicated Responsibility & Target Date column mappings, AP Char(1) and rating sanitization
 - `v0.3.3.md` — AIAG-VDA 2019 22-column PFMEA Excel Import Wizard, PFD stepNumber fix & multi-format parsing, Add Failure Cause field interchange, dropdown menu downward anchor & scroll, wizard >85% table viewport optimization, PFMEA floating horizontal scrollbar

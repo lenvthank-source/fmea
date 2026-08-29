@@ -12,6 +12,12 @@ import { CompetitorVsPage } from '../features/programmatic/CompetitorVsPage';
 import { GlossaryPage } from '../features/programmatic/GlossaryPage';
 import { RequirePermission } from '../components/RequirePermission';
 import { Login } from '../features/auth/Login';
+import { ProductPage } from '../features/product/ProductPage';
+import { AboutPage } from '../features/company/AboutPage';
+import { PricingPage } from '../features/pricing/PricingPage';
+import { LearnHubPage } from '../features/learn/LearnHubPage';
+import { BlogListPage } from '../features/blog/BlogListPage';
+import { BlogPostPage } from '../features/blog/BlogPostPage';
 
 const PfdWorkspace = lazy(() => import('../features/pfd/PfdWorkspace'));
 const PfmeaWorkspace = lazy(() => import('../features/pfmea/PfmeaWorkspace'));
@@ -46,6 +52,13 @@ export const AppRouter: React.FC = () => {
       <Route path="/admin" element={<Login />} />
       <Route path="/app/initializing" element={<InitializingWorkspace />} />
 
+      {/* Experience Store */}
+      <Route path="/product" element={<ProductPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/learn" element={<LearnHubPage />} />
+      <Route path="/blog" element={<BlogListPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
       {/* SEO Educational Pillar Hubs */}
       <Route path="/learn/:slug" element={<PillarPage />} />
       <Route path="/:lang/learn/:slug" element={<PillarPage />} />

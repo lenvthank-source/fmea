@@ -1,0 +1,57 @@
+version: '3.9'
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_DB: fmea_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ['5432:5432']
+    volumes: ['postgres-data:/var/lib/postgresql/data']
+    healthcheck: { test: ['CMD-SHELL', 'pg_isready -U postgres'], interval: 10s, retries: 5 }
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+    volumes: ['redis-data:/data']
+    healthcheck: { test: ['CMD', 'redis-cli', 'ping'], interval: 10s, retries: 5 }
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: fmea
+      MINIO_ROOT_PASSWORD: fmeaminio123
+    ports: ['9000:9000', '9001:9001']
+    volumes: ['minio-data:/data']
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/fmea_db?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+      R2_ENDPOINT: http://minio:9000
+      R2_BUCKET: fmea-evidence
+      R2_ACCESS_KEY_ID: fmea
+      R2_SECRET_ACCESS_KEY: fmeaminio123
+      LICENSE_KEY: ${LICENSE_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_DIR: /var/log/fmea
+    ports: ['3000:3000']
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy } }
+    volumes: ['fmea-logs:/var/log/fmea']
+    healthcheck: { test: ['CMD', 'node', '-e', "fetch('http://localhost:3000/api/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"], interval: 20s, retries: 5 }
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api/v1}
+    ports: ['80:80']
+    depends_on: [backend]
+volumes:
+  postgres-data: {}
+  redis-data: {}
+  minio-data: {}
+  fmea-logs: {}

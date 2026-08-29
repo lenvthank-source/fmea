@@ -13,8 +13,8 @@ import { useAuth } from '../auth/AuthContext';
 import { useBackendWarmup } from '../../hooks/useBackendWarmup';
 import { API_BASE_URL } from '../../config';
 import { SEO } from '../../components/SEO/SEO';
-import { ThemeToggle } from '../../components/ThemeToggle/ThemeToggle';
 import { RiskCalculatorWidget } from './RiskCalculatorWidget';
+import { HeroVideo } from './HeroVideo';
 
 /* ────────────────────────────────────────────────────────────
    Utility hook: useInView (IntersectionObserver)
@@ -231,11 +231,13 @@ export const LandingPage: React.FC = () => {
         description="Transform your quality risk with AI-powered FMEA software. Automate AIAG-VDA 7-step compliance, link PFD-PFMEA & sync Control Plans. Start free today! 🚀"
         canonical="/"
       />
+      <HeroVideo />
 
-      {/* ── NAVBAR ──────────────────────────────────────────── */}
+      {/* ── NAVBAR (hidden — replaced by HeroVideo 100vh) ──────────────────────────────────────────── */}
       <Box
         component="nav"
         sx={{
+          display: 'none',
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1200,
           transition: 'all 0.3s ease',
           bgcolor: scrolled ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.85)',
@@ -273,7 +275,7 @@ export const LandingPage: React.FC = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
-            <ThemeToggle />
+            {/* ThemeToggle removed — HeroVideo provides nav */}
             <Tooltip title={isBackendReady ? 'Launch workspace' : 'Preparing secure workspace...'} arrow>
               <Box sx={{ position: 'relative' }}>
                 <Button
@@ -300,13 +302,14 @@ export const LandingPage: React.FC = () => {
         </Container>
       </Box>
 
-      {/* ── HERO ────────────────────────────────────────────── */}
+      {/* ── HERO (hidden — HeroVideo now provides 100vh video hero) ────────────────────────────────────────────── */}
       <Box
         id="hero"
         sx={{
+          display: 'none',
           minHeight: '85vh', position: 'relative', overflow: 'hidden',
           background: 'radial-gradient(circle at 50% 20%, rgba(13, 148, 136, 0.08) 0%, rgba(37, 99, 235, 0.03) 40%, #ffffff 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          alignItems: 'center', justifyContent: 'center',
           borderBottom: '1px solid rgba(0,0,0,0.05)',
           pt: 12, pb: 6,
         }}
@@ -407,11 +410,12 @@ export const LandingPage: React.FC = () => {
         </IconButton>
       </Box>
 
-      {/* ── STATS COUNTER BAR ───────────────────────────────── */}
+      {/* ── STATS COUNTER BAR (hidden — HeroVideo stats footer inside 100vh) ───────────────────────────────── */}
       <Box
         id="stats"
         ref={statsRef}
         sx={{
+          display: 'none',
           bgcolor: '#ffffff', py: { xs: 4, md: 5 },
           borderBottom: '1px solid rgba(0,0,0,0.05)',
         }}

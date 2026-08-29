@@ -641,6 +641,33 @@ export class AuthService {
     });
   }
 
+  async createTryToken() {
+    const tenant = await this.prisma.tenant.findUnique({ where: { subdomain: 'public-try' } });
+    if (!tenant) throw new NotFoundException('Public try tenant not configured — run seed');
+    // Reuse preview-admin user (seeded) or create ephemeral try-anon user with Admin
+    let user = await this.prisma.user.findFirst({ where: { tenantId: tenant.id, email: 'preview-admin@public-try.local' } });
+    let adminRole = await this.prisma.role.findFirst({ where: { tenantId: tenant.id, name: 'Admin' } });
+    if (!adminRole) {
+      // fallback: create Admin role with all perms if missing
+      const allPerms = await this.prisma.permission.findMany();
+      adminRole = await this.prisma.role.create({ data: { tenantId: tenant.id, name: 'Admin', description: 'Preview Admin', isSystem: true } });
+      if (allPerms.length) await this.prisma.rolePermission.createMany({ data: allPerms.map(p=>({ roleId: adminRole!.id, permissionId: p.id })) });
+    }
+    if (!user) {
+      const anonEmail = `try-${Math.random().toString(36).slice(2,7)}@public-try.local`;
+      user = await this.prisma.user.create({ data: { tenantId: tenant.id, email: anonEmail, name: 'Preview User', passwordHash: null, status: 'active', isGuest: false } });
+      await this.prisma.userRole.create({ data: { userId: user.id, roleId: adminRole.id } });
+    } else {
+      // ensure role assigned
+      const has = await this.prisma.userRole.findFirst({ where: { userId: user.id, roleId: adminRole.id } });
+      if (!has) await this.prisma.userRole.create({ data: { userId: user.id, roleId: adminRole.id } });
+    }
+    const roleWithPerms = await this.prisma.role.findUnique({ where: { id: adminRole.id }, include: { rolePermissions: { include: { permission: true } } } });
+    const permissions = roleWithPerms?.rolePermissions.map(rp=>rp.permission.code) || (await this.prisma.permission.findMany()).map(p=>p.code);
+    const tokens = await this.generateTokens({ sub: user.id, email: user.email, tenantId: tenant.id, roles: ['Admin'], permissions, isGuest: false });
+    return { user: { id: user.id, email: user.email, name: user.name }, tenant: { id: tenant.id, subdomain: tenant.subdomain }, ...tokens, isGuest: false };
+  }
+
   async createContactInquiry(data: { name: string; email: string; company?: string; type: string; message: string }) {
     return this.prisma.contactInquiry.create({
       data: {

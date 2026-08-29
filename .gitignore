@@ -34,19 +34,36 @@ Thumbs.db
 /FMEA Credentials.txt
 /query
 .agents/
+!.agents/AGENTS.md
+!.agents/README.md
+!.agents/agents/**
+!.agents/context/**
+!.agents/memory/**
+!.agents/rules/**
+!.agents/workflows/**
+!.agents/skills/**
+!.agents/scripts/**
+!.agents/prompts/**
+!.agents/checklists/**
 
-# Root configurations and deployment guides
+# Root configurations and deployment guides (track required infra)
+# Keep version truth tracked via force-add; allow compose files
 /package.json
+!/package.json
 /fmea-pod.yaml
+!fmea-pod.yaml
 /*.yaml
+!docker-compose*.yaml
 /*.yml
 /deplopyment guide
 /deployment_guide.md
+!/deployment_guide.md
 /first_time_user_guide.md
 /podman_deployment_guide.md
 
-# Ignore entire docs directory
+# Ignore entire docs directory (keep ERGONOMICS for design)
 /docs/
+!/docs/ERGONOMICS.md
 
 # Ignore all subfolder README.md files (except root)
 **/README.md

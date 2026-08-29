@@ -37,17 +37,21 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       error = exception.name;
     }
 
+    const requestId = (request as any).requestId || request.headers['x-request-id'];
+    const tenantId = (request as any).user?.tenantId || 'anon';
     this.logger.error(
-      `${request.method} ${request.url} - ${status} - ${message}`,
+      `[${requestId}] [${tenantId}] ${request.method} ${request.url} - ${status} - ${message}`,
       exception instanceof Error ? exception.stack : undefined,
     );
 
+    response.setHeader('X-Request-Id', String(requestId || ''));
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       error,
       message,
+      requestId: requestId || undefined,
     });
   }
 }

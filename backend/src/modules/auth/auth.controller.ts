@@ -36,6 +36,13 @@ export class AuthController {
   }
 
   @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('try-token')
+  async tryToken() {
+    return this.authService.createTryToken();
+  }
+
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   @Post('contact')
   async submitContact(

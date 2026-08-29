@@ -440,7 +440,7 @@ export const AppShell: React.FC = () => {
             </Box>
           </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, minWidth: 0 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 2, minWidth: 0 }}>
         <Outlet />
       </Box>
     </Box>

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -23,6 +23,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { QueuesModule } from './queues/queues.module';
 import { CommonModule } from './common/common.module';
 import { RatingConfigModule } from './modules/rating-config/rating-config.module';
+import { RequestIdMiddleware } from './common/request-id.middleware';
 
 @Module({
   imports: [
@@ -65,4 +66,8 @@ import { RatingConfigModule } from './modules/rating-config/rating-config.module
     AuditLogService,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

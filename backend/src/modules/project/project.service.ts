@@ -82,6 +82,12 @@ export class ProjectService {
 
   async create(tenantId: string, userId: string, dto: CreateProjectDto) {
     return this.prisma.$transaction(async (tx) => {
+      // Preview cap: public-try limited to 10 projects (store requirement, Q5)
+      const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+      if (tenant?.subdomain === 'public-try') {
+        const cnt = await tx.project.count({ where: { tenantId } });
+        if (cnt >= 10) throw new BadRequestException('Preview limited to 10 projects — contact sales for enterprise');
+      }
       // 1. Create the project
       const project = await tx.project.create({
         data: {

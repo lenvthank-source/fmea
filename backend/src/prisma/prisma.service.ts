@@ -37,6 +37,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       const tenantCount = await this.tenant.count();
       if (tenantCount > 0) {
+        // Ensure public-try tenant exists even on existing DB (for preview)
+        const pub = await this.tenant.findUnique({ where: { subdomain: 'public-try' } });
+        if (!pub) {
+          await this.ensurePublicTryTenant();
+        }
         return; // Already seeded
       }
 
@@ -167,5 +172,28 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     } catch (e) {
       console.error('Failed to seed default database:', e);
     }
+  }
+
+  private async ensurePublicTryTenant() {
+    try {
+      const dbPermissions = await this.permission.findMany();
+      if (dbPermissions.length === 0) return;
+      await this.$transaction(async (tx) => {
+        const existing = await tx.tenant.findUnique({ where: { subdomain: 'public-try' } });
+        if (existing) return;
+        const tenant = await tx.tenant.create({ data: { name: 'Public Try Preview', subdomain: 'public-try' } });
+        const adminRole = await tx.role.create({ data: { tenantId: tenant.id, name: 'Admin', description: 'Preview Admin — anyone can edit', isSystem: true } });
+        await tx.role.createMany({ data: [
+          { tenantId: tenant.id, name: 'Quality Engineer', description: 'Preview QE', isSystem: true },
+          { tenantId: tenant.id, name: 'Reviewer', description: 'Reviewer', isSystem: true },
+          { tenantId: tenant.id, name: 'Approver', description: 'Approver', isSystem: true },
+          { tenantId: tenant.id, name: 'Viewer', description: 'Viewer', isSystem: true },
+        ]});
+        await tx.rolePermission.createMany({ data: dbPermissions.map(p=>({ roleId: adminRole.id, permissionId: p.id })) });
+        // seed one admin user for preview (no password, used via try-token)
+        const pubAdmin = await tx.user.create({ data: { tenantId: tenant.id, email: 'preview-admin@public-try.local', name: 'Preview Admin', passwordHash: null } });
+        await tx.userRole.create({ data: { userId: pubAdmin.id, roleId: adminRole.id } });
+      });
+    } catch (e) { console.error('Failed to seed public-try tenant:', e); }
   }
 }
