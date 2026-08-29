@@ -33,9 +33,21 @@ When `.agents/` conflicts with source code, **source code wins**.
 │   ├── api-contracts.md     ← /api/v1 DTOs, pagination, errors
 │   ├── permissions.md       ← endpoint→permission matrix + RLS
 │   ├── deployment.md        ← Render/Neon/R2/Podman + env
-│   └── versioning.md        ← ledger index + schema linkage
-├── agents/                ← Role definitions for AI agents
-│   ├── developer.md
+│   ├── versioning.md        ← ledger index + schema linkage
+│   └── routing.md           ← orchestrator dispatch table (keyword→agent, priority, fencing)
+├── agents/                ← Role + specialist definitions (portable mesh)
+│   ├── orchestrator/AGENT.md  ← Head orchestrator (primary, tri-compat)
+│   ├── pfd/AGENT.md           ← PFD specialist
+│   ├── pfmea/AGENT.md         ← PFMEA specialist
+│   ├── dfmea/AGENT.md         ← DFMEA specialist
+│   ├── control-plan/AGENT.md  ← CP sync specialist
+│   ├── action/AGENT.md        ← Actions lifecycle
+│   ├── revision/AGENT.md      ← 21 CFR Part 11
+│   ├── rag/AGENT.md           ← Vector/RAG
+│   ├── auth/AGENT.md          ← SSO/tenant/RBAC
+│   ├── repository/AGENT.md    ← Repo/enterprise
+│   ├── ai-suggestion/AGENT.md ← HITL review
+│   ├── developer.md           ← Generic developer
 │   ├── reviewer.md
 │   ├── tester.md
 │   └── architect.md
@@ -54,8 +66,11 @@ When `.agents/` conflicts with source code, **source code wins**.
 │   ├── pre-commit.md
 │   ├── pull-request.md
 │   └── release.md
-└── memory/                ← Durable architectural decisions
-    └── decisions.md
+├── scripts/               ← Portable dispatch helper
+│   └── dispatch.py          ← routing→prompt + blackboard bus (any IDE)
+└── memory/                ← Durable decisions + bus
+    ├── decisions.md         ← ADRs
+    └── blackboard.md        ← orchestration bus (pending/in_progress/completed)
 ```
 
 ## Progressive Context Loading
@@ -68,18 +83,22 @@ Agents must NOT load the entire `.agents/` directory. Load only what is relevant
 
 ### Level 2 — Task Context
 
-| Task Type | Load These |
-|---|---|
-| Frontend feature | `rules/architecture.md`, `context/architecture.md`, `skills/ui-ux-designer/` |
-| Backend feature | `rules/architecture.md`, `context/architecture.md`, relevant skill |
-| PFMEA authoring | `skills/fmea-authoring/`, `skills/pfd-pfmea-linking/`, `context/domain.md` |
-| Bug fix | `workflows/bugfix.md`, `context/architecture.md` |
-| Code review | `workflows/code-review.md`, `rules/coding-style.md`, `rules/security.md` |
-| Database change | `context/architecture.md`, `rules/security.md` |
-| SEO work | `skills/ai-seo/`, `skills/seo-audit/`, relevant SEO skills |
-| Revision/approval | `skills/revision-approval/`, `rules/security.md` |
-| Control Plan | `skills/control-plan-sync/`, `skills/fmea-authoring/` |
-| Actions/optimization | `skills/corrective-actions/`, `context/domain.md` |
+| Task Type | Load These | Specialist AGENT.md |
+|---|---|---|
+| Frontend feature | `rules/architecture.md`, `context/architecture.md`, `skills/ui-ux-designer/` | `agents/orchestrator/AGENT.md` classifies → relevant specialist |
+| Backend feature | `rules/architecture.md`, `context/architecture.md`, relevant skill | `agents/orchestrator/AGENT.md` → `auth/AGENT.md` or `pfd/AGENT.md` etc. |
+| PFMEA authoring | `skills/fmea-authoring/`, `skills/pfd-pfmea-linking/`, `context/domain.md` | `agents/pfmea/AGENT.md` |
+| PFD / import | `skills/pfd-pfmea-linking/`, `context/domain.md` | `agents/pfd/AGENT.md` |
+| DFMEA authoring | `skills/fmea-authoring/`, `context/domain.md` | `agents/dfmea/AGENT.md` |
+| Bug fix | `workflows/bugfix.md`, `context/architecture.md` | `agents/{domain}/AGENT.md` owner |
+| Code review | `workflows/code-review.md`, `rules/coding-style.md`, `rules/security.md` | `agents/reviewer.md` + domain specialist |
+| Database change | `context/architecture.md`, `rules/security.md` | `agents/{domain}/AGENT.md` + orchestrator `allow_shared` |
+| SEO work | `skills/ai-seo/`, `skills/seo-audit/`, relevant SEO skills | `agents/ai-suggestion/AGENT.md` / `seo-agent` |
+| Revision/approval | `skills/revision-approval/`, `rules/security.md` | `agents/revision/AGENT.md` |
+| Control Plan | `skills/control-plan-sync/`, `skills/fmea-authoring/` | `agents/control-plan/AGENT.md` |
+| Actions/optimization | `skills/corrective-actions/`, `context/domain.md` | `agents/action/AGENT.md` |
+| RAG / embeddings | `skills/vector-indexing/` | `agents/rag/AGENT.md` |
+| Auth / tenant | `skills/sso-tenant-context/`, `context/permissions.md` | `agents/auth/AGENT.md` |
 
 ### Level 3 — Specialized (load only when needed)
 - `context/domain.md`, `context/glossary.md`

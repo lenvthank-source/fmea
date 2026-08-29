@@ -148,3 +148,15 @@ Do **NOT** update for routine bugfixes that don't touch the above.
 - `versions/` index (`versions/README.md`) is linked from `context/versioning.md` — update entry on every release.
 - Review `.agents/` freshness at least once per minor version; stale docs count as a bug.
 
+### 6.5 Multi-Agent Orchestration — Portable Mesh (VS Code / Cursor / Opencode / Gemini / Antigravity)
+
+- **Source of truth for agents**: `.agents/agents/*/AGENT.md` (Markdown frontmatter) — NOT `agent.json`. Each `AGENT.md` is tri-compatible: `mode:primary/subagent` (opencode) + `mainAgent/subagent` (antigravity) + `kind/tools` (gemini) + `allow` fencing. See `.agents/context/routing.md:1`.
+- **Mirrors for Gemini CLI**: `.gemini/agents/*.md` are auto-copied from `.agents/agents/*/AGENT.md` (so `invoke_agent{agent_name}` and `@<name>` work); keep in sync via `python .agents/scripts/dispatch.py` or manual copy.
+- **Head Orchestrator**: `.agents/agents/orchestrator/AGENT.md:1` (never writes feature code) + `.agents/agents/orchestrator/prompt.md:1`. It classifies intent via `context/routing.md:1` keyword→agent table, fans out max 4 parallel specialists, merges slices, enforces **human gate ALWAYS** (`memory/blackboard.md:APPROVED` required before build/push).
+- **Bus**: `memory/blackboard.md:1` is the portable `send_message` replacement — every agent appends `## <ISO> — <intent> — <agent> — <status> — priority:N` with `owns/artifacts/depends_on` and `> <agent> → <target>: <msg>`. Visible in any IDE terminal.
+- **Dispatch helper**: `python .agents/scripts/dispatch.py --intent "..." --mode plan|build` prints per-agent prompts (copy-paste into any model's chat) and appends `pending` to blackboard. No Task tool required; if Opencode `Task(subagent_type)` exists it may be used, but fallback is file-bus.
+- **Routing table**: `.agents/context/routing.md:1` holds `keyword regex → agent → AGENT.md → priority → allow glob`. Priority decides conflict winner (higher wins; tie → human gate). `max_parallel: 4`.
+- **Fencing — HARD (not advisory)**: each `AGENT.md:allow` glob is enforced; writes outside `allow` are rejected by orchestrator pre-check and `checklists/pre-commit.md`. Shared files (`backend/prisma/schema.prisma`, `context/data-model.md`) require explicit `> orchestrator: granting allow_shared to <agent> for <reason>` in blackboard.
+- **Legacy JSON**: `F:\proj-fmea\.agents\agents\{fmea-authoring,pfd-pfmea-linking,...}/agent.json:1` (hidden `customAgent`) kept for back-compat but deprecated — dispatch reads `AGENT.md` only.
+- **Opencode vs Gemini parity**: Opencode `Task(subagent_type=agent.name)` ≡ Antigravity `invoke_subagent{TypeName}` ≡ Gemini `invoke_agent{agent_name}`/`@name`. No exclusive param — see `context/routing.md:Tri-compat Mapping`.
+
