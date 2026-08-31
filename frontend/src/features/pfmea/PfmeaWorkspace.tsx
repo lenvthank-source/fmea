@@ -2240,6 +2240,7 @@ export const PfmeaWorkspace: React.FC = () => {
           failureModeId={detailWindowFailureModeId}
           token={token}
           onRefresh={() => fetchData()}
+          projectName={projectName}
         />
       )}
 

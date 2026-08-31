@@ -95,7 +95,6 @@ export const ProjectList: React.FC = () => {
   // Step 3: Document Control & Approvals
   const [dwgNumber, setDwgNumber] = useState('');
   const [dwgRevNoAndDate, setDwgRevNoAndDate] = useState('');
-  const [preliminaryFinalFlag, setPreliminaryFinalFlag] = useState('preliminary');
   const [documentNumber, setDocumentNumber] = useState('');
   const [controlPlanNumber, setControlPlanNumber] = useState('');
   const [assemblyLineNumber, setAssemblyLineNumber] = useState('');
@@ -284,7 +283,6 @@ export const ProjectList: React.FC = () => {
     setDrawingRevDate(project.drawingRevDate ? new Date(project.drawingRevDate).toISOString().split('T')[0] : '');
     setDwgNumber(project.dwgNumber || '');
     setDwgRevNoAndDate(project.dwgRevNoAndDate || '');
-    setPreliminaryFinalFlag(project.preliminaryFinalFlag || 'preliminary');
     setDocumentNumber(project.documentNumber || '');
     setControlPlanNumber(project.controlPlanNumber || '');
     setAssemblyLineNumber(project.assemblyLineNumber || '');
@@ -322,7 +320,6 @@ export const ProjectList: React.FC = () => {
     setDrawingRevDate('');
     setDwgNumber(project.dwgNumber || '');
     setDwgRevNoAndDate(project.dwgRevNoAndDate || '');
-    setPreliminaryFinalFlag('preliminary');
     setDocumentNumber('');
     setControlPlanNumber(project.controlPlanNumber || '');
     setAssemblyLineNumber(project.assemblyLineNumber || '');
@@ -381,7 +378,6 @@ export const ProjectList: React.FC = () => {
       otherApprovalDate2: otherApprovalDate2 || null,
       dwgNumber: dwgNumber || null,
       dwgRevNoAndDate: dwgRevNoAndDate || null,
-      preliminaryFinalFlag,
     };
 
     try {
@@ -431,7 +427,6 @@ export const ProjectList: React.FC = () => {
     setDrawingRevDate('');
     setDwgNumber('');
     setDwgRevNoAndDate('');
-    setPreliminaryFinalFlag('preliminary');
     setDocumentNumber('');
     setControlPlanNumber('');
     setAssemblyLineNumber('');
@@ -447,6 +442,8 @@ export const ProjectList: React.FC = () => {
     setOtherApprovalDate2('');
     setSourceProjectId('');
     setImportTypes([]);
+    setStep(1);
+    setCreateError(null);
   };
 
 
@@ -527,7 +524,6 @@ export const ProjectList: React.FC = () => {
       otherApprovalDate2: otherApprovalDate2 || null,
       dwgNumber: dwgNumber || null,
       dwgRevNoAndDate: dwgRevNoAndDate || null,
-      preliminaryFinalFlag,
       sourceProjectId: sourceProjectId || null,
       importTypes: sourceProjectId ? importTypes : [],
     };
@@ -1131,21 +1127,50 @@ export const ProjectList: React.FC = () => {
                     />
                   </Grid>
                   <Grid size={6} sx={{ mt: 1 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary', fontWeight: 'bold' }}>
                       Document Type *
                     </Typography>
                     <RadioGroup
-                      value={documentTypes[0] || 'Prototype'}
-                      onChange={(e) => setDocumentTypes([e.target.value])}
+                      value={
+                        documentTypes.includes('Production')
+                          ? 'Production'
+                          : documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')
+                          ? 'Pre-Launch'
+                          : 'Prototype'
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Pre-Launch') {
+                          const isSafe = documentTypes.includes('Safe Launch');
+                          setDocumentTypes(isSafe ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
+                        } else {
+                          setDocumentTypes([val]);
+                        }
+                      }}
                     >
-                      {['Prototype', 'Pre-Launch', 'Safe Launch', 'Production'].map((type) => (
-                        <FormControlLabel
-                           key={type}
-                           value={type}
-                           control={<Radio />}
-                           label={type}
-                        />
-                      ))}
+                      <FormControlLabel value="Prototype" control={<Radio />} label="Prototype" />
+                      <FormControlLabel value="Pre-Launch" control={<Radio />} label="Pre-Launch" />
+                      {(documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')) && !documentTypes.includes('Prototype') && !documentTypes.includes('Production') && (
+                        <Box sx={{ pl: 4, my: 0.5 }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                size="small"
+                                checked={documentTypes.includes('Safe Launch')}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setDocumentTypes(['Pre-Launch', 'Safe Launch']);
+                                  } else {
+                                    setDocumentTypes(['Pre-Launch']);
+                                  }
+                                }}
+                              />
+                            }
+                            label={<Typography variant="body2" sx={{ fontWeight: 600, color: 'secondary.main' }}>Safe Launch</Typography>}
+                          />
+                        </Box>
+                      )}
+                      <FormControlLabel value="Production" control={<Radio />} label="Production" />
                     </RadioGroup>
                   </Grid>
                   <Grid size={12}>
@@ -1281,7 +1306,7 @@ export const ProjectList: React.FC = () => {
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Key Contact / Phone"
+                      label="Concerned Key Contact"
                       variant="outlined"
                       margin="normal"
                       value={keyContact}
@@ -1291,23 +1316,11 @@ export const ProjectList: React.FC = () => {
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Latest Change Level"
+                      label="Document Latest Change Level"
                       variant="outlined"
                       margin="normal"
                       value={latestChangeLevel}
                       onChange={(e) => setLatestChangeLevel(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      fullWidth
-                      label="Drawing Revision Date"
-                      type="date"
-                      variant="outlined"
-                      margin="normal"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={drawingRevDate}
-                      onChange={(e) => setDrawingRevDate(e.target.value)}
                     />
                   </Grid>
                 </Grid>
@@ -1331,25 +1344,24 @@ export const ProjectList: React.FC = () => {
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      label="Drawing Revision Date"
+                      type="date"
+                      variant="outlined"
+                      margin="normal"
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      value={drawingRevDate}
+                      onChange={(e) => setDrawingRevDate(e.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
                       label="Dwg Rev No / Date"
                       variant="outlined"
                       margin="normal"
                       value={dwgRevNoAndDate}
                       onChange={(e) => setDwgRevNoAndDate(e.target.value)}
                     />
-                  </Grid>
-                  <Grid size={12}>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary' }}>
-                      Status Flag
-                    </Typography>
-                    <RadioGroup
-                      row
-                      value={preliminaryFinalFlag}
-                      onChange={(e) => setPreliminaryFinalFlag(e.target.value)}
-                    >
-                      <FormControlLabel value="preliminary" control={<Radio />} label="Preliminary" />
-                      <FormControlLabel value="final" control={<Radio />} label="Final" />
-                    </RadioGroup>
                   </Grid>
                   <Grid size={12}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, mt: 1 }}>

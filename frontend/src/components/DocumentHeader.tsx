@@ -76,10 +76,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
   };
 
   const getStatusChipProps = () => {
+    const isSafe = project.documentTypes?.includes('Safe Launch');
+    if (isSafe) {
+      return { color: 'secondary' as const, label: 'SAFE LAUNCH' };
+    }
     const status = (project.documentTypes?.[0] || 'Prototype');
     switch (status) {
       case 'Production': return { color: 'success' as const, label: 'PRODUCTION' };
-      case 'Safe Launch': return { color: 'secondary' as const, label: 'SAFE LAUNCH' };
       case 'Pre-Launch': return { color: 'info' as const, label: 'PRE-LAUNCH' };
       default: return { color: 'warning' as const, label: 'PROTOTYPE' };
     }
@@ -88,7 +91,17 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
   const statusProps = getStatusChipProps();
 
   return (
-    <Card sx={{ mb: 3, border: '1px solid #e2e8f0', borderRadius: 4, bgcolor: 'background.paper', overflow: 'hidden' }}>
+    <Card sx={{ 
+      mb: 3, 
+      border: '1px solid #e2e8f0', 
+      borderRadius: 4, 
+      bgcolor: 'background.paper', 
+      overflow: 'hidden',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1100,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    }}>
       {/* Header bar always visible */}
       <Box sx={{
         px: 3,
@@ -168,7 +181,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
 
             {/* Col 3 */}
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Process Responsibility</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Concerned Key Contact</Typography>
               <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.keyContact || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>

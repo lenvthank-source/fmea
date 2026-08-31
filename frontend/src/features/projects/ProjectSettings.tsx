@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, TextField, Alert, CircularProgress, Grid, Card, CardContent,
   FormControlLabel, Chip, Radio, RadioGroup, Tabs, Tab, Switch,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Tooltip, Collapse, Stack
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Tooltip, Collapse, Stack, Checkbox
 } from '@mui/material';
 import {
   Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon,
@@ -47,7 +47,6 @@ export const ProjectSettings: React.FC = () => {
   const [drawingRevDate, setDrawingRevDate] = useState('');
   const [dwgNumber, setDwgNumber] = useState('');
   const [dwgRevNoAndDate, setDwgRevNoAndDate] = useState('');
-  const [preliminaryFinalFlag, setPreliminaryFinalFlag] = useState('preliminary');
   const [documentNumber, setDocumentNumber] = useState('');
   const [controlPlanNumber, setControlPlanNumber] = useState('');
   const [assemblyLineNumber, setAssemblyLineNumber] = useState('');
@@ -323,7 +322,6 @@ export const ProjectSettings: React.FC = () => {
         setDrawingRevDate(data.drawingRevDate ? data.drawingRevDate.split('T')[0] : '');
         setDwgNumber(data.dwgNumber || '');
         setDwgRevNoAndDate(data.dwgRevNoAndDate || '');
-        setPreliminaryFinalFlag(data.preliminaryFinalFlag || 'preliminary');
         setDocumentNumber(data.documentNumber || '');
         setControlPlanNumber(data.controlPlanNumber || '');
         setAssemblyLineNumber(data.assemblyLineNumber || '');
@@ -434,7 +432,6 @@ export const ProjectSettings: React.FC = () => {
       otherApprovalDate2: otherApprovalDate2 || null,
       dwgNumber: dwgNumber || null,
       dwgRevNoAndDate: dwgRevNoAndDate || null,
-      preliminaryFinalFlag,
       uiSettings: {
         autohideSidebar,
       },
@@ -569,17 +566,46 @@ export const ProjectSettings: React.FC = () => {
                     Document Type *
                   </Typography>
                   <RadioGroup
-                    value={documentTypes[0] || 'Prototype'}
-                    onChange={(e) => setDocumentTypes([e.target.value])}
+                    value={
+                      documentTypes.includes('Production')
+                        ? 'Production'
+                        : documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')
+                        ? 'Pre-Launch'
+                        : 'Prototype'
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'Pre-Launch') {
+                        const isSafe = documentTypes.includes('Safe Launch');
+                        setDocumentTypes(isSafe ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
+                      } else {
+                        setDocumentTypes([val]);
+                      }
+                    }}
                   >
-                    {['Prototype', 'Pre-Launch', 'Production'].map((type) => (
-                      <FormControlLabel
-                        key={type}
-                        value={type}
-                        control={<Radio />}
-                        label={type}
-                      />
-                    ))}
+                    <FormControlLabel value="Prototype" control={<Radio />} label="Prototype" />
+                    <FormControlLabel value="Pre-Launch" control={<Radio />} label="Pre-Launch" />
+                    {(documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')) && !documentTypes.includes('Prototype') && !documentTypes.includes('Production') && (
+                      <Box sx={{ pl: 4, my: 0.5 }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              size="small"
+                              checked={documentTypes.includes('Safe Launch')}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setDocumentTypes(['Pre-Launch', 'Safe Launch']);
+                                } else {
+                                  setDocumentTypes(['Pre-Launch']);
+                                }
+                              }}
+                            />
+                          }
+                          label={<Typography variant="body2" sx={{ fontWeight: 600, color: 'secondary.main' }}>Safe Launch</Typography>}
+                        />
+                      </Box>
+                    )}
+                    <FormControlLabel value="Production" control={<Radio />} label="Production" />
                   </RadioGroup>
                 </Grid>
               </Grid>
@@ -629,7 +655,7 @@ export const ProjectSettings: React.FC = () => {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="Key Contact / Phone"
+                    label="Concerned Key Contact"
                     variant="outlined"
                     value={keyContact}
                     onChange={(e) => setKeyContact(e.target.value)}
@@ -638,21 +664,10 @@ export const ProjectSettings: React.FC = () => {
                 <Grid size={6}>
                   <TextField
                     fullWidth
-                    label="Latest Change Level"
+                    label="Document Latest Change Level"
                     variant="outlined"
                     value={latestChangeLevel}
                     onChange={(e) => setLatestChangeLevel(e.target.value)}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Drawing Revision Date"
-                    type="date"
-                    variant="outlined"
-                    slotProps={{ inputLabel: { shrink: true } }}
-                    value={drawingRevDate}
-                    onChange={(e) => setDrawingRevDate(e.target.value)}
                   />
                 </Grid>
               </Grid>
@@ -673,24 +688,22 @@ export const ProjectSettings: React.FC = () => {
                 <Grid size={6}>
                   <TextField
                     fullWidth
+                    label="Drawing Revision Date"
+                    type="date"
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    value={drawingRevDate}
+                    onChange={(e) => setDrawingRevDate(e.target.value)}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
                     label="Dwg Rev No / Date"
                     variant="outlined"
                     value={dwgRevNoAndDate}
                     onChange={(e) => setDwgRevNoAndDate(e.target.value)}
                   />
-                </Grid>
-                <Grid size={12}>
-                  <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary', fontWeight: 'bold' }}>
-                    Status Flag
-                  </Typography>
-                  <RadioGroup
-                    row
-                    value={preliminaryFinalFlag}
-                    onChange={(e) => setPreliminaryFinalFlag(e.target.value)}
-                  >
-                    <FormControlLabel value="preliminary" control={<Radio />} label="Preliminary" />
-                    <FormControlLabel value="final" control={<Radio />} label="Final" />
-                  </RadioGroup>
                 </Grid>
                 <Grid size={6}>
                   <TextField

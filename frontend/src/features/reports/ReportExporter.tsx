@@ -387,9 +387,8 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       legendCell.border = allBorders(); // add border to legend row
       ws.getRow(r).height = 20;
 
-      // ---- SIGNATURE ROW (3 fields) ----
+      // ---- SIGNATURE ROW (3 fields: Prepared By, Checked By, Approved By) ----
       r += 1;
-      // Prepared By: (A:B), Checked By: (C:D), Approved By: (E:F), Approved By 2: (G:H) — spec A:B, C:D, E:F, G:H
       ws.mergeCells(`A${r}:B${r}`);
       const prepCell = ws.getCell(`A${r}`);
       prepCell.value = 'Prepared By:';
@@ -397,26 +396,23 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       prepCell.border = allBorders();
 
-      ws.mergeCells(`C${r}:D${r}`);
+      ws.mergeCells(`C${r}:E${r}`);
       const checkCell = ws.getCell(`C${r}`);
       checkCell.value = 'Checked By:';
       checkCell.font = { name: FONT, size: 11, bold: true };
       checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       checkCell.border = allBorders();
 
-      ws.mergeCells(`E${r}:F${r}`);
-      const approveCell = ws.getCell(`E${r}`);
+      ws.mergeCells(`F${r}:H${r}`);
+      const approveCell = ws.getCell(`F${r}`);
       approveCell.value = 'Approved By:';
       approveCell.font = { name: FONT, size: 11, bold: true };
       approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       approveCell.border = allBorders();
 
-      ws.mergeCells(`G${r}:H${r}`);
-      const approveCell2 = ws.getCell(`G${r}`);
-      approveCell2.value = 'Approved By:';
-      approveCell2.font = { name: FONT, size: 11, bold: true };
-      approveCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-      approveCell2.border = allBorders();
+      for (let c = 1; c <= 8; c++) {
+        ws.getRow(r).getCell(c).border = allBorders();
+      }
 
       ws.getRow(r).height = 25;
 
@@ -469,19 +465,19 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       const AP_MED_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
       const AP_LOW_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
 
-      const PFMEA_COL_WIDTHS = [6, 22, 20, 22, 20, 22, 7, 22, 22, 7, 22, 7, 8, 7, 22, 22, 22, 22, 8, 8, 8, 8, 12, 22];
+      const PFMEA_COL_WIDTHS = [6, 22, 22, 20, 22, 7, 22, 22, 7, 22, 7, 8, 7, 22, 22, 22, 22, 8, 8, 8, 8, 12, 22];
       const PFMEA_HEADERS = [
-        '#', 'Structure / Item', 'Work Element (4M)', 'Function / Focus Element',
+        '#', 'Structure / Item', 'Function / Focus Element',
         'Failure Mode', 'Potential Effects', 'SEV', 'Failure Causes',
         'Current Control – Prevention', 'OCC', 'Current Control – Detection', 'DET',
         'AP', 'FC', 'Prevention Action', 'Detection Action',
         'Responsibility & Target Date', 'Action Taken & Completion Date',
         'SEV (rev)', 'OCC (rev)', 'DET (rev)', 'AP (rev)', 'Status', 'Remarks'
       ];
-      const TOTAL_COLS = PFMEA_HEADERS.length; // 24
-      const LAST_COL_LETTER = 'X';
+      const TOTAL_COLS = PFMEA_HEADERS.length; // 23
+      const LAST_COL_LETTER = 'W';
       // Columns that should be center-aligned (0-indexed): #, SEV, OCC, DET, AP, FC, SEV(rev), OCC(rev), DET(rev), AP(rev), Status
-      const CENTERED_COLS = [0, 6, 9, 11, 12, 13, 18, 19, 20, 21, 22];
+      const CENTERED_COLS = [0, 5, 8, 10, 11, 12, 17, 18, 19, 20, 21];
 
       const allBorders = (style: Partial<import('exceljs').Border> = BORDER_THIN): Partial<import('exceljs').Borders> => ({
         top: style, left: style, bottom: style, right: style
@@ -491,7 +487,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       const arrToText = (arr: any): string => {
         if (!arr) return '';
         if (Array.isArray(arr)) {
-          const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
+          const items = arr.map(x => typeof x === 'object' ? (x.name || x.description || x.narration || '') : String(x)).filter(Boolean);
           return items.length > 0 ? items.map((x, i) => `${i + 1}. ${stripNum(x)}`).join('\n') : '';
         }
         if (typeof arr === 'string') {
@@ -502,6 +498,21 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           return arr;
         }
         return String(arr);
+      };
+
+      const parseItems = (val: any): string[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) {
+          return val.map(x => (typeof x === 'object' && x ? (x.name || x.description || x.narration || '') : String(x))).filter(Boolean);
+        }
+        if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) return parseItems(parsed);
+          } catch {}
+          return [val];
+        }
+        return [String(val)];
       };
 
       const getApFill = (ap: string | undefined): import('exceljs').FillPattern | undefined => {
@@ -558,8 +569,8 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       statusCell.border = allBorders();
       ws.getRow(3).height = 20;
 
-      // ---- INFO GRID (Rows 4-9) — 6 rows × 4 fields spanning 24 columns ----
-      // Layout: label (A:D), value (E:L), label (M:P), value (Q:X)
+      // ---- INFO GRID (Rows 4-9) — 6 rows × 4 fields spanning 23 columns ----
+      // Layout: label (A:D), value (E:L), label (M:P), value (Q:W)
       const infoRows: [string, string, string, string][] = [
         ['Organisation Name:', project?.organisationName || '—', 'Customer Name:', project?.customer || '—'],
         ['Manufacturing Plant:', project?.organisationPlant || '—', 'Document Number:', getDerivedDocNumber()],
@@ -595,7 +606,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         labelCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
         labelCell2.border = allBorders();
 
-        // Value 2: Q:X
+        // Value 2: Q:W
         ws.mergeCells(`Q${r}:${LAST_COL_LETTER}${r}`);
         const valCell2 = ws.getCell(`Q${r}`);
         valCell2.value = v2;
@@ -622,30 +633,14 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
 
       // Freeze panes below the header row
       ws.views = [{ state: 'frozen' as const, ySplit: headerRowIdx }];
-      // AutoFilter on header row (24 columns)
+      // AutoFilter on header row (23 columns)
       ws.autoFilter = { from: { row: headerRowIdx, column: 1 }, to: { row: headerRowIdx, column: TOTAL_COLS } };
 
       r = headerRowIdx + 1;
 
-      // ---- DATA ROWS ----
+      // ---- DATA ROWS (Each cause gets its own row with proportionate controls) ----
       data.forEach((row) => {
-        const excelRow = ws.getRow(r);
         const step = steps?.find(s => s.id === row.processStepId);
-
-        // Work Element — each point on separate line
-        let workElementsText = '';
-        if (step) {
-          if (Array.isArray(step.machinesEquipmentDocs)) {
-            workElementsText = step.machinesEquipmentDocs.map((x: string, i: number) => `${i + 1}. ${x.replace(/^\d+[\.)\-]\s*/, '')}`).join('\n');
-          } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
-            try {
-              const parsed = JSON.parse(step.machinesEquipmentDocs);
-              workElementsText = Array.isArray(parsed) ? parsed.map((x: string, i: number) => `${i + 1}. ${x.replace(/^\d+[\.)\-]\s*/, '')}`).join('\n') : step.machinesEquipmentDocs;
-            } catch {
-              workElementsText = step.machinesEquipmentDocs;
-            }
-          }
-        }
 
         // Responsibility & Target Date combined
         let respTargetDate = row.responsibility || '';
@@ -659,64 +654,96 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           actionCompDate += (actionCompDate ? '\n' : '') + `Done: ${new Date(row.completionDate).toLocaleDateString()}`;
         }
 
-        const values = [
-          String(row.rowNumber || ''),
-          step ? `${step.stepNumber}: ${step.name}` : '',
-          workElementsText,
-          arrToText(row.functions),
-          arrToText(row.failureModes),
-          arrToText(row.effects),
-          String(row.severity || ''),
-          arrToText(row.causes),
-          arrToText(row.controls?.filter((c: any) => c.type === 'prevention')),
-          String(row.occurrence || ''),
-          arrToText(row.controls?.filter((c: any) => c.type === 'detection')),
-          String(row.detection || ''),
-          row.ap || '',
-          row.filterCode || '',
-          row.preventionAction || '',
-          row.detectionAction || '',
-          respTargetDate,
-          actionCompDate,
-          String(row.revisedSeverity || ''),
-          String(row.revisedOccurrence || ''),
-          String(row.revisedDetection || ''),
-          row.revisedAp || '',
-          row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open',
-          row.notes || ''
-        ];
+        const causesList = parseItems(row.causes);
+        const prevControlsList = parseItems(row.controls?.filter((c: any) => c.type === 'prevention') || row.preventionControls);
+        const detControlsList = parseItems(row.controls?.filter((c: any) => c.type === 'detection') || row.detectionControls);
 
-        values.forEach((val, i) => {
-          const cell = excelRow.getCell(i + 1);
-          cell.value = val;
-          cell.font = { name: FONT, size: 11, color: { argb: 'FF0F172A' } };
-          cell.border = allBorders(BORDER_THIN);
-          cell.alignment = {
-            vertical: 'middle',
-            wrapText: true,
-            horizontal: CENTERED_COLS.includes(i) ? 'center' : 'left'
-          };
+        const subRowCount = Math.max(1, causesList.length, prevControlsList.length, detControlsList.length);
+        const startR = r;
 
-          // AP columns — conditional color fills (col index 12 = AP, 21 = AP rev)
-          if (i === 12 || i === 21) {
-            const apFill = getApFill(val);
-            if (apFill) cell.fill = apFill;
-            cell.font = { name: FONT, size: 11, bold: true, color: { argb: getApFontColor(val) } };
+        for (let subIdx = 0; subIdx < subRowCount; subIdx++) {
+          const excelRow = ws.getRow(r);
+          const isFirstSub = subIdx === 0;
+
+          const causeText = causesList[subIdx] || '';
+          const prevControlText = prevControlsList[subIdx] || '';
+          const detControlText = detControlsList[subIdx] || '';
+
+          const values: (string | number)[] = [
+            isFirstSub ? String(row.rowNumber || '') : '',
+            isFirstSub ? (step ? `${step.stepNumber}: ${step.name}` : '') : '',
+            isFirstSub ? arrToText(row.functions) : '',
+            isFirstSub ? arrToText(row.failureModes) : '',
+            isFirstSub ? arrToText(row.effects) : '',
+            isFirstSub ? String(row.severity || '') : '',
+            causeText,
+            prevControlText,
+            isFirstSub ? String(row.occurrence || '') : '',
+            detControlText,
+            isFirstSub ? String(row.detection || '') : '',
+            isFirstSub ? (row.ap || '') : '',
+            isFirstSub ? (row.filterCode || '') : '',
+            isFirstSub ? (row.preventionAction || '') : '',
+            isFirstSub ? (row.detectionAction || '') : '',
+            isFirstSub ? respTargetDate : '',
+            isFirstSub ? actionCompDate : '',
+            isFirstSub ? String(row.revisedSeverity || '') : '',
+            isFirstSub ? String(row.revisedOccurrence || '') : '',
+            isFirstSub ? String(row.revisedDetection || '') : '',
+            isFirstSub ? (row.revisedAp || '') : '',
+            isFirstSub ? (row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open') : '',
+            isFirstSub ? (row.notes || '') : ''
+          ];
+
+          values.forEach((val, i) => {
+            const cell = excelRow.getCell(i + 1);
+            cell.value = val;
+            cell.font = { name: FONT, size: 11, color: { argb: 'FF0F172A' } };
+            cell.border = allBorders(BORDER_THIN);
+            cell.alignment = {
+              vertical: 'middle',
+              wrapText: true,
+              horizontal: CENTERED_COLS.includes(i) ? 'center' : 'left'
+            };
+
+            // AP columns — conditional color fills (col index 11 = AP, 20 = AP rev)
+            if (i === 11 || i === 20) {
+              const apFill = getApFill(String(val));
+              if (apFill) cell.fill = apFill;
+              cell.font = { name: FONT, size: 11, bold: true, color: { argb: getApFontColor(String(val)) } };
+            }
+          });
+
+          // Dynamic row height based on wrapped line count
+          const maxLines = Math.max(1, ...values.map(v => String(v || '').split('\n').length));
+          excelRow.height = Math.max(20, maxLines * 15);
+          r++;
+        }
+
+        const endR = r - 1;
+        // Merge parent columns if multiple subRows
+        if (subRowCount > 1) {
+          // Merge columns 1..6 (#, Structure, Function, Failure Mode, Effects, SEV)
+          for (let col = 1; col <= 6; col++) {
+            ws.mergeCells(startR, col, endR, col);
           }
-        });
-
-        // Dynamic row height based on wrapped line count
-        const maxLines = Math.max(...values.map(v => String(v || '').split('\n').length));
-        excelRow.height = Math.max(20, maxLines * 15);
-        r++;
+          // Merge OCC (col 9), DET (col 11), AP (col 12), FC (col 13)
+          ws.mergeCells(startR, 9, endR, 9);
+          ws.mergeCells(startR, 11, endR, 11);
+          ws.mergeCells(startR, 12, endR, 12);
+          ws.mergeCells(startR, 13, endR, 13);
+          // Merge action columns 14..23
+          for (let col = 14; col <= 23; col++) {
+            ws.mergeCells(startR, col, endR, col);
+          }
+        }
       });
 
       // Apply outer medium border around the ENTIRE used range (title block through signature)
       const firstRowIdx = 1;
       const lastColIdx = TOTAL_COLS;
-      // We'll apply outer border after signature row is written
 
-      // ---- SIGNATURE ROW ----
+      // ---- SIGNATURE ROW (3 fields: Prepared By, Checked By, Approved By) ----
       r += 1; // spacer row
       // Add borders to spacer row across all columns
       for (let c = 1; c <= TOTAL_COLS; c++) {
@@ -725,34 +752,30 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       }
 
       r += 1;
-      // Prepared By: (A:F), Checked By: (G:L), Approved By: (M:R), Approved By 2: (S:X) — spec A:B, C:D, E:F, G:H per 24 cols
-      ws.mergeCells(`A${r}:F${r}`);
+      ws.mergeCells(`A${r}:G${r}`);
       const prepCell = ws.getCell(`A${r}`);
       prepCell.value = 'Prepared By:';
       prepCell.font = { name: FONT, size: 11, bold: true };
       prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       prepCell.border = allBorders();
 
-      ws.mergeCells(`G${r}:L${r}`);
-      const checkCell = ws.getCell(`G${r}`);
+      ws.mergeCells(`H${r}:N${r}`);
+      const checkCell = ws.getCell(`H${r}`);
       checkCell.value = 'Checked By:';
       checkCell.font = { name: FONT, size: 11, bold: true };
       checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       checkCell.border = allBorders();
 
-      ws.mergeCells(`M${r}:R${r}`);
-      const approveCell = ws.getCell(`M${r}`);
+      ws.mergeCells(`O${r}:${LAST_COL_LETTER}${r}`);
+      const approveCell = ws.getCell(`O${r}`);
       approveCell.value = 'Approved By:';
       approveCell.font = { name: FONT, size: 11, bold: true };
       approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
       approveCell.border = allBorders();
 
-      ws.mergeCells(`S${r}:${LAST_COL_LETTER}${r}`);
-      const approveCell2 = ws.getCell(`S${r}`);
-      approveCell2.value = 'Approved By:';
-      approveCell2.font = { name: FONT, size: 11, bold: true };
-      approveCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-      approveCell2.border = allBorders();
+      for (let c = 1; c <= TOTAL_COLS; c++) {
+        ws.getRow(r).getCell(c).border = allBorders();
+      }
 
       ws.getRow(r).height = 25;
 

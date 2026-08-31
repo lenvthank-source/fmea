@@ -28,7 +28,7 @@ import { FeedbackWidget } from '../FeedbackWidget/FeedbackWidget';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
 
 export const AppShell: React.FC = () => {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -115,7 +115,7 @@ export const AppShell: React.FC = () => {
     { text: 'Projects', icon: <FolderIcon />, path: '/app/projects' },
     { text: 'Work Element Repository', icon: <RepositoryIcon />, path: '/app/repository' },
     { text: 'My Actions', icon: <AssignmentIcon />, path: '/app/actions' },
-    { text: 'Administration', icon: <AdminIcon />, path: '/app/admin', permission: 'admin.users' },
+    { text: 'Administration', icon: <AdminIcon />, path: '/app/admin', permission: 'admin.config' },
   ];
 
   const drawerWidth = collapsed ? 64 : 240;
@@ -410,7 +410,9 @@ export const AppShell: React.FC = () => {
                     {renderListItem({ text: 'Project Settings', icon: <SettingsIcon />, path: `/app/projects/${projectId}/settings` })}
                   </>
                 ) : (
-                  globalMenuItems.map((item) => renderListItem(item))
+                  globalMenuItems
+                    .filter((item) => !item.permission || hasPermission(item.permission))
+                    .map((item) => renderListItem(item))
                 )}
               </List>
             </Box>
