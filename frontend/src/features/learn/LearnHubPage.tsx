@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Container, Typography, Grid, Paper, Chip } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
 
@@ -11,28 +10,92 @@ const PILLARS = [
 ];
 
 export const LearnHubPage: React.FC = () => (
-  <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh' }}>
+  <div className="min-h-screen bg-[#080A19] text-white font-sans antialiased">
     <SEO title="Learn — FMEApex Pillar Hub | 7-Step, PFD, Control Plan, 21 CFR" description="Learn hub: 7-step, PFD-PFMEA linking, Control Plan sync, 21 CFR Part 11 — tech articles with TechArticle+FAQ JSON-LD." canonical="/learn" />
-    <Box sx={{ bgcolor: '#0F172A', color: '#fff', py: 8, textAlign: 'center' }}>
-      <Container maxWidth="md">
-        <Typography variant="h3" sx={{ fontWeight: 800 }}>Learn Hub</Typography>
-        <Typography sx={{ color: 'rgba(255,255,255,0.7)', mt: 2 }}>Pillar tech articles `features/content/PillarPage.tsx:35 4 slugs` — extractable `ai-definition-block` for Princeton GEO, `TechArticle+FAQPage 252`.</Typography>
-      </Container>
-    </Box>
-    <Container maxWidth="lg" sx={{ py: 6 }}>
-      <Grid container spacing={3}>
-        {PILLARS.map(p => (
-          <Grid key={p.slug} size={{ xs: 12, sm: 6 }}>
-            <Paper elevation={0} component={Link} to={`/learn/${p.slug}`} style={{ textDecoration: 'none' }} sx={{ p: 3, borderRadius: 3, border: '1px solid rgba(0,0,0,0.06)', display: 'block', '&:hover': { borderColor: '#0D9488' } }}>
-              <Chip label={p.badge} size="small" sx={{ bgcolor: 'rgba(13,148,136,0.1)', color: '#0D9488', fontWeight: 600 }} />
-              <Typography sx={{ fontWeight: 700, mt: 1 }}>{p.title}</Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>{p.desc}</Typography>
-              <Typography sx={{ color: '#0D9488', fontSize: '0.8rem', fontWeight: 600, mt: 1 }}>Read →</Typography>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
-  </Box>
+
+    {/* Hero Section */}
+    <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#080A19] via-[#080A19] to-[#050505] z-0" />
+      <div className="relative z-10 w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px] py-20">
+        <div className="max-w-[720px] mx-auto text-center">
+          <h1 className="text-white text-[36px] sm:text-[48px] md:text-[56px] lg:text-[64px] font-normal leading-[1.05] tracking-[-0.02em] mb-6">
+            Learn Hub
+          </h1>
+          <p className="text-white/50 text-[16px] sm:text-[18px] md:text-[20px] font-[450] leading-[1.5] max-w-[640px] mx-auto">
+            Pillar tech articles — extractable <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">ai-definition-block</code> for Princeton GEO, <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">TechArticle+FAQPage 252</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Pillars Grid */}
+    <section className="bg-[#050505] py-24 sm:py-32 border-y border-white/[0.07]">
+      <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[20px] sm:gap-[24px]">
+          {PILLARS.map((p, i) => (
+            <Link
+              key={p.slug}
+              to={`/learn/${p.slug}`}
+              className={`
+                relative p-8 rounded-[24px] sm:rounded-[28px]
+                bg-[#0d0d0d] border border-white/[0.09]
+                transition-all duration-300 ease-out
+                hover:border-[#0D9488] hover:bg-[#121212] hover:-translate-y-[4px]
+                block
+              `}
+              style={{ transitionDelay: `${i * 60}ms` }}
+            >
+              <span className="inline-block px-3 py-1.5 rounded-[8px] bg-[#0D9488]/15 text-[#0D9488] font-[450] text-[11px] sm:text-[12px] uppercase tracking-[0.05em] mb-4">
+                {p.badge}
+              </span>
+              <h3 className="text-white font-[450] text-[16px] sm:text-[17px] leading-[1.3] mb-2">
+                {p.title}
+              </h3>
+              <p className="text-white/50 text-[13px] leading-[1.55] mb-4">
+                {p.desc}
+              </p>
+              <span className="text-[#0D9488] font-[450] text-[12px] sm:text-[13px] uppercase tracking-[0.05em]">
+                Read →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Footer */}
+    <footer className="bg-[#050505] border-t border-white/[0.06] py-14">
+      <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+          <div>
+            <span className="font-[800] text-[18px] sm:text-[20px] bg-gradient-to-r from-[#0D9488] to-[#2563eb] bg-clip-text text-transparent">
+              FMEApex
+            </span>
+            <p className="text-white/50 text-[12px] font-[450] mt-1">Quality Engineered To Evolve</p>
+          </div>
+          <nav className="flex flex-wrap gap-6 sm:gap-10 justify-center">
+            {[
+              { label: 'Product', to: '/product' },
+              { label: 'Learn', to: '/learn' },
+              { label: 'Blog', to: '/blog' },
+              { label: 'Pricing', to: '/pricing' },
+              { label: 'About', to: '/about' },
+            ].map(l => (
+              <Link
+                key={l.label}
+                to={l.to}
+                className="text-white/50 font-[450] text-[12px] sm:text-[13px] hover:text-white transition-colors"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-white/40 text-[11px] font-[450] text-right md:text-right">
+            © 2026 FMEApex. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </div>
 );
 export default LearnHubPage;
