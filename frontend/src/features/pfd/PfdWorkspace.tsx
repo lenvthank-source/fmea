@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, IconButton, Alert, Tab, Tabs, Input, Drawer,
+  Paper, IconButton, Alert, Input, Drawer, Chip,
   Divider, Stack, TextField, Tooltip, FormControl, InputLabel, Select, MenuItem, Fab
 } from '@mui/material';
 import {
@@ -27,12 +27,13 @@ import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
 import { getPfdIconMeta } from './utils/pfdIconMap';
+import { PfdEngineeringCanvas } from './components/PfdEngineeringCanvas';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ExcelImportWizard } from './components/ExcelImportWizard';
 
-interface ProcessStep {
+export interface ProcessStep {
   id: string;
   stepNumber: string;
   name: string;
@@ -785,82 +786,160 @@ export const PfdWorkspace: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 3, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 2, alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between' }}>
-        <Tabs 
-          value={activeTab} 
-          onChange={(_, val) => setActiveTab(val)}
-          sx={{
-            minHeight: 40,
-            '& .MuiTabs-indicator': {
-              height: 3,
-              borderRadius: '3px 3px 0 0',
-              backgroundColor: 'primary.main',
-            }
-          }}
-        >
-          <Tab 
-            label="Table View" 
-            value="table" 
+      {/* Space-Optimized Shadcn Top Toolbar */}
+      <Box sx={{ mb: 2.5, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1.5, alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between' }}>
+        {/* Segmented Pill Switcher */}
+        <Box sx={{ display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+          <Box
+            onClick={() => setActiveTab('table')}
             sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              minHeight: 40,
-              color: 'text.secondary',
-              '&.Mui-selected': { color: 'primary.main' }
+              px: 2,
+              py: 0.75,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 'table' ? '#ffffff' : 'transparent',
+              color: activeTab === 'table' ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 'table' ? 700 : 500,
+              fontSize: '0.8125rem',
+              boxShadow: activeTab === 'table' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
             }}
-          />
-          <Tab 
-            label="Flow Diagram" 
-            value="diagram" 
-            sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              minHeight: 40,
-              color: 'text.secondary',
-              '&.Mui-selected': { color: 'primary.main' }
-            }}
-          />
-        </Tabs>
-        {activeTab === 'table' && (
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Button
-              variant="outlined"
+          >
+            Table View
+            <Chip
+              label={steps.length}
               size="small"
-              onClick={handleExpandAll}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Expand All
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleCollapseAll}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Collapse All
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setImportOpen(true)}
-              startIcon={<UploadIcon />}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Import PFD
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setExportOpen(true)}
-              startIcon={<DownloadIcon />}
-              sx={{ textTransform: 'none', fontWeight: 600, ml: 1 }}
-            >
-              Export
-            </Button>
+              sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: activeTab === 'table' ? '#f4f4f5' : '#e4e4e7', color: '#09090b' }}
+            />
           </Box>
-        )}
+          <Box
+            onClick={() => setActiveTab('diagram')}
+            sx={{
+              px: 2,
+              py: 0.75,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 'diagram' ? '#ffffff' : 'transparent',
+              color: activeTab === 'diagram' ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 'diagram' ? 700 : 500,
+              fontSize: '0.8125rem',
+              boxShadow: activeTab === 'diagram' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            Process Flow Diagram (PFD)
+            <Chip
+              label="ENGINEERING"
+              size="small"
+              sx={{ height: 18, fontSize: '0.625rem', fontWeight: 700, bgcolor: activeTab === 'diagram' ? '#eff6ff' : '#e4e4e7', color: activeTab === 'diagram' ? '#2563eb' : '#71717a' }}
+            />
+          </Box>
+        </Box>
+
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleOpenAddDrawer}
+            startIcon={<AddIcon fontSize="small" />}
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              px: 1.75,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
+          >
+            Add Step
+          </Button>
+
+          {activeTab === 'table' && (
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleExpandAll}
+                sx={{
+                  color: '#09090b',
+                  borderColor: '#e4e4e7',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '7px',
+                  bgcolor: '#ffffff',
+                  '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+                }}
+              >
+                Expand All
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleCollapseAll}
+                sx={{
+                  color: '#09090b',
+                  borderColor: '#e4e4e7',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '7px',
+                  bgcolor: '#ffffff',
+                  '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+                }}
+              >
+                Collapse All
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setImportOpen(true)}
+            startIcon={<UploadIcon fontSize="small" />}
+            sx={{
+              color: '#09090b',
+              borderColor: '#e4e4e7',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              bgcolor: '#ffffff',
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
+            Import
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setExportOpen(true)}
+            startIcon={<DownloadIcon fontSize="small" />}
+            sx={{
+              color: '#09090b',
+              borderColor: '#e4e4e7',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              bgcolor: '#ffffff',
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
+            Export
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -874,20 +953,20 @@ export const PfdWorkspace: React.FC = () => {
 
       {activeTab === 'table' ? (
         <>
-          <TableContainer component={Paper} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflowX: 'auto', mt: 1 }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', overflowX: 'auto', mt: 1, boxShadow: 'none' }}>
           <Table aria-label="PFD spreadsheet grid" size="small">
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
                 <TableCell style={{ width: 40 }} /> {/* Drag Handle */}
-                <TableCell style={{ width: 130, fontWeight: 'bold' }}>Step #</TableCell>
-                <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Process Description</TableCell>
-                <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Incoming Source of Variation</TableCell>
-                <TableCell style={{ minWidth: 100, fontWeight: 'bold' }}>Spec. Class</TableCell>
-                <TableCell style={{ minWidth: 130, fontWeight: 'bold', textAlign: 'center' }}>Flow Symbols</TableCell>
-                <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Machines/Equipment/Docs</TableCell>
-                <TableCell style={{ minWidth: 200, fontWeight: 'bold' }}>Product Description / Desired Outcome</TableCell>
-                <TableCell style={{ minWidth: 180, fontWeight: 'bold' }}>Process Characteristics</TableCell>
-                <TableCell style={{ width: 120, fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ width: 110, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Step #</TableCell>
+                <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Description</TableCell>
+                <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Incoming Source of Variation</TableCell>
+                <TableCell sx={{ minWidth: 100, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Spec. Class</TableCell>
+                <TableCell sx={{ minWidth: 130, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a', textAlign: 'center' }}>Flow Symbols</TableCell>
+                <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Machines/Equipment/Docs</TableCell>
+                <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Desired Outcome</TableCell>
+                <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Characteristics</TableCell>
+                <TableCell sx={{ width: 110, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a', textAlign: 'right' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1298,397 +1377,25 @@ export const PfdWorkspace: React.FC = () => {
         )}
       </>
       ) : (
-        /* Flow Diagram View */
-        <Box sx={{ position: 'relative', border: '1px solid #cbd5e1', borderRadius: 4, overflow: 'hidden', bgcolor: '#f8fafc', height: 600 }}>
-          {/* Zoom/Pan Toolbar */}
-          <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1, zIndex: 10 }}>
-            <Button size="small" variant="contained" color="inherit" onClick={() => setZoom(z => Math.min(z + 0.1, 3))} sx={{ minWidth: 32, p: 0.5, fontWeight: 'bold' }}>+</Button>
-            <Button size="small" variant="contained" color="inherit" onClick={() => setZoom(z => Math.max(z - 0.1, 0.2))} sx={{ minWidth: 32, p: 0.5, fontWeight: 'bold' }}>-</Button>
-            <Button size="small" variant="contained" color="inherit" onClick={handleResetZoom} sx={{ fontSize: '0.75rem' }}>Fit</Button>
-          </Box>
-          <Box sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 10 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ bgcolor: 'rgba(255,255,255,0.9)', px: 1.5, py: 0.75, borderRadius: 2, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              💡 Drag to Pan • Mouse wheel to Zoom • Click Card for Details
-            </Typography>
-          </Box>
-          <div
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            style={{
-              width: '100%',
-              height: '100%',
-              cursor: isDragging ? 'grabbing' : 'grab',
-              overflow: 'hidden'
-            }}
-          >
-            {steps.length === 0 ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <Typography color="text.secondary">No process steps found to generate diagram.</Typography>
-              </Box>
-            ) : (() => {
-              // Precompute layout coordinates
-              const stepNodes: Array<{
-                stepId: string;
-                stepNumber: string;
-                name: string;
-                nodes: Array<{
-                  id: string;
-                  symbolKey: string;
-                  sym: string;
-                  short: string;
-                  color: string;
-                  x: number;
-                  y: number;
-                }>;
-                incomingVariation: string[];
-                workElements: string[];
-                x: number;
-                y: number;
-                width: number;
-                height: number;
-              }> = [];
-
-              let currentX = 100;
-              const stepY = 120;
-              const stepWidth = 280;
-              const stepHeight = 230;
-
-              steps.forEach((step) => {
-                const activeKeys = Object.keys(FLOW_ICON_COLUMNS).filter(k => step.flowIcons?.[k]);
-                if (activeKeys.length === 0) {
-                  activeKeys.push('oper');
-                }
-
-                let incomingVar: string[] = [];
-                const val = step.incomingVariation;
-                if (Array.isArray(val)) {
-                  incomingVar = val;
-                } else if (typeof val === 'string' && val) {
-                  try {
-                    const parsed = JSON.parse(val);
-                    incomingVar = Array.isArray(parsed) ? parsed : [val];
-                  } catch {
-                    incomingVar = [val];
-                  }
-                }
-                incomingVar = incomingVar.map(v => v.trim()).filter(Boolean);
-
-                let stepWorkElements: string[] = [];
-                if (Array.isArray(step.machinesEquipmentDocs)) {
-                  stepWorkElements = step.machinesEquipmentDocs;
-                } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
-                  try {
-                    const parsed = JSON.parse(step.machinesEquipmentDocs);
-                    stepWorkElements = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
-                  } catch {
-                    stepWorkElements = [step.machinesEquipmentDocs];
-                  }
-                }
-                const workElements = stepWorkElements.map(w => w.trim()).filter(Boolean);
-
-                const stepX = currentX;
-                const M = activeKeys.length;
-                const startSymX = stepX + 28;
-                const endSymX = stepX + stepWidth - 28;
-                const stepSymX = M > 1 ? (endSymX - startSymX) / (M - 1) : 0;
-                
-                const nodes = activeKeys.map((key, nodeIdx) => {
-                  const meta = FLOW_ICON_COLUMNS[key] || FLOW_ICON_COLUMNS.oper;
-                  const color = '#334155'; // Grayscale Slate-700 theme
-
-                  const symX = M > 1 ? startSymX + nodeIdx * stepSymX : stepX + stepWidth / 2;
-                  const symY = stepY + 165;
-
-                  return {
-                    id: `${step.id}-${key}`,
-                    symbolKey: key,
-                    sym: meta.sym,
-                    short: meta.short,
-                    color,
-                    x: symX,
-                    y: symY
-                  };
-                });
-
-                stepNodes.push({
-                  stepId: step.id,
-                  stepNumber: step.stepNumber,
-                  name: step.name,
-                  nodes,
-                  incomingVariation: incomingVar,
-                  workElements,
-                  x: stepX,
-                  y: stepY,
-                  width: stepWidth,
-                  height: stepHeight
-                });
-
-                currentX += 480;
-              });
-
-              return (
-                <svg
-                  width="100%"
-                  height="100%"
-                  onWheel={handleWheel}
-                  style={{ overflow: 'visible' }}
-                >
-                  <defs>
-                    {/* Workspace dot grid pattern */}
-                    <pattern id="dot-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <circle cx="2" cy="2" r="1.5" fill="#e2e8f0" />
-                    </pattern>
-                    <marker id="arrow-inter" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-                      <path d="M0,0 L0,6 L9,3 z" fill="#0D9488" />
-                    </marker>
-                    <marker id="arrow-intra" markerWidth="6" markerHeight="6" refX="5" refY="2" orient="auto" markerUnits="strokeWidth">
-                      <path d="M0,0 L0,4 L6,2 z" fill="#94a3b8" />
-                    </marker>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#dot-grid)" />
-
-                  <g transform={`translate(${panX}, ${panY}) scale(${zoom})`}>
-                    {/* 1. Intra-step horizontal connections */}
-                    {stepNodes.map((s) => {
-                      return s.nodes.slice(0, -1).map((node, idx) => {
-                        const nextNode = s.nodes[idx + 1];
-                        return (
-                          <g key={`intra-${node.id}`}>
-                            <line
-                              x1={node.x + 18}
-                              y1={node.y}
-                              x2={nextNode.x - 18}
-                              y2={nextNode.y}
-                              stroke="#cbd5e1"
-                              strokeWidth="2"
-                              markerEnd="url(#arrow-intra)"
-                            />
-                          </g>
-                        );
-                      });
-                    })}
-
-                    {/* 2. Connections between steps */}
-                    {stepNodes.slice(0, -1).map((s, idx) => {
-                      const nextS = stepNodes[idx + 1];
-                      if (s.nodes.length === 0 || nextS.nodes.length === 0) return null;
-                      
-                      const startX = s.x + s.width;
-                      const startY = s.y + 165;
-                      const endX = nextS.x;
-                      const endY = nextS.y + 165;
-                      
-                      const vars = nextS.incomingVariation.length > 0 ? nextS.incomingVariation : [''];
-                      const N = vars.length;
-                      const gap = endX - startX;
-
-                      return vars.map((v, k) => {
-                        const midX = (startX + endX) / 2;
-                        const midY = (startY + endY) / 2;
-                        const offset = N > 1 ? (k - (N - 1) / 2) * 60 : 0;
-                        const controlY = midY + offset * 1.333; // Cubic bezier control point offset
-                        
-                        const pathData = N > 1
-                          ? `M ${startX} ${startY} C ${startX + gap * 0.4} ${controlY}, ${endX - gap * 0.4} ${controlY}, ${endX} ${endY}`
-                          : `M ${startX} ${startY} L ${endX} ${endY}`;
-                        
-                        const labelX = midX;
-                        const labelY = midY + offset;
-                        const displayV = v.length > 25 ? `${v.substring(0, 22)}...` : v;
-
-                        return (
-                          <g key={`inter-${s.stepId}-${k}`}>
-                            <path
-                              d={pathData}
-                              fill="none"
-                              stroke="#0D9488"
-                              strokeWidth="2.5"
-                              strokeDasharray={N > 1 ? '4 4' : '0'}
-                              markerEnd="url(#arrow-inter)"
-                            />
-                            {v && (
-                              <g transform={`translate(${labelX}, ${labelY})`}>
-                                <rect
-                                  x={-displayV.length * 3.5 - 6}
-                                  y="-9"
-                                  width={displayV.length * 7 + 12}
-                                  height="18"
-                                  rx="4"
-                                  fill="#ffffff"
-                                  stroke="#0D9488"
-                                  strokeWidth="1"
-                                  style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }}
-                                />
-                                <text
-                                  textAnchor="middle"
-                                  fontSize="9"
-                                  fontWeight="bold"
-                                  fill="#0f766e"
-                                  y="3.5"
-                                >
-                                  {displayV}
-                                </text>
-                              </g>
-                            )}
-                          </g>
-                        );
-                      });
-                    })}
-
-                    {/* 3. Steps boundary boxes and active flow symbol nodes */}
-                    {stepNodes.map((s) => {
-                      return (
-                        <g 
-                          key={s.stepId}
-                          onMouseEnter={() => setHoveredStepId(s.stepId)}
-                          onMouseLeave={() => setHoveredStepId(null)}
-                          onClick={() => {
-                            const actualStep = steps.find(st => st.id === s.stepId);
-                            if (actualStep) openDetails(actualStep);
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {/* Card Outer Shape */}
-                          <rect
-                            x={s.x}
-                            y={s.y}
-                            width={s.width}
-                            height={s.height}
-                            rx="12"
-                            fill={hoveredStepId === s.stepId ? "#f8fafc" : "#ffffff"}
-                            stroke={hoveredStepId === s.stepId ? "#0D9488" : "#e2e8f0"}
-                            strokeWidth={hoveredStepId === s.stepId ? 2.5 : 1.5}
-                            style={{ 
-                              filter: hoveredStepId === s.stepId 
-                                ? 'drop-shadow(0px 8px 16px rgba(13, 148, 136, 0.12))' 
-                                : 'drop-shadow(0px 2px 4px rgba(0,0,0,0.03))',
-                              transition: 'all 0.2s ease-in-out'
-                            }}
-                          />
-                          
-                          {/* Header Bar */}
-                          <path
-                            d={`M ${s.x + 12} ${s.y} L ${s.x + s.width - 12} ${s.y} A 12 12 0 0 1 ${s.x + s.width} ${s.y + 12} L ${s.x + s.width} ${s.y + 40} L ${s.x} ${s.y + 40} L ${s.x} ${s.y + 12} A 12 12 0 0 1 ${s.x + 12} ${s.y} Z`}
-                            fill={hoveredStepId === s.stepId ? "#0f766e" : "#0D9488"}
-                            style={{ transition: 'all 0.2s ease-in-out' }}
-                          />
-                          
-                          {/* Header Text */}
-                          <text
-                            x={s.x + 16}
-                            y={s.y + 25}
-                            fontWeight="800"
-                            fontSize="13"
-                            fill="#ffffff"
-                          >
-                            Step {s.stepNumber}
-                          </text>
-                          
-                          {/* Step Name */}
-                          <text
-                            x={s.x + 16}
-                            y={s.y + 65}
-                            fontWeight="700"
-                            fontSize="13"
-                            fill={hoveredStepId === s.stepId ? "#0f766e" : "#1e293b"}
-                          >
-                            {s.name.length > 30 ? `${s.name.substring(0, 27)}...` : (s.name || 'Untitled Step')}
-                          </text>
-
-                          {/* Components / Work Elements section */}
-                          <g transform={`translate(${s.x + 16}, ${s.y + 85})`}>
-                            <text x="0" y="5" fontSize="9.5" fontWeight="800" fill="#64748b">COMPONENTS:</text>
-                            
-                            {s.workElements.length === 0 ? (
-                              <text x="0" y="20" fontSize="10.5" fontStyle="italic" fill="#94a3b8">No components linked</text>
-                            ) : (
-                              s.workElements.slice(0, 3).map((we, idx) => {
-                                const badgeX = idx * 82;
-                                const displayWe = we.length > 12 ? `${we.substring(0, 9)}..` : we;
-                                return (
-                                  <g key={idx} transform={`translate(${badgeX}, 11)`}>
-                                    <rect
-                                      x="0"
-                                      y="0"
-                                      width="76"
-                                      height="18"
-                                      rx="4"
-                                      fill="#f1f5f9"
-                                      stroke="#cbd5e1"
-                                      strokeWidth="1"
-                                    />
-                                    <text
-                                      x="38"
-                                      y="12"
-                                      textAnchor="middle"
-                                      fontSize="9"
-                                      fontWeight="600"
-                                      fill="#475569"
-                                    >
-                                      {displayWe}
-                                    </text>
-                                  </g>
-                                );
-                              })
-                            )}
-                          </g>
-
-                          {/* Symbol nodes chain */}
-                          {s.nodes.map((node) => {
-                            const iconData = getPfdIconMeta(node.symbolKey);
-                            return (
-                              <g key={node.id}>
-                                <circle
-                                  cx={node.x}
-                                  cy={node.y}
-                                  r="18"
-                                  fill="#ffffff"
-                                  stroke="#0f172a"
-                                  strokeWidth={hoveredStepId === s.stepId ? 3.5 : 2.5}
-                                  style={{ 
-                                    filter: 'drop-shadow(0px 3px 6px rgba(15, 23, 42, 0.12))',
-                                    transition: 'all 0.2s ease-in-out'
-                                  }}
-                                />
-                                <image
-                                  href={iconData.iconPath}
-                                  x={node.x - 11}
-                                  y={node.y - 11}
-                                  width="22"
-                                  height="22"
-                                />
-                              <rect
-                                x={node.x - 18}
-                                y={node.y + 22}
-                                width="36"
-                                height="11"
-                                rx="2"
-                                fill="#0f172a"
-                              />
-                              <text
-                                x={node.x}
-                                y={node.y + 30}
-                                textAnchor="middle"
-                                fontSize="7.5"
-                                fontWeight="bold"
-                                fill="#ffffff"
-                              >
-                                {node.short}
-                              </text>
-                            </g>
-                          );
-                        })}
-                        </g>
-                      );
-                    })}
-                  </g>
-                </svg>
-              );
-            })()}
-          </div>
-        </Box>
+        /* Flow Diagram View — Built from scratch to AIAG/ASME & Industrial PFD standards */
+        <PfdEngineeringCanvas
+          steps={steps}
+          hoveredStepId={hoveredStepId}
+          onHoverStep={setHoveredStepId}
+          onSelectStep={openDetails}
+          zoom={zoom}
+          panX={panX}
+          panY={panY}
+          isDragging={isDragging}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onWheel={handleWheel}
+          onResetZoom={handleResetZoom}
+          onZoomIn={() => setZoom((z) => Math.min(z + 0.15, 3))}
+          onZoomOut={() => setZoom((z) => Math.max(z - 0.15, 0.2))}
+          onFitView={handleResetZoom}
+        />
       )}
 
       {/* Details Slide-out Drawer */}
@@ -1696,7 +1403,7 @@ export const PfdWorkspace: React.FC = () => {
         anchor="right"
         open={detailsOpen}
         onClose={(_, reason) => { if (reason !== 'backdropClick') setDetailsOpen(false); }}
-        slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
+        slotProps={{ paper: { sx: { width: { xs: '100%', sm: 520 }, p: 3.5, bgcolor: '#ffffff', borderLeft: '1px solid #e4e4e7', boxShadow: '-8px 0 30px rgba(0,0,0,0.06)' } } }}
       >
         {selectedStep && (
           <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1886,7 +1593,7 @@ export const PfdWorkspace: React.FC = () => {
         anchor="right"
         open={addOpen}
         onClose={(_, reason) => { if (reason !== 'backdropClick') setAddOpen(false); }}
-        slotProps={{ paper: { sx: { width: 500, p: 4, bgcolor: 'background.paper', borderLeft: '1px solid rgba(40, 37, 29, 0.1)' } } }}
+        slotProps={{ paper: { sx: { width: { xs: '100%', sm: 520 }, p: 3.5, bgcolor: '#ffffff', borderLeft: '1px solid #e4e4e7', boxShadow: '-8px 0 30px rgba(0,0,0,0.06)' } } }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

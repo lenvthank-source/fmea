@@ -651,10 +651,10 @@ export const ProjectList: React.FC = () => {
 
       {/* ── Shadcn 4-Card Bento KPI Grid ──────────────────────── */}
       {(() => {
-        const productionCount = projects.filter(p => p.documentTypes?.[0] === 'Production').length;
-        const prototypeCount = projects.filter(p => p.documentTypes?.[0] === 'Prototype').length;
-        const preLaunchCount = projects.filter(p => p.documentTypes?.[0] === 'Pre-Launch').length;
-        const safeLaunchCount = projects.filter(p => p.documentTypes?.[0] === 'Safe Launch').length;
+        const productionCount = projects.filter(p => p.documentTypes?.includes('Production')).length;
+        const prototypeCount = projects.filter(p => p.documentTypes?.includes('Prototype')).length;
+        const preLaunchCount = projects.filter(p => p.documentTypes?.includes('Pre-Launch')).length;
+        const safeLaunchCount = projects.filter(p => p.documentTypes?.includes('Safe Launch')).length;
 
         return (
           <Grid container spacing={2} sx={{ mb: 3.5 }}>
@@ -749,7 +749,7 @@ export const ProjectList: React.FC = () => {
       {(() => {
         const filteredProjects = phaseFilter === 'All' 
           ? projects 
-          : projects.filter(p => p.documentTypes?.[0] === phaseFilter);
+          : projects.filter(p => p.documentTypes?.includes(phaseFilter));
 
         return (
           <Grid container spacing={3}>
@@ -1057,7 +1057,16 @@ export const ProjectList: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Chip 
-                              label={project.documentTypes?.[0] || 'Prototype'} 
+                              label={(() => {
+                                const docTypes = project.documentTypes || [];
+                                const isSafe = docTypes.includes('Safe Launch');
+                                const base = docTypes.includes('Production')
+                                  ? 'Production'
+                                  : docTypes.includes('Pre-Launch')
+                                  ? 'Pre-Launch'
+                                  : 'Prototype';
+                                return isSafe ? `${base} (Safe Launch)` : base;
+                              })()} 
                               size="small" 
                               sx={{ fontWeight: 650, fontSize: '0.7rem', height: 22 }}
                             />
@@ -1495,7 +1504,7 @@ export const ProjectList: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Part Name / Program Description *"
+                      label="Part Name / Program Description"
                       value={partName}
                       onChange={(e) => setPartName(e.target.value)}
                       required
@@ -1517,7 +1526,7 @@ export const ProjectList: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Organisation Part No. *"
+                      label="Organisation Part No."
                       value={orgPartNumber}
                       onChange={(e) => setOrgPartNumber(e.target.value)}
                       required
@@ -1557,27 +1566,26 @@ export const ProjectList: React.FC = () => {
                     />
                   </Grid>
 
-                  {/* Manufacturing Phase / Document Type Cards */}
+                  {/* Manufacturing Phase / Document Type Cards — Safe Launch enabled across Prototype, Pre-Launch, and Production */}
                   <Grid size={6}>
-                    <Box sx={{ p: 1.5, bgcolor: '#fafafa', borderRadius: '10px', border: '1px solid #e4e4e7' }}>
+                    <Box sx={{ p: 1.75, bgcolor: '#fafafa', borderRadius: '10px', border: '1px solid #e4e4e7' }}>
                       <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#09090b', mb: 1, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         Manufacturing Phase *
                       </Typography>
                       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
                         {['Prototype', 'Pre-Launch', 'Production'].map((dt) => {
-                          const isSel = (dt === 'Production' && documentTypes.includes('Production')) ||
-                                        (dt === 'Pre-Launch' && (documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch'))) ||
-                                        (dt === 'Prototype' && documentTypes.includes('Prototype'));
+                          const currentBase = documentTypes.includes('Production')
+                            ? 'Production'
+                            : documentTypes.includes('Pre-Launch')
+                            ? 'Pre-Launch'
+                            : 'Prototype';
+                          const isSel = currentBase === dt;
                           return (
                             <Box
                               key={dt}
                               onClick={() => {
-                                if (dt === 'Pre-Launch') {
-                                  const isSafe = documentTypes.includes('Safe Launch');
-                                  setDocumentTypes(isSafe ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
-                                } else {
-                                  setDocumentTypes([dt]);
-                                }
+                                const hasSafeLaunch = documentTypes.includes('Safe Launch');
+                                setDocumentTypes(hasSafeLaunch ? [dt, 'Safe Launch'] : [dt]);
                               }}
                               sx={{
                                 py: 1,
@@ -1599,22 +1607,44 @@ export const ProjectList: React.FC = () => {
                         })}
                       </Box>
 
-                      {/* Safe Launch inline pill */}
-                      {(documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')) && !documentTypes.includes('Prototype') && !documentTypes.includes('Production') && (
-                        <Box sx={{ mt: 1.25, pt: 1, borderTop: '1px dashed #e4e4e7', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                      {/* Safe Launch toggle — Active across Prototype, Pre-Launch, and Production */}
+                      <Box sx={{ mt: 1.5, pt: 1.25, borderTop: '1px dashed #e4e4e7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Checkbox
                             size="small"
                             checked={documentTypes.includes('Safe Launch')}
                             onChange={(e) => {
-                              setDocumentTypes(e.target.checked ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
+                              const currentBase = documentTypes.includes('Production')
+                                ? 'Production'
+                                : documentTypes.includes('Pre-Launch')
+                                ? 'Pre-Launch'
+                                : 'Prototype';
+                              setDocumentTypes(e.target.checked ? [currentBase, 'Safe Launch'] : [currentBase]);
                             }}
                             sx={{ p: 0.25, color: '#ff682c', '&.Mui-checked': { color: '#ff682c' } }}
                           />
-                          <Typography sx={{ fontSize: '0.785rem', fontWeight: 600, color: '#ff682c' }}>
-                            Enable Safe Launch Verification Checklist
-                          </Typography>
+                          <Box>
+                            <Typography sx={{ fontSize: '0.785rem', fontWeight: 600, color: '#09090b', lineHeight: 1.2 }}>
+                              Safe Launch Containment Plan
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.685rem', color: '#71717a', lineHeight: 1.1 }}>
+                              Applies enhanced containment & verification gates to{' '}
+                              {documentTypes.includes('Production')
+                                ? 'Production'
+                                : documentTypes.includes('Pre-Launch')
+                                ? 'Pre-Launch'
+                                : 'Prototype'}
+                            </Typography>
+                          </Box>
                         </Box>
-                      )}
+                        {documentTypes.includes('Safe Launch') && (
+                          <Chip
+                            label="ACTIVE"
+                            size="small"
+                            sx={{ height: 18, fontSize: '0.625rem', fontWeight: 700, bgcolor: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa' }}
+                          />
+                        )}
+                      </Box>
                     </Box>
                   </Grid>
 
@@ -1711,7 +1741,7 @@ export const ProjectList: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Organisation Name *"
+                      label="Organisation Name"
                       value={organisationName}
                       onChange={(e) => setOrganisationName(e.target.value)}
                       required
@@ -1733,7 +1763,7 @@ export const ProjectList: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Customer Name *"
+                      label="Customer Name"
                       value={customer}
                       onChange={(e) => setCustomer(e.target.value)}
                       required

@@ -116,7 +116,7 @@ Enforce granular permissions matching the active JWT user payload. The 5 roles a
 ### 6.1 What lives in `.agents/` (single source; no CLAUDE/GEMINI/.cursor duplicates)
 - **Root:** `.agents/AGENTS.md` (this file, always loaded) + `.agents/README.md` (progressive-loading manual).
 - **Context (domain knowledge):** `.agents/context/{project,architecture,domain,glossary}.md` + new `context/{data-model,api-contracts,permissions,deployment,versioning}.md` — full stack, data model (41 Prisma models), API DTOs, RBAC matrix, deployment (Render/Neon/R2/Podman), version ledger.
-- **Rules (stable):** `.agents/rules/{architecture,coding-style,security,testing,git}.md`
+- **Rules (stable):** `.agents/rules/{architecture,coding-style,security,testing,git,ui-theme}.md`
 - **Memory:** `.agents/memory/decisions.md` — append-only ADRs (date, context, decision, consequence, source file:line). Keep in sync with `versions/` index.
 - **Skills:** `.agents/skills/*` — execution contracts (`fmea-authoring`, `pfd-pfmea-linking`, `control-plan-sync`, `corrective-actions`, `revision-approval`, `vector-indexing`, `sso-tenant-context`, etc.). Do **not** create tool-specific `CLAUDE.md/GEMINI.md/.cursor` — only `.agents/`.
 - **Workflows/Checklists/Prompts/Agents:** `.agents/workflows/*.md`, `.agents/checklists/*.md`, `.agents/prompts/*.md`, `.agents/agents/*.md|*.json` — role workflows (developer/reviewer/architect/tester).

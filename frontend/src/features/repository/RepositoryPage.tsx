@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  Badge,
   CircularProgress,
   Table,
   TableBody,
@@ -199,53 +198,107 @@ export const RepositoryPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
-      {/* Header Banner */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#0f172a' }}>
-            Work Element Package Repository
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Central repository of standardized Work Element packages containing pre-defined functions, causes, and S/O/D ratings.
-          </Typography>
-        </Box>
+      {/* Header Banner — Shadcn Admin Layout */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
+          Standard Packages Repository
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
+          Central library of standardized Work Element packages containing pre-defined functions, causes, and S/O/D ratings.
+        </Typography>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2.5, borderRadius: '10px', border: '1px solid #fecaca', bgcolor: '#fef2f2', fontSize: '0.825rem' }}>
+          {error}
+        </Alert>
+      )}
 
-      {/* Main Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)} indicatorColor="primary" textColor="primary">
-          <Tab label={`Approved Packages (${approvedPackages.length})`} />
-          {isAdmin && (
-            <Tab
-              label={
-                <Badge badgeContent={pendingPackages.length} color="error">
-                  Pending Approvals
-                </Badge>
-              }
-            />
-          )}
-          <Tab label={`My Submissions (${mySubmissions.length})`} />
-        </Tabs>
-      </Paper>
+      {/* Main Segmented Pill Tabs */}
+      <Box sx={{ mb: 3 }}>
+        <Paper
+          sx={{
+            display: 'inline-flex',
+            p: 0.5,
+            borderRadius: '8px',
+            bgcolor: '#f4f4f5',
+            border: '1px solid #e4e4e7',
+            boxShadow: 'none',
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, val) => setActiveTab(val)}
+            sx={{
+              minHeight: 34,
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                minHeight: 32,
+                px: 2,
+                py: 0.5,
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                color: '#71717a',
+                transition: 'all 0.15s',
+                '&.Mui-selected': {
+                  bgcolor: '#ffffff',
+                  color: '#09090b',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                },
+              },
+            }}
+          >
+            <Tab label={`Approved Packages (${approvedPackages.length})`} />
+            {isAdmin && (
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>Pending Approvals</span>
+                    {pendingPackages.length > 0 && (
+                      <Chip
+                        label={pendingPackages.length}
+                        size="small"
+                        sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#ef4444', color: '#ffffff' }}
+                      />
+                    )}
+                  </Box>
+                }
+              />
+            )}
+            <Tab label={`My Submissions (${mySubmissions.length})`} />
+          </Tabs>
+        </Paper>
+      </Box>
 
       {/* Tab 0: Approved Packages */}
       {activeTab === 0 && (
         <Box>
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2.5 }}>
             <TextFieldAny
-              placeholder="Search work element packages..."
+              placeholder="Search work element packages... (⌘K)"
               size="small"
               fullWidth
               value={searchQuery}
               onChange={(e: any) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: '#a1a1aa', fontSize: '1.1rem' }} />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  bgcolor: '#ffffff',
+                  '& fieldset': { borderColor: '#e4e4e7' },
+                  '&:hover fieldset': { borderColor: '#d4d4d8' },
+                  '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                }
               }}
             />
           </Box>
@@ -261,16 +314,16 @@ export const RepositoryPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table>
-                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: '10px', border: '1px solid #e4e4e7', boxShadow: 'none', overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#fafafa' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Work Element Package</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Functions Count</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Contributor</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Date Approved</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', textAlign: 'right' }}>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>Work Element Package</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Description</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Functions</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contributor</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Date Approved</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -397,14 +450,14 @@ export const RepositoryPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table>
-                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: '10px', border: '1px solid #e4e4e7', boxShadow: 'none', overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#fafafa' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Package Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Submitted Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Rejection Reason</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>Package Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Submitted Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rejection Reason</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -435,23 +488,59 @@ export const RepositoryPage: React.FC = () => {
         </Box>
       )}
 
-      {/* Rejection Dialog */}
-      <Dialog open={Boolean(rejectingPackageId)} onClose={() => setRejectingPackageId(null)}>
-        <DialogTitle>Reject Submission</DialogTitle>
-        <DialogContent>
+      {/* Rejection Dialog — Modernized */}
+      <Dialog 
+        open={Boolean(rejectingPackageId)} 
+        onClose={() => setRejectingPackageId(null)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 50px -10px rgba(0,0,0,0.15)',
+              p: 1
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#09090b', fontSize: '1.05rem', pt: 2, px: 2.5 }}>
+          Reject Submission
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, py: 1 }}>
+          <Typography sx={{ color: '#71717a', fontSize: '0.825rem', mb: 1.5 }}>
+            Provide feedback explaining why this package does not meet standardization criteria:
+          </Typography>
           <TextField
-            label="Reason for Rejection"
+            size="small"
+            label="Reason for Rejection *"
             multiline
             rows={3}
             fullWidth
-            sx={{ mt: 1 }}
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                '& fieldset': { borderColor: '#e4e4e7' }
+              }
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRejectingPackageId(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleReject} disabled={!rejectionReason.trim()}>
+        <DialogActions sx={{ px: 2.5, pb: 2, pt: 1, gap: 1 }}>
+          <Button 
+            onClick={() => setRejectingPackageId(null)}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#71717a', border: '1px solid #e4e4e7' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleReject} 
+            disabled={!rejectionReason.trim()}
+            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, bgcolor: '#ef4444', color: '#ffffff', boxShadow: 'none' }}
+          >
             Confirm Rejection
           </Button>
         </DialogActions>

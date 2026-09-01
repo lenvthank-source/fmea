@@ -3,7 +3,7 @@ import {
   Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, Button, Alert, CircularProgress, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Stack,
-  Tabs, Tab, Badge, IconButton, Tooltip
+  Tabs, Tab, IconButton, Tooltip
 } from '@mui/material';
 import {
   Delete as DeleteIcon, Edit as EditIcon, CheckCircle as ResolveIcon,
@@ -349,43 +349,90 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', maxWidth: '1440px', mx: 'auto', p: 1 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 850, letterSpacing: '-0.75px', mb: 1, color: 'text.primary' }}>
+      {/* Header — Shadcn Admin Layout */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
           Administration Control Panel
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          Manage system users, view contact inquiries, and review user feedback.
+        <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
+          Manage system users, view contact inquiries, review user feedback, and configure AIAG-VDA risk evaluation masters.
         </Typography>
       </Box>
 
-      <Tabs
-        value={activeTab}
-        onChange={(_, val) => setActiveTab(val)}
-        sx={{
-          borderBottom: '1px solid rgba(40, 37, 29, 0.08)',
-          '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.9rem' },
-        }}
-      >
-        <Tab label="Users" />
-        <Tab
-          label={
-            <Badge badgeContent={unreadInquiries} color="error" max={99}>
-              <span style={{ paddingRight: unreadInquiries > 0 ? 8 : 0 }}>Contact Inquiries</span>
-            </Badge>
-          }
-        />
-        <Tab
-          label={
-            <Badge badgeContent={openFeedback} color="warning" max={99}>
-              <span style={{ paddingRight: openFeedback > 0 ? 8 : 0 }}>User Feedback</span>
-            </Badge>
-          }
-        />
-        <Tab label="Document Revisions" />
-        <Tab label="Severity" />
-        <Tab label="Occurrence" />
-        <Tab label="Detection" />
-      </Tabs>
+      {/* Segmented Pill Tabs */}
+      <Box sx={{ mb: 3 }}>
+        <Paper
+          sx={{
+            display: 'inline-flex',
+            p: 0.5,
+            borderRadius: '8px',
+            bgcolor: '#f4f4f5',
+            border: '1px solid #e4e4e7',
+            boxShadow: 'none',
+            maxWidth: '100%',
+            overflowX: 'auto',
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, val) => setActiveTab(val)}
+            sx={{
+              minHeight: 34,
+              '& .MuiTabs-indicator': { display: 'none' },
+              '& .MuiTab-root': {
+                minHeight: 32,
+                px: 2,
+                py: 0.5,
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                color: '#71717a',
+                transition: 'all 0.15s',
+                '&.Mui-selected': {
+                  bgcolor: '#ffffff',
+                  color: '#09090b',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                },
+              },
+            }}
+          >
+            <Tab label={`Users (${users.length})`} />
+            <Tab
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <span>Inquiries</span>
+                  {unreadInquiries > 0 && (
+                    <Chip
+                      label={unreadInquiries}
+                      size="small"
+                      sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#ef4444', color: '#ffffff' }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+            <Tab
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <span>Feedback</span>
+                  {openFeedback > 0 && (
+                    <Chip
+                      label={openFeedback}
+                      size="small"
+                      sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#f59e0b', color: '#ffffff' }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+            <Tab label="Document Revisions" />
+            <Tab label="Severity Masters" />
+            <Tab label="Occurrence Masters" />
+            <Tab label="Detection Masters" />
+          </Tabs>
+        </Paper>
+      </Box>
 
       {/* ── Tab 0: Users ────────────────────────────────────── */}
       <TabPanel value={activeTab} index={0}>
@@ -408,9 +455,9 @@ export const AdminPanel: React.FC = () => {
             <Typography color="text.secondary">No users found in this workspace.</Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
@@ -517,9 +564,9 @@ export const AdminPanel: React.FC = () => {
             <Typography color="text.secondary">No contact inquiries yet.</Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
@@ -582,9 +629,9 @@ export const AdminPanel: React.FC = () => {
             <Typography color="text.secondary">No feedback submitted yet.</Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
@@ -660,9 +707,9 @@ export const AdminPanel: React.FC = () => {
             <Typography color="text.secondary">No document revisions found in this workspace.</Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Project</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Document</TableCell>
@@ -754,9 +801,9 @@ export const AdminPanel: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
@@ -805,9 +852,9 @@ export const AdminPanel: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
@@ -856,9 +903,9 @@ export const AdminPanel: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.08)', borderRadius: 3, boxShadow: 'none' }}>
+          <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
             <Table>
-              <TableHead sx={{ bgcolor: 'rgba(40, 37, 29, 0.02)' }}>
+              <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, width: 80 }}>Value</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Label</TableCell>
@@ -900,9 +947,26 @@ export const AdminPanel: React.FC = () => {
         )}
       </TabPanel>
 
-      {/* ── Edit User Dialog ────────────────────────────────── */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit User Properties</DialogTitle>
+      {/* ── Edit User Dialog — Modernized ──────────────────── */}
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={() => setEditDialogOpen(false)} 
+        maxWidth="xs" 
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.2)',
+              p: 1
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, color: '#09090b', fontSize: '1.1rem', pt: 2, px: 2.5 }}>
+          Edit User Properties
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {editingUser && (
@@ -951,16 +1015,31 @@ export const AdminPanel: React.FC = () => {
             onClick={handleSaveUser}
             variant="contained"
             disabled={saveLoading}
-            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100 }}
+            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100, borderRadius: '8px', bgcolor: '#09090b', color: '#ffffff', boxShadow: 'none', '&:hover': { bgcolor: '#27272a' } }}
           >
             {saveLoading ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* ── Edit Rating Scale Dialog ──────────────────────────── */}
-      <Dialog open={editScaleDialogOpen} onClose={() => setEditScaleDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
+      {/* ── Edit Rating Scale Dialog — Modernized ────────────── */}
+      <Dialog 
+        open={editScaleDialogOpen} 
+        onClose={() => setEditScaleDialogOpen(false)} 
+        maxWidth="xs" 
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.2)',
+              p: 1
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, color: '#09090b', fontSize: '1.1rem', pt: 2, px: 2.5 }}>
           Edit {editingScale ? `${editingScale.scale.charAt(0).toUpperCase() + editingScale.scale.slice(1)} - Value ${editingScale.value}` : 'Rating'}
         </DialogTitle>
         <DialogContent>
@@ -1008,7 +1087,7 @@ export const AdminPanel: React.FC = () => {
             onClick={handleSaveScale}
             variant="contained"
             disabled={savingScale}
-            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100 }}
+            sx={{ textTransform: 'none', fontWeight: 600, minWidth: 100, borderRadius: '8px', bgcolor: '#09090b', color: '#ffffff', boxShadow: 'none', '&:hover': { bgcolor: '#27272a' } }}
           >
             {savingScale ? 'Saving...' : 'Save Changes'}
           </Button>

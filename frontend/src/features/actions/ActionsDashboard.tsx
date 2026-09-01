@@ -477,50 +477,67 @@ export const ActionsDashboard: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}>
-      {/* Header Section */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+      {/* Header Section — Shadcn Admin Layout */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 850, letterSpacing: '-0.75px', color: 'text.primary' }}>
-            Actions & Corrective Actions
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
+            Actions & Optimization
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-            Step 6 of the Quality Workflow: Manage assigned tasks, track risk reduction, and verify evidence.
+          <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
+            Step 6 of the AIAG-VDA workflow: Assign corrective actions, track risk reduction (S/O/D), and verify evidence files.
           </Typography>
         </Box>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           {/* View mode toggle */}
           <ToggleButtonGroup
             value={viewMode}
             exclusive
             onChange={(_, val) => val && setViewMode(val)}
             size="small"
+            sx={{
+              bgcolor: '#f4f4f5',
+              p: 0.5,
+              borderRadius: '8px',
+              border: '1px solid #e4e4e7',
+              '& .MuiToggleButton-root': {
+                border: 'none',
+                borderRadius: '6px !important',
+                px: 1.25,
+                py: 0.5,
+                color: '#71717a',
+                '&.Mui-selected': {
+                  bgcolor: '#ffffff',
+                  color: '#09090b',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }
+              }
+            }}
           >
             <Tooltip title="Table View">
-              <ToggleButton value="table">
-                <TableIcon fontSize="small" />
-              </ToggleButton>
+              <ToggleButton value="table"><TableIcon sx={{ fontSize: '1.1rem' }} /></ToggleButton>
             </Tooltip>
             <Tooltip title="Kanban View">
-              <ToggleButton value="kanban">
-                <KanbanIcon fontSize="small" />
-              </ToggleButton>
+              <ToggleButton value="kanban"><KanbanIcon sx={{ fontSize: '1.1rem' }} /></ToggleButton>
             </Tooltip>
             <Tooltip title="Calendar View">
-              <ToggleButton value="calendar">
-                <CalendarIcon fontSize="small" />
-              </ToggleButton>
+              <ToggleButton value="calendar"><CalendarIcon sx={{ fontSize: '1.1rem' }} /></ToggleButton>
             </Tooltip>
           </ToggleButtonGroup>
 
           {/* Project selector filter */}
           <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Filter by Project</InputLabel>
+            <InputLabel sx={{ fontSize: '0.85rem' }}>Filter by Program</InputLabel>
             <Select
               value={selectedProjectId}
-              label="Filter by Project"
+              label="Filter by Program"
               onChange={(e) => setSelectedProjectId(e.target.value)}
+              sx={{
+                borderRadius: '8px',
+                bgcolor: '#ffffff',
+                '& fieldset': { borderColor: '#e4e4e7' }
+              }}
             >
-              <MenuItem value="all">All Projects</MenuItem>
+              <MenuItem value="all">All Quality Programs</MenuItem>
               {projects.map((p) => (
                 <MenuItem key={p.id} value={p.id}>
                   {p.name}
@@ -528,8 +545,19 @@ export const ActionsDashboard: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <IconButton onClick={fetchActions} disabled={loading} color="primary" sx={{ border: '1px solid rgba(40, 37, 29, 0.1)' }}>
-            <RefreshIcon />
+          <IconButton 
+            onClick={fetchActions} 
+            disabled={loading} 
+            size="small"
+            sx={{ 
+              border: '1px solid #e4e4e7', 
+              borderRadius: '8px', 
+              p: 0.75, 
+              color: '#71717a',
+              '&:hover': { bgcolor: '#f4f4f5', color: '#09090b' } 
+            }}
+          >
+            <RefreshIcon sx={{ fontSize: '1.1rem' }} />
           </IconButton>
         </Stack>
       </Box>
@@ -547,40 +575,82 @@ export const ActionsDashboard: React.FC = () => {
         </Alert>
       )}
 
-      {/* Tabs & Sub-filters */}
-      <Box sx={{ display: 'flex', borderBottom: '1px solid #2e2e36', mb: 3, justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant={tabFilter === 'assigned' ? 'contained' : 'text'}
-            onClick={() => setTabFilter('assigned')}
-            color="primary"
-            sx={{ px: 3, py: 1, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
-          >
-            My Assigned Actions
-          </Button>
-          <Button
-            variant={tabFilter === 'all-project' ? 'contained' : 'text'}
-            onClick={() => setTabFilter('all-project')}
-            disabled={selectedProjectId === 'all'}
-            color="primary"
-            sx={{ px: 3, py: 1, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
-          >
-            All Project Actions
-          </Button>
-        </Stack>
+      {/* Tabs & Sub-filters — Segmented Pill Bar */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Paper
+          sx={{
+            display: 'inline-flex',
+            p: 0.5,
+            borderRadius: '8px',
+            bgcolor: '#f4f4f5',
+            border: '1px solid #e4e4e7',
+            boxShadow: 'none',
+          }}
+        >
+          <Stack direction="row" spacing={0.5}>
+            <Button
+              onClick={() => setTabFilter('assigned')}
+              sx={{
+                px: 2,
+                py: 0.5,
+                minHeight: 32,
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                bgcolor: tabFilter === 'assigned' ? '#ffffff' : 'transparent',
+                color: tabFilter === 'assigned' ? '#09090b' : '#71717a',
+                boxShadow: tabFilter === 'assigned' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                '&:hover': { bgcolor: tabFilter === 'assigned' ? '#ffffff' : 'rgba(0,0,0,0.04)' }
+              }}
+            >
+              My Assigned Actions
+            </Button>
+            <Button
+              onClick={() => setTabFilter('all-project')}
+              disabled={selectedProjectId === 'all'}
+              sx={{
+                px: 2,
+                py: 0.5,
+                minHeight: 32,
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                bgcolor: tabFilter === 'all-project' ? '#ffffff' : 'transparent',
+                color: tabFilter === 'all-project' ? '#09090b' : '#71717a',
+                boxShadow: tabFilter === 'all-project' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                '&:hover': { bgcolor: tabFilter === 'all-project' ? '#ffffff' : 'rgba(0,0,0,0.04)' }
+              }}
+            >
+              All Program Actions
+            </Button>
+          </Stack>
+        </Paper>
 
-        <Stack direction="row" spacing={1} sx={{ pb: 1 }}>
-          {['all', 'open', 'in_progress', 'completed', 'verified', 'closed', 'cancelled'].map((st) => (
-            <Chip
-              key={st}
-              label={st.toUpperCase().replace('_', ' ')}
-              onClick={() => setStatusFilter(st)}
-              variant={statusFilter === st ? 'filled' : 'outlined'}
-              color={statusFilter === st ? 'primary' : 'default'}
-              size="small"
-              sx={{ cursor: 'pointer' }}
-            />
-          ))}
+        <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+          {['all', 'open', 'in_progress', 'completed', 'verified', 'closed', 'cancelled'].map((st) => {
+            const isSel = statusFilter === st;
+            return (
+              <Chip
+                key={st}
+                label={st.toUpperCase().replace('_', ' ')}
+                onClick={() => setStatusFilter(st)}
+                size="small"
+                sx={{
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  fontWeight: 600,
+                  fontSize: '0.725rem',
+                  border: '1px solid',
+                  borderColor: isSel ? '#09090b' : '#e4e4e7',
+                  bgcolor: isSel ? '#09090b' : '#ffffff',
+                  color: isSel ? '#ffffff' : '#71717a',
+                  '&:hover': { bgcolor: isSel ? '#27272a' : '#f4f4f5' }
+                }}
+              />
+            );
+          })}
         </Stack>
       </Box>
 
@@ -590,19 +660,19 @@ export const ActionsDashboard: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : viewMode === 'table' ? (
-        <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', boxShadow: 'none' }}>
+        <TableContainer component={Paper} sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', bgcolor: '#ffffff', boxShadow: 'none', overflow: 'hidden' }}>
           <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#F7F6F2' }}>
-                <TableCell sx={{ fontWeight: 'bold' }}>Action Description</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Project</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Priority</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Assigned To</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', align: 'center' }}>FMEA Before</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', align: 'center' }}>FMEA After</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Manage</TableCell>
+            <TableHead sx={{ bgcolor: '#fafafa' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>Action Description</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Program</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Priority</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Due Date</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Assigned To</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>FMEA Before</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>FMEA After</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Manage</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -616,7 +686,7 @@ export const ActionsDashboard: React.FC = () => {
                 filteredActions.map((action) => {
                   const mainLink = action.fmeaLinks[0];
                   return (
-                    <TableRow key={action.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
+                    <TableRow key={action.id} hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
                       {/* Action Description */}
                       <TableCell sx={{ maxWidth: 280 }}>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>

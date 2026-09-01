@@ -2,6 +2,11 @@
 
 /* ── Theme tokens (CSS variables) ── */
 @layer base {
+  /* Prevent modal/dialog backdrop from blurring the sticky document header */
+  .MuiBackdrop-root {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
   :root {
     --bg: #FFFFFF;
     --bg-soft: #F5F5F5;

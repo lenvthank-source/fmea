@@ -76,31 +76,72 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
   };
 
   const getStatusChipProps = () => {
-    const isSafe = project.documentTypes?.includes('Safe Launch');
-    if (isSafe) {
-      return { color: 'secondary' as const, label: 'SAFE LAUNCH' };
+    const docTypes = project.documentTypes || [];
+    const isSafe = docTypes.includes('Safe Launch');
+    const basePhase = docTypes.includes('Production')
+      ? 'Production'
+      : docTypes.includes('Pre-Launch')
+      ? 'Pre-Launch'
+      : 'Prototype';
+
+    const label = isSafe ? `${basePhase.toUpperCase()} (SAFE LAUNCH)` : basePhase.toUpperCase();
+
+    if (basePhase === 'Production') {
+      return {
+        color: 'success' as const,
+        label,
+        sx: {
+          bgcolor: isSafe ? '#f0fdf4' : '#ecfdf5',
+          color: '#16a34a',
+          border: '1px solid #bbf7d0',
+          fontWeight: 700,
+          fontSize: '0.725rem',
+          height: 22,
+        },
+      };
     }
-    const status = (project.documentTypes?.[0] || 'Prototype');
-    switch (status) {
-      case 'Production': return { color: 'success' as const, label: 'PRODUCTION' };
-      case 'Pre-Launch': return { color: 'info' as const, label: 'PRE-LAUNCH' };
-      default: return { color: 'warning' as const, label: 'PROTOTYPE' };
+    if (basePhase === 'Pre-Launch') {
+      return {
+        color: 'info' as const,
+        label,
+        sx: {
+          bgcolor: isSafe ? '#eff6ff' : '#f0f9ff',
+          color: '#2563eb',
+          border: '1px solid #bfdbfe',
+          fontWeight: 700,
+          fontSize: '0.725rem',
+          height: 22,
+        },
+      };
     }
+    // Prototype
+    return {
+      color: 'warning' as const,
+      label,
+      sx: {
+        bgcolor: isSafe ? '#fff7ed' : '#fffbeb',
+        color: isSafe ? '#ea580c' : '#d97706',
+        border: isSafe ? '1px solid #fed7aa' : '1px solid #fde68a',
+        fontWeight: 700,
+        fontSize: '0.725rem',
+        height: 22,
+      },
+    };
   };
 
   const statusProps = getStatusChipProps();
 
   return (
     <Card sx={{ 
-      mb: 3, 
-      border: '1px solid #e2e8f0', 
-      borderRadius: 4, 
-      bgcolor: 'background.paper', 
+      mb: 2.5, 
+      border: '1px solid #e4e4e7', 
+      borderRadius: '12px', 
+      bgcolor: '#ffffff', 
       overflow: 'hidden',
       position: 'sticky',
       top: 0,
-      zIndex: 1100,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+      zIndex: 1350, /* Placed above modal backdrops (1300) so it is never dimmed or blurred when adding functions/failures/steps */
+      boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
     }}>
       {/* Header bar always visible */}
       <Box sx={{
@@ -130,12 +171,22 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
             • Part No: {project.orgPartNumber || '—'}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography sx={{ fontWeight: 600, fontSize: '0.88rem', color: 'text.secondary' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Chip
+            label={statusProps.label}
+            size="small"
+            sx={statusProps.sx}
+          />
+          <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto', bgcolor: '#e4e4e7' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.825rem', color: '#71717a' }}>
             {expanded ? 'Hide Details' : 'View Full Header'}
           </Typography>
-          <IconButton onClick={() => setExpanded(!expanded)} size="small">
-            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          <IconButton 
+            onClick={() => setExpanded(!expanded)} 
+            size="small"
+            sx={{ border: '1px solid #e4e4e7', borderRadius: '6px', p: 0.5 }}
+          >
+            {expanded ? <ExpandLessIcon sx={{ fontSize: '1rem' }} /> : <ExpandMoreIcon sx={{ fontSize: '1rem' }} />}
           </IconButton>
         </Box>
       </Box>
@@ -188,10 +239,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
               <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Status</Typography>
               <Chip
                 label={statusProps.label}
-                color={statusProps.color}
-                variant="outlined"
                 size="small"
-                sx={{ mt: 0.5, fontWeight: 'bold', height: 24, fontSize: '0.80rem' }}
+                sx={{ ...statusProps.sx, mt: 0.5 }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 12, md: 4 }}>
