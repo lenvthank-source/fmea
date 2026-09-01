@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.5.5.md` — Create Project Button Fix & Complete Modal Overhaul: eliminated duplicate '+ +' icon, redesigned 3-step Create/Edit Quality Program modal into space-optimized Shadcn Admin layout (3-pill step tracker, segmented phase cards, uniform grid spacing, compact CFT tags), and updated delete confirmation dialog.
 - `v0.5.4.md` — Risk Simulator Smooth Navigation & Educational Pillar Pages Ventriloc Rebuild: active scroll-to-element navigation from any page, full modernization of /learn/21-cfr-part-11-fmea and /learn/aiag-vda-7-step-fmea with floating fluid header, breadcrumbs, GEO answer blocks, and sticky conversion card.
 - `v0.5.3.md` — Translucent Fluid Glass Header, Ventriloc Aesthetic Overhaul, Favicon Redesign & AI Search Discovery: living fluid motion streams in header, slap cap FREE badge, light-themed 3D tilt interactive dashboard, Module 03 converted to light ivory, all marketing pages aligned to Ventriloc theme, Tailwind v4 @layer cascade fix, rich FAQPage schema for Google AI Overviews, full AI search crawler permissions in robots.txt, and llms.txt standard files.
 - `v0.5.2.md` — Shadcn Admin Workspace First Screen & Ventriloc Clone: 4-card bento KPI grid, segmented pill tabs, 2-col overview (search ⌘K, phase pills, recent activity, quick actions), AppShell header/sidebar refinement, Ventriloc interactive Power BI/Fabric dashboard, floating capsule navbar, infinite marquee partner ticker, stacked sticky cards.

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Alert, FormControlLabel, Chip, Radio, RadioGroup,
-  Stepper, Step, StepLabel, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
+  TextField, Alert, FormControlLabel, Chip, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
   TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Tabs, Tab,
   Card, CardContent, Tooltip, Divider, Stack, Avatar, ToggleButton, ToggleButtonGroup,
   FormControl, InputLabel, Select, Checkbox, Pagination
@@ -12,7 +11,8 @@ import {
   GridView as GridIcon, ViewList as ListIcon, ContentCopy as ContentCopyIcon,
   CheckCircle as CheckCircleIcon, Security as ShieldCheckIcon, TrendingUp as TrendingUpIcon,
   Search as SearchIcon, Bolt as BoltIcon, HistoryEdu as AuditIcon,
-  Layers as LayersIcon
+  Layers as LayersIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -603,7 +603,7 @@ export const ProjectList: React.FC = () => {
               '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
             }}
           >
-            + Create Project
+            Create Project
           </Button>
         </Stack>
       </Box>
@@ -1161,7 +1161,7 @@ export const ProjectList: React.FC = () => {
                         '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
                       }}
                     >
-                      + Create New Quality Program
+                      Create New Quality Program
                     </Button>
                     <Button
                       variant="outlined"
@@ -1309,133 +1309,332 @@ export const ProjectList: React.FC = () => {
         )}
       </Menu>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Delete Project?</DialogTitle>
-        <DialogContent>
-          <Typography>This action is permanent and will delete all associated documents, process steps, FMEA rows, and control plans. This cannot be undone.</Typography>
+      {/* Delete Confirmation Dialog — Shadcn Admin Styled */}
+      <Dialog 
+        open={deleteConfirmOpen} 
+        onClose={() => setDeleteConfirmOpen(false)} 
+        maxWidth="xs" 
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 50px -10px rgba(0,0,0,0.15)',
+              p: 1
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#09090b', fontSize: '1.05rem', pt: 2, px: 2.5 }}>
+          Delete Quality Program?
+        </DialogTitle>
+        <DialogContent sx={{ px: 2.5, py: 1 }}>
+          <Typography sx={{ color: '#71717a', fontSize: '0.875rem', lineHeight: 1.5 }}>
+            This action is permanent and will permanently delete all associated documents, process steps, FMEA rows, and control plans. This cannot be undone.
+          </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)} disabled={deleteLoading}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleDeleteProject} disabled={deleteLoading}>
-            {deleteLoading ? 'Deleting...' : 'Delete'}
+        <DialogActions sx={{ px: 2.5, pb: 2, pt: 1, gap: 1 }}>
+          <Button 
+            onClick={() => setDeleteConfirmOpen(false)} 
+            disabled={deleteLoading}
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none', 
+              fontWeight: 600, 
+              color: '#71717a',
+              border: '1px solid #e4e4e7',
+              '&:hover': { bgcolor: '#f4f4f5' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleDeleteProject} 
+            disabled={deleteLoading}
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none', 
+              fontWeight: 600, 
+              bgcolor: '#ef4444', 
+              color: '#ffffff',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#dc2626', boxShadow: 'none' }
+            }}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete Program'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 3-Step Create/Edit Project Modal */}
-      <Dialog open={open} onClose={handleClose} maxWidth={false} fullWidth sx={{ '& .MuiDialog-paper': { width: '80vw', maxWidth: '80vw' } }}>
-        <DialogTitle sx={{ fontWeight: 'bold', px: 3, pt: 3 }}>
-          {isEditing ? 'Edit Quality Project' : 'Create Quality Project'}
-        </DialogTitle>
-        <Box sx={{ px: 3, mb: 2 }}>
-          <Stepper activeStep={step - 1} alternativeLabel>
-            <Step><StepLabel>Basic Info</StepLabel></Step>
-            <Step><StepLabel>Organisation & Part Info</StepLabel></Step>
-            <Step><StepLabel>Document Control & Approvals</StepLabel></Step>
-          </Stepper>
+      {/* 3-Step Create/Edit Project Modal — Space-Optimized Shadcn Admin Layout */}
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="md" 
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.2)',
+              bgcolor: '#ffffff',
+              overflow: 'hidden',
+              maxHeight: '92vh',
+            }
+          }
+        }}
+      >
+        {/* Header Bar */}
+        <Box sx={{ px: 3.5, pt: 3, pb: 2.25, borderBottom: '1px solid #f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', fontSize: '1.15rem' }}>
+              {isEditing ? 'Edit Quality Program' : 'Create Quality Program'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#71717a', display: 'block', mt: 0.25, fontSize: '0.785rem' }}>
+              AIAG-VDA 2019 standards, structural tree parameters, and CFT sign-offs.
+            </Typography>
+          </Box>
+          <IconButton 
+            onClick={handleClose} 
+            size="small" 
+            sx={{ 
+              color: '#71717a', 
+              borderRadius: '8px', 
+              border: '1px solid #e4e4e7',
+              p: 0.75,
+              '&:hover': { color: '#09090b', bgcolor: '#f4f4f5' } 
+            }}
+          >
+            <CloseIcon sx={{ fontSize: '1.1rem' }} />
+          </IconButton>
         </Box>
 
-        <Box>
-          <DialogContent sx={{ p: 3 }}>
+        {/* Step Navigation Pill Tracker */}
+        <Box sx={{ px: 3.5, py: 1.75, bgcolor: '#fafafa', borderBottom: '1px solid #f4f4f5' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
+            {[
+              { stepNum: 1, title: 'Program & Part', desc: 'Classification' },
+              { stepNum: 2, title: 'Plant & Customer', desc: 'Context' },
+              { stepNum: 3, title: 'Document Control', desc: 'CFT & Sign-offs' },
+            ].map((s) => {
+              const isActive = step === s.stepNum;
+              const isDone = step > s.stepNum;
+              return (
+                <Box
+                  key={s.stepNum}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                    px: 1.75,
+                    py: 1,
+                    borderRadius: '10px',
+                    bgcolor: isActive ? '#ffffff' : 'transparent',
+                    border: isActive ? '1px solid #e4e4e7' : '1px solid transparent',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+                    transition: 'all 0.15s ease-in-out',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.725rem',
+                      fontWeight: 700,
+                      bgcolor: isDone ? '#10b981' : isActive ? '#09090b' : '#e4e4e7',
+                      color: isDone || isActive ? '#ffffff' : '#71717a',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isDone ? '✓' : s.stepNum}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontSize: '0.785rem', fontWeight: isActive ? 700 : 600, color: isActive ? '#09090b' : '#71717a', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {s.title}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.685rem', color: '#a1a1aa', lineHeight: 1.1 }}>
+                      {s.desc}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+
+        {/* Modal Body */}
+        <Box sx={{ overflowY: 'auto', maxHeight: 'calc(92vh - 190px)' }}>
+          <DialogContent sx={{ p: 3.5 }}>
             {createError && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 2.5, 
+                  borderRadius: '10px', 
+                  border: '1px solid #fecaca', 
+                  bgcolor: '#fef2f2',
+                  fontSize: '0.825rem'
+                }}
+              >
                 {createError}
               </Alert>
             )}
 
-            {/* Step 1: Basic Info */}
+            {/* ── Step 1: Program & Part ─────────────────── */}
             {step === 1 && (
               <Box>
-                <Grid container spacing={2}>
+                <Grid container spacing={2.5}>
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Part Name / Description *"
-                      variant="outlined"
-                      margin="normal"
+                      size="small"
+                      label="Part Name / Program Description *"
                       value={partName}
                       onChange={(e) => setPartName(e.target.value)}
                       required
+                      placeholder="e.g. Electric Drive Unit Housing"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Organisation Part No. *"
-                      variant="outlined"
-                      margin="normal"
                       value={orgPartNumber}
                       onChange={(e) => setOrgPartNumber(e.target.value)}
                       required
+                      placeholder="e.g. 66122531"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Model Year"
-                      variant="outlined"
-                      margin="normal"
                       value={modelYear}
                       onChange={(e) => setModelYear(e.target.value)}
+                      placeholder="e.g. 2026 MY"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
-                  <Grid size={6} sx={{ mt: 1 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'text.secondary', fontWeight: 'bold' }}>
-                      Document Type *
-                    </Typography>
-                    <RadioGroup
-                      value={
-                        documentTypes.includes('Production')
-                          ? 'Production'
-                          : documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')
-                          ? 'Pre-Launch'
-                          : 'Prototype'
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Pre-Launch') {
-                          const isSafe = documentTypes.includes('Safe Launch');
-                          setDocumentTypes(isSafe ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
-                        } else {
-                          setDocumentTypes([val]);
-                        }
-                      }}
-                    >
-                      <FormControlLabel value="Prototype" control={<Radio />} label="Prototype" />
-                      <FormControlLabel value="Pre-Launch" control={<Radio />} label="Pre-Launch" />
+
+                  {/* Manufacturing Phase / Document Type Cards */}
+                  <Grid size={6}>
+                    <Box sx={{ p: 1.5, bgcolor: '#fafafa', borderRadius: '10px', border: '1px solid #e4e4e7' }}>
+                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#09090b', mb: 1, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Manufacturing Phase *
+                      </Typography>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+                        {['Prototype', 'Pre-Launch', 'Production'].map((dt) => {
+                          const isSel = (dt === 'Production' && documentTypes.includes('Production')) ||
+                                        (dt === 'Pre-Launch' && (documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch'))) ||
+                                        (dt === 'Prototype' && documentTypes.includes('Prototype'));
+                          return (
+                            <Box
+                              key={dt}
+                              onClick={() => {
+                                if (dt === 'Pre-Launch') {
+                                  const isSafe = documentTypes.includes('Safe Launch');
+                                  setDocumentTypes(isSafe ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
+                                } else {
+                                  setDocumentTypes([dt]);
+                                }
+                              }}
+                              sx={{
+                                py: 1,
+                                px: 0.5,
+                                borderRadius: '7px',
+                                border: isSel ? '1.5px solid #09090b' : '1px solid #e4e4e7',
+                                bgcolor: isSel ? '#ffffff' : '#f4f4f5',
+                                cursor: 'pointer',
+                                textAlign: 'center',
+                                transition: 'all 0.15s ease-in-out',
+                                boxShadow: isSel ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                              }}
+                            >
+                              <Typography sx={{ fontSize: '0.785rem', fontWeight: isSel ? 700 : 500, color: isSel ? '#09090b' : '#71717a' }}>
+                                {dt}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+
+                      {/* Safe Launch inline pill */}
                       {(documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')) && !documentTypes.includes('Prototype') && !documentTypes.includes('Production') && (
-                        <Box sx={{ pl: 4, my: 0.5 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                size="small"
-                                checked={documentTypes.includes('Safe Launch')}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setDocumentTypes(['Pre-Launch', 'Safe Launch']);
-                                  } else {
-                                    setDocumentTypes(['Pre-Launch']);
-                                  }
-                                }}
-                              />
-                            }
-                            label={<Typography variant="body2" sx={{ fontWeight: 600, color: 'secondary.main' }}>Safe Launch</Typography>}
+                        <Box sx={{ mt: 1.25, pt: 1, borderTop: '1px dashed #e4e4e7', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <Checkbox
+                            size="small"
+                            checked={documentTypes.includes('Safe Launch')}
+                            onChange={(e) => {
+                              setDocumentTypes(e.target.checked ? ['Pre-Launch', 'Safe Launch'] : ['Pre-Launch']);
+                            }}
+                            sx={{ p: 0.25, color: '#ff682c', '&.Mui-checked': { color: '#ff682c' } }}
                           />
+                          <Typography sx={{ fontSize: '0.785rem', fontWeight: 600, color: '#ff682c' }}>
+                            Enable Safe Launch Verification Checklist
+                          </Typography>
                         </Box>
                       )}
-                      <FormControlLabel value="Production" control={<Radio />} label="Production" />
-                    </RadioGroup>
+                    </Box>
                   </Grid>
+
+                  {/* Optional Template Replicator */}
                   <Grid size={12}>
-                    <Box sx={{ mt: 2, p: 2, border: '1px solid #cbd5e1', borderRadius: 2, bgcolor: '#f8fafc' }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1.5, color: '#334155' }}>
-                        Import Template / Data from Existing Project (Optional)
-                      </Typography>
+                    <Box sx={{ p: 2, border: '1px solid #e4e4e7', borderRadius: '10px', bgcolor: '#fafafa' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.825rem', fontWeight: 700, color: '#09090b' }}>
+                            Import Template / Data from Existing Program (Optional)
+                          </Typography>
+                          <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+                            Pre-populate PFD process steps, PFMEA rows, and control plans from historical programs.
+                          </Typography>
+                        </Box>
+                      </Box>
                       <Grid container spacing={2}>
                         <Grid size={12}>
                           <FormControl fullWidth size="small">
-                            <InputLabel>Select Project to Import From</InputLabel>
+                            <InputLabel sx={{ fontSize: '0.85rem' }}>Select Program to Import From</InputLabel>
                             <Select
                               {...dialogSelectProps}
                               value={sourceProjectId}
@@ -1448,9 +1647,14 @@ export const ProjectList: React.FC = () => {
                                   setImportTypes([]);
                                 }
                               }}
-                              label="Select Project to Import From"
+                              label="Select Program to Import From"
+                              sx={{
+                                borderRadius: '8px',
+                                bgcolor: '#ffffff',
+                                '& fieldset': { borderColor: '#e4e4e7' }
+                              }}
                             >
-                              <MenuItem value=""><em>None (Create Empty Project)</em></MenuItem>
+                              <MenuItem value=""><em>None (Create Empty Program)</em></MenuItem>
                               {projects.map((proj) => (
                                 <MenuItem key={proj.id} value={proj.id}>
                                   {proj.partName || proj.name} ({proj.orgPartNumber || 'N/A'}) - {proj.customer}
@@ -1461,7 +1665,7 @@ export const ProjectList: React.FC = () => {
                         </Grid>
                         {sourceProjectId && (
                           <Grid size={12}>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                            <Typography sx={{ fontSize: '0.75rem', color: '#71717a', display: 'block', mb: 1, fontWeight: 600 }}>
                               Choose Document Types to Import:
                             </Typography>
                             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1482,16 +1686,14 @@ export const ProjectList: React.FC = () => {
                                           }
                                         }}
                                         size="small"
+                                        sx={{ '&.Mui-checked': { color: '#09090b' } }}
                                       />
                                     }
-                                    label={label}
+                                    label={<Typography sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{label}</Typography>}
                                   />
                                 );
                               })}
                             </Stack>
-                            <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 1 }}>
-                              * Active revision content (items, rows, linkages) of the checked documents will copy into the new project automatically.
-                            </Typography>
                           </Grid>
                         )}
                       </Grid>
@@ -1501,288 +1703,469 @@ export const ProjectList: React.FC = () => {
               </Box>
             )}
 
-            {/* Step 2: Organisation & Part Info */}
+            {/* ── Step 2: Organisation & Customer ────────── */}
             {step === 2 && (
               <Box>
-                <Grid container spacing={2}>
+                <Grid container spacing={2.5}>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Organisation Name *"
-                      variant="outlined"
-                      margin="normal"
                       value={organisationName}
                       onChange={(e) => setOrganisationName(e.target.value)}
                       required
+                      placeholder="e.g. FMEApex Manufacturing Corp"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Organisation Code"
-                      variant="outlined"
-                      margin="normal"
-                      value={organisationCode}
-                      onChange={(e) => setOrganisationCode(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      label="Organisation / Plant"
-                      variant="outlined"
-                      margin="normal"
-                      value={organisationPlant}
-                      onChange={(e) => setOrganisationPlant(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      label="Customer *"
-                      variant="outlined"
-                      margin="normal"
+                      size="small"
+                      label="Customer Name *"
                       value={customer}
                       onChange={(e) => setCustomer(e.target.value)}
                       required
+                      placeholder="e.g. Tier 1 Automotive OEM"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
+                      label="Organisation Code"
+                      value={organisationCode}
+                      onChange={(e) => setOrganisationCode(e.target.value)}
+                      placeholder="e.g. ORG-402"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Organisation / Plant Facility"
+                      value={organisationPlant}
+                      onChange={(e) => setOrganisationPlant(e.target.value)}
+                      placeholder="e.g. Detroit Line 3"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
                       label="Customer Part Number"
-                      variant="outlined"
-                      margin="normal"
                       value={customerPartNumber}
                       onChange={(e) => setCustomerPartNumber(e.target.value)}
+                      placeholder="e.g. OEM-88910-A"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Concerned Key Contact"
-                      variant="outlined"
-                      margin="normal"
                       value={keyContact}
                       onChange={(e) => setKeyContact(e.target.value)}
+                      placeholder="e.g. Chief Quality Engineer"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
-                  <Grid size={6}>
+                  <Grid size={12}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Document Latest Change Level"
-                      variant="outlined"
-                      margin="normal"
                       value={latestChangeLevel}
                       onChange={(e) => setLatestChangeLevel(e.target.value)}
+                      placeholder="e.g. Rev 03 · Engineering ECO #4402"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                 </Grid>
               </Box>
             )}
 
-            {/* Step 3: Document Control & Approvals */}
+            {/* ── Step 3: Document Control & CFT ─────────── */}
             {step === 3 && (
-              <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 1 }}>
-                <Grid container spacing={2}>
+              <Box>
+                <Grid container spacing={2.5}>
+                  {/* Auto-Derived Document Numbers Bar */}
+                  <Grid size={12}>
+                    <Box sx={{ p: 2, bgcolor: '#fafafa', borderRadius: '10px', border: '1px solid #e4e4e7' }}>
+                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1 }}>
+                        Auto-Derived System Document Numbers
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography sx={{ fontSize: '0.785rem', color: '#71717a' }}>PFD:</Typography>
+                          <Chip label={`PFD${orgPartNumber || '—'}`} size="small" sx={{ height: 24, fontSize: '0.785rem', fontWeight: 700, bgcolor: '#ffffff', border: '1px solid #e4e4e7', color: '#09090b' }} />
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography sx={{ fontSize: '0.785rem', color: '#71717a' }}>PFMEA:</Typography>
+                          <Chip label={`PFMEA${orgPartNumber || '—'}`} size="small" sx={{ height: 24, fontSize: '0.785rem', fontWeight: 700, bgcolor: '#ffffff', border: '1px solid #e4e4e7', color: '#09090b' }} />
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography sx={{ fontSize: '0.785rem', color: '#71717a' }}>Control Plan:</Typography>
+                          <Chip label={`CP${orgPartNumber || '—'}`} size="small" sx={{ height: 24, fontSize: '0.785rem', fontWeight: 700, bgcolor: '#ffffff', border: '1px solid #e4e4e7', color: '#09090b' }} />
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Dwg No."
-                      variant="outlined"
-                      margin="normal"
+                      size="small"
+                      label="Drawing Number"
                       value={dwgNumber}
                       onChange={(e) => setDwgNumber(e.target.value)}
+                      placeholder="e.g. DWG-9902-B"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Drawing Revision Date"
                       type="date"
-                      variant="outlined"
-                      margin="normal"
                       slotProps={{ inputLabel: { shrink: true } }}
                       value={drawingRevDate}
                       onChange={(e) => setDrawingRevDate(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Dwg Rev No / Date"
-                      variant="outlined"
-                      margin="normal"
-                      value={dwgRevNoAndDate}
-                      onChange={(e) => setDwgRevNoAndDate(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, mt: 1 }}>
-                      Auto-Derived Document Numbers
-                    </Typography>
-                    <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Typography variant="body2">
-                        <strong>PFD Document No:</strong> PFD{orgPartNumber || '—'}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>PFMEA Document No:</strong> PFMEA{orgPartNumber || '—'}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>Control Plan No:</strong> CP{orgPartNumber || '—'}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
+                      size="small"
                       label="Assembly Line No."
-                      variant="outlined"
-                      margin="normal"
                       value={assemblyLineNumber}
                       onChange={(e) => setAssemblyLineNumber(e.target.value)}
+                      placeholder="e.g. Station Line 04"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Origination Date"
                       type="date"
-                      variant="outlined"
-                      margin="normal"
                       slotProps={{ inputLabel: { shrink: true } }}
                       value={originationDate}
                       onChange={(e) => setOriginationDate(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      fullWidth
-                      label="Supplier / Plant Approval Date"
-                      type="date"
-                      variant="outlined"
-                      margin="normal"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={supplierApprovalDate}
-                      onChange={(e) => setSupplierApprovalDate(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                          '&:hover fieldset': { borderColor: '#d4d4d8' },
+                          '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                        },
+                        '& .MuiInputLabel-root': { fontSize: '0.85rem', color: '#71717a' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#09090b' },
+                      }}
                     />
                   </Grid>
 
                   {/* CFT Members Input */}
-                  <Grid size={12} sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                      Core CFT Members (Press Add or Enter)
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1.5 }}>
-                      <TextField
-                        fullWidth
-                        label="CFT Member Name"
-                        value={newCftMember}
-                        onChange={(e) => setNewCftMember(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addCftMember();
-                          }
-                        }}
-                      />
-                      <Button variant="outlined" onClick={addCftMember}>Add</Button>
-                    </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                      {cftMembers.map((member) => (
-                        <Chip
-                          key={member}
-                          label={member}
-                          onDelete={() => removeCftMember(member)}
+                  <Grid size={12}>
+                    <Box sx={{ p: 2, bgcolor: '#fafafa', borderRadius: '10px', border: '1px solid #e4e4e7' }}>
+                      <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#09090b', mb: 1 }}>
+                        Core Cross-Functional Team (CFT) Members
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'center', mb: 1.5 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          label="Add Team Member Name"
+                          value={newCftMember}
+                          onChange={(e) => setNewCftMember(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCftMember();
+                            }
+                          }}
+                          placeholder="e.g. John Doe (Quality Lead)"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '8px',
+                              bgcolor: '#ffffff',
+                              '& fieldset': { borderColor: '#e4e4e7' },
+                            }
+                          }}
                         />
-                      ))}
-                      {cftMembers.length === 0 && (
-                        <Typography variant="caption" color="text.secondary">No CFT members added yet.</Typography>
-                      )}
+                        <Button 
+                          variant="outlined" 
+                          onClick={addCftMember}
+                          sx={{ 
+                            height: 38, 
+                            px: 2.5, 
+                            borderRadius: '8px', 
+                            textTransform: 'none', 
+                            fontWeight: 600,
+                            color: '#09090b',
+                            borderColor: '#e4e4e7',
+                            '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {cftMembers.map((member) => (
+                          <Chip
+                            key={member}
+                            label={member}
+                            onDelete={() => removeCftMember(member)}
+                            sx={{
+                              borderRadius: '6px',
+                              bgcolor: '#ffffff',
+                              border: '1px solid #e4e4e7',
+                              fontWeight: 600,
+                              fontSize: '0.785rem'
+                            }}
+                          />
+                        ))}
+                        {cftMembers.length === 0 && (
+                          <Typography sx={{ fontSize: '0.75rem', color: '#a1a1aa' }}>
+                            No CFT members registered yet. Press Add or Enter to assign contributors.
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                   </Grid>
 
-                  {/* Approvals section */}
-                  <Grid size={12} sx={{ mt: 3 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
-                      Initial Approval Sign-offs (Optional)
-                    </Typography>
-                  </Grid>
+                  {/* Initial Approval Sign-offs (Optional) */}
                   <Grid size={6}>
                     <TextField
                       fullWidth
+                      size="small"
                       label="Customer Eng. Approver"
-                      variant="outlined"
-                      margin="normal"
                       value={customerEngApprover}
                       onChange={(e) => setCustomerEngApprover(e.target.value)}
+                      placeholder="e.g. Dr. A. Vance"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                        }
+                      }}
                     />
                   </Grid>
                   <Grid size={6}>
                     <TextField
                       fullWidth
-                      label="Customer Eng. Approval Date"
-                      type="date"
-                      variant="outlined"
-                      margin="normal"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={customerEngApprovalDate}
-                      onChange={(e) => setCustomerEngApprovalDate(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
+                      size="small"
                       label="Customer Quality Approver"
-                      variant="outlined"
-                      margin="normal"
                       value={customerQualApprover}
                       onChange={(e) => setCustomerQualApprover(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      label="Customer Quality Approval Date"
-                      type="date"
-                      variant="outlined"
-                      margin="normal"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={customerQualApprovalDate}
-                      onChange={(e) => setCustomerQualApprovalDate(e.target.value)}
+                      placeholder="e.g. M. Jenkins"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#e4e4e7' },
+                        }
+                      }}
                     />
                   </Grid>
                 </Grid>
               </Box>
             )}
           </DialogContent>
-
-          <DialogActions sx={{ p: 3, borderTop: '1px solid #e2e8f0' }}>
-            <Button type="button" onClick={handleClose} disabled={createLoading}>Cancel</Button>
-            <Box sx={{ flexGrow: 1 }} />
-            {step > 1 && (
-              <Button type="button" onClick={handleBack} disabled={createLoading}>Back</Button>
-            )}
-            {step < 3 ? (
-              <Button type="button" onClick={handleNext} variant="contained">Next</Button>
-            ) : (
-              <Button
-                type="button"
-                variant="contained"
-                disabled={createLoading}
-                onClick={(e) => {
-                  if (isEditing) {
-                    handleUpdate(e as any);
-                  } else {
-                    handleCreate(e as any);
-                  }
-                }}
-              >
-                {createLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Project')}
-              </Button>
-            )}
-          </DialogActions>
         </Box>
+
+        {/* Footer Actions */}
+        <DialogActions sx={{ p: 2.5, px: 3.5, borderTop: '1px solid #f4f4f5', bgcolor: '#ffffff' }}>
+          <Button 
+            type="button" 
+            onClick={handleClose} 
+            disabled={createLoading}
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none', 
+              fontWeight: 600, 
+              color: '#71717a',
+              px: 2.5,
+              '&:hover': { bgcolor: '#f4f4f5', color: '#09090b' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Box sx={{ flexGrow: 1 }} />
+          {step > 1 && (
+            <Button 
+              type="button" 
+              onClick={handleBack} 
+              disabled={createLoading}
+              sx={{ 
+                borderRadius: '8px', 
+                textTransform: 'none', 
+                fontWeight: 600, 
+                color: '#09090b',
+                border: '1px solid #e4e4e7',
+                px: 2.5,
+                mr: 1,
+                '&:hover': { bgcolor: '#f4f4f5' }
+              }}
+            >
+              Back
+            </Button>
+          )}
+          {step < 3 ? (
+            <Button 
+              type="button" 
+              onClick={handleNext} 
+              variant="contained"
+              sx={{ 
+                borderRadius: '8px', 
+                textTransform: 'none', 
+                fontWeight: 600, 
+                bgcolor: '#09090b',
+                color: '#ffffff',
+                px: 3,
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+              }}
+            >
+              Next Step →
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="contained"
+              disabled={createLoading}
+              onClick={(e) => {
+                if (isEditing) {
+                  handleUpdate(e as any);
+                } else {
+                  handleCreate(e as any);
+                }
+              }}
+              sx={{ 
+                borderRadius: '8px', 
+                textTransform: 'none', 
+                fontWeight: 600, 
+                bgcolor: '#09090b',
+                color: '#ffffff',
+                px: 3.5,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+              }}
+            >
+              {createLoading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Program')}
+            </Button>
+          )}
+        </DialogActions>
       </Dialog>
     </Box>
   );
