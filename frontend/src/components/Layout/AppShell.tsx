@@ -18,7 +18,9 @@ import {
   CollectionsBookmark as RepositoryIcon,
   ExpandLess,
   ExpandMore,
-  FiberManualRecord as BulletIcon
+  FiberManualRecord as BulletIcon,
+  NotificationsNone as BellIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../features/auth/AuthContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
@@ -132,42 +134,33 @@ export const AppShell: React.FC = () => {
         selected={active}
         sx={{
           mx: collapsed ? 0.5 : 1,
-          borderRadius: 2,
+          borderRadius: '6px',
           mb: 0.5,
-          pl: item.isChild ? (collapsed ? 1.5 : 4) : 2,
-          pr: 2,
-          py: 1,
-          minHeight: 40,
+          pl: item.isChild ? (collapsed ? 1.5 : 3.5) : 1.5,
+          pr: 1.5,
+          py: 0.75,
+          minHeight: 36,
           position: 'relative',
           justifyContent: collapsed ? 'center' : 'initial',
           '&.Mui-selected': {
-            bgcolor: 'rgba(1, 105, 111, 0.08)',
+            bgcolor: '#f4f4f5',
             '& .MuiListItemIcon-root': {
-              color: 'primary.main',
-            },
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              left: 0,
-              top: '15%',
-              bottom: '15%',
-              width: 3,
-              borderRadius: '0 4px 4px 0',
-              backgroundColor: 'primary.main',
+              color: '#09090b',
             },
             '&:hover': {
-              bgcolor: 'rgba(1, 105, 111, 0.12)',
+              bgcolor: '#ececeb',
             },
           },
           '&:hover': {
-            bgcolor: 'rgba(40, 37, 29, 0.04)',
+            bgcolor: '#f4f4f5',
           },
         }}
       >
         <ListItemIcon sx={{
-          color: active ? 'primary.main' : 'text.secondary',
-          minWidth: collapsed ? 0 : 32,
+          color: active ? '#09090b' : '#71717a',
+          minWidth: collapsed ? 0 : 28,
           justifyContent: 'center',
+          '& .MuiSvgIcon-root': { fontSize: 18 }
         }}>
           {item.icon}
         </ListItemIcon>
@@ -175,9 +168,9 @@ export const AppShell: React.FC = () => {
           <ListItemText
             primary={
               <Typography sx={{
-                fontSize: item.isChild ? '0.825rem' : '0.875rem',
-                fontWeight: active ? 600 : 500,
-                color: active ? 'primary.main' : 'text.primary',
+                fontSize: item.isChild ? '0.8rem' : '0.825rem',
+                fontWeight: active ? 650 : 500,
+                color: active ? '#09090b' : '#71717a',
               }}>
                 {item.text}
               </Typography>
@@ -211,39 +204,81 @@ export const AppShell: React.FC = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           bgcolor: 'background.paper',
-          borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
+          borderBottom: '1px solid #e4e4e7',
           boxShadow: 'none',
           display: showAppBar ? 'block' : 'none'
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: '52px !important', height: '52px', px: { xs: 1.5, sm: 2 } }}>
           <IconButton
             onClick={handleToggleCollapse}
             edge="start"
-            sx={{ mr: 2, color: 'text.secondary' }}
+            size="small"
+            sx={{ mr: 1.5, color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}
           >
-            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '1.25rem', letterSpacing: '-0.5px' }}>FMEApex</span>
-          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: { xs: 1, md: 0 }, mr: 3 }}>
+            <Typography variant="subtitle1" noWrap component="div" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <span style={{ color: '#ff682c', fontWeight: 900 }}>/</span> FMEApex
+            </Typography>
+            <span style={{ fontSize: '0.725rem', fontWeight: 600, color: '#71717a', backgroundColor: '#f4f4f5', padding: '2px 8px', borderRadius: '6px', border: '1px solid #e4e4e7' }}>
+              Quality Workspace
+            </span>
+          </Box>
+
+          {/* Center search box (Shadcn style) */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, flexGrow: 1, maxWidth: 360, mr: 'auto' }}>
+            <Box 
+              onClick={() => navigate('/app/projects')}
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                width: '100%', 
+                height: 32, 
+                px: 1.5, 
+                borderRadius: '6px', 
+                bgcolor: '#f4f4f5', 
+                border: '1px solid #e4e4e7',
+                cursor: 'pointer',
+                color: '#71717a',
+                fontSize: '0.8rem',
+                '&:hover': { borderColor: '#d4d4d8', bgcolor: '#ececeb' }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <SearchIcon sx={{ fontSize: 16, color: '#a1a1aa' }} />
+                <span>Search programs, causes...</span>
+              </Box>
+              <kbd style={{ fontSize: '0.65rem', backgroundColor: '#ffffff', padding: '1px 5px', borderRadius: '4px', border: '1px solid #e4e4e7', color: '#71717a' }}>⌘K</kbd>
+            </Box>
+          </Box>
 
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title="Notifications">
+                <IconButton size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+                  <BellIcon sx={{ fontSize: 19 }} />
+                </IconButton>
+              </Tooltip>
+
               <ThemeToggle />
-              <IconButton onClick={handleMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', width: 32, height: 32, fontSize: '0.875rem' }}>
+
+              <IconButton onClick={handleMenu} size="small" sx={{ p: 0.5 }}>
+                <Avatar sx={{ bgcolor: '#09090b', color: 'white', fontWeight: 'bold', width: 28, height: 28, fontSize: '0.775rem' }}>
                   {user.name[0].toUpperCase()}
                 </Avatar>
               </IconButton>
-                {(user as any)?.isGuest && (
-                  <Chip label="Guest" size="small" sx={{ ml: 1, bgcolor: '#f59e0b', color: 'white', fontWeight: 600, fontSize: '0.7rem', height: 22 }} />
-                )}
+              {(user as any)?.isGuest && (
+                <Chip label="Guest" size="small" sx={{ ml: 0.5, bgcolor: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 650, fontSize: '0.675rem', height: 20 }} />
+              )}
               <Menu
                 id="menu-appbar"
                 anchorEl={anchorEl}
                 anchorOrigin={{
-                  vertical: 'top',
+                  vertical: 'bottom',
                   horizontal: 'right',
                 }}
                 keepMounted
@@ -253,15 +288,31 @@ export const AppShell: React.FC = () => {
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
+                sx={{
+                  mt: 1,
+                  '& .MuiPaper-root': {
+                    borderRadius: '8px',
+                    border: '1px solid #e4e4e7',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    minWidth: 200,
+                  }
+                }}
               >
-                <MenuItem disabled sx={{ py: 1.5 }}>
+                <MenuItem disabled sx={{ py: 1, opacity: '1 !important' }}>
                   <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{user.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#09090b', fontSize: '0.85rem' }}>{user.name}</Typography>
+                    <Typography variant="caption" sx={{ color: '#71717a', fontSize: '0.75rem' }}>{user.email}</Typography>
                   </Box>
                 </MenuItem>
-                <Divider />
-                <MenuItem onClick={() => { handleClose(); logout(); navigate('/'); }} sx={{ py: 1, fontWeight: 500, color: 'error.main' }}>
+                <Divider sx={{ my: 0.5, borderColor: '#f4f4f5' }} />
+                <MenuItem onClick={() => { handleClose(); navigate('/app/projects'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
+                  Quality Projects
+                </MenuItem>
+                <MenuItem onClick={() => { handleClose(); navigate('/admin'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
+                  Admin Settings
+                </MenuItem>
+                <Divider sx={{ my: 0.5, borderColor: '#f4f4f5' }} />
+                <MenuItem onClick={() => { handleClose(); logout(); navigate('/'); }} sx={{ py: 0.75, fontWeight: 600, color: '#ef4444', fontSize: '0.825rem' }}>
                   Sign Out
                 </MenuItem>
               </Menu>
@@ -281,7 +332,7 @@ export const AppShell: React.FC = () => {
               width: drawerWidth,
               boxSizing: 'border-box',
               bgcolor: 'background.paper',
-              borderRight: '1px solid rgba(40, 37, 29, 0.1)',
+              borderRight: '1px solid #e4e4e7',
               transition: collapsed
                 ? 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)'
                 : 'width 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -324,31 +375,31 @@ export const AppShell: React.FC = () => {
                         }}
                         sx={{
                           mx: collapsed ? 0.5 : 1,
-                          borderRadius: 2,
+                          borderRadius: '6px',
                           mb: 0.5,
-                          pl: 2,
-                          pr: 2,
-                          py: 1,
-                          minHeight: 40,
+                          pl: 1.5,
+                          pr: 1.5,
+                          py: 0.75,
+                          minHeight: 36,
                           justifyContent: collapsed ? 'center' : 'space-between',
-                          '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                          '&:hover': { bgcolor: '#f4f4f5' }
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                          <ListItemIcon sx={{ color: '#71717a', minWidth: collapsed ? 0 : 28, justifyContent: 'center', '& .MuiSvgIcon-root': { fontSize: 18 } }}>
                             <PfmeaIcon />
                           </ListItemIcon>
                           {!collapsed && (
                             <ListItemText
                               primary={
-                                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                <Typography sx={{ fontSize: '0.825rem', fontWeight: 600, color: '#09090b' }}>
                                   PFMEA
                                 </Typography>
                               }
                             />
                           )}
                         </Box>
-                        {!collapsed && (pfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                        {!collapsed && (pfmeaOpen ? <ExpandLess fontSize="small" sx={{ fontSize: 18, color: '#71717a' }} /> : <ExpandMore fontSize="small" sx={{ fontSize: 18, color: '#71717a' }} />)}
                       </ListItemButton>
                       
                       <Collapse in={pfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
@@ -371,31 +422,31 @@ export const AppShell: React.FC = () => {
                         }}
                         sx={{
                           mx: collapsed ? 0.5 : 1,
-                          borderRadius: 2,
+                          borderRadius: '6px',
                           mb: 0.5,
-                          pl: 2,
-                          pr: 2,
-                          py: 1,
-                          minHeight: 40,
+                          pl: 1.5,
+                          pr: 1.5,
+                          py: 0.75,
+                          minHeight: 36,
                           justifyContent: collapsed ? 'center' : 'space-between',
-                          '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                          '&:hover': { bgcolor: '#f4f4f5' }
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <ListItemIcon sx={{ color: 'text.secondary', minWidth: collapsed ? 0 : 32, justifyContent: 'center' }}>
+                          <ListItemIcon sx={{ color: '#71717a', minWidth: collapsed ? 0 : 28, justifyContent: 'center', '& .MuiSvgIcon-root': { fontSize: 18 } }}>
                             <DfmeaIcon />
                           </ListItemIcon>
                           {!collapsed && (
                             <ListItemText
                               primary={
-                                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
+                                <Typography sx={{ fontSize: '0.825rem', fontWeight: 600, color: '#09090b' }}>
                                   DFMEA
                                 </Typography>
                               }
                             />
                           )}
                         </Box>
-                        {!collapsed && (dfmeaOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />)}
+                        {!collapsed && (dfmeaOpen ? <ExpandLess fontSize="small" sx={{ fontSize: 18, color: '#71717a' }} /> : <ExpandMore fontSize="small" sx={{ fontSize: 18, color: '#71717a' }} />)}
                       </ListItemButton>
                       
                       <Collapse in={dfmeaOpen && !collapsed} timeout="auto" unmountOnExit>
@@ -423,7 +474,7 @@ export const AppShell: React.FC = () => {
                 p: 1.5, 
                 display: 'flex', 
                 justifyContent: collapsed ? 'center' : 'flex-end',
-                borderTop: '1px solid rgba(40, 37, 29, 0.08)',
+                borderTop: '1px solid #e4e4e7',
                 bgcolor: 'background.paper'
               }}
             >
@@ -431,10 +482,10 @@ export const AppShell: React.FC = () => {
                 onClick={handleToggleCollapse} 
                 size="small" 
                 sx={{ 
-                  border: '1px solid rgba(40, 37, 29, 0.15)', 
-                  borderRadius: 1.5,
+                  border: '1px solid #e4e4e7', 
+                  borderRadius: '6px',
                   bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.04)' }
+                  '&:hover': { bgcolor: '#f4f4f5' }
                 }}
               >
                 {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
@@ -442,7 +493,7 @@ export const AppShell: React.FC = () => {
             </Box>
           </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 2, minWidth: 0 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2, md: 2.5 }, minWidth: 0, bgcolor: '#fbfbfb' }}>
         <Outlet />
       </Box>
     </Box>

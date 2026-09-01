@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
 import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
-import { MockupDashboard } from '../../components/site/MockupDashboard';
+import { VentrilocDashboard } from '../../components/site/VentrilocDashboard';
 
 const FEATURES = [
   { t: '7-Step AIAG-VDA', d: 'Guided Structure → Function → Failure → Risk → Optimization → Documentation with hard gating. No skipping. No orphan data.', tag: 'Methodology' },
@@ -51,20 +51,20 @@ export const ProductPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 onClick={() => navigate('/login')}
-                className="h-[48px] px-6 rounded-[12px] bg-[#0F172A] text-white text-[15px] font-[600] hover:bg-[#1E293B] transition-colors"
+                className="btn-ventriloc-primary h-[48px] px-7 text-[14.5px]"
               >
                 Try the preview
               </button>
               <button
-                onClick={() => navigate('/login')}
-                className="h-[48px] px-6 rounded-[12px] border border-[#D8D3C8] text-[15px] font-[600] text-[#0F172A] hover:bg-white transition-colors"
+                onClick={() => navigate('/#contact')}
+                className="btn-ventriloc-outline h-[48px] px-7 text-[14.5px]"
               >
                 Book a demo
               </button>
             </div>
           </div>
           <div className="reveal">
-            <MockupDashboard />
+            <VentrilocDashboard />
           </div>
         </div>
       </section>

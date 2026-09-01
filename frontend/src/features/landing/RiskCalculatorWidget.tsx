@@ -98,9 +98,9 @@ export const RiskCalculatorWidget: React.FC = () => {
 
           <button
             onClick={() => navigate('/login')}
-            className="w-full h-[52px] rounded-full bg-[#0F172A] text-white text-[15px] font-[600] hover:bg-[#1E293B] transition-colors flex items-center justify-center gap-2"
+            className="w-full btn-ventriloc-dark h-[52px] text-[15px] flex items-center justify-center gap-2"
           >
-            Try it in the live preview
+            Try live in the quality workspace
             <span aria-hidden="true">→</span>
           </button>
         </div>

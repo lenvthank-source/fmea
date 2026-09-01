@@ -3,68 +3,88 @@ import { Link } from 'react-router-dom';
 
 const COLS: { title: string; links: { label: string; to: string }[] }[] = [
   {
+    title: 'Solutions',
+    links: [
+      { label: 'PFD ↔ PFMEA Sync', to: '/product' },
+      { label: '7-Step AIAG-VDA Gating', to: '/product' },
+      { label: 'Control Plan Auto-Flow', to: '/product' },
+      { label: 'Action Priority (AP) Matrix', to: '/product' },
+      { label: 'AI Quality Copilot (RAG)', to: '/product' },
+    ],
+  },
+  {
     title: 'Platform',
     links: [
-      { label: 'Product', to: '/product' },
-      { label: '7-Step Workflow', to: '/product' },
-      { label: 'PFD ↔ PFMEA', to: '/product' },
-      { label: 'Control Plan', to: '/product' },
-      { label: 'AI Copilot', to: '/product' },
+      { label: 'Product Architecture', to: '/product' },
+      { label: 'Pricing & Tiers', to: '/pricing' },
+      { label: 'Security & 21 CFR Part 11', to: '/learn/21-cfr-part-11-fmea' },
+      { label: 'Docker On-Premise', to: '/product' },
+      { label: 'Release Notes (v0.5.1)', to: '/product' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About', to: '/about' },
-      { label: 'Pricing', to: '/pricing' },
+      { label: 'About Us', to: '/about' },
+      { label: 'Learn Hub', to: '/learn' },
+      { label: 'Quality Blog', to: '/blog' },
       { label: 'Careers', to: '/about' },
       { label: 'Contact', to: '/#contact' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Learn Hub', to: '/learn' },
-      { label: 'Blog', to: '/blog' },
-      { label: 'AIAG-VDA Guide', to: '/learn/aiag-vda-7-step-fmea' },
-      { label: '21 CFR Part 11', to: '/learn/21-cfr-part-11-fmea' },
     ],
   },
 ];
 
 export const SiteFooter: React.FC = () => (
-  <footer className="relative bg-[#0B1220] text-white overflow-hidden rounded-t-[32px]">
-    {/* Accent shape */}
-    <div className="absolute -right-24 -bottom-24 w-[380px] h-[380px] rounded-[48px] bg-[#0D9488]/25 rotate-[18deg] pointer-events-none" />
-    <div className="absolute -right-12 -bottom-12 w-[220px] h-[220px] rounded-[40px] bg-[#14B8A6]/30 rotate-[18deg] pointer-events-none" />
-
-    <div className="relative w-full max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 pt-20 pb-10">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Brand */}
+  <footer className="bg-[#202020] text-white pt-20 pb-12 border-t border-[#333338] font-sans">
+    <div className="w-full max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-[#333338]">
+        {/* Brand Column */}
         <div className="lg:col-span-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-[10px] bg-white flex items-center justify-center">
-              <span className="text-[#0B1220] font-bold text-[16px] leading-none">F</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center tracking-[-0.03em] font-extrabold text-[24px] text-white">
+              <span>fmeapex</span>
+              <span className="w-2 h-5 bg-[#FF682C] ml-1 rounded-sm transform skew-x-[-14deg]" />
             </div>
-            <span className="text-[20px] font-[650] tracking-[-0.02em]">FMEApex</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold pl-2 border-l border-[#44444C]">
+              Quality Intelligence
+            </span>
           </div>
-          <p className="mt-5 text-[15px] leading-[1.65] text-white/60 max-w-[360px]">
-            The AI-native FMEA platform for quality engineering. AIAG-VDA 2019 compliant, audit-ready, built for modern manufacturing teams.
+
+          <p className="mt-5 text-[15px] leading-[1.65] text-[#A1A1AA] max-w-[400px]">
+            Trusted by global manufacturing, automotive, and aerospace engineering leaders to automate AIAG-VDA 2019 FMEA, eliminate spreadsheets, and ensure 21 CFR Part 11 audit readiness.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 px-4 h-[38px] rounded-full bg-white/[0.06] border border-white/10 text-[13px] text-white/70">
-            <span className="w-2 h-2 rounded-full bg-[#14B8A6]" />
-            System status — Operational
+
+          <div className="mt-6 flex flex-wrap items-center gap-2.5">
+            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
+              AIAG-VDA 2019
+            </span>
+            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
+              21 CFR Part 11
+            </span>
+            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
+              IATF 16949
+            </span>
+          </div>
+
+          <div className="mt-6 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#18181A] border border-[#2E2E34] text-[12px] text-[#A1A1AA]">
+            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+            <span>Telemetry: All Systems Operational (Neon pgvector + R2)</span>
           </div>
         </div>
 
-        {/* Link columns */}
+        {/* Link Columns */}
         {COLS.map((col) => (
-          <div key={col.title} className="lg:col-span-2">
-            <h4 className="text-[12px] font-[650] uppercase tracking-[0.12em] text-white/40 mb-4">{col.title}</h4>
-            <ul className="space-y-2.5">
+          <div key={col.title} className="lg:col-span-2 sm:col-span-4">
+            <h4 className="text-[11.5px] font-mono font-bold uppercase tracking-[0.14em] text-[#816729] mb-4">
+              {col.title}
+            </h4>
+            <ul className="space-y-3">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <Link to={l.to} className="text-[14px] text-white/70 hover:text-white transition-colors">
+                  <Link
+                    to={l.to}
+                    className="text-[14px] text-[#D4D4D8] hover:text-[#FF682C] transition-colors"
+                  >
                     {l.label}
                   </Link>
                 </li>
@@ -74,12 +94,15 @@ export const SiteFooter: React.FC = () => (
         ))}
       </div>
 
-      <div className="mt-16 pt-7 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-[13px] text-white/40">© 2026 FMEApex. All rights reserved.</p>
+      {/* Sub-Footer */}
+      <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12.5px] text-[#828282]">
+        <p>© 2026 FMEApex. All rights reserved. Design inspired by Ventriloc BI & Fabric systems.</p>
+
         <div className="flex items-center gap-6">
-          <Link to="/privacy" className="text-[13px] text-white/40 hover:text-white/80 transition-colors">Privacy Policy</Link>
-          <Link to="/terms" className="text-[13px] text-white/40 hover:text-white/80 transition-colors">Terms</Link>
-          <span className="text-[13px] text-white/40">AIAG-VDA 2019 · 21 CFR Part 11</span>
+          <Link to="/about" className="hover:text-white transition-colors">Privacy</Link>
+          <Link to="/about" className="hover:text-white transition-colors">Terms</Link>
+          <Link to="/#contact" className="hover:text-white transition-colors">Security Disclosures</Link>
+          <span className="font-mono text-[11px] text-[#816729]">v0.5.1 Enterprise</span>
         </div>
       </div>
     </div>
