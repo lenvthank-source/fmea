@@ -39,10 +39,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const requestId = (request as any).requestId || request.headers['x-request-id'];
     const tenantId = (request as any).user?.tenantId || 'anon';
-    this.logger.error(
-      `[${requestId}] [${tenantId}] ${request.method} ${request.url} - ${status} - ${message}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
+    const logMsg = `[${requestId}] [${tenantId}] ${request.method} ${request.url} - ${status} - ${message}`;
+
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(
+        logMsg,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    } else {
+      this.logger.warn(logMsg);
+    }
 
     response.setHeader('X-Request-Id', String(requestId || ''));
     response.status(status).json({

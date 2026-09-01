@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'path';
 import helmet from 'helmet';
@@ -29,8 +29,13 @@ async function bootstrap() {
     });
   }
   
-  // Set global prefix
-  app.setGlobalPrefix('api/v1');
+  // Set global prefix with exclusions for root domain and health checks
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      { path: '', method: RequestMethod.ALL },
+      { path: 'health', method: RequestMethod.ALL },
+    ],
+  });
 
   // Use global validation pipes
   app.useGlobalPipes(
