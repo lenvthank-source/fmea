@@ -28,7 +28,16 @@ export const SiteHeader: React.FC = () => {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 pt-3 sm:pt-4 px-4 sm:px-6 lg:px-8 pointer-events-none transition-all duration-300">
-      <div className="max-w-[1360px] mx-auto flex items-center justify-between pointer-events-auto">
+      {/* Translucent Fluid Glass Background */}
+      <div className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-8 top-3 sm:top-4 bottom-0 max-w-[1360px] mx-auto rounded-2xl overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.04)]" />
+        {/* Fluid animated gradient orbs */}
+        <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-[#FF682C]/[0.06] blur-2xl animate-[drift_8s_ease-in-out_infinite]" />
+        <div className="absolute -bottom-6 right-12 w-24 h-24 rounded-full bg-[#816729]/[0.05] blur-2xl animate-[drift_10s_ease-in-out_2s_infinite_reverse]" />
+        <div className="absolute top-1 left-1/3 w-20 h-20 rounded-full bg-sky-400/[0.04] blur-2xl animate-[drift_12s_ease-in-out_4s_infinite]" />
+      </div>
+
+      <div className="max-w-[1360px] mx-auto flex items-center justify-between pointer-events-auto relative z-10">
         {/* Left: Brand Wordmark */}
         <Link to="/" className="flex items-center gap-2 group bg-white/80 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none px-3 py-1.5 sm:p-0 rounded-full border border-[#E5E0D8] sm:border-none shadow-xs sm:shadow-none">
           <div className="flex items-center tracking-[-0.03em] font-extrabold text-[22px] sm:text-[24px] text-[#18181B]">

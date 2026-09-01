@@ -287,40 +287,44 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Tile 3: Regulatory Governance & 21 CFR Part 11 (Deep Graphite Tile) */}
-            <div className="bg-[#18181B] text-white rounded-[32px] p-8 sm:p-12 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+            {/* Tile 3: Regulatory Governance & 21 CFR Part 11 */}
+            <div className="bg-[#FAF9F6] rounded-[32px] border border-[#E5E0D8] p-8 sm:p-12 shadow-xs hover:border-[#D4D4D8] transition-all">
               <div className="grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-6">
-                  <div className="w-12 h-1 bg-[#FF682C] rounded-full mb-5" />
-                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Module 03</span>
-                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-white mt-1 mb-3 ff-heading">
+                  <div className="w-12 h-1 bg-[#816729] rounded-full mb-5" />
+                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#816729] font-bold">Module 03</span>
+                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#18181B] mt-1 mb-3 ff-heading">
                     Regulatory Governance & 21 CFR Part 11
                   </h3>
-                  <div className="inline-block text-[12px] font-mono text-[#E4E4E4] font-bold bg-[#2A2A30] px-3 py-1 rounded-lg mb-4 border border-[#3E3E48]">
+                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-lg mb-4 border border-[#D4CFC4]">
                     Electronic Signatures · Reviewer Segregation · Immutable Audit Trail
                   </div>
-                  <p className="text-[15.5px] leading-relaxed text-[#A1A1AA] mb-6">
+                  <p className="text-[15.5px] leading-relaxed text-[#52525B] mb-6">
                     Establish strict regulatory controls, cryptographic digital signatures, and locked document revisions ensuring flawless regulatory inspection readiness. Database constraints permanently reject deletions on audit records.
                   </p>
                   <button
                     onClick={() => navigate('/learn/21-cfr-part-11-fmea')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-white hover:text-[#FF682C] transition-colors"
+                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#18181B] hover:text-[#816729] transition-colors"
                   >
                     <span>Read 21 CFR Part 11 specification</span>
                     <span>→</span>
                   </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-2xl bg-[#222228] border border-[#2E2E36] p-6 font-mono text-[12px] text-[#A1A1AA] space-y-3">
-                  <div className="flex justify-between items-center pb-2.5 border-b border-[#2E2E36] text-[10.5px] uppercase font-bold text-[#71717A]">
+                <div className="lg:col-span-6 rounded-2xl bg-white border border-[#E5E0D8] p-6 font-mono text-[12px] text-[#52525B] space-y-3 shadow-xs">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-[#E5E0D8] text-[10.5px] uppercase font-bold text-[#71717A]">
                     <span>Immutable Audit Trail Partition</span>
-                    <span className="text-[#10B981]">Active Lock</span>
+                    <span className="text-emerald-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active Lock</span>
                   </div>
-                  <div className="p-3 bg-[#18181B] rounded-xl border border-[#2E2E36] text-white">
-                    <span className="text-[#FF682C]">2026-09-01T08:14:05Z</span> • Rev C Approved by QA Director • Hash: e8046277
+                  <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[#18181B]">
+                    <span className="text-[#FF682C] font-bold">2026-09-01T08:14:05Z</span> · Rev C Approved by QA Director · Hash: <span className="text-[#816729] font-bold">e8046277</span>
                   </div>
-                  <div className="p-3 bg-[#18181B] rounded-xl border border-[#2E2E36]">
-                    <span className="text-[#A1A1AA]">2026-09-01T08:02:14Z</span> • ACT-102 Evidence Uploaded (R2) • S=8, O=3, D=3
+                  <div className="p-3.5 bg-[#FAFAF8] rounded-xl border border-[#E5E0D8] text-[#52525B]">
+                    <span className="text-[#71717A]">2026-09-01T08:02:14Z</span> · ACT-102 Evidence Uploaded (R2) · S=8, O=3, D=3
+                  </div>
+                  <div className="flex items-center justify-between pt-2 text-[10.5px] text-[#71717A]">
+                    <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> 21 CFR Part 11 Signed</span>
+                    <span className="text-[#816729] font-bold">SHA-256 Verified</span>
                   </div>
                 </div>
               </div>
