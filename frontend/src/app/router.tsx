@@ -49,7 +49,7 @@ export const AppRouter: React.FC = () => {
       {/* Root Landing Page & Auth */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/admin" element={<Login />} />
+      <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
       <Route path="/app/initializing" element={<InitializingWorkspace />} />
 
       {/* Experience Store */}

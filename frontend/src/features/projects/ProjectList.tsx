@@ -1186,7 +1186,7 @@ export const ProjectList: React.FC = () => {
                       variant="outlined"
                       fullWidth
                       startIcon={<ShieldCheckIcon sx={{ color: '#10b981' }} />}
-                      onClick={() => navigate('/admin')}
+                      onClick={() => navigate('/app/admin')}
                       sx={{ 
                         justifyContent: 'flex-start', 
                         borderRadius: '8px', 

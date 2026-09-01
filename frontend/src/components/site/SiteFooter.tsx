@@ -1,112 +1,76 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const COLS: { title: string; links: { label: string; to: string }[] }[] = [
-  {
-    title: 'Solutions',
-    links: [
-      { label: 'PFD ↔ PFMEA Sync', to: '/product' },
-      { label: '7-Step AIAG-VDA Gating', to: '/product' },
-      { label: 'Control Plan Auto-Flow', to: '/product' },
-      { label: 'Action Priority (AP) Matrix', to: '/product' },
-      { label: 'AI Quality Copilot (RAG)', to: '/product' },
-    ],
-  },
-  {
-    title: 'Platform',
-    links: [
-      { label: 'Product Architecture', to: '/product' },
-      { label: 'Pricing & Tiers', to: '/pricing' },
-      { label: 'Security & 21 CFR Part 11', to: '/learn/21-cfr-part-11-fmea' },
-      { label: 'Docker On-Premise', to: '/product' },
-      { label: 'Release Notes (v0.5.1)', to: '/product' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'About Us', to: '/about' },
-      { label: 'Learn Hub', to: '/learn' },
-      { label: 'Quality Blog', to: '/blog' },
-      { label: 'Careers', to: '/about' },
-      { label: 'Contact', to: '/#contact' },
-    ],
-  },
-];
-
-export const SiteFooter: React.FC = () => (
-  <footer className="bg-[#202020] text-white pt-20 pb-12 border-t border-[#333338] font-sans">
-    <div className="w-full max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16 border-b border-[#333338]">
-        {/* Brand Column */}
-        <div className="lg:col-span-5">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center tracking-[-0.03em] font-extrabold text-[24px] text-white">
-              <span>fmeapex</span>
-              <span className="w-2 h-5 bg-[#FF682C] ml-1 rounded-sm transform skew-x-[-14deg]" />
+export const SiteFooter: React.FC = () => {
+  return (
+    <footer className="bg-[#FAFAFA] border-t border-[#E4E4E7] py-14 text-[#71717A] text-[13px]">
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          {/* Brand Col */}
+          <div className="col-span-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-[20px] tracking-tight text-[#09090B]">fmeapex</span>
+              <span className="w-2 h-4 bg-[#FF682C] rounded-sm transform skew-x-[-14deg]" />
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#71717A] pl-2 border-l border-[#E4E4E7]">
+                Quality Intelligence
+              </span>
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold pl-2 border-l border-[#44444C]">
-              Quality Intelligence
-            </span>
+            <p className="max-w-[340px] text-[13.5px] text-[#71717A] leading-relaxed">
+              Automate AIAG-VDA 2019 FMEA workflows, eliminate spreadsheet risk, and maintain immutable 21 CFR Part 11 audit trails for mission-critical manufacturing.
+            </p>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-[#10B981]">
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+              <span>All Systems Operational · Neon Cloud RLS Active</span>
+            </div>
           </div>
 
-          <p className="mt-5 text-[15px] leading-[1.65] text-[#A1A1AA] max-w-[400px]">
-            Trusted by global manufacturing, automotive, and aerospace engineering leaders to automate AIAG-VDA 2019 FMEA, eliminate spreadsheets, and ensure 21 CFR Part 11 audit readiness.
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-2.5">
-            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
-              AIAG-VDA 2019
-            </span>
-            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
-              21 CFR Part 11
-            </span>
-            <span className="px-3 py-1 rounded-full bg-[#2A2A30] border border-[#3A3A42] text-[11px] font-mono text-[#D4D4D8]">
-              IATF 16949
-            </span>
-          </div>
-
-          <div className="mt-6 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#18181A] border border-[#2E2E34] text-[12px] text-[#A1A1AA]">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-            <span>Telemetry: All Systems Operational (Neon pgvector + R2)</span>
-          </div>
-        </div>
-
-        {/* Link Columns */}
-        {COLS.map((col) => (
-          <div key={col.title} className="lg:col-span-2 sm:col-span-4">
-            <h4 className="text-[11.5px] font-mono font-bold uppercase tracking-[0.14em] text-[#816729] mb-4">
-              {col.title}
-            </h4>
-            <ul className="space-y-3">
-              {col.links.map((l) => (
-                <li key={l.label}>
-                  <Link
-                    to={l.to}
-                    className="text-[14px] text-[#D4D4D8] hover:text-[#FF682C] transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+          {/* Solutions */}
+          <div>
+            <h4 className="font-semibold text-[#09090B] text-[12.5px] uppercase tracking-wider font-mono mb-3">Solutions</h4>
+            <ul className="space-y-2">
+              <li><Link to="/product" className="hover:text-[#09090B] transition-colors">PFD ↔ PFMEA Sync</Link></li>
+              <li><Link to="/learn/aiag-vda-7-step-fmea" className="hover:text-[#09090B] transition-colors">7-Step AIAG-VDA</Link></li>
+              <li><Link to="/product" className="hover:text-[#09090B] transition-colors">Control Plan Auto-Flow</Link></li>
+              <li><Link to="/product" className="hover:text-[#09090B] transition-colors">Deterministic AP Matrix</Link></li>
             </ul>
           </div>
-        ))}
-      </div>
 
-      {/* Sub-Footer */}
-      <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12.5px] text-[#828282]">
-        <p>© 2026 FMEApex. All rights reserved. Design inspired by Ventriloc BI & Fabric systems.</p>
+          {/* Compliance */}
+          <div>
+            <h4 className="font-semibold text-[#09090B] text-[12.5px] uppercase tracking-wider font-mono mb-3">Compliance</h4>
+            <ul className="space-y-2">
+              <li><Link to="/learn/21-cfr-part-11-fmea" className="hover:text-[#09090B] transition-colors">21 CFR Part 11</Link></li>
+              <li><Link to="/learn" className="hover:text-[#09090B] transition-colors">IATF 16949 Standards</Link></li>
+              <li><Link to="/product" className="hover:text-[#09090B] transition-colors">Immutable Audit Logs</Link></li>
+              <li><Link to="/product" className="hover:text-[#09090B] transition-colors">Electronic Signatures</Link></li>
+            </ul>
+          </div>
 
-        <div className="flex items-center gap-6">
-          <Link to="/about" className="hover:text-white transition-colors">Privacy</Link>
-          <Link to="/about" className="hover:text-white transition-colors">Terms</Link>
-          <Link to="/#contact" className="hover:text-white transition-colors">Security Disclosures</Link>
-          <span className="font-mono text-[11px] text-[#816729]">v0.5.1 Enterprise</span>
+          {/* Platform */}
+          <div>
+            <h4 className="font-semibold text-[#09090B] text-[12.5px] uppercase tracking-wider font-mono mb-3">Platform</h4>
+            <ul className="space-y-2">
+              <li><Link to="/pricing" className="hover:text-[#09090B] transition-colors">Pricing & Plans</Link></li>
+              <li><Link to="/login" className="hover:text-[#09090B] transition-colors">Guest Sandbox</Link></li>
+              <li><Link to="/about" className="hover:text-[#09090B] transition-colors">About FMEApex</Link></li>
+              <li><a href="mailto:quality@fmeapex.online" className="hover:text-[#09090B] transition-colors">Contact Support</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="pt-6 border-t border-[#E4E4E7] flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#A1A1AA]">
+          <p>© 2026 FMEApex Inc. All rights reserved. Quality engineered to evolve.</p>
+          <div className="flex items-center gap-6">
+            <span>AIAG-VDA 2019 (1st Ed)</span>
+            <span>·</span>
+            <span>21 CFR Part 11 Compliant</span>
+            <span>·</span>
+            <span>ISO 9001:2015 Ready</span>
+          </div>
         </div>
       </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 export default SiteFooter;

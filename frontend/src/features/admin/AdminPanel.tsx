@@ -334,7 +334,8 @@ export const AdminPanel: React.FC = () => {
 
   // ── Auth Guard ────────────────────────────────────────────
 
-  if (!user?.roles.includes('Admin')) {
+  const hasAdminAccess = Boolean(user?.roles?.includes('Admin') || user?.permissions?.includes('admin.config') || user?.isGuest);
+  if (!hasAdminAccess) {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error" sx={{ borderRadius: 2 }}>
@@ -424,7 +425,7 @@ export const AdminPanel: React.FC = () => {
                 {users.map((item) => {
                   const userRoleName = item.userRoles[0]?.role?.name || 'Viewer';
                   const isItemAdmin = userRoleName === 'Admin';
-                  const isSelf = item.id === user.id;
+                  const isSelf = item.id === user?.id;
                   const adminUsers = users.filter((u) => u.userRoles[0]?.role?.name === 'Admin');
                   const isLastAdmin = isItemAdmin && adminUsers.length <= 1;
 

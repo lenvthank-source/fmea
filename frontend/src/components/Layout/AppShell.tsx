@@ -308,7 +308,7 @@ export const AppShell: React.FC = () => {
                 <MenuItem onClick={() => { handleClose(); navigate('/app/projects'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
                   Quality Projects
                 </MenuItem>
-                <MenuItem onClick={() => { handleClose(); navigate('/admin'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
+                <MenuItem onClick={() => { handleClose(); navigate('/app/admin'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
                   Admin Settings
                 </MenuItem>
                 <Divider sx={{ my: 0.5, borderColor: '#f4f4f5' }} />

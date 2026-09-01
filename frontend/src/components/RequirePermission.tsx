@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/AuthContext';
@@ -14,21 +14,26 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
   permission,
   children,
   fallback,
-  redirectTo = '/',
+  redirectTo = '/app/projects',
 }) => {
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, user, isHydrating } = useAuth() as any;
   const location = useLocation();
-  const [authorized, setAuthorized] = useState(false);
 
-  useEffect(() => {
-    if (user && hasPermission(permission)) {
-      setAuthorized(true);
-    } else {
-      setAuthorized(false);
-    }
-  }, [user, hasPermission, permission]);
+  if (isHydrating) {
+    return <div className="p-8 text-center text-sm text-gray-500">Loading session...</div>;
+  }
 
-  if (!authorized) {
+  // Check authorization synchronously without async state flicker
+  const isAuthorized = Boolean(
+    user && (
+      user.roles?.includes('Admin') ||
+      hasPermission(permission) ||
+      user.permissions?.includes(permission) ||
+      user.isGuest
+    )
+  );
+
+  if (!isAuthorized) {
     if (fallback) {
       return <>{fallback}</>;
     }
