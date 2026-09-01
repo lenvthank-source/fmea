@@ -35,6 +35,23 @@ export const LandingPage: React.FC = () => {
   const [contactSuccess, setContactSuccess] = useState(false);
   const [contactError, setContactError] = useState('');
 
+  // Handle smooth scroll to simulator if requested via ?scroll=simulator or hash
+  React.useEffect(() => {
+    const handleScrollTarget = () => {
+      const params = new URLSearchParams(window.location.search);
+      const target = params.get('scroll') || (window.location.hash ? window.location.hash.substring(1) : null);
+      if (target) {
+        setTimeout(() => {
+          const el = document.getElementById(target);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
+    };
+    handleScrollTarget();
+  }, []);
+
   const handleContactSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) return;

@@ -25,6 +25,21 @@ export const SiteHeader: React.FC = () => {
     { label: 'Pricing', to: '/pricing' },
   ];
 
+  const handleLinkClick = (e: React.MouseEvent, to: string) => {
+    if (to.includes('#simulator')) {
+      e.preventDefault();
+      if (location.pathname === '/') {
+        const el = document.getElementById('simulator');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        navigate('/?scroll=simulator');
+      }
+      return;
+    }
+  };
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 pt-3 sm:pt-4 px-3 sm:px-6 pointer-events-none transition-all duration-300">
       <div className="max-w-[1340px] mx-auto pointer-events-auto">
@@ -65,6 +80,7 @@ export const SiteHeader: React.FC = () => {
               <Link
                 key={l.label}
                 to={l.to}
+                onClick={(e) => handleLinkClick(e, l.to)}
                 className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all ${
                   location.pathname === l.to
                     ? 'bg-[#18181B] text-white shadow-xs'
@@ -123,7 +139,7 @@ export const SiteHeader: React.FC = () => {
               <Link
                 key={l.label}
                 to={l.to}
-                onClick={() => setOpen(false)}
+                onClick={(e) => { setOpen(false); handleLinkClick(e, l.to); }}
                 className="block text-[14px] font-semibold text-[#52525B] hover:text-[#18181B] py-1.5"
               >
                 {l.label}

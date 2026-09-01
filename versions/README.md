@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.5.4.md` — Risk Simulator Smooth Navigation & Educational Pillar Pages Ventriloc Rebuild: active scroll-to-element navigation from any page, full modernization of /learn/21-cfr-part-11-fmea and /learn/aiag-vda-7-step-fmea with floating fluid header, breadcrumbs, GEO answer blocks, and sticky conversion card.
 - `v0.5.3.md` — Translucent Fluid Glass Header, Ventriloc Aesthetic Overhaul, Favicon Redesign & AI Search Discovery: living fluid motion streams in header, slap cap FREE badge, light-themed 3D tilt interactive dashboard, Module 03 converted to light ivory, all marketing pages aligned to Ventriloc theme, Tailwind v4 @layer cascade fix, rich FAQPage schema for Google AI Overviews, full AI search crawler permissions in robots.txt, and llms.txt standard files.
 - `v0.5.2.md` — Shadcn Admin Workspace First Screen & Ventriloc Clone: 4-card bento KPI grid, segmented pill tabs, 2-col overview (search ⌘K, phase pills, recent activity, quick actions), AppShell header/sidebar refinement, Ventriloc interactive Power BI/Fabric dashboard, floating capsule navbar, infinite marquee partner ticker, stacked sticky cards.
 - `v0.5.1.md` — Quality Workflow & Exports: Safe Launch 2-level selector, Concerned Key Contact & Dwg date alignment, Admin Panel nav fix, sticky DocumentHeader, rebuilt Failure Details window + inline controls + Action Guideline modal, PFD/PFMEA 3 signature boxes, PFMEA per-cause sub-rows.

@@ -1,12 +1,8 @@
 import React from 'react';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
-import {
-  Box, Container, Typography, Button, Paper, Grid, Breadcrumbs, Link, Chip, Accordion, AccordionSummary, AccordionDetails
-} from '@mui/material';
-import {
-  NavigateNext, ExpandMore, Verified, ArrowForward, CheckCircle
-} from '@mui/icons-material';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
+import { SiteHeader } from '../../components/site/SiteHeader';
+import { SiteFooter } from '../../components/site/SiteFooter';
 
 interface ArticleData {
   slug: string;
@@ -44,7 +40,7 @@ const PILLAR_ARTICLES: Record<string, ArticleData> = {
     authorTitle: 'Lead Quality Systems Architect & AIAG Certified Trainer',
     definitionBlock: {
       question: 'What is the AIAG-VDA 7-Step FMEA Methodology?',
-      answer: 'The AIAG-VDA 7-Step FMEA methodology is a standardized quality risk assessment framework jointly developed by the AIAG and VDA in 2019. It replaces Risk Priority Numbers (RPN) with Action Priority (AP) matrices across 7 gated steps: 1. Planning, 2. Structure Analysis, 3. Function Analysis, 4. Failure Analysis, 5. Risk Analysis, 6. Optimization, and 7. Documentation.'
+      answer: 'The AIAG-VDA 7-Step FMEA methodology is a standardized quality risk assessment framework jointly developed by AIAG and VDA in 2019. It replaces Risk Priority Numbers (RPN) with Action Priority (AP) matrices across 7 gated steps: 1. Planning, 2. Structure Analysis, 3. Function Analysis, 4. Failure Analysis, 5. Risk Analysis, 6. Optimization, and 7. Documentation.'
     },
     toc: [
       { id: 'overview', title: 'Why AIAG-VDA 2019 Replaced RPN with Action Priority' },
@@ -100,69 +96,74 @@ const PILLAR_ARTICLES: Record<string, ArticleData> = {
       }
     ],
     faq: [
-      { q: 'Can Action Priority (AP) values be manually changed?', a: 'No. Under AIAG-VDA 2019 rules, AP is a read-only field derived from Severity, Occurrence, and Detection lookup tables.' },
-      { q: 'Is FMEApex compliant with IATF 16949 and AS9100?', a: 'Yes. FMEApex is fully audit-ready for IATF 16949 automotive quality standards and AS9100 aerospace requirements.' }
+      {
+        q: 'Can engineers manually override the Action Priority (AP) rating?',
+        a: 'No. Under AIAG-VDA 2019 standards, Action Priority is a deterministic lookup based on S, O, and D ratings. FMEApex maintains AP as an immutable calculated field to prevent audit non-conformances.'
+      },
+      {
+        q: 'How does FMEApex enforce 7-step gating?',
+        a: 'FMEApex restricts advancing to downstream steps until predecessor criteria are fully validated (e.g., Step 4 Failure Analysis requires completed Step 3 Function Analysis).'
+      }
     ]
   },
   'pfd-pfmea-linking': {
     slug: 'pfd-pfmea-linking',
-    title: 'How to Automate PFD to PFMEA Bidirectional Linking & Gap Analysis',
-    seoTitle: 'PFD to PFMEA Bidirectional Linking & Gap Analysis | FMEApex',
-    seoDesc: 'Eliminate process gap errors. Discover how bidirectional PFD to PFMEA synchronization ensures zero orphan steps in manufacturing.',
-    badge: 'Process Engineering',
+    title: 'Bidirectional PFD ↔ PFMEA Linking: Eliminating Orphan Manufacturing Operations',
+    seoTitle: 'PFD to PFMEA Bidirectional Linking & Synchronization | FMEApex',
+    seoDesc: 'Eliminate manufacturing quality gaps with bidirectional PFD-PFMEA linking. Discover automated orphan step detection and characteristic flow-down.',
+    badge: 'Process Architecture',
     updatedDate: 'July 2026',
-    author: 'Elena Rostova, CQE',
-    authorTitle: 'Principal Process Quality Director',
+    author: 'Jean-Marc Dubois',
+    authorTitle: 'Senior Manufacturing Systems Engineer',
     definitionBlock: {
       question: 'What is PFD to PFMEA Bidirectional Linking?',
-      answer: 'PFD to PFMEA bidirectional linking is a real-time data integration mechanism that synchronizes Process Flow Diagram (PFD) operation steps directly with Process Failure Mode and Effects Analysis (PFMEA) grids. Any modification to operation sequences, step numbers, or special characteristics instantly propagates in both directions.'
+      answer: 'PFD to PFMEA bidirectional linking is the continuous digital synchronization between the Process Flow Diagram (PFD) and the Process FMEA grid. Changes in operation sequences, tooling, or work elements immediately propagate between both documents.'
     },
     toc: [
-      { id: 'problem', title: 'The Cost of Disconnected Process Flow Spreadsheets' },
-      { id: 'how-it-works', title: 'How Bidirectional Linking Works in FMEApex' },
-      { id: 'gap-analysis', title: 'Automated Gap Analysis & Zero-Orphan Policy' },
+      { id: 'linking-problem', title: 'The Problem with Disconnected Spreadsheets' },
+      { id: 'fmeapex-engine', title: 'How the FMEApex Synchronization Engine Works' },
+      { id: 'orphan-detection', title: 'Automated Orphan Step Detection' },
       { id: 'faq', title: 'Frequently Asked Questions' }
     ],
     content: [
       {
-        id: 'problem',
-        h2: 'The Cost of Disconnected Process Flow Spreadsheets',
+        id: 'linking-problem',
+        h2: 'The Problem with Disconnected Spreadsheets',
         text: [
-          'When Process Flow Diagrams (PFD) and PFMEAs are maintained in separate Excel spreadsheets, process engineering changes frequently fail to sync. Up to 30% of manufacturing line defects originate from out-of-date PFMEA rows that missed recent PFD process updates.'
+          'In traditional automotive and aerospace plants, manufacturing engineers design Process Flow Diagrams in Visio or CAD, while quality engineers build PFMEAs in Excel. Over time, engineering changes (ECOs) cause the documents to diverge.'
         ]
       },
       {
-        id: 'how-it-works',
-        h2: 'How Bidirectional Linking Works in FMEApex',
+        id: 'fmeapex-engine',
+        h2: 'How the FMEApex Synchronization Engine Works',
         text: [
-          'FMEApex enforces a unified relational schema. Creating or reordering an operation step in the PFD Workspace automatically updates the corresponding PFMEA structure tree, maintaining step numbers, operation names, and special characteristic flags.'
+          'FMEApex treats process steps as first-class entities. When an engineer modifies Operation 20 in the PFD, the linked PFMEA structural tree updates automatically in a single atomic transaction.'
         ]
       },
       {
-        id: 'gap-analysis',
-        h2: 'Automated Gap Analysis & Zero-Orphan Policy',
+        id: 'orphan-detection',
+        h2: 'Automated Orphan Step Detection',
         text: [
-          'FMEApex automatically highlights PFD steps that lack a corresponding failure analysis chain as "Coverage Warnings", preventing quality teams from releasing incomplete process documentation.'
+          'FMEApex audits the structural tree on every revision submission, automatically highlighting any operation that lacks a corresponding failure mode or control linkage.'
         ]
       }
     ],
     faq: [
-      { q: 'What happens if a PFD step is deleted?', a: 'FMEApex warns the user of linked PFMEA failure mode dependencies before allowing deletion, keeping audit trails intact.' },
-      { q: 'Can we import existing PFD Excel files?', a: 'Yes, FMEApex includes an automated Excel import parser that builds your PFD and PFMEA structure trees in seconds.' }
+      { q: 'What happens when a process step is deleted in the PFD?', a: 'FMEApex alerts the engineer and prompts for reassignment or archiving to avoid orphaned failure modes.' }
     ]
   },
   'control-plan-sync': {
     slug: 'control-plan-sync',
-    title: 'Control Plan Synchronization & Real-Time PFMEA Integration',
-    seoTitle: 'Control Plan Synchronization & PFMEA Integration | FMEApex',
-    seoDesc: 'Automatically propagate prevention and detection controls from PFMEA to Control Plans. Ensure 100% compliance across your shop floor.',
-    badge: 'Quality Control',
+    title: 'Dynamic Control Plan Synchronization from PFMEA Characteristics',
+    seoTitle: 'Control Plan Synchronization & PFMEA Flow-Down | FMEApex',
+    seoDesc: 'Generate and synchronize shop floor Control Plans dynamically from PFMEA detection controls and special characteristics.',
+    badge: 'Shop Floor Quality',
     updatedDate: 'July 2026',
-    author: 'Marcus Vance, CQE',
-    authorTitle: 'Lead Quality Systems Architect',
+    author: 'Sarah Chen, Six Sigma Black Belt',
+    authorTitle: 'VP of Manufacturing Excellence',
     definitionBlock: {
-      question: 'What is Control Plan Synchronization?',
-      answer: 'Control Plan Synchronization is an automated quality workflow where prevention methods, detection controls, reaction plans, and critical characteristics identified during PFMEA are automatically mapped into the production Control Plan in a single atomic transaction.'
+      question: 'How Does Control Plan Synchronization Work?',
+      answer: 'Control Plan synchronization dynamically compiles shop floor inspection methods, sample sizes, and reaction plans directly from PFMEA prevention and detection controls, guaranteeing zero mismatch between quality design and plant execution.'
     },
     toc: [
       { id: 'sync-overview', title: 'Why Synchronized Control Plans Are Vital' },
@@ -256,156 +257,175 @@ export const PillarPage: React.FC = () => {
     'description': article.seoDesc,
     'author': { '@type': 'Person', 'name': article.author, 'jobTitle': article.authorTitle },
     'publisher': { '@type': 'Organization', 'name': 'FMEApex', 'url': 'https://fmeapex.online' },
-    'dateModified': '2026-07-26'
+    'dateModified': '2026-09-01'
   };
 
   return (
-    <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 10 }}>
+    <div className="bg-[#FAF9F6] min-h-screen text-[#18181B] font-sans antialiased">
       <SEO
         title={article.seoTitle}
         description={article.seoDesc}
-        canonical={`/en/learn/${article.slug}`}
+        canonical={`/learn/${article.slug}`}
         jsonLd={[articleSchema, faqSchema]}
       />
 
-      {/* Hero Header */}
-      <Box sx={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', color: '#fff', py: 8 }}>
-        <Container maxWidth="lg">
-          <Breadcrumbs separator={<NavigateNext fontSize="small" sx={{ color: '#94A3B8' }} />} sx={{ mb: 3 }}>
-            <Link component={RouterLink} to="/" sx={{ color: '#94A3B8', textDecoration: 'none', '&:hover': { color: '#2DD4BF' } }}>Home</Link>
-            <Link component={RouterLink} to="/en/learn/aiag-vda-7-step-fmea" sx={{ color: '#94A3B8', textDecoration: 'none', '&:hover': { color: '#2DD4BF' } }}>Learn Hub</Link>
-            <Typography sx={{ color: '#2DD4BF', fontWeight: 600 }}>{article.badge}</Typography>
-          </Breadcrumbs>
+      {/* Floating Translucent Header */}
+      <SiteHeader />
 
-          <Chip label={article.badge} sx={{ bgcolor: 'rgba(45,212,191,0.15)', color: '#2DD4BF', fontWeight: 700, mb: 2 }} />
-          <Typography variant="h1" sx={{ fontSize: { xs: '2rem', md: '2.8rem' }, fontWeight: 800, lineHeight: 1.2, mb: 2 }}>
+      {/* Hero Banner Tile */}
+      <section className="pt-28 sm:pt-36 pb-14 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+        <div className="max-w-[1240px] mx-auto">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-2 text-[12px] font-mono text-[#71717A] mb-6">
+            <Link to="/" className="hover:text-[#18181B] transition-colors">Home</Link>
+            <span>/</span>
+            <Link to="/learn" className="hover:text-[#18181B] transition-colors">Learn Hub</Link>
+            <span>/</span>
+            <span className="text-[#FF682C] font-bold">{article.badge}</span>
+          </nav>
+
+          {/* Badge Pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E5E0D8] text-[11.5px] font-mono font-bold text-[#816729] shadow-xs mb-5">
+            <span className="text-[#FF682C]">✦</span>
+            <span>{article.badge}</span>
+          </div>
+
+          {/* Editorial Headline */}
+          <h1 className="text-[34px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[#18181B] mb-6 ff-heading max-w-[960px]">
             {article.title}
-          </Typography>
+          </h1>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', color: '#94A3B8', fontSize: '0.9rem' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Verified sx={{ color: '#2DD4BF', fontSize: '1.1rem' }} />
-              <Typography variant="body2" sx={{ color: '#F8FAFC', fontWeight: 600 }}>{article.author}</Typography>
-            </Box>
-            <Typography variant="body2">• {article.authorTitle}</Typography>
-            <Typography variant="body2">• Updated {article.updatedDate}</Typography>
-          </Box>
-        </Container>
-      </Box>
+          {/* Author Metadata Strip */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-[13px] text-[#71717A] pt-2 border-t border-[#E5E0D8]">
+            <div className="flex items-center gap-2 text-[#18181B] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+              <span>{article.author}</span>
+            </div>
+            <span>•</span>
+            <span>{article.authorTitle}</span>
+            <span>•</span>
+            <span className="font-mono text-[12px]">Updated {article.updatedDate}</span>
+          </div>
+        </div>
+      </section>
 
       {/* Main Content Layout */}
-      <Container maxWidth="lg" sx={{ mt: 5 }}>
-        <Grid container spacing={4}>
+      <section className="pb-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-[#E5E0D8] pt-12">
+        <div className="max-w-[1240px] mx-auto grid lg:grid-cols-12 gap-12 items-start">
           {/* Main Article Column */}
-          <Grid size={{ xs: 12, md: 8 }}>
+          <div className="lg:col-span-8 space-y-10">
             {/* Princeton GEO Extractable Answer Block */}
-            <Paper elevation={0} sx={{ p: 3, mb: 4, borderRadius: 3, borderLeft: '4px solid #0D9488', bgcolor: '#F0FDF4' }} className="ai-definition-block">
-              <Typography variant="subtitle2" sx={{ color: '#0D9488', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, mb: 1 }}>
-                Key Definition & Summary
-              </Typography>
-              <Typography variant="h6" component="h3" sx={{ fontWeight: 700, mb: 1, color: '#0F172A' }}>
+            <div className="rounded-[24px] bg-[#FAF9F6] border-2 border-[#FF682C]/30 p-7 sm:p-8 shadow-xs relative overflow-hidden">
+              <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-wider text-[#FF682C] mb-2">
+                <span>✦ Key Definition & Summary</span>
+              </div>
+              <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#18181B] mb-3 ff-heading">
                 {article.definitionBlock.question}
-              </Typography>
-              <Typography variant="body1" sx={{ color: '#334155', lineHeight: 1.7 }}>
+              </h2>
+              <p className="text-[15.5px] leading-relaxed text-[#52525B]">
                 {article.definitionBlock.answer}
-              </Typography>
-            </Paper>
+              </p>
+            </div>
 
             {/* Article Content Sections */}
-            {article.content.map(sec => (
-              <Box key={sec.id} id={sec.id} sx={{ mb: 5 }}>
-                <Typography variant="h2" sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#0F172A', mb: 2, pb: 1, borderBottom: '2px solid #E2E8F0' }}>
+            {article.content.map((sec) => (
+              <div key={sec.id} id={sec.id} className="space-y-4 pt-4">
+                <h2 className="text-[24px] sm:text-[30px] font-extrabold text-[#18181B] pb-3 border-b border-[#E5E0D8] ff-heading">
                   {sec.h2}
-                </Typography>
+                </h2>
 
                 {sec.text.map((paragraph, idx) => (
-                  <Typography key={idx} variant="body1" sx={{ color: '#334155', lineHeight: 1.8, fontSize: '1.02rem', mb: 2 }}>
+                  <p key={idx} className="text-[16px] leading-[1.75] text-[#52525B]">
                     {paragraph}
-                  </Typography>
+                  </p>
                 ))}
 
                 {sec.bulletPoints && (
-                  <Box sx={{ my: 2, pl: 2 }}>
+                  <div className="space-y-2.5 my-4 pl-1">
                     {sec.bulletPoints.map((pt, idx) => (
-                      <Box key={idx} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
-                        <CheckCircle sx={{ color: '#0D9488', fontSize: '1.2rem', mt: 0.3 }} />
-                        <Typography variant="body1" sx={{ color: '#1E293B', fontWeight: 500 }}>{pt}</Typography>
-                      </Box>
+                      <div key={idx} className="flex items-start gap-3">
+                        <span className="text-[#FF682C] font-bold text-[16px] leading-none mt-1">✓</span>
+                        <span className="text-[15px] font-medium text-[#18181B]">{pt}</span>
+                      </div>
                     ))}
-                  </Box>
+                  </div>
                 )}
 
                 {sec.callout && (
-                  <Paper elevation={0} sx={{ p: 2.5, my: 3, borderRadius: 2, bgcolor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-                    <Typography variant="body2" sx={{ color: '#1E40AF', fontWeight: 600 }}>
-                      💡 {sec.callout}
-                    </Typography>
-                  </Paper>
+                  <div className="p-5 rounded-2xl bg-[#FAF9F6] border border-[#816729]/30 text-[#816729] text-[14.5px] font-medium">
+                    💡 {sec.callout}
+                  </div>
                 )}
-              </Box>
+              </div>
             ))}
 
-            {/* FAQ Accordion */}
-            <Box id="faq" sx={{ mt: 6 }}>
-              <Typography variant="h2" sx={{ fontSize: '1.6rem', fontWeight: 700, color: '#0F172A', mb: 3 }}>
+            {/* FAQ Section */}
+            <div id="faq" className="pt-8 space-y-4">
+              <h2 className="text-[26px] sm:text-[32px] font-extrabold text-[#18181B] ff-heading">
                 Frequently Asked Questions
-              </Typography>
-              {article.faq.map((item, idx) => (
-                <Accordion key={idx} sx={{ mb: 1.5, borderRadius: '8px !important', '&:before': { display: 'none' } }}>
-                  <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Typography sx={{ fontWeight: 600, color: '#0F172A' }}>{item.q}</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography sx={{ color: '#475569', lineHeight: 1.6 }}>{item.a}</Typography>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-          </Grid>
+              </h2>
+              <div className="space-y-3">
+                {article.faq.map((item, idx) => (
+                  <div key={idx} className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-5 sm:p-6">
+                    <h3 className="text-[16.5px] font-bold text-[#18181B] mb-2">{item.q}</h3>
+                    <p className="text-[15px] leading-relaxed text-[#52525B]">{item.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Sticky Sidebar */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Box sx={{ position: 'sticky', top: 30 }}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0', mb: 3, bgcolor: '#fff' }}>
-                <Typography variant="subtitle2" sx={{ color: '#64748B', fontWeight: 700, textTransform: 'uppercase', mb: 2 }}>
-                  Table of Contents
-                </Typography>
-                <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-                  {article.toc.map(item => (
-                    <Box component="li" key={item.id} sx={{ mb: 1.5 }}>
-                      <Typography
-                        onClick={() => scrollTo(item.id)}
-                        sx={{ cursor: 'pointer', color: '#334155', fontSize: '0.92rem', fontWeight: 500, '&:hover': { color: '#0D9488' }, transition: 'color 0.2s' }}
-                      >
-                        {item.title}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Paper>
+          <div className="lg:col-span-4 sticky top-24 space-y-6">
+            {/* Table of Contents Tile */}
+            <div className="rounded-[24px] bg-[#FAF9F6] border border-[#E5E0D8] p-6 shadow-xs">
+              <h3 className="text-[11.5px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-4">
+                Table of Contents
+              </h3>
+              <ul className="space-y-2.5 text-[13.5px]">
+                {article.toc.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => scrollTo(item.id)}
+                      className="text-left text-[#52525B] hover:text-[#FF682C] transition-colors font-medium"
+                    >
+                      {item.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              {/* Conversion CTA Box */}
-              <Paper elevation={0} sx={{ p: 3.5, borderRadius: 3, background: 'linear-gradient(135deg, #0F172A 0%, #0D9488 100%)', color: '#fff' }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>
-                  Ready to Automate Your FMEAs?
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#E2E8F0', mb: 3, lineHeight: 1.6 }}>
-                  Test FMEApex instantly in our free guest sandbox. Zero setup required.
-                </Typography>
-                <Button
-                  variant="contained"
-                  fullWidth
+            {/* High-Impact Sandbox Conversion Card with Slap Cap */}
+            <div className="rounded-[24px] bg-white border border-[#E5E0D8] p-7 shadow-[0_12px_40px_rgba(0,0,0,0.06)] relative overflow-hidden">
+              <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
+              <h3 className="text-[19px] font-extrabold text-[#18181B] mb-2 ff-heading">
+                Ready to Automate Your FMEA?
+              </h3>
+              <p className="text-[13.5px] text-[#52525B] leading-relaxed mb-6">
+                Explore the AIAG-VDA 7-step quality workspace instantly in our guest sandbox. Pre-loaded with automotive assembly lines.
+              </p>
+              <div className="relative inline-flex w-full items-center">
+                <button
                   onClick={() => navigate('/login')}
-                  endIcon={<ArrowForward />}
-                  sx={{ bgcolor: '#fff', color: '#0F172A', fontWeight: 700, '&:hover': { bgcolor: '#F1F5F9' } }}
+                  className="w-full h-11 rounded-full bg-[#FF682C] hover:bg-[#E05219] text-white text-[13.5px] font-semibold transition-all shadow-[0_4px_14px_rgba(255,104,44,0.35)] flex items-center justify-center gap-2"
                 >
-                  Start Free Trial
-                </Button>
-              </Paper>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+                  <span>Launch Free Sandbox</span>
+                  <span>→</span>
+                </button>
+                <span className="absolute -top-2 -right-1 px-2 py-0.5 rounded-md bg-[#18181B] text-white border border-white text-[9px] font-mono font-black uppercase shadow-xs transform rotate-[8deg] pointer-events-none">
+                  FREE
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <SiteFooter />
+    </div>
   );
 };
+
+export default PillarPage;
