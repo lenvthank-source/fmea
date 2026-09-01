@@ -3,72 +3,175 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Page Title -->
-    <title>FMEApex</title>
+    <!-- Primary Title & Verification -->
+    <title>FMEApex — AIAG-VDA 2019 FMEA Quality Intelligence Platform</title>
+    <meta name="title" content="FMEApex — AIAG-VDA 2019 FMEA Quality Intelligence Platform" />
 
-    <!-- Suisse Intl Webfont -->
-    <link href="https://db.onlinewebfonts.com/c/13ab13418f633c1b0516fed6e30bedbc?family=Suisse+Int%27l" rel="stylesheet">
-
-    <!-- Google Fonts: Inter, Plus Jakarta Sans, DM Mono -->
+    <!-- Fonts: Inter, Plus Jakarta Sans, DM Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link href="https://db.onlinewebfonts.com/c/13ab13418f633c1b0516fed6e30bedbc?family=Suisse+Int%27l" rel="stylesheet">
 
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Enterprise AI Quality Risk Platform for Automotive, Aerospace, and Medical Manufacturing. AIAG-VDA 7-step FMEA, PFD-PFMEA linking, 21 CFR Part 11 audit trails." />
-    <meta name="keywords" content="FMEA, PFMEA, DFMEA, PFD, Control Plan, AIAG-VDA, quality risk, failure mode, risk analysis, AI copilot, 21 CFR Part 11, corrective actions, process flow diagram, IATF 16949" />
-    <meta name="author" content="FMEApex" />
-    <meta name="robots" content="index, follow" />
+    <!-- SEO Meta Tags (Google, Bing & AI Search Engines) -->
+    <meta name="description" content="FMEApex is an enterprise quality platform automating AIAG-VDA 2019 7-step FMEA, bidirectional PFD ↔ PFMEA linking, Control Plan synchronization, and 21 CFR Part 11 immutable audit trails. Free guest sandbox available." />
+    <meta name="keywords" content="AIAG-VDA 2019 FMEA, PFMEA software, DFMEA platform, Process Flow Diagram PFD, Control Plan synchronization, Action Priority AP calculator, 21 CFR Part 11 audit trails, IATF 16949 quality standard, AI FMEA copilot, manufacturing quality operating system, AS9100 FMEA, ISO 13485 medical device FMEA" />
+    <meta name="author" content="FMEApex Inc." />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://fmeapex.online/" />
+
+    <!-- AI Engine & Machine-Readable Declarations -->
+    <meta name="ai-content-declaration" content="human-directed-engineering" />
+    <link rel="help" href="https://fmeapex.online/llms.txt" type="text/plain" title="LLM Machine-Readable Summary" />
+    <link rel="sitemap" type="application/xml" href="https://fmeapex.online/sitemap.xml" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://fmeapex.online/" />
-    <meta property="og:title" content="FMEApex" />
-    <meta property="og:description" content="Enterprise AI Quality Risk Platform for Automotive, Aerospace, and Medical Manufacturing." />
-    <meta property="og:site_name" content="FMEApex" />
+    <meta property="og:title" content="FMEApex — AIAG-VDA 2019 FMEA Quality Intelligence Platform" />
+    <meta property="og:description" content="Automate AIAG-VDA 2019 7-Step FMEA workflows, bidirectional PFD-PFMEA linking, Control Plan sync, and 21 CFR Part 11 immutable audit trails for mission-critical manufacturing." />
+    <meta property="og:site_name" content="FMEApex Quality Intelligence" />
     <meta property="og:image" content="https://fmeapex.online/favicon.svg" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FMEApex" />
-    <meta name="twitter:description" content="Enterprise AI Quality Risk Platform for Automotive, Aerospace, and Medical Manufacturing." />
+    <meta name="twitter:url" content="https://fmeapex.online/" />
+    <meta name="twitter:title" content="FMEApex — AIAG-VDA 2019 FMEA Quality Intelligence Platform" />
+    <meta name="twitter:description" content="Automate AIAG-VDA 2019 7-Step FMEA workflows, bidirectional PFD-PFMEA linking, and 21 CFR Part 11 audit trails." />
     <meta name="twitter:image" content="https://fmeapex.online/favicon.svg" />
 
-    <!-- JSON-LD Structured Data Graph -->
+    <!-- JSON-LD Structured Data Graph for Traditional & AI Search (Perplexity, ChatGPT, Google AI Overviews) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Organization",
-          "name": "FMEApex",
+          "@id": "https://fmeapex.online/#organization",
+          "name": "FMEApex Inc.",
           "url": "https://fmeapex.online/",
-          "logo": "https://fmeapex.online/favicon.svg",
-          "description": "Enterprise AI Quality Risk Platform for Automotive, Aerospace, and Medical Manufacturing."
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://fmeapex.online/favicon.svg",
+            "width": "64",
+            "height": "64"
+          },
+          "description": "Enterprise AI Quality Risk Platform for Automotive (IATF 16949), Aerospace (AS9100), and Medical Device (ISO 13485) Manufacturing.",
+          "email": "quality@fmeapex.online",
+          "knowsAbout": [
+            "AIAG-VDA 2019 7-Step FMEA Methodology",
+            "Process Failure Mode and Effects Analysis (PFMEA)",
+            "Design Failure Mode and Effects Analysis (DFMEA)",
+            "Process Flow Diagram (PFD) to PFMEA Bidirectional Linking",
+            "Dynamic Control Plan (CP) Synchronization",
+            "Action Priority (AP) Calculation",
+            "21 CFR Part 11 Electronic Signatures & Immutable Audit Trails",
+            "IATF 16949 Quality Management Standard",
+            "Automated Corrective Actions Lifecycle"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://fmeapex.online/#website",
+          "url": "https://fmeapex.online/",
+          "name": "FMEApex",
+          "description": "The modern operating system for manufacturing quality risk intelligence.",
+          "publisher": { "@id": "https://fmeapex.online/#organization" },
+          "inLanguage": "en"
         },
         {
           "@type": "SoftwareApplication",
-          "name": "FMEApex",
+          "@id": "https://fmeapex.online/#software",
+          "name": "FMEApex Quality Platform",
           "applicationCategory": "BusinessApplication",
-          "description": "AI-powered FMEA quality risk platform with AIAG-VDA 7-step compliance, PFD-PFMEA linking, and 21 CFR Part 11 audit trails.",
-          "operatingSystem": "Web Browser",
+          "operatingSystem": "Web Browser, Cloud SaaS, Docker On-Premise",
           "url": "https://fmeapex.online/",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "description": "15-day free guest access"
-          },
+          "softwareVersion": "0.5.2",
+          "description": "Automated AIAG-VDA 2019 7-step FMEA software with bidirectional PFD-PFMEA linking, Control Plan synchronization, AI vector copilot, and 21 CFR Part 11 compliance.",
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Guest Sandbox",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Instant free guest sandbox session with pre-populated manufacturing lines."
+            },
+            {
+              "@type": "Offer",
+              "name": "Quality Engineering Team",
+              "price": "49",
+              "priceCurrency": "USD",
+              "billingDuration": "P1M",
+              "description": "Dedicated tenant isolation with AI Copilot vector RAG and Control Plan sync."
+            },
+            {
+              "@type": "Offer",
+              "name": "Enterprise On-Prem",
+              "price": "Custom",
+              "priceCurrency": "USD",
+              "description": "Self-hosted Docker deployment behind corporate firewall with 21 CFR Part 11 locks."
+            }
+          ],
           "featureList": [
-            "AIAG-VDA 7-Step FMEA Workflow",
-            "PFD-PFMEA Bidirectional Linking",
-            "AI Copilot Suggestions",
-            "Control Plan Synchronization",
-            "Corrective Action Lifecycle Tracking",
-            "21 CFR Part 11 Audit-Ready Revisions"
+            "AIAG-VDA 2019 7-Step Gating Workflow",
+            "Deterministic Action Priority (High, Medium, Low) Lookup",
+            "PFD ↔ PFMEA Bidirectional Linking & Orphan Detection",
+            "Dynamic Control Plan Generation and Real-Time Sync",
+            "Closed-Loop Corrective Actions with R2 Evidence Storage",
+            "21 CFR Part 11 Electronic Signatures and Locked Revisions",
+            "Tenant-Isolated Vector RAG AI Quality Copilot"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://fmeapex.online/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is FMEApex?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "FMEApex is an enterprise manufacturing quality intelligence platform that automates AIAG-VDA 2019 FMEA workflows, enforces bidirectional Process Flow Diagram (PFD) to PFMEA synchronization, dynamically compiles Control Plans, and guarantees 21 CFR Part 11 compliant audit trails."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does FMEApex implement the AIAG-VDA 2019 7-step FMEA methodology?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "FMEApex enforces strict prerequisite step gating across all 7 steps: Planning (5Ts), Structure Analysis, Function Analysis, Failure Analysis, Risk Analysis (S/O/D ratings), Optimization (High-AP corrective actions), and Documentation (signed locked revision). A step cannot start until its predecessor is completed."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does PFD to PFMEA bidirectional linking work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "FMEApex links every operation in the Process Flow Diagram directly to corresponding PFMEA analysis rows. Modifying process steps automatically updates linked PFMEA rows, while orphan process detection prevents uninspected operations from reaching the shop floor."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is FMEApex compliant with 21 CFR Part 11?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. FMEApex enforces FDA 21 CFR Part 11 through role-segregated approval workflows (creator cannot review or approve), immutable locked revisions, and cryptographic audit logs where database constraints permanently reject UPDATE and DELETE operations."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I try FMEApex for free without creating an account?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. FMEApex offers an instant Guest Sandbox accessible with one click at https://fmeapex.online/login. It initializes a pre-configured quality workspace with automotive assembly lines, PFD diagrams, and PFMEA matrices."
+              }
+            }
           ]
         }
       ]

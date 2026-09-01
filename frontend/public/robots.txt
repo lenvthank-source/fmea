@@ -1,25 +1,72 @@
+# FMEApex Robots Configuration
+# Permitting Search Engines and AI Answer Engines (ChatGPT, Perplexity, Claude, Gemini, Copilot)
+
 User-agent: *
 Allow: /
 Disallow: /app/
 
-# AI Crawlers & Search Assistants (Permitted for Citations & Discovery)
+# OpenAI Crawlers (ChatGPT Search & AI Citations)
 User-agent: GPTBot
 Allow: /
+Disallow: /app/
 
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /app/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /app/
+
+# Perplexity AI Crawler (Perplexity.ai Answer Engine)
 User-agent: PerplexityBot
 Allow: /
+Disallow: /app/
 
+# Anthropic Claude Crawlers
 User-agent: ClaudeBot
 Allow: /
+Disallow: /app/
 
 User-agent: anthropic-ai
 Allow: /
+Disallow: /app/
 
+# Google Gemini & Google AI Overviews
 User-agent: Google-Extended
 Allow: /
+Disallow: /app/
 
+User-agent: Googlebot
+Allow: /
+Disallow: /app/
+
+# Microsoft Copilot & Bingbot
 User-agent: Bingbot
 Allow: /
+Disallow: /app/
 
-# Machine-Readable Context & Sitemaps
+# Apple Intelligence
+User-agent: Applebot
+Allow: /
+Disallow: /app/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /app/
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /app/
+
+# Cohere AI
+User-agent: Cohere-ai
+Allow: /
+Disallow: /app/
+
+# Sitemaps & Machine-Readable AI Context
 Sitemap: https://fmeapex.online/sitemap.xml
+# AI Context Summary: https://fmeapex.online/llms.txt
+# AI Full Documentation: https://fmeapex.online/llms-full.txt
+# Machine-Readable Pricing: https://fmeapex.online/pricing.md

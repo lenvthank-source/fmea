@@ -1,11 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="apexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0D9488" />
-      <stop offset="100%" stop-color="#2563eb" />
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#24242A" />
+      <stop offset="100%" stop-color="#141416" />
     </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF783E" />
+      <stop offset="100%" stop-color="#FF5216" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#FF682C" flood-opacity="0.4" />
+    </filter>
   </defs>
-  <rect width="32" height="32" rx="8" fill="url(#apexGrad)" />
-  <path d="M9 9 h12 v3 h-9 v4 h8 v3 h-8 v5 h-3 z" fill="#ffffff" />
-  <path d="M23 24 l-4.5 -6.5 l4.5 -6.5" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+  <!-- Rounded Squircle Canvas -->
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)" stroke="#3E3E48" stroke-width="1.5" />
+  
+  <!-- Bold Geometric 'F' Lettermark -->
+  <path d="M16 16 h24 v7 h-16 v8 h13 v7 h-13 v14 h-8 z" fill="#FFFFFF" />
+  
+  <!-- Ventriloc Signature Electric Orange Accent Slash -->
+  <path d="M44 14 l-6 36 h7 l6 -36 z" fill="url(#orangeGrad)" filter="url(#glow)" />
 </svg>

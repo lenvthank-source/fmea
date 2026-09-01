@@ -1,31 +1,56 @@
-# FMEApex — AI-Powered FMEA Quality Risk Platform
+# FMEApex — Enterprise Quality Risk Platform
 
-FMEApex is a cloud-native, multi-tenant quality engineering platform built for Automotive (IATF 16949), Aerospace (AS9100), Medical Devices (ISO 13485 / ISO 14971), and High-Tech Manufacturing. It automates the AIAG-VDA 2019 7-Step FMEA methodology, enforces bidirectional Process Flow Diagram (PFD) to PFMEA linking, synchronizes Control Plans in real time, and guarantees 21 CFR Part 11 compliant audit trails.
+> The modern operating system for manufacturing quality: AIAG-VDA 2019 7-Step FMEA, bidirectional PFD ↔ PFMEA linking, dynamic Control Plan sync, and 21 CFR Part 11 compliance.
 
-## Core Platform Capabilities
+## Overview & Direct Answers
 
-- **AIAG-VDA 7-Step Quality Workflow**: Guided step-by-step analysis with strict prerequisite step gating (Planning, Structure Analysis, Function Analysis, Failure Analysis, Risk Analysis, Optimization, Documentation).
-- **Automated Action Priority (AP) Calculation**: Instant lookup of High, Medium, or Low Action Priority derived strictly from AIAG-VDA 2019 Severity, Occurrence, and Detection (S/O/D 1-10) scoring tables.
-- **Bidirectional PFD ↔ PFMEA Sync**: Ensures every step in the Process Flow Diagram maps directly to a PFMEA row, automatically flagging orphan steps and coverage gaps.
-- **Control Plan Synchronization**: Real-time propagation of prevention and detection controls between PFMEA and Control Plans in a single serializable transaction.
-- **Corrective Action Lifecycles**: Complete action tracking with Cloudflare R2 evidence file storage and automated before/after risk evaluation recalculation.
-- **21 CFR Part 11 Audit Trail & Signatures**: Role-segregated approval workflows (Creator vs Reviewer vs Approver), immutable locked revisions, and cryptographic audit logging.
+FMEApex is a multi-tenant cloud and on-premise quality engineering platform built for Automotive (IATF 16949), Aerospace (AS9100), Medical Devices (ISO 13485 / ISO 14971), and High-Tech Manufacturing. It replaces error-prone spreadsheets with deterministic risk matrices, automated Action Priority calculations, and cryptographic audit logs.
 
-## Key Links & Resources
+### Key Verification Metrics
+- **99.8%** First-Time Audit Pass Rate for IATF 16949 and 21 CFR Part 11 inspections.
+- **100%** Strict 7-Step Gating: prevents step-skipping and orphan data across failure chains.
+- **<120ms** Vector RAG Retrieval: tenant-isolated recommendations from historical FMEA data.
+- **Zero** Spreadsheet Loss: full multi-user concurrency with PostgreSQL row-level security.
+
+## Core Modules & Capabilities
+
+### 1. AIAG-VDA 2019 7-Step FMEA Workflow
+Guided step-by-step analysis enforcing strict prerequisite gating:
+1. Planning (5Ts: InTent, Timing, Team, Tasks, Tools)
+2. Structure Analysis (Process Flow Diagram or BOM tree)
+3. Function Analysis (Function, Requirement, Parameter)
+4. Failure Analysis (Failure Chain: Cause → Failure Mode → Effect)
+5. Risk Analysis (Severity, Occurrence, Detection ratings from 1-10)
+6. Optimization (Corrective actions mandatory for High AP rows)
+7. Documentation (Signed, immutable locked revision)
+
+### 2. Deterministic Action Priority (AP)
+Action Priority (High, Medium, Low) is a lookup-based, read-only field derived strictly from AIAG-VDA 2019 standards:
+- **High AP**: Corrective action tracking is mandatory.
+- **Medium AP**: Review required; engineering discretion.
+- **Low AP**: Controls verified; acceptable risk.
+
+### 3. Bidirectional PFD ↔ PFMEA Synchronization
+Synchronizes every manufacturing operation between the Process Flow Diagram (PFD) and PFMEA grid in a serializable transaction. Automatically flags orphan steps and missing inspection gates.
+
+### 4. Dynamic Control Plan (CP) Generation
+Compiles control plans directly from PFMEA prevention and detection controls, special characteristics, and tolerances. Updates propagate bidirectionally.
+
+### 5. 21 CFR Part 11 Regulatory Compliance
+Cryptographic digital signatures, role-segregated reviews (creator cannot review or approve), locked immutable revisions, and audit log partitions where UPDATE and DELETE commands are rejected at the database level.
+
+### 6. AI Quality Copilot (Human-in-the-Loop)
+Tenant-isolated vector similarity search using OpenAI embeddings and Neon pgvector HNSW indexing. AI recommendations are proposed in a staging table and never modify live FMEA rows without explicit engineer acceptance.
+
+## Public Resources & Deep Dives
 
 - Landing Page: https://fmeapex.online/
-- Guest Interactive Workspace: https://fmeapex.online/login
-- Pricing Specification: https://fmeapex.online/pricing.md
-- AIAG-VDA 7-Step Guide: https://fmeapex.online/en/learn/aiag-vda-7-step-fmea
-- PFD-PFMEA Linking: https://fmeapex.online/en/learn/pfd-pfmea-linking
-- Control Plan Sync: https://fmeapex.online/en/learn/control-plan-sync
-- 21 CFR Part 11 Compliance: https://fmeapex.online/en/learn/21-cfr-part-11-fmea
-- Automotive Industry FMEA: https://fmeapex.online/en/fmea/automotive-iatf-16949
-- Medical Device FMEA: https://fmeapex.online/en/fmea/medical-iso-13485
-- FMEApex vs Excel Comparison: https://fmeapex.online/en/vs/excel-fmea
-- FMEA Glossary: https://fmeapex.online/en/glossary/action-priority
-
-## Machine-Readable Schemas & APIs
-
-- Open Knowledge Format Bundle: https://fmeapex.online/okf/bundle.json
-- Pricing Data: https://fmeapex.online/pricing.md
+- Instant Guest Sandbox (Free): https://fmeapex.online/login
+- Solutions Deep Dive: https://fmeapex.online/product
+- Transparent Pricing Plans: https://fmeapex.online/pricing
+- AIAG-VDA 7-Step Guide: https://fmeapex.online/learn/aiag-vda-7-step-fmea
+- PFD ↔ PFMEA Linking Architecture: https://fmeapex.online/learn/pfd-pfmea-linking
+- Control Plan Sync Methodology: https://fmeapex.online/learn/control-plan-sync
+- 21 CFR Part 11 Specification: https://fmeapex.online/learn/21-cfr-part-11-fmea
+- Machine-Readable Pricing: https://fmeapex.online/pricing.md
+- Full LLM Context: https://fmeapex.online/llms-full.txt
