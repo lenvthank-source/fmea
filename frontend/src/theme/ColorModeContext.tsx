@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { ThemeProvider, createTheme, type Theme } from '@mui/material/styles';
+import { StyledEngineProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 export type PaletteMode = 'light';
@@ -147,10 +148,12 @@ export const ColorModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   return (
     <ColorModeContext.Provider value={{ mode: 'light', actualMode: 'light', setMode: () => {} }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </StyledEngineProvider>
     </ColorModeContext.Provider>
   );
 };
