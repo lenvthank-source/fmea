@@ -28,14 +28,14 @@ export const RiskCalculatorWidget: React.FC = () => {
   ];
 
   return (
-    <div className="w-full rounded-[24px] bg-white border border-[#E6E1D8] shadow-[0_24px_60px_-24px_rgba(15,23,42,0.18)] p-6 sm:p-10">
-      <div className="flex items-center gap-3 mb-1">
-        <div className="w-9 h-9 rounded-[12px] bg-[#0D9488]/10 flex items-center justify-center">
-          <div className="w-4 h-4 rounded-[4px] bg-[#0D9488]" />
+    <div className="w-full rounded-[28px] bg-white border border-[#E5E0D8] shadow-[0_12px_40px_rgba(0,0,0,0.04)] p-7 sm:p-12">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-9 h-9 rounded-xl bg-[#FF682C]/10 flex items-center justify-center">
+          <div className="w-4 h-4 rounded-sm bg-[#FF682C]" />
         </div>
         <div>
-          <h3 className="text-[18px] font-[650] text-[#0F172A] tracking-[-0.01em]">Interactive risk simulator</h3>
-          <p className="text-[13px] text-[#64748B]">AIAG-VDA Action Priority — live calculation</p>
+          <h3 className="text-[19px] font-extrabold text-[#18181B] tracking-tight">Interactive Action Priority Simulator</h3>
+          <p className="text-[13px] text-[#71717A]">Deterministic AIAG-VDA 2019 AP matrix calculation</p>
         </div>
       </div>
 
@@ -46,10 +46,10 @@ export const RiskCalculatorWidget: React.FC = () => {
             <div key={s.label}>
               <div className="flex items-baseline justify-between mb-1.5">
                 <div>
-                  <span className="text-[14px] font-[650] text-[#0F172A]">{s.label}</span>
-                  <span className="text-[12px] text-[#8A8F98] ml-2 hidden sm:inline">{s.sub}</span>
+                  <span className="text-[14.5px] font-bold text-[#18181B]">{s.label}</span>
+                  <span className="text-[12px] text-[#71717A] ml-2 hidden sm:inline">{s.sub}</span>
                 </div>
-                <span className="text-[15px] font-[650] text-[#0F172A] tabular-nums">{s.value}<span className="text-[#8A8F98] font-[500]">/10</span></span>
+                <span className="text-[15px] font-extrabold text-[#18181B] font-mono tabular-nums">{s.value}<span className="text-[#A1A1AA] font-normal">/10</span></span>
               </div>
               <input
                 type="range" min={1} max={10} step={1}
@@ -58,50 +58,49 @@ export const RiskCalculatorWidget: React.FC = () => {
                 className="fmea-range"
                 aria-label={`${s.label} slider`}
               />
-              <p className="text-[12px] text-[#8A8F98] mt-1.5">{s.hint}</p>
+              <p className="text-[11.5px] text-[#71717A] mt-1.5 font-medium">{s.hint}</p>
             </div>
           ))}
         </div>
 
         {/* Result cards */}
-        <div className="space-y-4">
+        <div className="space-y-5 flex flex-col justify-between">
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-[16px] border border-[#E6E1D8] bg-[#FAF9F6] p-5 text-center">
-              <span className="text-[11px] font-[650] uppercase tracking-[0.1em] text-[#8A8F98]">Current state</span>
+            <div className="rounded-2xl border border-[#E5E0D8] bg-[#FAF9F6] p-5 text-center shadow-xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-[#71717A]">Initial State</span>
               <div className="mt-3">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-[650] ${before.cls}`}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: before.dot }} />
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-bold ${before.cls}`}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: before.dot }} />
                   {before.ap} AP
                 </span>
               </div>
-              <div className="mt-3 text-[38px] font-[650] text-[#0F172A] leading-none tabular-nums">{rpnBefore}</div>
-              <div className="text-[12px] text-[#8A8F98] mt-1">RPN (S×O×D)</div>
+              <div className="mt-3 text-[36px] font-extrabold text-[#18181B] font-mono leading-none tabular-nums">{rpnBefore}</div>
+              <div className="text-[11.5px] text-[#71717A] mt-1 font-mono">RPN (S×O×D)</div>
             </div>
 
-            <div className="rounded-[16px] border border-[#99E5DA] bg-[#F0FDF9] p-5 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-[10px] bg-[#0D9488] text-white text-[10px] font-[650] uppercase tracking-wide">AI</div>
-              <span className="text-[11px] font-[650] uppercase tracking-[0.1em] text-[#0F766E]">After AI Copilot</span>
+            <div className="rounded-2xl border border-[#FF682C]/30 bg-[#FFF9F5] p-5 text-center relative overflow-hidden shadow-xs">
+              <div className="absolute top-0 right-0 px-2.5 py-0.5 rounded-bl-lg bg-[#FF682C] text-white text-[10px] font-bold uppercase tracking-wider font-mono">AI RAG</div>
+              <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-[#FF682C]">After AI Copilot</span>
               <div className="mt-3">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-[650] ${after.cls}`}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: after.dot }} />
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12.5px] font-bold ${after.cls}`}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: after.dot }} />
                   {after.ap} AP
                 </span>
               </div>
-              <div className="mt-3 text-[38px] font-[650] text-[#0D9488] leading-none tabular-nums">{rpnAfter}</div>
-              <div className="text-[12px] text-[#0F766E] font-[600] mt-1">−{reduction}% risk reduction</div>
+              <div className="mt-3 text-[36px] font-extrabold text-[#FF682C] font-mono leading-none tabular-nums">{rpnAfter}</div>
+              <div className="text-[11.5px] text-[#FF682C] font-bold mt-1 font-mono">−{reduction}% Risk Reduction</div>
             </div>
           </div>
 
-          <p className="text-[12.5px] leading-[1.6] text-[#64748B]">
-            FMEApex suggests corrective actions from a tenant-isolated RAG knowledge base, then recalculates S/O/D and AP automatically after each action closes.
+          <p className="text-[13px] leading-relaxed text-[#71717A]">
+            FMEApex suggests preventive and detection controls from a tenant-isolated vector RAG knowledge base, then recalculates S/O/D and Action Priority automatically.
           </p>
 
           <button
             onClick={() => navigate('/login')}
-            className="w-full btn-ventriloc-dark h-[52px] text-[15px] flex items-center justify-center gap-2"
+            className="w-full h-11 rounded-xl bg-[#18181B] hover:bg-[#000000] text-white text-[13.5px] font-semibold transition-all flex items-center justify-center gap-2 shadow-xs"
           >
-            Try live in the quality workspace
-            <span aria-hidden="true">→</span>
+            <span>Try Live Simulator in Quality Workspace →</span>
           </button>
         </div>
       </div>
