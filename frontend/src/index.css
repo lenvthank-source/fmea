@@ -35,6 +35,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+*:not(input):not(textarea):not([contenteditable="true"]) {
+  caret-color: transparent;
+}
+
 html { scroll-behavior: smooth; }
 
 body {

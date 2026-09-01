@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { SEO } from '../../components/SEO/SEO';
 
@@ -25,7 +25,7 @@ export const Login: React.FC = () => {
       await login(email, password, 'guest-tenant');
       navigate('/app/projects');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Invalid email or password');
     } finally {
       setSignInLoading(false);
     }
@@ -45,137 +45,128 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F7F6F3] text-[#0F172A]">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-[#FAFAFA] text-[#09090B]">
       <SEO
         title="Sign In — FMEApex"
         description="Sign in to your FMEApex workspace or launch the instant guest sandbox."
         canonical="/login"
       />
 
-      {/* Left rail — brand / showcase (desktop) */}
-      <aside className="hidden lg:flex flex-col w-[520px] shrink-0 bg-[#0B1220] text-white p-12 justify-between">
-        <div>
-          <a href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-[10px] bg-[#0D9488] flex items-center justify-center">
-              <span className="text-white font-[650] text-[16px]">F</span>
-            </div>
-            <span className="text-[19px] font-[650] tracking-[-0.02em]">FMEApex</span>
-          </a>
-        </div>
-
-        <div>
-          <p className="text-[11px] font-[650] uppercase tracking-[0.18em] text-[#2DD4BF]">AIAG-VDA 2019 · 21 CFR Part 11</p>
-          <h2 className="mt-4 text-[40px] leading-[1.1] font-[650] tracking-[-0.02em]">
-            Quality engineering, engineered like software.
-          </h2>
-          <p className="mt-5 text-[16px] leading-[1.6] text-[#94A3B8] max-w-[420px]">
-            7-step FMEAs, PFD↔PFMEA linking, Control Plan sync, and an AI copilot that suggests failures, effects, and controls — all inside one audit-ready workspace.
-          </p>
-
-          <div className="mt-10 space-y-4">
-            {[
-              { t: '7-step guided workflow', d: 'Gated steps with automatic Action Priority lookup' },
-              { t: 'PFD ↔ PFMEA sync', d: 'Zero orphan process steps across lines' },
-              { t: 'Immutable audit trail', d: 'Cryptographic signatures, revision locks' },
-            ].map((f) => (
-              <div key={f.t} className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-[#0D9488]/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <div className="w-2 h-2 rounded-full bg-[#2DD4BF]" />
-                </div>
-                <div>
-                  <p className="text-[14.5px] font-[600] text-[#E2E8F0]">{f.t}</p>
-                  <p className="text-[13.5px] text-[#64748B]">{f.d}</p>
-                </div>
-              </div>
-            ))}
+      <div className="w-full max-w-[420px] flex flex-col items-center">
+        {/* Brand Logo Header */}
+        <Link to="/" className="flex items-center gap-2 mb-8 group">
+          <div className="flex items-center tracking-[-0.03em] font-extrabold text-[26px] text-[#09090B]">
+            <span>fmeapex</span>
+            <span className="w-2.5 h-6 bg-[#FF682C] ml-1 rounded-sm transform skew-x-[-14deg] group-hover:scale-y-110 transition-transform" />
           </div>
-        </div>
+          <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold pl-2 border-l border-[#E4E4E7]">
+            Quality Platform
+          </span>
+        </Link>
 
-        <p className="text-[12px] text-[#475569]">© 2026 FMEApex. Quality Engineered To Evolve.</p>
-      </aside>
+        {/* Main Authentication Card */}
+        <div className="w-full bg-[#FFFFFF] rounded-2xl border border-[#E4E4E7] p-7 sm:p-9 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+          <div className="text-center mb-6">
+            <h1 className="text-[22px] font-bold text-[#09090B] tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-[13.5px] text-[#71717A] mt-1">
+              Enter your credentials or launch an instant guest sandbox.
+            </p>
+          </div>
 
-      {/* Right column — form */}
-      <main className="flex-1 flex items-center justify-center px-6 py-14">
-        <div className="w-full max-w-[440px]">
-          {/* Mobile brand */}
-          <a href="/" className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="w-8 h-8 rounded-[10px] bg-[#0F172A] flex items-center justify-center">
-              <span className="text-white font-bold text-[15px]">F</span>
+          {error && (
+            <div className="mb-5 p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[13px] text-[#B91C1C] flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{error}</span>
             </div>
-            <span className="text-[19px] font-[650] tracking-[-0.02em]">FMEApex</span>
-          </a>
+          )}
 
-          <div className="bg-white rounded-[20px] border border-[#E6E1D8] p-8 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.15)]">
-            <h1 className="text-[24px] font-[650] tracking-[-0.01em]">Sign in</h1>
-            <p className="text-[14px] text-[#64748B] mt-1">Use your work email, or launch the shared sandbox.</p>
-
-            {error && (
-              <div className="mt-5 px-4 py-3 rounded-[10px] bg-[#FEF2F2] border border-[#FCA5A5] text-[13.5px] text-[#B91C1C]">
-                {error}
-              </div>
+          {/* Instant Guest Sandbox Access */}
+          <button
+            onClick={handleGuestAccess}
+            disabled={guestLoading || signInLoading}
+            className="w-full h-11 rounded-xl bg-[#09090B] hover:bg-[#27272A] disabled:opacity-50 text-white text-[13.5px] font-semibold transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            {guestLoading ? (
+              <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <span className="text-[#FF682C]">⚡</span>
+                <span>Launch Instant Guest Sandbox</span>
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-white/20 text-white font-mono uppercase">Free</span>
+              </>
             )}
+          </button>
 
-            {/* Guest sandbox */}
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-[#E4E4E7]" />
+            <span className="text-[10.5px] font-semibold font-mono uppercase tracking-wider text-[#A1A1AA]">
+              or continue with email
+            </span>
+            <div className="flex-1 h-px bg-[#E4E4E7]" />
+          </div>
+
+          {/* Email / Password Form */}
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <div>
+              <label className="block text-[12.5px] font-semibold text-[#09090B] mb-1.5">
+                Work Email
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="engineer@manufacturer.com"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#E4E4E7] bg-white text-[14px] text-[#09090B] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#09090B]/10 focus:border-[#09090B] transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[12.5px] font-semibold text-[#09090B] mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#E4E4E7] bg-white text-[14px] text-[#09090B] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#09090B]/10 focus:border-[#09090B] transition-all"
+              />
+            </div>
+
             <button
-              onClick={handleGuestAccess}
-              disabled={guestLoading || signInLoading}
-              className="mt-6 w-full h-[50px] rounded-[12px] bg-[#0D9488] hover:bg-[#0F766E] disabled:opacity-50 text-white text-[14.5px] font-[600] transition-colors flex items-center justify-center gap-2"
+              type="submit"
+              disabled={signInLoading || guestLoading}
+              className="w-full h-11 rounded-xl bg-[#FF682C] hover:bg-[#E05219] disabled:opacity-50 text-white text-[14px] font-semibold transition-all shadow-sm flex items-center justify-center gap-2 mt-2"
             >
-              {guestLoading ? (
+              {signInLoading ? (
                 <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
-                'Launch guest sandbox (no signup)'
+                'Sign In to Workspace →'
               )}
             </button>
+          </form>
 
-            <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-[#E6E1D8]" />
-              <span className="text-[11px] font-[600] uppercase tracking-[0.08em] text-[#94A3B8]">or continue with email</span>
-              <div className="flex-1 h-px bg-[#E6E1D8]" />
-            </div>
-
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div>
-                <label className="block text-[13px] font-[600] text-[#334155] mb-1.5">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className="w-full h-[48px] px-4 rounded-[12px] border border-[#D8D3C8] bg-white text-[14.5px] placeholder:text-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#0D9488]/25 focus:border-[#0D9488] transition"
-                />
-              </div>
-              <div>
-                <label className="block text-[13px] font-[600] text-[#334155] mb-1.5">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full h-[48px] px-4 rounded-[12px] border border-[#D8D3C8] bg-white text-[14.5px] placeholder:text-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#0D9488]/25 focus:border-[#0D9488] transition"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={signInLoading || guestLoading}
-                className="w-full h-[50px] rounded-[12px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white text-[14.5px] font-[600] transition-colors flex items-center justify-center"
-              >
-                {signInLoading ? (
-                  <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                ) : (
-                  'Sign in'
-                )}
-              </button>
-            </form>
+          {/* Compliance Tag */}
+          <div className="mt-6 pt-4 border-t border-[#F4F4F5] text-center text-[11px] font-mono text-[#A1A1AA]">
+            <span>21 CFR Part 11 Compliant · Row-Level Tenant Security</span>
           </div>
-
-          <p className="text-center text-[13px] text-[#8A8F98] mt-6">
-            <a href="/" className="hover:text-[#0D9488] transition-colors">← Back to fmeapex.online</a>
-          </p>
         </div>
-      </main>
+
+        {/* Back Link */}
+        <div className="mt-6 text-center">
+          <Link
+            to="/"
+            className="text-[13px] text-[#71717A] hover:text-[#09090B] font-medium transition-colors"
+          >
+            ← Back to FMEApex Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

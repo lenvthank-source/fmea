@@ -11,7 +11,7 @@ import {
   Add as AddIcon, MoreVert as MoreVertIcon, Delete as DeleteIcon, Edit as EditIcon,
   GridView as GridIcon, ViewList as ListIcon, ContentCopy as ContentCopyIcon,
   CheckCircle as CheckCircleIcon, Security as ShieldCheckIcon, TrendingUp as TrendingUpIcon,
-  Download as DownloadIcon, Search as SearchIcon, Bolt as BoltIcon, HistoryEdu as AuditIcon,
+  Search as SearchIcon, Bolt as BoltIcon, HistoryEdu as AuditIcon,
   Layers as LayersIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
@@ -586,26 +586,6 @@ export const ProjectList: React.FC = () => {
         </Box>
 
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-          <Button 
-            variant="outlined" 
-            startIcon={<DownloadIcon fontSize="small" />}
-            onClick={() => navigate('/app/reports')}
-            sx={{ 
-              borderRadius: '8px', 
-              height: 38, 
-              px: 2, 
-              fontWeight: 600, 
-              textTransform: 'none', 
-              fontSize: '0.825rem',
-              borderColor: '#e4e4e7',
-              color: '#09090b',
-              bgcolor: '#ffffff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
-            }}
-          >
-            Download Overview
-          </Button>
           <Button 
             variant="contained" 
             startIcon={<AddIcon fontSize="small" />} 

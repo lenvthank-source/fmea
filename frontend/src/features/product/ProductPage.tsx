@@ -36,7 +36,7 @@ export const ProductPage: React.FC = () => {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="pt-[120px] pb-16 px-5 sm:px-8 lg:px-12">
+      <section className="pt-10 sm:pt-14 pb-16 px-5 sm:px-8 lg:px-12">
         <div className="max-w-[1200px] mx-auto grid lg:grid-cols-2 gap-14 items-center">
           <div>
             <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
