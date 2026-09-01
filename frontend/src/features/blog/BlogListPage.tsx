@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
+import { SiteHeader } from '../../components/site/SiteHeader';
+import { SiteFooter } from '../../components/site/SiteFooter';
 import { API_BASE_URL } from '../../config';
 
 type Post = { slug: string; title: string; excerpt: string; date: string; badge: string; author: string; };
@@ -35,131 +37,68 @@ export const BlogListPage: React.FC = () => {
   const filtered = posts.filter(p => !q || p.title.toLowerCase().includes(q.toLowerCase()) || p.excerpt.toLowerCase().includes(q.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[#080A19] text-white font-sans antialiased">
+    <div className="bg-[#F7F6F3] min-h-screen">
       <SEO
         title="Blog — FMEApex | Quality, AI, Automotive"
-        description="FMEApex blog — headless CMS (n8n automate POST /cms/blog/publish), BlogPosting JSON-LD, sitemap indexed."
+        description="FMEApex blog — headless CMS. Product updates, engineering deep-dives, automotive compliance."
         canonical="/blog"
         jsonLd={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'FMEApex Blog', url: 'https://fmeapex.online/blog' }}
       />
+      <SiteHeader />
 
-      {/* Hero Section */}
-      <section className="relative w-full min-h-[60vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080A19] via-[#080A19] to-[#050505] z-0" />
-        <div className="relative z-10 w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px] py-20">
-          <div className="max-w-[720px] mx-auto text-center">
-            <h1 className="text-white text-[36px] sm:text-[48px] md:text-[56px] lg:text-[64px] font-normal leading-[1.05] tracking-[-0.02em] mb-6">
-              Blog
-            </h1>
-            <p className="text-white/50 text-[16px] sm:text-[18px] md:text-[20px] font-[450] leading-[1.5] max-w-[640px] mx-auto mb-8">
-              Headless CMS <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">POST /cms/blog/publish</code> → <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">n8n</code> automation. Fallback 3 posts seed until first publish.
-            </p>
-            <div className="relative max-w-[400px] mx-auto">
-              <input
-                type="text"
-                placeholder="Search posts…"
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                className="w-full h-[52px] px-6 pl-12 bg-[#050505] border border-white/[0.08] rounded-[14px] text-white placeholder-white/30 text-[14px] font-[450] focus:outline-none focus:border-[#0D9488] focus:ring-1 focus:ring-[#0D9488] transition-all"
-              />
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" strokeWidth="2" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" />
-              </svg>
-            </div>
+      {/* Hero */}
+      <section className="pt-[120px] pb-14 px-5 sm:px-8 lg:px-12">
+        <div className="max-w-[680px] mx-auto text-center">
+          <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
+            Blog
+          </span>
+          <h1 className="mt-5 text-[40px] sm:text-[52px] leading-[1.05] font-[650] tracking-[-0.02em] text-[#0F172A]">
+            Ideas for quality engineers.
+          </h1>
+          <p className="mt-4 text-[16px] text-[#5B6470] max-w-[500px] mx-auto">
+            Shipping notes, engineering deep-dives, and what we learn running FMEAs at scale.
+          </p>
+
+          <div className="relative max-w-[420px] mx-auto mt-8">
+            <input
+              type="text"
+              placeholder="Search posts…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-full h-[48px] pl-11 pr-4 rounded-[12px] border border-[#D8D3C8] bg-white text-[14.5px] placeholder:text-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 focus:border-[#0D9488] transition"
+            />
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#A8A29E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" strokeWidth="2" />
+              <path d="m21 21-4.35-4.35" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </div>
         </div>
       </section>
 
-      {/* Posts Grid */}
-      <section className="bg-[#050505] py-24 sm:py-32 border-y border-white/[0.07]">
-        <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[20px] sm:gap-[24px]">
-            {filtered.map((p, i) => (
-              <Link
-                key={p.slug}
-                to={`/blog/${p.slug}`}
-                className={`
-                  relative p-8 rounded-[24px] sm:rounded-[28px]
-                  bg-[#0d0d0d] border border-white/[0.09]
-                  transition-all duration-300 ease-out
-                  hover:border-[#0D9488] hover:bg-[#121212] hover:-translate-y-[4px]
-                  block h-full flex flex-col
-                `}
-                style={{ transitionDelay: `${i * 60}ms` }}
-              >
-                <span className="inline-block px-3 py-1.5 rounded-[8px] bg-[#0D9488]/15 text-[#0D9488] font-[450] text-[11px] sm:text-[12px] uppercase tracking-[0.05em] mb-4 w-fit">
-                  {p.badge}
-                </span>
-                <h3 className="text-white font-[450] text-[16px] sm:text-[17px] leading-[1.3] mb-2 flex-1">
-                  {p.title}
-                </h3>
-                <p className="text-white/50 text-[13px] leading-[1.55] mb-3 flex-1">
-                  {p.excerpt}
-                </p>
-                <p className="text-white/40 text-[11px] sm:text-[12px] font-[450]">
-                  {p.date} · {p.author}
-                </p>
-              </Link>
-            ))}
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-white/50 text-[15px] font-[450]">No posts found matching "{q}"</p>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-4 justify-center mt-12">
+      {/* Posts */}
+      <section className="pb-24 px-5 sm:px-8 lg:px-12">
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.map((p) => (
             <Link
-              to="/learn"
-              className="h-[52px] px-8 border border-white/[0.15] rounded-[14px] text-white/70 font-[450] text-[15px] transition-colors hover:border-[#0D9488] hover:text-white hover:bg-white/[0.03] flex items-center justify-center"
+              key={p.slug}
+              to={`/blog/${p.slug}`}
+              className="group rounded-[18px] border border-[#E6E1D8] bg-white p-6 flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_44px_-16px_rgba(15,23,42,0.14)] hover:border-[#0D9488]/30 transition-all h-full"
             >
-              Learn Hub
-            </Link>
-            <Link
-              to="/product"
-              className="h-[52px] px-8 bg-[#E9E9E9] text-[#0A0707] rounded-[14px] font-[450] text-[15px] transition-colors hover:bg-white flex items-center justify-center"
-            >
-              Product
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#050505] border-t border-white/[0.06] py-14">
-        <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div>
-              <span className="font-[800] text-[18px] sm:text-[20px] bg-gradient-to-r from-[#0D9488] to-[#2563eb] bg-clip-text text-transparent">
-                FMEApex
+              <span className="inline-block self-start px-2.5 py-1 rounded-md bg-[#F0FDF9] border border-[#99E5DA] text-[#0D9488] text-[10.5px] font-[650] uppercase tracking-[0.06em] mb-3">
+                {p.badge}
               </span>
-              <p className="text-white/50 text-[12px] font-[450] mt-1">Quality Engineered To Evolve</p>
-            </div>
-            <nav className="flex flex-wrap gap-6 sm:gap-10 justify-center">
-              {[
-                { label: 'Product', to: '/product' },
-                { label: 'Learn', to: '/learn' },
-                { label: 'Blog', to: '/blog' },
-                { label: 'Pricing', to: '/pricing' },
-                { label: 'About', to: '/about' },
-              ].map(l => (
-                <Link
-                  key={l.label}
-                  to={l.to}
-                  className="text-white/50 font-[450] text-[12px] sm:text-[13px] hover:text-white transition-colors"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-            <p className="text-white/40 text-[11px] font-[450] text-right md:text-right">
-              © 2026 FMEApex. All rights reserved.
-            </p>
-          </div>
+              <h3 className="text-[16.5px] font-[650] text-[#0F172A] leading-[1.3] flex-1 mb-3">{p.title}</h3>
+              <p className="text-[13.5px] leading-[1.55] text-[#5B6470] flex-1 mb-4">{p.excerpt}</p>
+              <p className="text-[12px] text-[#8A8F98]">{p.date} · {p.author}</p>
+            </Link>
+          ))}
         </div>
-      </footer>
+        {filtered.length === 0 && (
+          <p className="text-center text-[14px] text-[#8A8F98] py-16">No posts found matching “{q}”.</p>
+        )}
+      </section>
+
+      <SiteFooter />
     </div>
   );
 };

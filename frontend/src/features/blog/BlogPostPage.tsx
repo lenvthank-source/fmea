@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
+import { SiteHeader } from '../../components/site/SiteHeader';
+import { SiteFooter } from '../../components/site/SiteFooter';
 import { API_BASE_URL } from '../../config';
 
 export const BlogPostPage: React.FC = () => {
@@ -27,10 +29,10 @@ export const BlogPostPage: React.FC = () => {
   const fallback = !post && !loading;
 
   return (
-    <div className="min-h-screen bg-[#080A19] text-white font-sans antialiased">
+    <div className="bg-[#F7F6F3] min-h-screen">
       <SEO
         title={`${title} — FMEApex Blog`}
-        description={post?.excerpt || 'FMEApex blog post — headless CMS.'}
+        description={post?.excerpt || 'FMEApex blog post.'}
         canonical={`/blog/${slug}`}
         jsonLd={{
           '@context': 'https://schema.org',
@@ -40,103 +42,53 @@ export const BlogPostPage: React.FC = () => {
           author: { '@type': 'Organization', name: 'FMEApex' },
         }}
       />
+      <SiteHeader />
 
-      {/* Hero Section */}
-      <section className="relative w-full min-h-[50vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080A19] via-[#080A19] to-[#050505] z-0" />
-        <div className="relative z-10 w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px] py-16">
-          <div className="max-w-[720px] mx-auto text-center">
-            <h1 className="text-white text-[32px] sm:text-[42px] md:text-[48px] font-normal leading-[1.1] tracking-[-0.02em] mb-4">
-              {title}
-            </h1>
-            {post && (
-              <span className="inline-block px-3 py-1.5 rounded-[8px] bg-[#0D9488]/15 text-[#0D9488] font-[450] text-[11px] sm:text-[12px] uppercase tracking-[0.05em] mb-4">
-                {post.badge || 'Blog'}
-              </span>
-            )}
-            <p className="text-white/50 text-[14px] sm:text-[15px] font-[450] leading-[1.5]">
-              {post?.date ? `${post.date} · ${post.author || 'FMEApex Team'}` : 'Headless CMS — POST /cms/blog/publish from n8n'}
-            </p>
-          </div>
+      <section className="pt-[130px] pb-20 px-5 sm:px-8 lg:px-12 bg-white border-b border-[#E6E1D8]">
+        <div className="max-w-[720px] mx-auto">
+          {post?.badge && (
+            <span className="inline-block px-3 py-1.5 rounded-full bg-[#F0FDF9] border border-[#99E5DA] text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.06em] mb-4">
+              {post.badge}
+            </span>
+          )}
+          <h1 className="text-[36px] sm:text-[46px] font-[650] tracking-[-0.02em] leading-[1.12] text-[#0F172A]">
+            {title}
+          </h1>
+          <p className="mt-4 text-[14.5px] text-[#8A8F98]">
+            {post?.date ? `${post.date} · ${post.author || 'FMEApex Team'}` : 'Published via headless CMS'}
+          </p>
         </div>
       </section>
 
-      {/* Article Content */}
-      <section className="bg-[#050505] py-16 sm:py-24 border-y border-white/[0.07]">
-        <div className="w-full max-w-[720px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="rounded-[24px] sm:rounded-[28px] bg-[#0c0c0c] border border-white/[0.09] p-8 sm:p-12">
-            {post ? (
-              <div className="prose prose-invert max-w-none" style={{ lineHeight: 1.7 }}>
-                <div className="text-white/70 text-[15px] sm:text-[16px] font-[450] whitespace-pre-wrap">
-                  {post.content || post.excerpt}
-                </div>
+      <section className="py-16 px-5 sm:px-8 lg:px-12">
+        <div className="max-w-[720px] mx-auto">
+          <article className="rounded-[20px] border border-[#E6E1D8] bg-white p-8 sm:p-12 prose prose-slate max-w-none">
+            {loading ? (
+              <p className="text-[#8A8F98]">Loading…</p>
+            ) : post ? (
+              <div className="text-[#334155] leading-[1.7] text-[16px] whitespace-pre-wrap font-sans">
+                {post.content || post.excerpt}
               </div>
             ) : fallback ? (
-              <div className="text-center py-12">
-                <p className="text-white/50 text-[15px] font-[450] mb-4">
-                  Headless CMS not yet populated for <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">{slug}</code>.
-                </p>
-                <p className="text-white/40 text-[13px] font-[450] mb-6">
-                  Publish via <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">POST /cms/blog/publish</code> (n8n).
-                </p>
-                <Link
-                  to="/blog"
-                  className="inline-flex items-center gap-2 h-[52px] px-8 bg-[#E9E9E9] text-[#0A0707] rounded-[14px] font-[450] text-[15px] transition-colors hover:bg-white"
-                >
-                  ← Back to Blog
-                </Link>
+              <div className="text-center py-8">
+                <p className="text-[#64748B] mb-2">This post hasn’t been published yet.</p>
+                <p className="text-[13px] text-[#94A3B8]">Publish it with <code className="px-1.5 py-0.5 bg-[#F1F5F9] rounded text-[#0D9488] font-mono text-[12px]">POST /cms/blog/publish</code>.</p>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-white/50 text-[15px] font-[450] animate-pulse">Loading…</p>
-              </div>
-            )}
-          </div>
+            ) : null}
+          </article>
 
           <div className="mt-8 text-center">
             <Link
               to="/blog"
-              className="inline-flex items-center gap-2 h-[52px] px-8 border border-white/[0.15] rounded-[14px] text-white/70 font-[450] text-[15px] transition-colors hover:border-[#0D9488] hover:text-white hover:bg-white/[0.03]"
+              className="inline-flex items-center gap-2 h-[46px] px-6 rounded-full border border-[#D8D3C8] text-[14.5px] font-[600] text-[#334155] hover:border-[#0D9488] hover:text-[#0D9488] transition-colors"
             >
-              ← Back to Blog
+              ← Back to all posts
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#050505] border-t border-white/[0.06] py-14">
-        <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div>
-              <span className="font-[800] text-[18px] sm:text-[20px] bg-gradient-to-r from-[#0D9488] to-[#2563eb] bg-clip-text text-transparent">
-                FMEApex
-              </span>
-              <p className="text-white/50 text-[12px] font-[450] mt-1">Quality Engineered To Evolve</p>
-            </div>
-            <nav className="flex flex-wrap gap-6 sm:gap-10 justify-center">
-              {[
-                { label: 'Product', to: '/product' },
-                { label: 'Learn', to: '/learn' },
-                { label: 'Blog', to: '/blog' },
-                { label: 'Pricing', to: '/pricing' },
-                { label: 'About', to: '/about' },
-              ].map(l => (
-                <Link
-                  key={l.label}
-                  to={l.to}
-                  className="text-white/50 font-[450] text-[12px] sm:text-[13px] hover:text-white transition-colors"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-            <p className="text-white/40 text-[11px] font-[450] text-right md:text-right">
-              © 2026 FMEApex. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };

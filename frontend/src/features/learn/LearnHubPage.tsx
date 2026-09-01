@@ -1,101 +1,63 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
+import { SiteHeader } from '../../components/site/SiteHeader';
+import { SiteFooter } from '../../components/site/SiteFooter';
 
 const PILLARS = [
-  { slug: 'aiag-vda-7-step-fmea', title: 'AIAG-VDA 7-Step FMEA', badge: 'Standards', desc: 'Planning → Structure → Function → Failure → Risk → Optimization → Documentation.' },
-  { slug: 'pfd-pfmea-linking', title: 'PFD ↔ PFMEA Linking', badge: 'Linking', desc: 'Bidirectional PFD-PFMEA with orphan warnings and sequence.' },
-  { slug: 'control-plan-sync', title: 'Control Plan Sync', badge: 'Control Plan', desc: 'CP propagation from FMEA controls, serializable.' },
-  { slug: '21-cfr-part-11-fmea', title: '21 CFR Part 11', badge: 'Compliance', desc: 'Digital signatures, immutable audit_log, segregation.' },
+  { slug: 'aiag-vda-7-step-fmea', title: 'AIAG-VDA 7-Step FMEA', badge: 'Standards', desc: 'Planning → Structure → Function → Failure → Risk → Optimization → Documentation. Each step with examples, checklists, and AP lookup tables.' },
+  { slug: 'pfd-pfmea-linking', title: 'PFD ↔ PFMEA Linking', badge: 'Linking', desc: 'Bidirectional sync between process flow and PFMEA. Orphan detection, sequence mismatches, and one-click relink.' },
+  { slug: 'control-plan-sync', title: 'Control Plan Sync', badge: 'Control Plan', desc: 'Generate and propagate control plans from FMEA characteristics. Serializable, revisioned, and audit-ready.' },
+  { slug: '21-cfr-part-11-fmea', title: '21 CFR Part 11', badge: 'Compliance', desc: 'Digital signatures, typed audit logs, reviewer segregation. What regulated industries require from FMEA software.' },
 ];
 
 export const LearnHubPage: React.FC = () => (
-  <div className="min-h-screen bg-[#080A19] text-white font-sans antialiased">
-    <SEO title="Learn — FMEApex Pillar Hub | 7-Step, PFD, Control Plan, 21 CFR" description="Learn hub: 7-step, PFD-PFMEA linking, Control Plan sync, 21 CFR Part 11 — tech articles with TechArticle+FAQ JSON-LD." canonical="/learn" />
+  <div className="bg-[#F7F6F3] min-h-screen">
+    <SEO
+      title="Learn — FMEApex Knowledge Hub"
+      description="Guides on the AIAG-VDA 7-step FMEA, PFD-PFMEA linking, Control Plan sync, and 21 CFR Part 11 compliance."
+      canonical="/learn"
+    />
+    <SiteHeader />
 
-    {/* Hero Section */}
-    <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#080A19] via-[#080A19] to-[#050505] z-0" />
-      <div className="relative z-10 w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px] py-20">
-        <div className="max-w-[720px] mx-auto text-center">
-          <h1 className="text-white text-[36px] sm:text-[48px] md:text-[56px] lg:text-[64px] font-normal leading-[1.05] tracking-[-0.02em] mb-6">
-            Learn Hub
-          </h1>
-          <p className="text-white/50 text-[16px] sm:text-[18px] md:text-[20px] font-[450] leading-[1.5] max-w-[640px] mx-auto">
-            Pillar tech articles — extractable <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">ai-definition-block</code> for Princeton GEO, <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">TechArticle+FAQPage 252</code>.
-          </p>
-        </div>
+    {/* Hero */}
+    <section className="pt-[120px] pb-16 px-5 sm:px-8 lg:px-12">
+      <div className="max-w-[720px] mx-auto text-center">
+        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
+          Learn Hub
+        </span>
+        <h1 className="mt-5 text-[40px] sm:text-[52px] leading-[1.05] font-[650] tracking-[-0.02em] text-[#0F172A]">
+          Master quality risk, step by step.
+        </h1>
+        <p className="mt-5 text-[17px] leading-[1.6] text-[#5B6470] max-w-[580px] mx-auto">
+          Deep-dive guides built with structured JSON-LD and FAQ blocks — engineered for both GIS professionals and AI-powered answers.
+        </p>
       </div>
     </section>
 
-    {/* Pillars Grid */}
-    <section className="bg-[#050505] py-24 sm:py-32 border-y border-white/[0.07]">
-      <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[20px] sm:gap-[24px]">
-          {PILLARS.map((p, i) => (
-            <Link
-              key={p.slug}
-              to={`/learn/${p.slug}`}
-              className={`
-                relative p-8 rounded-[24px] sm:rounded-[28px]
-                bg-[#0d0d0d] border border-white/[0.09]
-                transition-all duration-300 ease-out
-                hover:border-[#0D9488] hover:bg-[#121212] hover:-translate-y-[4px]
-                block
-              `}
-              style={{ transitionDelay: `${i * 60}ms` }}
-            >
-              <span className="inline-block px-3 py-1.5 rounded-[8px] bg-[#0D9488]/15 text-[#0D9488] font-[450] text-[11px] sm:text-[12px] uppercase tracking-[0.05em] mb-4">
-                {p.badge}
-              </span>
-              <h3 className="text-white font-[450] text-[16px] sm:text-[17px] leading-[1.3] mb-2">
-                {p.title}
-              </h3>
-              <p className="text-white/50 text-[13px] leading-[1.55] mb-4">
-                {p.desc}
-              </p>
-              <span className="text-[#0D9488] font-[450] text-[12px] sm:text-[13px] uppercase tracking-[0.05em]">
-                Read →
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    {/* Footer */}
-    <footer className="bg-[#050505] border-t border-white/[0.06] py-14">
-      <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-          <div>
-            <span className="font-[800] text-[18px] sm:text-[20px] bg-gradient-to-r from-[#0D9488] to-[#2563eb] bg-clip-text text-transparent">
-              FMEApex
+    {/* Pillars */}
+    <section className="pb-24 px-5 sm:px-8 lg:px-12">
+      <div className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {PILLARS.map((p) => (
+          <Link
+            key={p.slug}
+            to={`/learn/${p.slug}`}
+            className="group rounded-[20px] border border-[#E6E1D8] bg-white p-8 flex flex-col hover:-translate-y-1 hover:shadow-[0_24px_48px_-16px_rgba(15,23,42,0.14)] hover:border-[#0D9488]/30 transition-all"
+          >
+            <span className="inline-block self-start px-3 py-1 rounded-full bg-[#F0FDF9] border border-[#99E5DA] text-[#0D9488] text-[11px] font-[650] uppercase tracking-[0.06em] mb-4">
+              {p.badge}
             </span>
-            <p className="text-white/50 text-[12px] font-[450] mt-1">Quality Engineered To Evolve</p>
-          </div>
-          <nav className="flex flex-wrap gap-6 sm:gap-10 justify-center">
-            {[
-              { label: 'Product', to: '/product' },
-              { label: 'Learn', to: '/learn' },
-              { label: 'Blog', to: '/blog' },
-              { label: 'Pricing', to: '/pricing' },
-              { label: 'About', to: '/about' },
-            ].map(l => (
-              <Link
-                key={l.label}
-                to={l.to}
-                className="text-white/50 font-[450] text-[12px] sm:text-[13px] hover:text-white transition-colors"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-          <p className="text-white/40 text-[11px] font-[450] text-right md:text-right">
-            © 2026 FMEApex. All rights reserved.
-          </p>
-        </div>
+            <h3 className="text-[20px] font-[650] text-[#0F172A] leading-[1.25] mb-3">{p.title}</h3>
+            <p className="text-[14px] leading-[1.6] text-[#5B6470] flex-1">{p.desc}</p>
+            <span className="mt-6 inline-flex items-center gap-1.5 text-[13.5px] font-[600] text-[#0D9488]">
+              Read the guide <span aria-hidden="true">→</span>
+            </span>
+          </Link>
+        ))}
       </div>
-    </footer>
+    </section>
+
+    <SiteFooter />
   </div>
 );
 export default LearnHubPage;

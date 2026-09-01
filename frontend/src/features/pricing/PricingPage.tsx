@@ -1,23 +1,26 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
+import { SiteHeader } from '../../components/site/SiteHeader';
+import { SiteFooter } from '../../components/site/SiteFooter';
 
 const TIERS = [
   {
     name: 'Preview',
     price: '$0',
-    desc: '10 shared projects, no login, anyone can edit — try at try.fmeapex.online',
-    features: ['Up to 10 projects', 'No login required', 'Shared demo tenant', 'Feedback widget'],
-    cta: 'Try Preview',
+    period: '',
+    desc: 'Shared sandbox, 10 projects, no login required.',
+    features: ['Up to 10 shared projects', 'No login required', 'All modules unlocked', 'Community support'],
+    cta: 'Launch preview',
     to: '/login',
     highlight: false,
   },
   {
     name: 'Team',
     price: '$49',
-    period: '/month',
-    desc: 'Per month, tenant-isolated, 21 CFR ready',
-    features: ['Unlimited projects', 'RBAC 22 perms', 'PFD↔PFMEA + Control Plan', 'R2 evidence 50MB'],
+    period: '/ mo per user',
+    desc: 'Dedicated tenant, RBAC, unlimited projects.',
+    features: ['Unlimited projects', 'Tenant isolation (RLS)', 'PFD ↔ PFMEA + Control Plan', 'AI Copilot with RAG', 'Evidence storage 50 MB/file'],
     cta: 'Start Team',
     to: '/login',
     highlight: true,
@@ -25,9 +28,10 @@ const TIERS = [
   {
     name: 'Enterprise',
     price: 'Custom',
-    desc: 'On-prem Docker, license `exp + maxSeats`, super-admin health/logs',
-    features: ['docker compose up -d', 'License JWT RS256', 'Pino logs + requestId', 'Super-admin Fleet/Health'],
-    cta: 'Contact Sales',
+    period: '',
+    desc: 'On-prem Docker, licensed, with super-admin dashboard.',
+    features: ['One-command docker compose up', 'License JWT (exp + seats)', 'Health & log endpoints', 'Fleet / health panels', 'Priority support'],
+    cta: 'Contact us',
     to: '/about',
     highlight: false,
   },
@@ -37,123 +41,84 @@ export const PricingPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#080A19] text-white font-sans antialiased">
-      <SEO title="Pricing — FMEApex | Preview $0, Team $49, Enterprise Custom" description="FMEApex pricing: Preview $0 (10 projects, no login), Team $49, Enterprise custom on-prem with license." canonical="/pricing" />
+    <div className="bg-[#F7F6F3] min-h-screen">
+      <SEO
+        title="Pricing — FMEApex | Preview $0, Team $49, Enterprise Custom"
+        description="FMEApex pricing: free preview, $49/mo team, enterprise on-prem."
+        canonical="/pricing"
+      />
+      <SiteHeader />
 
-      {/* Hero Section */}
-      <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080A19] via-[#080A19] to-[#050505] z-0" />
-        <div className="relative z-10 w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px] py-20">
-          <div className="max-w-[720px] mx-auto text-center">
-            <h1 className="text-white text-[36px] sm:text-[48px] md:text-[56px] lg:text-[64px] font-normal leading-[1.05] tracking-[-0.02em] mb-6">
-              Pricing — Start Free, Scale to On-Prem
-            </h1>
-            <p className="text-white/50 text-[16px] sm:text-[18px] md:text-[20px] font-[450] leading-[1.5] max-w-[640px] mx-auto">
-              From <code className="bg-[#050505] px-2 py-0.5 rounded-[6px] text-[#0D9488] font-mono text-[12px]">frontend/public/pricing.md</code> Guest $0 5 projects → Preview $0 10 projects shared. One command deploy for enterprise.
-            </p>
-          </div>
+      {/* Hero */}
+      <section className="pt-[120px] pb-14 px-5 sm:px-8 lg:px-12">
+        <div className="max-w-[760px] mx-auto text-center">
+          <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
+            Pricing
+          </span>
+          <h1 className="mt-5 text-[40px] sm:text-[52px] leading-[1.05] font-[650] tracking-[-0.02em] text-[#0F172A]">
+            Start free. Scale to on-prem.
+          </h1>
+          <p className="mt-4 text-[17px] text-[#5B6470] max-w-[520px] mx-auto">
+            Transparent pricing — no per-document fees, no surprise lock-ins.
+          </p>
         </div>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="bg-[#050505] py-24 sm:py-32 border-y border-white/[0.07]">
-        <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-[20px] sm:gap-[24px]">
-            {TIERS.map((t, i) => (
-              <div
-                key={t.name}
-                className={`
-                  relative p-8 rounded-[24px] sm:rounded-[28px]
-                  bg-[#0d0d0d] border ${
-                    t.highlight
-                      ? 'border-[2px] border-[#0D9488]'
-                      : 'border border-white/[0.09]'
-                  }
-                  transition-all duration-300 ease-out
-                  hover:border-[#0D9488] hover:bg-[#121212] hover:-translate-y-[4px]
-                  flex flex-col
-                `}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
-                <div className="mb-4">
-                  <h3 className="text-white text-[20px] sm:text-[22px] font-[450] leading-[1.2] mb-2">
-                    {t.name}
-                  </h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-white text-[42px] sm:text-[48px] font-[450] leading-[1]">
-                      {t.price}
-                    </span>
-                    {t.period && (
-                      <span className="text-white/50 text-[15px] font-[450]">
-                        {t.period}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-white/50 text-[14px] sm:text-[15px] font-[450] leading-[1.5] mb-8 min-h-[48px]">
-                  {t.desc}
-                </p>
-                <ul className="flex-1 mb-8 space-y-3">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3">
-                      <span className="text-[#0D9488] text-[16px] leading-none mt-0.5 shrink-0">•</span>
-                      <span className="text-white/70 text-[13px] sm:text-[14px] font-[450] leading-[1.5]">
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => navigate(t.to)}
-                  className={`
-                    w-full h-[52px] rounded-[14px] font-[450] text-[15px] transition-colors
-                    ${t.highlight
-                      ? 'bg-[#0D9488] text-white hover:bg-[#0f766e]'
-                      : 'bg-[#E9E9E9] text-[#0A0707] hover:bg-white'
-                    }
-                  `}
-                >
-                  {t.cta}
-                </button>
+      {/* Tiers */}
+      <section className="pb-24 px-5 sm:px-8 lg:px-12">
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-5">
+          {TIERS.map((t) => (
+            <div
+              key={t.name}
+              className={`relative rounded-[20px] border p-8 flex flex-col bg-white transition-all ${
+                t.highlight
+                  ? 'border-[#0D9488] shadow-[0_24px_60px_-20px_rgba(13,148,136,0.25)]'
+                  : 'border-[#E6E1D8] hover:shadow-[0_20px_44px_-18px_rgba(15,23,42,0.12)]'
+              }`}
+            >
+              {t.highlight && (
+                <span className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-[#0D9488] text-white text-[11px] font-[650] uppercase tracking-[0.06em]">
+                  Most popular
+                </span>
+              )}
+              <h3 className="text-[20px] font-[650] text-[#0F172A]">{t.name}</h3>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-[44px] font-[650] leading-none text-[#0F172A]">{t.price}</span>
+                {t.period && <span className="text-[14px] text-[#8A8F98]">{t.period}</span>}
               </div>
-            ))}
-          </div>
+              <p className="mt-3 text-[14px] text-[#5B6470] min-h-[44px]">{t.desc}</p>
+
+              <ul className="mt-6 flex-1 space-y-3">
+                {t.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 w-4 h-4 rounded-full bg-[#0D9488]/10 flex items-center justify-center shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488]" />
+                    </span>
+                    <span className="text-[13.5px] leading-[1.5] text-[#334155]">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => navigate(t.to)}
+                className={`mt-8 w-full h-[48px] rounded-[12px] text-[14.5px] font-[600] transition-colors ${
+                  t.highlight
+                    ? 'bg-[#0D9488] text-white hover:bg-[#0F766E]'
+                    : 'bg-[#0F172A] text-white hover:bg-[#1E293B]'
+                }`}
+              >
+                {t.cta}
+              </button>
+            </div>
+          ))}
         </div>
+
+        <p className="text-center text-[13px] text-[#8A8F98] mt-10 max-w-[480px] mx-auto">
+          All prices USD. Enterprise licensing is seat- and project-based — <span className="text-[#0D9488] font-[600]">contact us</span> for a quote.
+        </p>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#050505] border-t border-white/[0.06] py-14">
-        <div className="w-full max-w-[1800px] mx-auto px-5 sm:px-8 md:px-[82px]">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div>
-              <span className="font-[800] text-[18px] sm:text-[20px] bg-gradient-to-r from-[#0D9488] to-[#2563eb] bg-clip-text text-transparent">
-                FMEApex
-              </span>
-              <p className="text-white/50 text-[12px] font-[450] mt-1">Quality Engineered To Evolve</p>
-            </div>
-            <nav className="flex flex-wrap gap-6 sm:gap-10 justify-center">
-              {[
-                { label: 'Product', to: '/product' },
-                { label: 'Learn', to: '/learn' },
-                { label: 'Blog', to: '/blog' },
-                { label: 'Pricing', to: '/pricing' },
-                { label: 'About', to: '/about' },
-              ].map(l => (
-                <a
-                  key={l.label}
-                  href={l.to}
-                  className="text-white/50 font-[450] text-[12px] sm:text-[13px] hover:text-white transition-colors"
-                >
-                  {l.label}
-                </a>
-              ))}
-            </nav>
-            <p className="text-white/40 text-[11px] font-[450] text-right md:text-right">
-              © 2026 FMEApex. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
