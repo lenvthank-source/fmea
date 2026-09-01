@@ -23,6 +23,10 @@ export class AppController {
     };
   }
 
+  getHello(): string {
+    return this.appService.getHello();
+  }
+
   @Get(['health', 'api/v1/health'])
   @Head(['health', 'api/v1/health'])
   @Public()
