@@ -3,10 +3,13 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Chip, IconButton, Alert, Select, MenuItem, Dialog, DialogTitle,
-  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField, Tabs, Tab,
+  DialogContent, DialogActions, FormControl, InputLabel, Stack, Tooltip, TextField,
   Grid, TablePagination, Slider
 } from '@mui/material';
 import {
+  Add as AddIcon,
+  Download as DownloadIcon,
+  InfoOutlined as DetailsIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PlaylistAdd as PlaylistAddIcon,
@@ -15,6 +18,7 @@ import {
   ChevronLeft as LeftIcon,
   ChevronRight as RightIcon,
 } from '@mui/icons-material';
+import { calculateAP } from './utils/apCalculator';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
@@ -1383,43 +1387,143 @@ export const PfmeaWorkspace: React.FC = () => {
         onHeaderLoaded={(p) => setProjectName(p.name)}
       />
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 2 : 0, justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center' }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, val) => setSearchParams({ tab: val })}
-          indicatorColor="primary"
-          textColor="primary"
-        >
-          <Tab value="tree" label="Tree View" sx={{ fontWeight: 'bold' }} />
-          <Tab value="table" label="Report View" sx={{ fontWeight: 'bold' }} />
-        </Tabs>
-        
-        <Stack direction="row" spacing={1.5} sx={{ mt: isMobile ? 1.5 : 0 }}>
+      {/* Space-Optimized Shadcn Top Toolbar */}
+      <Box sx={{ mb: 2.5, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1.5, alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between' }}>
+        {/* Segmented Pill Tabs */}
+        <Box sx={{ display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+          <Box
+            onClick={() => setSearchParams({ tab: 'tree' })}
+            sx={{
+              px: 2,
+              py: 0.75,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 'tree' ? '#ffffff' : 'transparent',
+              color: activeTab === 'tree' ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 'tree' ? 700 : 500,
+              fontSize: '0.8125rem',
+              boxShadow: activeTab === 'tree' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            Tree View
+            <Chip
+              label="STRUCTURE"
+              size="small"
+              sx={{ height: 18, fontSize: '0.625rem', fontWeight: 700, bgcolor: activeTab === 'tree' ? '#f4f4f5' : '#e4e4e7', color: '#09090b' }}
+            />
+          </Box>
+          <Box
+            onClick={() => setSearchParams({ tab: 'table' })}
+            sx={{
+              px: 2,
+              py: 0.75,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 'table' ? '#ffffff' : 'transparent',
+              color: activeTab === 'table' ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 'table' ? 700 : 500,
+              fontSize: '0.8125rem',
+              boxShadow: activeTab === 'table' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            Report View
+            <Chip
+              label={rows.length}
+              size="small"
+              sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: activeTab === 'table' ? '#eff6ff' : '#e4e4e7', color: activeTab === 'table' ? '#2563eb' : '#71717a' }}
+            />
+          </Box>
+        </Box>
+
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button
             variant="contained"
-            color="primary"
-            startIcon={<UploadIcon />}
-            onClick={() => setPfmeaImportOpen(true)}
-            sx={{ fontWeight: 700, textTransform: 'none' }}
+            size="small"
+            onClick={() => setAddDialogOpen(true)}
+            startIcon={<AddIcon fontSize="small" />}
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              px: 1.75,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
           >
-            Import PFMEA
+            Add Analysis Row
           </Button>
-          <Button variant="outlined" color="primary" onClick={() => setExporterOpen(true)}>
-            Export FMEA
+
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setPfmeaImportOpen(true)}
+            startIcon={<UploadIcon fontSize="small" />}
+            sx={{
+              color: '#09090b',
+              borderColor: '#e4e4e7',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              bgcolor: '#ffffff',
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
+            Import Excel
           </Button>
+
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setExporterOpen(true)}
+            startIcon={<DownloadIcon fontSize="small" />}
+            sx={{
+              color: '#09090b',
+              borderColor: '#e4e4e7',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '7px',
+              bgcolor: '#ffffff',
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
+            Export Excel
+          </Button>
+
           {activeTab === 'table' && (
-            <>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleSyncTreeWithTable}
-                disabled={syncingTree}
-              >
-                {syncingTree ? 'Syncing...' : 'Sync Tree'}
-              </Button>
-            </>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSyncTreeWithTable}
+              disabled={syncingTree}
+              sx={{
+                color: '#71717a',
+                borderColor: '#e4e4e7',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '7px',
+                bgcolor: '#ffffff',
+                '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+              }}
+            >
+              {syncingTree ? 'Syncing...' : 'Sync Tree'}
+            </Button>
           )}
-        </Stack>
+        </Box>
       </Box>
 
 
@@ -1472,283 +1576,343 @@ export const PfmeaWorkspace: React.FC = () => {
         <TableContainer
           ref={tableContainerRef}
           component={Paper}
-          sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none', position: 'relative' }}
+          elevation={0}
+          sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', bgcolor: '#ffffff', overflowX: 'auto', boxShadow: 'none', position: 'relative' }}
         >
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
-              <TableRow>
-                <TableCell sx={{ minWidth: 45, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#f8fafc', zIndex: 3, borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>#</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, position: 'sticky', left: 45, bgcolor: '#f8fafc', zIndex: 3, borderRight: '2px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Structure / Item</TableCell>
-                <TableCell sx={{ minWidth: 240, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Work Element (4M)</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Function / Focus Element</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Failure Mode</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Potential Effects</TableCell>
-                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>SEV</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Failure Causes</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Current Control – Prevention</TableCell>
-                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>OCC</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Current Control – Detection</TableCell>
-                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>DET</TableCell>
-                <TableCell sx={{ minWidth: 70, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>AP</TableCell>
-                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>FC</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Prevention Action</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Detection Action</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Responsibility & Target Date</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Action Taken & Completion Date</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>SEV (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>OCC (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>DET (rev)</TableCell>
-                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>AP (rev)</TableCell>
-                <TableCell sx={{ minWidth: 100, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Status</TableCell>
-                <TableCell sx={{ minWidth: 160, fontWeight: 700, bgcolor: '#f8fafc', borderRight: '1px solid #cbd5e1', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Remarks</TableCell>
-                <TableCell sx={{ minWidth: 110, fontWeight: 700, textAlign: 'center', bgcolor: '#f8fafc', borderBottom: '2px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>Actions</TableCell>
+              <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
+                <TableCell sx={{ minWidth: 45, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 3, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>#</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, position: 'sticky', left: 45, bgcolor: '#fafafa', zIndex: 3, borderRight: '2px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Structure / Item</TableCell>
+                {/* Work Element (4M) removed to match Excel export */}
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Function / Focus Element</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Failure Mode</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Potential Effects</TableCell>
+                <TableCell sx={{ minWidth: 55, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>SEV</TableCell>
+                {/* Fragmented Columns 7 through 23 */}
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Failure Causes</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Current Control – Prevention</TableCell>
+                <TableCell sx={{ minWidth: 55, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>OCC</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Current Control – Detection</TableCell>
+                <TableCell sx={{ minWidth: 55, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>DET</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>AP</TableCell>
+                <TableCell sx={{ minWidth: 55, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>FC</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Prevention Action</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Detection Action</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Responsibility & Target Date</TableCell>
+                <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Action Taken & Completion Date</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>SEV (rev)</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>OCC (rev)</TableCell>
+                <TableCell sx={{ minWidth: 60, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>DET (rev)</TableCell>
+                <TableCell sx={{ minWidth: 65, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>AP (rev)</TableCell>
+                <TableCell sx={{ minWidth: 90, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Status</TableCell>
+                <TableCell sx={{ minWidth: 140, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Remarks</TableCell>
+                <TableCell sx={{ minWidth: 100, fontWeight: 700, textAlign: 'center', bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={25} align="center" sx={{ py: 6, color: 'text.secondary', fontSize: '0.9rem' }}>
+                  <TableCell colSpan={24} align="center" sx={{ py: 6, color: 'text.secondary', fontSize: '0.9rem' }}>
                     No PFMEA analysis rows added yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((row) => {
                   const step = steps.find(s => s.id === row.processStepId);
-                  let workElements: string[] = [];
-                  if (step) {
-                    if (Array.isArray(step.machinesEquipmentDocs)) {
-                      workElements = step.machinesEquipmentDocs;
-                    } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs) {
-                      try {
-                        const parsed = JSON.parse(step.machinesEquipmentDocs);
-                        workElements = Array.isArray(parsed) ? parsed : [step.machinesEquipmentDocs];
-                      } catch {
-                        workElements = [step.machinesEquipmentDocs];
-                      }
+                  const rawCauses = Array.isArray(row.causes) ? row.causes : [];
+                  const causesList = rawCauses.length > 0 ? rawCauses : [{ narration: '', name: '' } as any];
+                  const prevControlsList = (row.controls?.filter((c: any) => c.type === 'prevention') || []) as any[];
+                  const detControlsList = (row.controls?.filter((c: any) => c.type === 'detection') || []) as any[];
+                  const subRowCount = Math.max(1, causesList.length, prevControlsList.length, detControlsList.length);
+
+                  return Array.from({ length: subRowCount }).map((_, subIdx) => {
+                    const isFirstSub = subIdx === 0;
+                    const causeObj = causesList[subIdx];
+                    const causeText = typeof causeObj === 'object' ? (causeObj?.narration || causeObj?.name || '') : String(causeObj || '');
+                    const prevControlText = prevControlsList[subIdx]?.name || (typeof causeObj === 'object' ? causeObj?.currentControlPrevention || '' : '');
+                    const detControlText = detControlsList[subIdx]?.name || (typeof causeObj === 'object' ? causeObj?.currentControlDetection || '' : '');
+
+                    const causeOcc = (typeof causeObj === 'object' && causeObj?.occurrenceRating != null)
+                      ? causeObj.occurrenceRating
+                      : (isFirstSub && row.occurrence != null ? row.occurrence : null);
+
+                    const causeDet = (typeof causeObj === 'object' && causeObj?.detectionRating != null)
+                      ? causeObj.detectionRating
+                      : (isFirstSub && row.detection != null ? row.detection : null);
+
+                    let causeAp: string = '';
+                    if (row.severity && causeOcc && causeDet) {
+                      causeAp = calculateAP(Number(row.severity), Number(causeOcc), Number(causeDet)) || '';
+                    } else if (isFirstSub && row.ap) {
+                      causeAp = row.ap;
                     }
-                  }
 
-                  return (
-                    <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
-                      {/* Row Number */}
-                      <TableCell sx={{ fontWeight: 600, position: 'sticky', left: 0, bgcolor: '#fff', zIndex: 1, borderRight: '1px solid #cbd5e1', fontSize: '0.85rem', color: '#334155' }}>{row.rowNumber}</TableCell>
+                    const causeFc = (typeof causeObj === 'object' && causeObj?.filterCode)
+                      ? causeObj.filterCode
+                      : (isFirstSub && row.filterCode ? row.filterCode : '');
 
-                      {/* Structure / Item */}
-                      <TableCell sx={{ position: 'sticky', left: 45, bgcolor: '#fff', zIndex: 1, borderRight: '2px solid #cbd5e1' }}>
-                        <Typography sx={{ fontWeight: 500, fontSize: '0.85rem', color: '#334155' }}>
-                          {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : ''}
-                          {row.processStep?.name || 'Untitled Step'}
-                        </Typography>
-                      </TableCell>
+                    return (
+                      <TableRow
+                        key={`${row.id}-sub-${subIdx}`}
+                        sx={{
+                          '&:hover': { bgcolor: '#f8fafc' },
+                          borderBottom: isFirstSub && subRowCount > 1 ? '1px dashed #f4f4f5' : '1px solid #e4e4e7'
+                        }}
+                      >
+                        {/* Parent columns — Rendered ONLY on subIdx 0 with rowSpan */}
+                        {isFirstSub && (
+                          <>
+                            <TableCell
+                              rowSpan={subRowCount}
+                              sx={{ fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#ffffff', zIndex: 1, borderRight: '1px solid #e4e4e7', fontSize: '0.8rem', color: '#09090b', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              {row.rowNumber}
+                            </TableCell>
 
-                      {/* Work Element (4M) */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.3}>
-                          {workElements.map((we, idx) => (
-                            <Typography key={idx} sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>
-                              {we}
+                            <TableCell
+                              rowSpan={subRowCount}
+                              sx={{ position: 'sticky', left: 45, bgcolor: '#ffffff', zIndex: 1, borderRight: '2px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#09090b' }}>
+                                {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : (step?.stepNumber ? `${step.stepNumber}: ` : '')}
+                                {row.processStep?.name || step?.name || 'Untitled Step'}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell
+                              rowSpan={subRowCount}
+                              sx={{ borderRight: '1px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              <Stack spacing={0.3}>
+                                {row.functions?.map((f, i) => (
+                                  <Typography key={i} sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>{f.name}</Typography>
+                                ))}
+                                {row.requirements?.map((req, i) => (
+                                  <Typography key={i} sx={{ fontSize: '0.75rem', color: '#71717a' }}>R: {req.name}</Typography>
+                                ))}
+                                {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
+                              </Stack>
+                            </TableCell>
+
+                            <TableCell
+                              rowSpan={subRowCount}
+                              sx={{ borderRight: '1px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              <Stack spacing={0.3}>
+                                {row.failureModes?.map((fm, i) => (
+                                  <Typography key={i} sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#b91c1c' }}>{fm.name}</Typography>
+                                ))}
+                                {(!row.failureModes || row.failureModes.length === 0) && '—'}
+                              </Stack>
+                            </TableCell>
+
+                            <TableCell
+                              rowSpan={subRowCount}
+                              sx={{ borderRight: '1px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              <Stack spacing={0.3}>
+                                {row.effects?.map((e, i) => (
+                                  <Typography key={i} sx={{ fontSize: '0.8125rem', color: '#52525b' }}>{e.name}</Typography>
+                                ))}
+                                {(!row.effects || row.effects.length === 0) && '—'}
+                              </Stack>
+                            </TableCell>
+
+                            <TableCell
+                              rowSpan={subRowCount}
+                              align="center"
+                              sx={{ borderRight: '1px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                            >
+                              <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: '#09090b' }}>{row.severity || '—'}</Typography>
+                            </TableCell>
+                          </>
+                        )}
+
+                        {/* Fragmented Columns (7 through 23) — Rendered on EVERY sub-row */}
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#09090b' }}>
+                            {causeText || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#52525b' }}>
+                            {prevControlText || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>
+                            {causeOcc || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#52525b' }}>
+                            {detControlText || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>
+                            {causeDet || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          {getApBadge(causeAp)}
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#71717a' }}>
+                            {causeFc || '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#52525b' }}>
+                            {isFirstSub ? (row.preventionAction || '—') : '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#52525b' }}>
+                            {isFirstSub ? (row.detectionAction || '—') : '—'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Stack spacing={0.2}>
+                            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#09090b' }}>
+                              {isFirstSub ? (row.responsibility || '—') : '—'}
                             </Typography>
-                          ))}
-                          {workElements.length === 0 && <Typography sx={{ fontSize: '0.85rem', color: 'text.secondary' }}>—</Typography>}
-                        </Stack>
-                      </TableCell>
+                            {isFirstSub && row.targetDate && (
+                              <Typography sx={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                Target: {new Date(row.targetDate).toLocaleDateString()}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
 
-                      {/* Function / Focus Element */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.3}>
-                          {row.functions?.map((f, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{f.name}</Typography>
-                          ))}
-                          {row.requirements?.map((req, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.8rem', color: 'text.secondary', fontWeight: 400 }}>R: {req.name}</Typography>
-                          ))}
-                          {(!row.functions || row.functions.length === 0) && (!row.requirements || row.requirements.length === 0) && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* Failure Mode */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.3}>
-                          {row.failureModes?.map((fm, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{fm.name}</Typography>
-                          ))}
-                          {(!row.failureModes || row.failureModes.length === 0) && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* Potential Effects */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.5}>
-                          {row.effects?.map((e, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{e.name}</Typography>
-                          ))}
-                          {(!row.effects || row.effects.length === 0) && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* SEV */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.severity || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Failure Causes */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.3}>
-                          {row.causes?.map((c, i) => (
-                            <Typography key={i} sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{c.name}</Typography>
-                          ))}
-                          {(!row.causes || row.causes.length === 0) && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* Current Control – Prevention */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.5}>
-                          {row.controls?.filter(c => c.type === 'prevention').map((c, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{c.name}</Typography>
-                          ))}
-                          {row.controls?.filter(c => c.type === 'prevention').length === 0 && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* OCC */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.occurrence || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Current Control – Detection */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.5}>
-                          {row.controls?.filter(c => c.type === 'detection').map((c, i) => (
-                            <Typography key={i} variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{c.name}</Typography>
-                          ))}
-                          {row.controls?.filter(c => c.type === 'detection').length === 0 && '—'}
-                        </Stack>
-                      </TableCell>
-
-                      {/* DET */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.detection || '—'}</Typography>
-                      </TableCell>
-
-                      {/* AP - COLOR BADGE KEPT HERE */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>{getApBadge(row.ap)}</TableCell>
-
-                      {/* FC */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155' }}>{row.filterCode || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Prevention Action */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155', minWidth: 200 }}>{row.preventionAction || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Detection Action */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 400, color: '#334155', minWidth: 200 }}>{row.detectionAction || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Responsibility & Target Date */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.2}>
-                          <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{row.responsibility || '—'}</Typography>
-                          {row.targetDate && (
-                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 400 }}>
-                              Target: {new Date(row.targetDate).toLocaleDateString()}
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Stack spacing={0.2}>
+                            <Typography sx={{ fontSize: '0.8125rem', fontWeight: 500, color: '#09090b' }}>
+                              {isFirstSub ? (row.actionTaken || '—') : '—'}
                             </Typography>
-                          )}
-                        </Stack>
-                      </TableCell>
+                            {isFirstSub && row.completionDate && (
+                              <Typography sx={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                Done: {new Date(row.completionDate).toLocaleDateString()}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
 
-                      {/* Action Taken & Completion Date */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Stack spacing={0.2}>
-                          <Typography sx={{ fontSize: '0.85rem', fontWeight: 500, color: '#334155' }}>{row.actionTaken || '—'}</Typography>
-                          {row.completionDate && (
-                            <Typography variant="caption" sx={{ fontSize: '0.78rem', color: 'text.secondary', fontWeight: 400 }}>
-                              Done: {new Date(row.completionDate).toLocaleDateString()}
-                            </Typography>
-                          )}
-                        </Stack>
-                      </TableCell>
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>
+                            {isFirstSub ? (row.revisedSeverity || '—') : '—'}
+                          </Typography>
+                        </TableCell>
 
-                      {/* SEV (revised) */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedSeverity || '—'}</Typography>
-                      </TableCell>
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>
+                            {isFirstSub ? (row.revisedOccurrence || '—') : '—'}
+                          </Typography>
+                        </TableCell>
 
-                      {/* OCC (revised) */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedOccurrence || '—'}</Typography>
-                      </TableCell>
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: '#09090b' }}>
+                            {isFirstSub ? (row.revisedDetection || '—') : '—'}
+                          </Typography>
+                        </TableCell>
 
-                      {/* DET (revised) */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{row.revisedDetection || '—'}</Typography>
-                      </TableCell>
+                        <TableCell align="center" sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          {isFirstSub ? getApBadge(row.revisedAp || null) : '—'}
+                        </TableCell>
 
-                      {/* AP (revised) - COLOR BADGE KEPT HERE */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>{getApBadge(row.revisedAp || null)}</TableCell>
-
-                      {/* Status */}
-                      <TableCell align="center" sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        {(() => {
-                          const st = getDynamicRowStatus(row);
-                          if (st.label === '—') {
-                            return <Typography sx={{ fontSize: '0.85rem', color: '#94A3B8' }}>—</Typography>;
-                          }
-                          return (
-                            <Chip
-                              label={st.label}
-                              size="small"
-                              sx={{
-                                height: 22,
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                color: st.color,
-                                bgcolor: st.bg,
-                                border: `1px solid ${st.color}40`,
-                              }}
-                            />
-                          );
-                        })()}
-                      </TableCell>
-
-                      {/* Remarks */}
-                      <TableCell sx={{ borderRight: '1px solid #cbd5e1' }}>
-                        <Typography sx={{ fontSize: '0.85rem', color: '#334155', minWidth: 160 }}>{row.notes || '—'}</Typography>
-                      </TableCell>
-
-                      {/* Actions */}
-                      <TableCell align="center">
-                        <Tooltip title="Manage Action">
-                          <IconButton
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Chip
+                            label={isFirstSub ? (row.status === 'approved' ? 'Closed' : row.status === 'reviewed' ? 'In Progress' : 'Open') : '—'}
                             size="small"
-                            color="secondary"
-                            onClick={() => openManageAction(row)}
+                            sx={{
+                              height: 20,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              bgcolor: row.status === 'approved' ? '#ecfdf5' : row.status === 'reviewed' ? '#eff6ff' : '#f4f4f5',
+                              color: row.status === 'approved' ? '#059669' : row.status === 'reviewed' ? '#2563eb' : '#71717a'
+                            }}
+                          />
+                        </TableCell>
+
+                        <TableCell sx={{ borderRight: '1px solid #e4e4e7', py: 1.25 }}>
+                          <Typography sx={{ fontSize: '0.8125rem', color: '#71717a' }}>
+                            {isFirstSub ? (row.notes || '—') : '—'}
+                          </Typography>
+                        </TableCell>
+
+                        {/* Actions column — Rendered on subIdx 0 with rowSpan */}
+                        {isFirstSub && (
+                          <TableCell
+                            rowSpan={subRowCount}
+                            align="center"
+                            sx={{ verticalAlign: 'top', pt: 1.5 }}
                           >
-                            <PlaylistAddIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            const failId = getFailureModeDbId(row);
-                            if (failId) {
-                              handleEditNodeFromTree(`struct-mode::${failId}`);
-                            }
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                              <Tooltip title="Failure Details">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    const failId = getFailureModeDbId(row);
+                                    if (failId) {
+                                      setDetailWindowFailureModeId(failId);
+                                      setDetailWindowOpen(true);
+                                    } else {
+                                      showToast('No linked failure mode found for this row', 'info');
+                                    }
+                                  }}
+                                  sx={{ p: 0.5, border: '1px solid #e4e4e7', borderRadius: '6px' }}
+                                >
+                                  <DetailsIcon fontSize="small" sx={{ fontSize: '1rem', color: '#71717a' }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Manage Actions">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openManageAction(row)}
+                                  sx={{ p: 0.5, border: '1px solid #e4e4e7', borderRadius: '6px', color: '#2563eb' }}
+                                >
+                                  <PlaylistAddIcon fontSize="small" sx={{ fontSize: '1rem' }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Edit Mode">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    const failId = getFailureModeDbId(row);
+                                    if (failId) {
+                                      handleEditNodeFromTree(`struct-mode::${failId}`);
+                                    }
+                                  }}
+                                  sx={{ p: 0.5, border: '1px solid #e4e4e7', borderRadius: '6px', color: '#09090b' }}
+                                >
+                                  <EditIcon fontSize="small" sx={{ fontSize: '1rem' }} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Delete Row">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteRow(row.id)}
+                                  sx={{ p: 0.5, border: '1px solid #fee2e2', borderRadius: '6px', color: '#dc2626', '&:hover': { bgcolor: '#fef2f2' } }}
+                                >
+                                  <DeleteIcon fontSize="small" sx={{ fontSize: '1rem' }} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  });
                 })
               )}
             </TableBody>
@@ -1934,11 +2098,39 @@ export const PfmeaWorkspace: React.FC = () => {
 
       {/* Replaced slide drawer edit window */}
 
-      {/* Add Row Dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Add PFMEA Analysis Row</DialogTitle>
-        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+      {/* Add Row Dialog — Shadcn Theme */}
+      <Dialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+          <Box>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              Add PFMEA Analysis Row
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              Select a process step from the PFD / structure tree
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setAddDialogOpen(false)} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
+          <Stack spacing={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Process Step</InputLabel>
               <Select
@@ -1956,30 +2148,79 @@ export const PfmeaWorkspace: React.FC = () => {
             </FormControl>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)} color="inherit">
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
+          <Button
+            onClick={() => setAddDialogOpen(false)}
+            size="small"
+            sx={{
+              color: '#71717a',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              border: '1px solid #e4e4e7',
+              bgcolor: '#ffffff',
+              px: 2,
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleAddRow} variant="contained" disabled={!selectedStepId}>
+          <Button
+            onClick={handleAddRow}
+            disabled={!selectedStepId}
+            size="small"
+            variant="contained"
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 2.5,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
+          >
             Add Row
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Manage Action Dialog — Full action fields matching FMEA report columns */}
+      {/* Manage Action Dialog — Shadcn Theme */}
       <Dialog
         open={manageActionOpen}
         onClose={() => setManageActionOpen(false)}
         maxWidth="md"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2, p: 1 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
       >
-        <DialogTitle sx={{ py: 1.5, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Manage Action</Typography>
-          <IconButton size="small" onClick={() => setManageActionOpen(false)}><CloseIcon /></IconButton>
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+          <Box>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              Manage Corrective Action
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              Step 6 Optimization: Prevention/Detection actions, ownership, target dates, and revised ratings
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setManageActionOpen(false)} sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </DialogTitle>
 
-        <DialogContent sx={{ px: 2, py: 1 }}>
+        <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
           <Stack spacing={2}>
             {/* Prevention Action(s) */}
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
@@ -2175,34 +2416,116 @@ export const PfmeaWorkspace: React.FC = () => {
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end', gap: 1 }}>
-          <Button variant="contained" onClick={handleSaveManageAction} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
-            Save
-          </Button>
-          <Button variant="outlined" onClick={() => setManageActionOpen(false)} sx={{ px: 4, fontWeight: 700 }}>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa', justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            size="small"
+            onClick={() => setManageActionOpen(false)}
+            sx={{
+              color: '#71717a',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              border: '1px solid #e4e4e7',
+              bgcolor: '#ffffff',
+              px: 2.5,
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
             Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={handleSaveManageAction}
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
+          >
+            Save Action
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* PFD Step Import Prompt Dialog */}
-      <Dialog open={importPromptOpen} onClose={() => setImportPromptOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Import Process Flow Steps?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            We found {pfdSteps.length} process steps in your Process Flow Diagram (PFD). 
+      {/* PFD Step Import Prompt Dialog — Shadcn Theme */}
+      <Dialog
+        open={importPromptOpen}
+        onClose={() => setImportPromptOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+          <Box>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              Import Process Flow Steps?
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              PFD ↔ PFMEA Synchronizer
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setImportPromptOpen(false)} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
+          <Typography sx={{ fontSize: '0.85rem', color: '#52525b', lineHeight: 1.5 }}>
+            We found <strong>{pfdSteps.length} process steps</strong> in your Process Flow Diagram (PFD). 
             Importing them will automatically create the initial Process Steps structure in your PFMEA.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 0 }}>
-          <Button onClick={() => setImportPromptOpen(false)} variant="outlined">
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
+          <Button
+            onClick={() => setImportPromptOpen(false)}
+            size="small"
+            sx={{
+              color: '#71717a',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              border: '1px solid #e4e4e7',
+              bgcolor: '#ffffff',
+              px: 2,
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
             Skip
           </Button>
-          <Button 
-            onClick={handleImportPfdSteps} 
-            variant="contained" 
-            color="primary"
+          <Button
+            onClick={handleImportPfdSteps}
             disabled={importing}
+            size="small"
+            variant="contained"
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 2.5,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
           >
             {importing ? 'Importing...' : 'Import Steps'}
           </Button>

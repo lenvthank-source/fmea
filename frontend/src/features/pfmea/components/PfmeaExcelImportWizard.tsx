@@ -20,6 +20,7 @@ import {
   Paper,
   Checkbox,
   Chip,
+  IconButton,
   Alert,
   CircularProgress,
   FormControl,
@@ -40,6 +41,7 @@ import {
   ArrowForward as ArrowForwardIcon,
   SelectAll as AddIcon,
   Deselect as RemoveIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
 import { API_BASE_URL } from '../../../config';
@@ -254,10 +256,10 @@ const EXACT_HEADER_SYNONYMS: Record<PfmeaFieldKey, string[]> = {
     'action taken & date',
     'action taken/date',
   ],
-  revisedSeverity: ['sev revised', 'revised sev', 'after sev', 'sev after', 'revised s'],
-  revisedOccurrence: ['occ revised', 'revised occ', 'after occ', 'occ after', 'revised o'],
-  revisedDetection: ['det revised', 'revised det', 'after det', 'det after', 'revised d'],
-  revisedAp: ['ap revised', 'revised ap', 'after ap', 'ap after'],
+  revisedSeverity: ['sev revised', 'revised sev', 'after sev', 'sev after', 'revised s', 'sev rev', 'sev (rev)'],
+  revisedOccurrence: ['occ revised', 'revised occ', 'after occ', 'occ after', 'revised o', 'occ rev', 'occ (rev)'],
+  revisedDetection: ['det revised', 'revised det', 'after det', 'det after', 'revised d', 'det rev', 'det (rev)'],
+  revisedAp: ['ap revised', 'revised ap', 'after ap', 'ap after', 'ap rev', 'ap (rev)'],
   status: ['status', 'action status', 'row status'],
   notes: ['remarks', 'notes', 'comments', 'remark'],
 };
@@ -1122,18 +1124,45 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
       onClose={handleClose}
       maxWidth={false}
       fullWidth
-      sx={{ '& .MuiDialog-paper': { width: '96vw', maxWidth: '1600px', height: '92vh', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' } }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: '96vw',
+            maxWidth: '1600px',
+            height: '92vh',
+            maxHeight: '92vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: '12px',
+            border: '1px solid #e4e4e7',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.18)'
+          }
+        }
+      }}
     >
-      <DialogTitle sx={{ fontWeight: 'bold', px: 3, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <UploadIcon sx={{ color: 'primary.main', fontSize: '1.4rem' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem' }}>
-            Import PFMEA from Excel (AIAG-VDA 2019)
-          </Typography>
-        </Stack>
-        {activeStep >= 2 && (
-          <Chip label={mode === 'build' ? 'Build New' : 'Append / Update'} color="primary" size="small" variant="outlined" sx={{ fontWeight: 700, bgcolor: '#FFFFFF' }} />
-        )}
+      <DialogTitle sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', bgcolor: '#ffffff' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ p: 1, bgcolor: '#f4f4f5', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <UploadIcon sx={{ color: '#09090b', fontSize: '1.2rem' }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#09090b' }}>
+              Import PFMEA from Excel
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              AIAG-VDA 2019 7-Step Quality Analysis structure with fragmented cause rows support
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {activeStep >= 2 && (
+            <Chip label={mode === 'build' ? 'Build New' : 'Append / Update'} size="small" sx={{ fontWeight: 700, bgcolor: '#eff6ff', color: '#2563eb' }} />
+          )}
+          <IconButton onClick={handleClose} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </DialogTitle>
       <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', bgcolor: '#F8FAFC' }}>
         {error && <Alert severity="error" sx={{ m: 1.5, py: 0.5 }}>{error}</Alert>}
@@ -1150,25 +1179,68 @@ export const PfmeaExcelImportWizard: React.FC<PfmeaExcelImportWizardProps> = ({
           {stepContents[activeStep]}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
         {activeStep > 0 && (
-          <Button onClick={() => setActiveStep(activeStep - 1)} startIcon={<ArrowBackIcon />} disabled={importing}>
+          <Button
+            onClick={() => setActiveStep(activeStep - 1)}
+            startIcon={<ArrowBackIcon fontSize="small" />}
+            disabled={importing}
+            size="small"
+            sx={{
+              color: '#71717a',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              border: '1px solid #e4e4e7',
+              bgcolor: '#ffffff',
+              px: 2,
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
             Back
           </Button>
         )}
         <Box sx={{ flex: 1 }} />
         {activeStep < stepLabels.length - 1 && !importing && (
-          <Button onClick={() => setActiveStep(activeStep + 1)} endIcon={<ArrowForwardIcon />} disabled={importing || !canProceed(activeStep)}>
-            Next
+          <Button
+            onClick={() => setActiveStep(activeStep + 1)}
+            endIcon={<ArrowForwardIcon fontSize="small" />}
+            disabled={importing || !canProceed(activeStep)}
+            size="small"
+            variant="contained"
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 2.5,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
+          >
+            Next Step
           </Button>
         )}
         {activeStep === stepLabels.length - 1 && !importing && selectedRows.size > 0 && (
           <Button
             variant="contained"
-            size="large"
-            startIcon={<SaveIcon />}
+            size="small"
+            startIcon={<SaveIcon fontSize="small" />}
             onClick={handleImport}
-            sx={{ fontWeight: 700 }}
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
           >
             Apply Import
           </Button>

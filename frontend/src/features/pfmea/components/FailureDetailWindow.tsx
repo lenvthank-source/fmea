@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Box, Typography, Stack, Chip, Tabs, Tab,
+  Button, Box, Typography, Stack, Chip,
   CircularProgress, IconButton, Table, TableBody,
   TableCell, TableHead, TableRow, Tooltip, Alert, TextField,
   Grid, MenuItem, Paper, TableContainer
@@ -438,8 +438,10 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       slotProps={{
         paper: {
           sx: {
-            height: '85vh',
-            borderRadius: 2,
+            height: '88vh',
+            borderRadius: '14px',
+            border: '1px solid #e4e4e7',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.18)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
@@ -447,8 +449,8 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
         }
       }}
     >
-      {/* ── BREADCRUMB HEADER (MATCHING IMAGE 2) ── */}
-      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+      {/* ── BREADCRUMB HEADER (Shadcn Theme) ── */}
+      <Box sx={{ px: 3, py: 2, bgcolor: '#ffffff', borderBottom: '1px solid #f4f4f5', flexShrink: 0 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem' }}>
@@ -504,21 +506,60 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
         </Box>
       </Box>
 
-      {/* ── TABS: EFFECTS | CAUSES ── */}
-      <Box sx={{ borderBottom: '2px solid #0284c7', bgcolor: '#f0f9ff', px: 2, flexShrink: 0 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ minHeight: 38 }}>
-          <Tab label={`Effects (${data?.effects.length || 0})`} sx={{ minHeight: 38, fontWeight: 700, textTransform: 'none' }} />
-          <Tab
-            label={`Causes (${data?.causes.length || 0})`}
+      {/* ── TABS: EFFECTS | CAUSES (Segmented Pill Bar) ── */}
+      <Box sx={{ px: 3, py: 1.25, bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7', flexShrink: 0 }}>
+        <Box sx={{ display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+          <Box
+            onClick={() => setActiveTab(0)}
             sx={{
-              minHeight: 38,
-              fontWeight: 700,
-              textTransform: 'none',
-              bgcolor: activeTab === 1 ? '#ffedd5' : 'transparent',
-              color: activeTab === 1 ? '#c2410c' : 'inherit'
+              px: 2,
+              py: 0.6,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 0 ? '#ffffff' : 'transparent',
+              color: activeTab === 0 ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 0 ? 700 : 500,
+              fontSize: '0.8rem',
+              boxShadow: activeTab === 0 ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
             }}
-          />
-        </Tabs>
+          >
+            Effects
+            <Chip
+              label={data?.effects.length || 0}
+              size="small"
+              sx={{ height: 18, fontSize: '0.625rem', fontWeight: 700, bgcolor: activeTab === 0 ? '#fee2e2' : '#e4e4e7', color: activeTab === 0 ? '#dc2626' : '#71717a' }}
+            />
+          </Box>
+          <Box
+            onClick={() => setActiveTab(1)}
+            sx={{
+              px: 2,
+              py: 0.6,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              bgcolor: activeTab === 1 ? '#ffffff' : 'transparent',
+              color: activeTab === 1 ? '#09090b' : '#71717a',
+              fontWeight: activeTab === 1 ? 700 : 500,
+              fontSize: '0.8rem',
+              boxShadow: activeTab === 1 ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}
+          >
+            Causes & Actions
+            <Chip
+              label={data?.causes.length || 0}
+              size="small"
+              sx={{ height: 18, fontSize: '0.625rem', fontWeight: 700, bgcolor: activeTab === 1 ? '#ffedd5' : '#e4e4e7', color: activeTab === 1 ? '#ea580c' : '#71717a' }}
+            />
+          </Box>
+        </Box>
       </Box>
 
       {/* ── DIALOG CONTENT ── */}
@@ -540,7 +581,7 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
                 ) : (
                   <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
-                      <TableHead sx={{ bgcolor: '#38bdf8' }}>
+                      <TableHead sx={{ bgcolor: '#fafafa' }}>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 800, color: '#0f172a' }}>Effect Description</TableCell>
                           <TableCell sx={{ fontWeight: 800, color: '#0f172a' }}>Function</TableCell>
@@ -900,9 +941,28 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
       </DialogActions>
 
       {/* ── EDIT CAUSE MODAL ── */}
-      <Dialog open={editCauseModalOpen} onClose={() => setEditCauseModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800, bgcolor: '#0284c7', color: '#fff', py: 1.5 }}>
+      <Dialog
+        open={editCauseModalOpen}
+        onClose={() => setEditCauseModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', bgcolor: '#ffffff', color: '#09090b', fontWeight: 700, fontSize: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           Edit Cause
+          <IconButton onClick={() => setEditCauseModalOpen(false)} size="small" sx={{ color: '#71717a' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 2.5, mt: 1 }}>
           <Stack spacing={2}>
@@ -964,19 +1024,36 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
         </DialogActions>
       </Dialog>
 
-      {/* ── ADD / EDIT ACTION DIALOG (MATCHING IMAGE 3) ── */}
+      {/* ── ADD / EDIT ACTION DIALOG (Shadcn Theme) ── */}
       <Dialog
         open={actionModalOpen}
         onClose={() => setActionModalOpen(false)}
         maxWidth="md"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2, p: 1 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
       >
-        <DialogTitle sx={{ py: 1.5, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            {editingAction ? 'Edit Action' : 'Add Action'}
-          </Typography>
-          <IconButton size="small" onClick={() => setActionModalOpen(false)}><CloseIcon /></IconButton>
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+          <Box>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              {editingAction ? 'Edit Corrective Action' : 'Add Corrective Action'}
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              Step 6 Optimization: Preventive/Detection controls & revised S/O/D ratings
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setActionModalOpen(false)} sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </DialogTitle>
 
         <DialogContent sx={{ px: 2, py: 1 }}>
@@ -1225,24 +1302,74 @@ export const FailureDetailWindow: React.FC<FailureDetailWindowProps> = ({
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'flex-end', gap: 1 }}>
-          <Button variant="contained" onClick={submitActionModal} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
-            Save
-          </Button>
-          <Button variant="contained" onClick={() => setActionModalOpen(false)} sx={{ bgcolor: '#0284c7', px: 4, fontWeight: 700 }}>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa', justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            size="small"
+            onClick={() => setActionModalOpen(false)}
+            sx={{
+              color: '#71717a',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              border: '1px solid #e4e4e7',
+              bgcolor: '#ffffff',
+              px: 2.5,
+              '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+            }}
+          >
             Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={submitActionModal}
+            sx={{
+              bgcolor: '#09090b',
+              color: '#ffffff',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '6px',
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+            }}
+          >
+            Save Action
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* ── GUIDELINE REFERENCE DIALOG ── */}
-      <Dialog open={guidelineOpen} onClose={() => setGuidelineOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ bgcolor: '#0284c7', color: '#fff', py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-            {guidelineType === 'severity' ? 'Severity (S) Rating Criteria' : guidelineType === 'occurrence' ? 'Occurrence (O) Rating Criteria' : 'Detection (D) Rating Criteria'}
-          </Typography>
-          <IconButton size="small" onClick={() => setGuidelineOpen(false)} sx={{ color: '#fff' }}>
-            <CloseIcon />
+      {/* ── GUIDELINE REFERENCE DIALOG (Shadcn Theme) ── */}
+      <Dialog
+        open={guidelineOpen}
+        onClose={() => setGuidelineOpen(false)}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              border: '1px solid #e4e4e7',
+              boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+              p: 0,
+              overflow: 'hidden'
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', bgcolor: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              Rating Criteria: {guidelineType === 'severity' ? 'Severity (S)' : guidelineType === 'occurrence' ? 'Occurrence (O)' : 'Detection (D)'}
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              AIAG-VDA 2019 standard evaluation scale [1-10]
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setGuidelineOpen(false)} sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
         <DialogContent sx={{ p: 2 }}>

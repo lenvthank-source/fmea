@@ -11,8 +11,6 @@ import {
   CircularProgress,
   Stack,
   Divider,
-  Tabs,
-  Tab,
   IconButton,
   Alert,
   Table,
@@ -26,6 +24,7 @@ import {
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { RatingDropdown } from './RatingDropdown';
 import { API_BASE_URL } from '../../../config';
@@ -312,12 +311,48 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
       onClose={handleClose}
       maxWidth={role === 'cause' && activeTab === 1 ? 'lg' : 'md'}
       fullWidth
-      sx={{ '& .MuiDialog-paper': { borderTop: '4px solid #d32f2f', transform: 'translateY(-36px)', m: 2 } }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '12px',
+            border: '1px solid #e4e4e7',
+            boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+            p: 0,
+            overflow: 'hidden'
+          }
+        }
+      }}
     >
-      <DialogTitle sx={{ color: '#d32f2f', fontWeight: 'bold', pt: 2.5, pb: 1 }}>
-        {editMode ? 'Edit' : 'Add'} Failure {roleTitle}
+      <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              {editMode ? 'Edit' : 'Add'} Failure {roleTitle}
+            </Typography>
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: '4px',
+                fontSize: '0.675rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                bgcolor: role === 'effect' ? '#fee2e2' : role === 'mode' ? '#fef3c7' : '#ffedd5',
+                color: role === 'effect' ? '#dc2626' : role === 'mode' ? '#d97706' : '#ea580c'
+              }}
+            >
+              {roleTitle}
+            </Box>
+          </Box>
+          <Typography sx={{ fontSize: '0.75rem', color: '#71717a', mt: 0.25 }}>
+            Configure failure analysis element for AIAG-VDA 2019 quality chain
+          </Typography>
+        </Box>
+        <IconButton onClick={handleClose} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
         {/* Parent Function Context Banner */}
         <Box
           sx={{
@@ -338,11 +373,41 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         </Box>
 
         {!editMode && (
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
-              <Tab label={`Single Failure ${roleTitle}`} />
-              <Tab label={`Multiple Failure ${roleTitle}s`} />
-            </Tabs>
+          <Box sx={{ mb: 2.5, display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+            <Box
+              onClick={() => setActiveTab(0)}
+              sx={{
+                px: 2,
+                py: 0.65,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                bgcolor: activeTab === 0 ? '#ffffff' : 'transparent',
+                color: activeTab === 0 ? '#09090b' : '#71717a',
+                fontWeight: activeTab === 0 ? 700 : 500,
+                fontSize: '0.8rem',
+                boxShadow: activeTab === 0 ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              Single Failure {roleTitle}
+            </Box>
+            <Box
+              onClick={() => setActiveTab(1)}
+              sx={{
+                px: 2,
+                py: 0.65,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                bgcolor: activeTab === 1 ? '#ffffff' : 'transparent',
+                color: activeTab === 1 ? '#09090b' : '#71717a',
+                fontWeight: activeTab === 1 ? 700 : 500,
+                fontSize: '0.8rem',
+                boxShadow: activeTab === 1 ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              Multiple Failure {roleTitle}s
+            </Box>
           </Box>
         )}
 
@@ -602,8 +667,23 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
           </Stack>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} disabled={loading} color="inherit">
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
+        <Button
+          onClick={handleClose}
+          disabled={loading}
+          size="small"
+          sx={{
+            color: '#71717a',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            border: '1px solid #e4e4e7',
+            bgcolor: '#ffffff',
+            px: 2,
+            '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+          }}
+        >
           Cancel
         </Button>
         <Button
@@ -613,11 +693,22 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
             (activeTab === 0 && !narration.trim()) ||
             (activeTab === 1 && rows.every((r) => !r.narration.trim()))
           }
+          size="small"
           variant="contained"
-          color="error"
+          sx={{
+            bgcolor: '#09090b',
+            color: '#ffffff',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            px: 2.5,
+            boxShadow: 'none',
+            '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+          }}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
-          {loading ? (editMode ? 'Saving...' : 'Adding...') : 'OK'}
+          {loading ? (editMode ? 'Saving...' : 'Adding...') : (editMode ? 'Save Changes' : `Add Failure ${roleTitle}`)}
         </Button>
       </DialogActions>
     </Dialog>

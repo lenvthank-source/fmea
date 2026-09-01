@@ -12,6 +12,7 @@ import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { getPfdIconMeta } from '../pfd/utils/pfdIconMap';
 import * as XLSX from 'xlsx';
+import { calculateAP } from '../pfmea/utils/apCalculator';
 
 interface ReportExporterProps {
   open: boolean;
@@ -654,6 +655,8 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           actionCompDate += (actionCompDate ? '\n' : '') + `Done: ${new Date(row.completionDate).toLocaleDateString()}`;
         }
 
+        // Raw causes array to check for object-level properties (OCC, DET, FC, etc.)
+        const rawCauses = Array.isArray(row.causes) ? row.causes : [];
         const causesList = parseItems(row.causes);
         const prevControlsList = parseItems(row.controls?.filter((c: any) => c.type === 'prevention') || row.preventionControls);
         const detControlsList = parseItems(row.controls?.filter((c: any) => c.type === 'detection') || row.detectionControls);
@@ -665,10 +668,33 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           const excelRow = ws.getRow(r);
           const isFirstSub = subIdx === 0;
 
+          const causeObj = rawCauses[subIdx];
           const causeText = causesList[subIdx] || '';
-          const prevControlText = prevControlsList[subIdx] || '';
-          const detControlText = detControlsList[subIdx] || '';
+          const prevControlText = prevControlsList[subIdx] || (typeof causeObj === 'object' ? causeObj?.currentControlPrevention || '' : '');
+          const detControlText = detControlsList[subIdx] || (typeof causeObj === 'object' ? causeObj?.currentControlDetection || '' : '');
 
+          // Individual cause OCC and DET ratings if present, or row fallback
+          const causeOcc = (typeof causeObj === 'object' && causeObj?.occurrenceRating != null)
+            ? String(causeObj.occurrenceRating)
+            : (isFirstSub && row.occurrence != null ? String(row.occurrence) : '');
+
+          const causeDet = (typeof causeObj === 'object' && causeObj?.detectionRating != null)
+            ? String(causeObj.detectionRating)
+            : (isFirstSub && row.detection != null ? String(row.detection) : '');
+
+          // Calculate cause-specific AP if ratings exist, else row AP
+          let causeAp: string = '';
+          if (row.severity && causeOcc && causeDet) {
+            causeAp = calculateAP(Number(row.severity), Number(causeOcc), Number(causeDet)) || '';
+          } else if (isFirstSub && row.ap) {
+            causeAp = row.ap;
+          }
+
+          const causeFc = (typeof causeObj === 'object' && causeObj?.filterCode)
+            ? String(causeObj.filterCode)
+            : (isFirstSub && row.filterCode ? String(row.filterCode) : '');
+
+          // Fragmented columns 7 through 23: each cause gets its own distinct sub-row values
           const values: (string | number)[] = [
             isFirstSub ? String(row.rowNumber || '') : '',
             isFirstSub ? (step ? `${step.stepNumber}: ${step.name}` : '') : '',
@@ -678,11 +704,11 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
             isFirstSub ? String(row.severity || '') : '',
             causeText,
             prevControlText,
-            isFirstSub ? String(row.occurrence || '') : '',
+            causeOcc,
             detControlText,
-            isFirstSub ? String(row.detection || '') : '',
-            isFirstSub ? (row.ap || '') : '',
-            isFirstSub ? (row.filterCode || '') : '',
+            causeDet,
+            causeAp,
+            causeFc,
             isFirstSub ? (row.preventionAction || '') : '',
             isFirstSub ? (row.detectionAction || '') : '',
             isFirstSub ? respTargetDate : '',
@@ -721,19 +747,10 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         }
 
         const endR = r - 1;
-        // Merge parent columns if multiple subRows
+        // Merge ONLY parent columns (1..6: #, Structure, Function, Failure Mode, Effects, SEV) if multiple subRows.
+        // Columns 7 to 23 (Failure Causes, Controls, OCC, DET, AP, Actions, etc.) remain FRAGMENTED per cause.
         if (subRowCount > 1) {
-          // Merge columns 1..6 (#, Structure, Function, Failure Mode, Effects, SEV)
           for (let col = 1; col <= 6; col++) {
-            ws.mergeCells(startR, col, endR, col);
-          }
-          // Merge OCC (col 9), DET (col 11), AP (col 12), FC (col 13)
-          ws.mergeCells(startR, 9, endR, 9);
-          ws.mergeCells(startR, 11, endR, 11);
-          ws.mergeCells(startR, 12, endR, 12);
-          ws.mergeCells(startR, 13, endR, 13);
-          // Merge action columns 14..23
-          for (let col = 14; col <= 23; col++) {
             ws.mergeCells(startR, col, endR, col);
           }
         }

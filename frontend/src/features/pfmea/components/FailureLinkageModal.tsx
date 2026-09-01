@@ -12,6 +12,7 @@ import {
   Add as AddIcon,
   Remove as RemoveIcon,
   CropFree as CropFreeIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { API_BASE_URL } from '../../../config';
 import { TREE_COLORS, TREE_ASSETS } from '../../shared/fmeaTreeStyles';
@@ -390,15 +391,42 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth={false} slotProps={{ paper: { sx: { width: '96vw', height: '94vh', m: 'auto', borderRadius: 3 } } }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={false}
+      slotProps={{
+        paper: {
+          sx: {
+            width: '96vw',
+            height: '94vh',
+            m: 'auto',
+            borderRadius: '12px',
+            border: '1px solid #e4e4e7',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.18)',
+            overflow: 'hidden'
+          }
+        }
+      }}
+    >
       {/* Dialog Header */}
-      <DialogTitle sx={{ bgcolor: '#0F172A', color: '#FFFFFF', px: 3, py: 2 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <LinkIcon sx={{ color: '#38BDF8', fontSize: '1.5rem' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'inherit', fontSize: '1.3rem' }}>
-            Failure Linkage — Effects / Mode / Causes
-          </Typography>
-        </Stack>
+      <DialogTitle sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f4f4f5', bgcolor: '#ffffff' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ p: 1, bgcolor: '#eff6ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LinkIcon sx={{ color: '#2563eb', fontSize: '1.25rem' }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: '1.05rem', fontWeight: 700, color: '#09090b' }}>
+              Failure Linkage Network
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: '#71717a' }}>
+              Connect Failure Causes (4M) → Failure Mode → Potential Effects (Severity flow-down)
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton onClick={onClose} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
       </DialogTitle>
       
       <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F8FAFC' }}>
@@ -818,20 +846,47 @@ export const FailureLinkageModal: React.FC<FailureLinkageModalProps> = ({
       </DialogContent>
       
       {/* Dialog Footer Actions */}
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-        <Typography variant="caption" color="text.secondary" sx={{ flex: 1, fontWeight: 600 }}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
+        <Typography sx={{ flex: 1, fontWeight: 600, fontSize: '0.8rem', color: '#71717a' }}>
           {selectedEffectIds.length} effect(s) + {selectedCauseIds.length} cause(s) selected for linkage
         </Typography>
-        <Button onClick={onClose} disabled={saving} color="inherit" sx={{ fontWeight: 600 }}>Cancel</Button>
+        <Button
+          onClick={onClose}
+          disabled={saving}
+          size="small"
+          sx={{
+            color: '#71717a',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            border: '1px solid #e4e4e7',
+            bgcolor: '#ffffff',
+            px: 2.5,
+            '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+          }}
+        >
+          Cancel
+        </Button>
         <Button
           onClick={handleSave}
-          variant="contained"
-          color="error"
           disabled={saving}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LinkIcon />}
-          sx={{ fontWeight: 700, px: 3 }}
+          size="small"
+          variant="contained"
+          sx={{
+            bgcolor: '#09090b',
+            color: '#ffffff',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            px: 3,
+            boxShadow: 'none',
+            '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+          }}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <LinkIcon fontSize="small" />}
         >
-          {saving ? 'Saving...' : 'Save Linkage'}
+          {saving ? 'Saving...' : 'Save Linkages'}
         </Button>
       </DialogActions>
     </Dialog>

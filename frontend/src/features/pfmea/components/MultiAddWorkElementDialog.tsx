@@ -6,8 +6,6 @@ import {
   DialogActions,
   Button,
   TextField,
-  Tabs,
-  Tab,
   Box,
   Stack,
   IconButton,
@@ -30,6 +28,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Download as ImportIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../auth/AuthContext';
 import { API_BASE_URL } from '../../../config';
@@ -177,15 +176,78 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
   const selectedPkg = approvedPackages.find((p) => p.id === selectedPackageId);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth sx={{ '& .MuiDialog-paper': { transform: 'translateY(-36px)', m: 2 } }}>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Add Work Element (4M)</DialogTitle>
-      <DialogContent>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-          <Tabs value={activeTab} onChange={(_, val) => setActiveTab(val)}>
-            <Tab label="Single Work Element" />
-            <Tab label="Multiple Work Elements" />
-            <Tab label="Import from Repository" />
-          </Tabs>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '12px',
+            border: '1px solid #e4e4e7',
+            boxShadow: '0 20px 40px -8px rgba(0,0,0,0.12)',
+            p: 0,
+            overflow: 'hidden'
+          }
+        }
+      }}
+    >
+      <DialogTitle sx={{ px: 3, py: 2, borderBottom: '1px solid #f4f4f5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#ffffff' }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>
+              Add Work Element (4M)
+            </Typography>
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: '4px',
+                fontSize: '0.675rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                bgcolor: '#eff6ff',
+                color: '#2563eb'
+              }}
+            >
+              4M / System
+            </Box>
+          </Box>
+          <Typography sx={{ fontSize: '0.75rem', color: '#71717a', mt: 0.25 }}>
+            Assign Man, Machine, Material, or Method resources to process step
+          </Typography>
+        </Box>
+        <IconButton onClick={onClose} size="small" sx={{ color: '#71717a', '&:hover': { bgcolor: '#f4f4f5' } }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
+        <Box sx={{ mb: 2.5, display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7', flexWrap: 'wrap' }}>
+          {[
+            { id: 0, label: 'Single Element' },
+            { id: 1, label: 'Multiple (Batch)' },
+            { id: 2, label: 'Repository Package' },
+          ].map((t) => (
+            <Box
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              sx={{
+                px: 1.75,
+                py: 0.65,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                bgcolor: activeTab === t.id ? '#ffffff' : 'transparent',
+                color: activeTab === t.id ? '#09090b' : '#71717a',
+                fontWeight: activeTab === t.id ? 700 : 500,
+                fontSize: '0.8rem',
+                boxShadow: activeTab === t.id ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {t.label}
+            </Box>
+          ))}
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -293,13 +355,26 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
           </Stack>
         )}
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={importing}>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #f4f4f5', bgcolor: '#fafafa' }}>
+        <Button
+          onClick={onClose}
+          disabled={importing}
+          size="small"
+          sx={{
+            color: '#71717a',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            border: '1px solid #e4e4e7',
+            bgcolor: '#ffffff',
+            px: 2,
+            '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+          }}
+        >
           Cancel
         </Button>
         <Button
-          variant="contained"
-          color="primary"
           onClick={handleSubmit}
           disabled={
             importing ||
@@ -307,9 +382,22 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
             (activeTab === 1 && multipleNames.every((n) => !n.trim())) ||
             (activeTab === 2 && !selectedPackageId)
           }
-          startIcon={activeTab === 2 ? <ImportIcon /> : undefined}
+          size="small"
+          variant="contained"
+          sx={{
+            bgcolor: '#09090b',
+            color: '#ffffff',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: '6px',
+            px: 2.5,
+            boxShadow: 'none',
+            '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+          }}
+          startIcon={activeTab === 2 ? <ImportIcon fontSize="small" /> : undefined}
         >
-          {activeTab === 2 ? (importing ? 'Importing...' : 'Import Package') : 'Save'}
+          {activeTab === 2 ? (importing ? 'Importing...' : 'Import Package') : 'Save Element'}
         </Button>
       </DialogActions>
     </Dialog>
