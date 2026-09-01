@@ -1,90 +1,102 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
 import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
 
-const CUSTOMERS = ['Bosch', 'Magna', 'Continental', 'Siemens', 'Tata Motors', 'Mahindra', 'Valeo', 'ZF Group'];
-
 const VALUES = [
-  { t: 'Dense, not fanciful', d: 'Spreadsheet-grade grids, single-viewport bento chrome, keyboard-first. No marketing fluff inside the product.' },
-  { t: 'Explicit, not magical', d: 'Every S/O/D rating, every AP lookup, every PFD↔PFMEA link is visible, versioned, and auditable.' },
-  { t: 'Deployable anywhere', d: 'One `docker compose up` — your data stays in your infrastructure, behind your firewall.' },
+  { t: 'Deterministic, not magical', d: 'Every severity, occurrence, and detection rating in FMEApex is explicit, versioned, and auditable. AI assists but never overwrites engineering judgment.' },
+  { t: 'Connected shop floor intelligence', d: 'Process flow diagrams, PFMEAs, and Control Plans are linked in real time. Changes propagate bidirectionally with zero copy-paste errors.' },
+  { t: 'Deployable anywhere on-prem', d: 'One docker compose up command ships your entire quality platform behind your corporate firewall, keeping mission-critical data isolated.' },
 ];
 
-export const AboutPage: React.FC = () => (
-  <div className="bg-[#F7F6F3] min-h-screen">
-    <SEO
-      title="About — FMEApex | Quality Engineered To Evolve"
-      description="About FMEApex: a modular AI platform for production quality risk, trusted by manufacturing and automotive teams."
-      canonical="/about"
-    />
-    <SiteHeader />
+export const AboutPage: React.FC = () => {
+  const navigate = useNavigate();
 
-    {/* Hero */}
-    <section className="pt-[120px] pb-20 px-5 sm:px-8 lg:px-12">
-      <div className="max-w-[860px] mx-auto text-center">
-        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
-          About us
-        </span>
-        <h1 className="mt-5 text-[40px] sm:text-[52px] leading-[1.06] font-[650] tracking-[-0.02em] text-[#0F172A]">
-          Software that factories actually trust.
-        </h1>
-        <p className="mt-5 text-[17px] leading-[1.6] text-[#5B6470] max-w-[640px] mx-auto">
-          We build modular AI systems for quality engineering. FMEApex makes the AIAG-VDA 7-step FMEA rigorous, linked, and audit-ready — without the EHS-suite bloat.
-        </p>
-      </div>
-    </section>
+  return (
+    <div className="bg-[#FAF9F6] min-h-screen text-[#18181B] font-sans antialiased">
+      <SEO
+        title="About — FMEApex | Quality Engineered to Evolve"
+        description="About FMEApex: an enterprise quality intelligence platform built for automotive, aerospace, and medical manufacturing teams."
+        canonical="/about"
+      />
+      <SiteHeader />
 
-    {/* Mission + Build */}
-    <section className="py-16 px-5 sm:px-8 lg:px-12 bg-white border-y border-[#E6E1D8]">
-      <div className="max-w-[1000px] mx-auto grid sm:grid-cols-2 gap-5">
-        <div className="rounded-[20px] border border-[#E6E1D8] bg-[#FAF9F6] p-8">
-          <h3 className="text-[20px] font-[650] text-[#0F172A] mb-3">Our mission</h3>
-          <p className="text-[14.5px] leading-[1.65] text-[#5B6470]">
-            Cut the time quality engineers spend chasing risk paperwork. Every severity, occurrence, and detection rating in FMEApex is explicit, traceable, and reproducible — so audits take hours, not weeks.
+      {/* Hero */}
+      <section className="pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[820px] mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E5E0D8] text-[11.5px] font-mono font-bold text-[#816729] shadow-xs mb-6">
+            <span className="text-[#FF682C]">✦</span>
+            <span>Our Mission</span>
+          </div>
+          <h1 className="text-[38px] sm:text-[54px] font-extrabold leading-[1.06] tracking-[-0.035em] text-[#18181B] mb-5 ff-heading">
+            Quality software that manufacturing engineers actually adopt.
+          </h1>
+          <p className="text-[17px] sm:text-[19px] leading-[1.6] text-[#52525B] max-w-[640px] mx-auto">
+            We build modular AI systems for quality engineering. FMEApex makes the AIAG-VDA 7-step FMEA rigorous, linked, and audit-ready—without bloated enterprise IT overhead.
           </p>
         </div>
-        <div className="rounded-[20px] border border-[#E6E1D8] bg-[#FAF9F6] p-8">
-          <h3 className="text-[20px] font-[650] text-[#0F172A] mb-3">How we build</h3>
-          <p className="text-[14.5px] leading-[1.65] text-[#5B6470]">
-            Dense bento chrome, spreadsheet-grade tables, keyboard navigation everywhere, ConfirmDialog on every destructive action, 21 CFR Part 11 locks. On-prem ships as one command.
+      </section>
+
+      {/* Mission Tiles */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-y border-[#E5E0D8]">
+        <div className="max-w-[1200px] mx-auto grid sm:grid-cols-2 gap-8">
+          <div className="rounded-[28px] border border-[#E5E0D8] bg-[#FAF9F6] p-8 sm:p-10 shadow-xs">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Purpose</span>
+            <h3 className="text-[24px] font-bold text-[#18181B] mt-2 mb-3 ff-heading">Eliminate Spreadsheet Chaos</h3>
+            <p className="text-[15px] leading-relaxed text-[#52525B]">
+              Quality engineers spend hundreds of hours manually copy-pasting numbers across disconnected Excel files. FMEApex ensures every process step, failure mode, and control plan is synchronized in a single verifiable system of record.
+            </p>
+          </div>
+          <div className="rounded-[28px] border border-[#E5E0D8] bg-[#FAF9F6] p-8 sm:p-10 shadow-xs">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#816729] font-bold">Standard</span>
+            <h3 className="text-[24px] font-bold text-[#18181B] mt-2 mb-3 ff-heading">Built on AIAG-VDA & 21 CFR Part 11</h3>
+            <p className="text-[15px] leading-relaxed text-[#52525B]">
+              Deterministic Action Priority lookup tables, immutable audit log partitions, electronic signatures, and reviewer segregation make inspection readiness automatic from day one.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Values Grid */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+        <div className="max-w-[1200px] mx-auto">
+          <h2 className="text-[32px] sm:text-[40px] font-extrabold text-[#18181B] mb-12 text-center ff-heading">
+            What We Believe
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-6">
+            {VALUES.map((v) => (
+              <div key={v.t} className="rounded-[24px] bg-white border border-[#E5E0D8] p-8 shadow-xs">
+                <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
+                <h4 className="text-[18px] font-bold text-[#18181B] mb-2">{v.t}</h4>
+                <p className="text-[14px] leading-relaxed text-[#52525B]">{v.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white border-t border-[#E5E0D8]">
+        <div className="max-w-[820px] mx-auto text-center">
+          <h2 className="text-[32px] sm:text-[42px] font-extrabold text-[#18181B] mb-4 ff-heading">
+            Experience the platform firsthand.
+          </h2>
+          <p className="text-[16px] text-[#52525B] max-w-[560px] mx-auto mb-8">
+            Launch an instant guest sandbox session to explore the AIAG-VDA 7-step FMEA workspace with pre-populated manufacturing data.
           </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="h-12 px-8 rounded-full bg-[#FF682C] hover:bg-[#E05219] text-white text-[14.5px] font-semibold transition-all shadow-[0_6px_20px_rgba(255,104,44,0.35)]"
+          >
+            Launch Free Guest Sandbox →
+          </button>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* Values */}
-    <section className="py-16 px-5 sm:px-8 lg:px-12">
-      <div className="max-w-[1000px] mx-auto">
-        <h2 className="text-[32px] sm:text-[40px] font-[650] tracking-[-0.02em] text-[#0F172A] mb-10">What we believe</h2>
-        <div className="grid sm:grid-cols-3 gap-5">
-          {VALUES.map((v) => (
-            <div key={v.t} className="rounded-[16px] border border-[#E6E1D8] bg-white p-6">
-              <h3 className="text-[17px] font-[650] text-[#0F172A] mb-2">{v.t}</h3>
-              <p className="text-[13.5px] leading-[1.6] text-[#5B6470]">{v.d}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      <SiteFooter />
+    </div>
+  );
+};
 
-    {/* Customers */}
-    <section className="py-16 px-5 sm:px-8 lg:px-12 bg-white border-t border-[#E6E1D8]">
-      <div className="max-w-[1000px] mx-auto">
-        <h2 className="text-[28px] font-[650] tracking-[-0.02em] text-[#0F172A]">Trusted by manufacturing &amp; automotive makers</h2>
-        <p className="mt-2 text-[14.5px] text-[#5B6470]">Teams exploring FMEApex in preview deployments.</p>
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {CUSTOMERS.map((c) => (
-            <div key={c} className="rounded-[14px] border border-[#E6E1D8] bg-[#FAF9F6] p-5 flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-[10px] bg-[#0D9488]/10 flex items-center justify-center text-[#0D9488] font-[650] text-[16px]">{c.charAt(0)}</div>
-              <span className="text-[13px] font-[600] text-[#334155]">{c}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    <SiteFooter />
-  </div>
-);
 export default AboutPage;
