@@ -152,7 +152,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* ── 3. The Studio Tile (Interactive Preview Canvas) ── */}
-          <div className="rounded-[28px] border border-[#E5E0D8] bg-[#18181B] shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden">
+          <div className="shadow-[0_20px_60px_rgba(0,0,0,0.08)]  rounded-[24px]">
             <VentrilocDashboard />
           </div>
         </div>
