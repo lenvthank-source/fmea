@@ -60,11 +60,11 @@ export const VentrilocDashboard: React.FC<{ compact?: boolean }> = ({ compact: _
       </div>
 
       {/* Main Studio Canvas */}
-      <div className="p-5 sm:p-6 bg-[#18181B]">
+      <div className="p-4 sm:p-5 bg-[#18181B]">
         {activeTab === 'bi' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Bento KPI Row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
               <div className="rounded-[16px] bg-[#222228] border border-[#2E2E36] p-4 relative overflow-hidden group hover:border-[#FF682C]/50 transition-colors">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#FF682C]/10 rounded-bl-[32px] pointer-events-none" />
                 <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9CA3AF]">Audit Readiness</span>
@@ -104,7 +104,7 @@ export const VentrilocDashboard: React.FC<{ compact?: boolean }> = ({ compact: _
             </div>
 
             {/* Interactive Process Station Visualizer */}
-            <div className="grid lg:grid-cols-[1.5fr_1fr] gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-3.5">
               {/* Left Bar Chart */}
               <div className="rounded-[18px] bg-[#222228] border border-[#2E2E36] p-5">
                 <div className="flex items-center justify-between mb-4">

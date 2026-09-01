@@ -71,26 +71,26 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] text-[#202020] font-sans">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#202020] font-sans">
       <SEO
         title="FMEApex — Trusted Experts in AIAG-VDA 2019 Quality Intelligence & PFMEA"
         description="Turn your manufacturing quality data into a zero-defect growth engine with advanced AIAG-VDA 2019 FMEA, PFD linking, and 21 CFR Part 11 intelligence."
         canonical="/"
       />
 
-      {/* ── Ventriloc-Styled News Announcement Banner ──────────── */}
+      {/* ── Top News Announcement Banner ──────────────────────── */}
       {showBanner && (
         <aside
           aria-label="Release announcement"
-          className="bg-[#202020] text-white py-2.5 px-4 text-[12.5px] border-b border-[#333338] sticky top-0 z-50 transition-all"
+          className="bg-[#202020] text-white py-2 px-4 text-[12px] border-b border-[#333338] relative z-40"
         >
           <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <span className="px-2 py-0.5 rounded-full bg-[#FF682C] text-white font-mono text-[10px] font-bold uppercase tracking-wider shrink-0">
-                News
+                Release v0.5.2
               </span>
               <p className="truncate text-[#E4E4E4]">
-                <strong className="text-white font-semibold">Release v0.5.1 Live:</strong> Rebuilt Failure Details window, Safe Launch hierarchy & AIAG-VDA Excel auto-merging.
+                <strong className="text-white font-semibold">Live:</strong> Shadcn Admin quality workspace, interactive Power BI studio & AIAG-VDA Excel export.
               </p>
             </div>
             <div className="flex items-center gap-4 shrink-0">
@@ -112,43 +112,41 @@ export const LandingPage: React.FC = () => {
         </aside>
       )}
 
+      {/* ── Sticky Clean SiteHeader ───────────────────────────── */}
       <SiteHeader />
 
-      {/* ── Ventriloc-Style Hero Section (pb-row-hero) ──────────── */}
-      <section className="relative pt-[120px] lg:pt-[150px] pb-20 px-5 sm:px-8 lg:px-12 bg-[#FAF9F6] border-b border-[#E4E4E4] overflow-hidden">
-        {/* Subtle Background Geometry */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#EBE6DD]/60 rounded-full blur-3xl pointer-events-none -mr-40 -mt-40" />
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-[#FF682C]/5 rounded-full blur-3xl pointer-events-none" />
+      {/* ── Hero Section ──────────────────────────────────────── */}
+      <section className="relative pt-10 pb-16 lg:pt-14 lg:pb-24 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6] border-b border-[#E4E4E4] overflow-hidden">
+        {/* Ambient subtle glow */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#EBE6DD]/60 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-1/4 w-[350px] h-[350px] bg-[#FF682C]/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-[1440px] mx-auto grid lg:grid-cols-12 gap-12 lg:gap-16 items-center relative z-10">
+        <div className="max-w-[1440px] mx-auto grid lg:grid-cols-12 gap-10 lg:gap-12 items-center relative z-10">
           {/* Left Hero Copy */}
           <div className="lg:col-span-6 reveal">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBE6DD] border border-[#D4CFC4] text-[11.5px] font-mono font-bold text-[#816729] uppercase tracking-[0.12em] mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EBE6DD] border border-[#D4CFC4] text-[11px] font-mono font-bold text-[#816729] uppercase tracking-[0.12em] mb-5">
               <span>✦ AIAG-VDA 2019</span>
               <span className="text-[#A1A1AA]">•</span>
               <span>21 CFR Part 11</span>
             </div>
 
-            <h1 className="text-[44px] sm:text-[58px] lg:text-[68px] font-extrabold leading-[1.02] tracking-[-0.035em] text-[#202020] mb-6 ff-heading">
+            <h1 className="text-[38px] sm:text-[52px] lg:text-[62px] font-extrabold leading-[1.06] tracking-[-0.035em] text-[#202020] mb-5 ff-heading">
               Your Quality.<br />
               Our Analytics Expertise.<br />
               Powering Your{' '}
-              <span className="title-highlight font-extrabold">
-                Zero-Defect Growth
-                <span className="title-highlight__underline" />
-              </span>.
+              <span className="text-[#FF682C]">Zero-Defect Growth</span>.
             </h1>
 
-            <p className="text-[17px] sm:text-[18px] leading-[1.62] text-[#4D4D4D] max-w-[540px] mb-8 font-normal">
+            <p className="text-[16px] sm:text-[17.5px] leading-[1.62] text-[#4D4D4D] max-w-[540px] mb-7 font-normal">
               FMEApex puts business intelligence, manufacturing data engineering, and AIAG-VDA expertise to work for your team. Unlocking the full potential of your quality lifecycle with human-in-the-loop AI and immutable compliance.
             </p>
 
             {/* Dual CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-4 mb-10">
+            <div className="flex flex-wrap items-center gap-3.5 mb-8">
               <button
                 onClick={handlePrimaryCTA}
                 disabled={guestLoading}
-                className="btn-ventriloc-primary h-[52px] px-8 text-[15px] tracking-wide flex items-center gap-2.5 shadow-md"
+                className="btn-ventriloc-primary h-[50px] px-8 text-[14.5px] tracking-wide flex items-center gap-2.5 shadow-md"
               >
                 {guestLoading ? (
                   <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -160,14 +158,14 @@ export const LandingPage: React.FC = () => {
 
               <button
                 onClick={() => navigate('/product')}
-                className="btn-ventriloc-outline h-[52px] px-8 text-[15px]"
+                className="btn-ventriloc-outline h-[50px] px-7 text-[14.5px]"
               >
                 Explore Platform
               </button>
             </div>
 
-            {/* Trust Badges */}
-            <div className="pt-6 border-t border-[#E4E4E4] grid grid-cols-3 gap-4 text-left">
+            {/* Trust Metrics */}
+            <div className="pt-5 border-t border-[#E4E4E4] grid grid-cols-3 gap-4 text-left">
               <div>
                 <div className="text-[20px] font-extrabold text-[#202020] font-mono">99.8%</div>
                 <div className="text-[11.5px] text-[#828282] font-medium">Audit Pass Rate</div>
@@ -190,13 +188,13 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Ventriloc-Style Infinite Partner Ticker ─────────────── */}
-      <section className="py-10 bg-[#FFFFFF] border-b border-[#E4E4E4] overflow-hidden">
-        <div className="max-w-[1440px] mx-auto px-5 sm:px-8 mb-4 flex items-center justify-between">
-          <p className="text-[12px] font-mono uppercase tracking-[0.14em] text-[#828282] font-bold">
-            <span className="title-highlight text-[#816729]">Trusted by</span> 80+ global manufacturing leaders
+      {/* ── Infinite Partner Ticker ─────────────────────────────── */}
+      <section className="py-8 bg-[#FFFFFF] border-b border-[#E4E4E4] overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 mb-3 flex items-center justify-between">
+          <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#828282] font-bold">
+            <span className="text-[#816729]">Trusted by</span> 80+ global manufacturing leaders
           </p>
-          <span className="text-[11px] font-mono text-[#A1A1AA] hidden sm:inline">Automotive & Aerospace Tier 1</span>
+          <span className="text-[10.5px] font-mono text-[#A1A1AA] hidden sm:inline">Automotive & Aerospace Tier 1</span>
         </div>
 
         <div className="relative w-full overflow-hidden flex items-center">
@@ -204,7 +202,7 @@ export const LandingPage: React.FC = () => {
             {[...LOGOS, ...LOGOS].map((brand, i) => (
               <span
                 key={`${brand}-${i}`}
-                className="text-[15px] sm:text-[17px] font-extrabold tracking-[0.16em] text-[#A1A1AA] hover:text-[#202020] transition-colors cursor-default whitespace-nowrap"
+                className="text-[14px] sm:text-[16px] font-extrabold tracking-[0.16em] text-[#A1A1AA] hover:text-[#202020] transition-colors cursor-default whitespace-nowrap"
               >
                 {brand}
               </span>
@@ -213,59 +211,59 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Ventriloc-Style Stacked Sticky Cards (pb-row-services) ── */}
-      <section className="py-24 sm:py-32 px-5 sm:px-8 lg:px-12 bg-[#F5F5F5]" id="solutions">
+      {/* ── Core Quality Modules Section ────────────────────────── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#F5F5F5]" id="solutions">
         <div className="max-w-[1440px] mx-auto">
-          <div className="max-w-[620px] mb-16">
-            <p className="text-[12px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold mb-3">Our Core Modules</p>
-            <h2 className="text-[38px] sm:text-[48px] font-extrabold tracking-[-0.03em] text-[#202020] ff-heading leading-[1.08]">
+          <div className="max-w-[640px] mb-12">
+            <p className="text-[11.5px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold mb-2">Our Core Modules</p>
+            <h2 className="text-[34px] sm:text-[44px] font-extrabold tracking-[-0.03em] text-[#202020] ff-heading leading-[1.1]">
               Engineered for absolute quality adoption.
             </h2>
-            <p className="mt-4 text-[17px] text-[#4D4D4D] leading-[1.6]">
+            <p className="mt-3 text-[16px] text-[#4D4D4D] leading-[1.6]">
               Every module is designed to be understood, adopted, and used daily on the shop floor and in engineering review rooms.
             </p>
           </div>
 
-          {/* Stacked Cards Container */}
-          <div className="space-y-12">
+          {/* Clean Non-Overlapping Sequential Cards */}
+          <div className="space-y-8">
             {/* Card 1: PFD ↔ PFMEA Sync */}
-            <div className="sticky-stack-card bg-[#FFFFFF] border border-[#E4E4E4] p-8 sm:p-12 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)]">
+            <div className="bg-[#FFFFFF] border border-[#E4E4E4] rounded-[24px] p-6 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all">
               <div className="grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-6">
-                  <div className="w-12 h-1.5 bg-[#FF682C] rounded-full mb-6" />
-                  <span className="text-[12px] font-mono uppercase tracking-[0.12em] text-[#FF682C] font-bold">Module 01</span>
-                  <h3 className="text-[30px] sm:text-[38px] font-extrabold text-[#202020] mt-1 mb-4 ff-heading">
+                  <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
+                  <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#FF682C] font-bold">Module 01</span>
+                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#202020] mt-1 mb-3 ff-heading">
                     Process Flow & Structure Analysis
                   </h3>
-                  <div className="inline-block text-[13px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-md mb-4">
+                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-md mb-4">
                     AIAG-VDA Step 2 & 3 · PFD ↔ PFMEA Bidirectional Sync
                   </div>
-                  <p className="text-[16px] leading-[1.65] text-[#4D4D4D] mb-6">
+                  <p className="text-[15.5px] leading-[1.65] text-[#4D4D4D] mb-5">
                     We extract, map, and synchronize every manufacturing operation from your Process Flow Diagram directly into the PFMEA grid with zero data loss. Automatic orphan process detection prevents missing inspection gates.
                   </p>
                   <button
                     onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#202020] hover:text-[#FF682C] transition-colors"
+                    className="inline-flex items-center gap-2 text-[13.5px] font-bold text-[#202020] hover:text-[#FF682C] transition-colors"
                   >
                     <span>Explore PFD ↔ PFMEA linking</span>
                     <span>→</span>
                   </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-[18px] bg-[#F5F5F5] border border-[#E4E4E4] p-6 font-mono text-[12px]">
-                  <div className="text-[#816729] font-bold mb-3 uppercase tracking-wider text-[11px]">Process Synchronization Engine</div>
-                  <div className="space-y-3">
+                <div className="lg:col-span-6 rounded-[16px] bg-[#F9F9F8] border border-[#E4E4E4] p-5 font-mono text-[12px]">
+                  <div className="text-[#816729] font-bold mb-3 uppercase tracking-wider text-[10.5px]">Process Synchronization Engine</div>
+                  <div className="space-y-2.5">
                     <div className="p-3 bg-white rounded-lg border border-[#E4E4E4]">
-                      <div className="flex justify-between items-center text-[#202020] font-bold">
+                      <div className="flex justify-between items-center text-[#202020] font-bold text-[12.5px]">
                         <span>PFD Step 10: Automatic Bearing Press</span>
-                        <span className="text-[#10B981]">SYNCED</span>
+                        <span className="text-[#10B981] font-bold">SYNCED</span>
                       </div>
                       <div className="text-[#828282] text-[11px] mt-1">4M Allocation: Machine (Press-04) · Man (Operator 2)</div>
                     </div>
                     <div className="p-3 bg-white rounded-lg border border-[#E4E4E4]">
-                      <div className="flex justify-between items-center text-[#202020] font-bold">
+                      <div className="flex justify-between items-center text-[#202020] font-bold text-[12.5px]">
                         <span>PFMEA Row 10.1: Insufficient Press Force</span>
-                        <span className="text-[#FF682C]">S=8 · O=3 · D=4</span>
+                        <span className="text-[#FF682C] font-bold">S=8 · O=3 · D=4</span>
                       </div>
                       <div className="text-[#828282] text-[11px] mt-1">Directly propagates to Control Plan Dimension Tolerances</div>
                     </div>
@@ -275,129 +273,128 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* Card 2: Risk & Action Priority */}
-            <div className="sticky-stack-card bg-[#FAF9F6] border border-[#E4E4E4] p-8 sm:p-12 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.12)]">
+            <div className="bg-[#FFFFFF] border border-[#E4E4E4] rounded-[24px] p-6 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all">
               <div className="grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-6">
-                  <div className="w-12 h-1.5 bg-[#816729] rounded-full mb-6" />
-                  <span className="text-[12px] font-mono uppercase tracking-[0.12em] text-[#816729] font-bold">Module 02</span>
-                  <h3 className="text-[30px] sm:text-[38px] font-extrabold text-[#202020] mt-1 mb-4 ff-heading">
+                  <div className="w-10 h-1 bg-[#816729] rounded-full mb-4" />
+                  <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#816729] font-bold">Module 02</span>
+                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#202020] mt-1 mb-3 ff-heading">
                     Risk Visualization & Action Priority
                   </h3>
-                  <div className="inline-block text-[13px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-md mb-4">
+                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-md mb-4">
                     Deterministic AIAG-VDA AP (High, Medium, Low)
                   </div>
-                  <p className="text-[16px] leading-[1.65] text-[#4D4D4D] mb-6">
+                  <p className="text-[15.5px] leading-[1.65] text-[#4D4D4D] mb-5">
                     Our methodology is design-driven: every visual is crafted with the quality engineer in mind, providing instant visual hierarchy over Severity, Occurrence, and Detection ratings. High-AP mandates trigger automated action tasks.
                   </p>
                   <button
                     onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#202020] hover:text-[#816729] transition-colors"
+                    className="inline-flex items-center gap-2 text-[13.5px] font-bold text-[#202020] hover:text-[#816729] transition-colors"
                   >
                     <span>View Action Priority logic</span>
                     <span>→</span>
                   </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-[18px] bg-white border border-[#E4E4E4] p-6">
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-[#816729] font-bold mb-4">Live Matrix Derivation</div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5]/60">
-                      <div className="text-[11px] font-bold text-[#EF4444] uppercase">High AP</div>
-                      <div className="text-[24px] font-extrabold text-[#B91C1C] my-1">Mandatory</div>
-                      <div className="text-[11px] text-[#7F1D1D]">Requires Closed-Loop Action</div>
+                <div className="lg:col-span-6 rounded-[16px] bg-[#F9F9F8] border border-[#E4E4E4] p-5">
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-3">Live Matrix Evaluation</div>
+                  <div className="grid grid-cols-3 gap-2.5 text-center">
+                    <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
+                      <span className="text-[10px] font-mono font-bold uppercase text-[#EF4444]">High AP</span>
+                      <div className="text-[15px] font-bold text-[#991B1B] mt-1">Mandatory</div>
+                      <div className="text-[10px] text-[#DC2626] mt-0.5">Requires Closed-Loop Action</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
-                      <div className="text-[11px] font-bold text-[#D97706] uppercase">Medium AP</div>
-                      <div className="text-[24px] font-extrabold text-[#B45309] my-1">Review</div>
-                      <div className="text-[11px] text-[#92400E]">Engineering Discretion</div>
+                    <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl">
+                      <span className="text-[10px] font-mono font-bold uppercase text-[#D97706]">Medium AP</span>
+                      <div className="text-[15px] font-bold text-[#92400E] mt-1">Review</div>
+                      <div className="text-[10px] text-[#B45309] mt-0.5">Engineering Discretion</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]">
-                      <div className="text-[11px] font-bold text-[#16A34A] uppercase">Low AP</div>
-                      <div className="text-[24px] font-extrabold text-[#15803D] my-1">Acceptable</div>
-                      <div className="text-[11px] text-[#166534]">Controls Verified</div>
+                    <div className="p-3 bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl">
+                      <span className="text-[10px] font-mono font-bold uppercase text-[#059669]">Low AP</span>
+                      <div className="text-[15px] font-bold text-[#065F46] mt-1">Acceptable</div>
+                      <div className="text-[10px] text-[#047857] mt-0.5">Controls Verified</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: 21 CFR Part 11 & Governance */}
-            <div className="sticky-stack-card bg-[#202020] text-white border border-[#333338] p-8 sm:p-12 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)]">
+            {/* Card 3: 21 CFR Part 11 Regulatory Governance */}
+            <div className="bg-[#202020] text-white rounded-[24px] p-6 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.12)]">
               <div className="grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-6">
-                  <div className="w-12 h-1.5 bg-[#10B981] rounded-full mb-6" />
-                  <span className="text-[12px] font-mono uppercase tracking-[0.12em] text-[#10B981] font-bold">Module 03</span>
-                  <h3 className="text-[30px] sm:text-[38px] font-extrabold text-white mt-1 mb-4 ff-heading">
+                  <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
+                  <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#FF682C] font-bold">Module 03</span>
+                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-white mt-1 mb-3 ff-heading">
                     Regulatory Governance & 21 CFR Part 11
                   </h3>
-                  <div className="inline-block text-[13px] font-mono text-[#38BDF8] font-bold bg-[#18181C] px-3 py-1 rounded-md mb-4 border border-[#2E2E36]">
+                  <div className="inline-block text-[12px] font-mono text-[#E4E4E4] font-bold bg-[#333338] px-3 py-1 rounded-md mb-4 border border-[#44444C]">
                     Electronic Signatures · Reviewer Segregation · Immutable Audit Trail
                   </div>
-                  <p className="text-[16px] leading-[1.65] text-[#A1A1AA] mb-6">
+                  <p className="text-[15.5px] leading-[1.65] text-[#A1A1AA] mb-5">
                     We establish strict regulatory controls, cryptographic digital signatures, and locked document revisions ensuring flawless regulatory inspection readiness. Database constraints reject any deletion on audit records.
                   </p>
                   <button
                     onClick={() => navigate('/learn/21-cfr-part-11-fmea')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-white hover:text-[#10B981] transition-colors"
+                    className="inline-flex items-center gap-2 text-[13.5px] font-bold text-white hover:text-[#FF682C] transition-colors"
                   >
                     <span>Read 21 CFR Part 11 specification</span>
                     <span>→</span>
                   </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-[18px] bg-[#141416] border border-[#2E2E36] p-6 font-mono text-[12px]">
-                  <div className="flex items-center justify-between text-[#10B981] text-[11px] mb-3">
-                    <span>DIGITAL AUDIT TRAIL LOG</span>
-                    <span>ACTIVE PARTITION</span>
+                <div className="lg:col-span-6 rounded-[16px] bg-[#18181B] border border-[#2E2E36] p-5 font-mono text-[11.5px] text-[#A1A1AA]">
+                  <div className="flex justify-between items-center pb-2.5 mb-2.5 border-b border-[#2E2E36] text-[10px] uppercase font-bold text-[#71717A]">
+                    <span>Immutable Audit Trail Log</span>
+                    <span className="text-[#10B981]">Active Partition</span>
                   </div>
-                  <div className="space-y-2 text-[#D4D4D8]">
-                    <div className="p-2.5 rounded bg-[#1C1C20] border border-[#2A2A30]">
-                      <span className="text-[#816729]">2026-09-01T00:14:05Z</span> &bull; Rev C Approved by QA Director &bull; Hash: e00f6377
+                  <div className="space-y-2">
+                    <div className="text-white">
+                      <span className="text-[#FF682C]">2026-09-01T08:14:05Z</span> • Rev C Approved by QA Director • Hash: e8046277
                     </div>
-                    <div className="p-2.5 rounded bg-[#1C1C20] border border-[#2A2A30]">
-                      <span className="text-[#816729]">2026-09-01T00:08:14Z</span> &bull; ACT-102 Evidence Uploaded (R2) &bull; S=9 &rarr; S=9, O=1
+                    <div>
+                      <span className="text-[#A1A1AA]">2026-09-01T08:02:14Z</span> • ACT-102 Evidence Uploaded (R2) • S=8, O=3, D=3
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Card 4: AI Decision Copilot */}
-            <div className="sticky-stack-card bg-[#FFFFFF] border border-[#E4E4E4] p-8 sm:p-12 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)]">
+            {/* Card 4: AI Quality Copilot & Data Agents */}
+            <div className="bg-[#FFFFFF] border border-[#E4E4E4] rounded-[24px] p-6 sm:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all">
               <div className="grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-6">
-                  <div className="w-12 h-1.5 bg-[#863B32] rounded-full mb-6" />
-                  <span className="text-[12px] font-mono uppercase tracking-[0.12em] text-[#863B32] font-bold">Module 04</span>
-                  <h3 className="text-[30px] sm:text-[38px] font-extrabold text-[#202020] mt-1 mb-4 ff-heading">
+                  <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
+                  <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#FF682C] font-bold">Module 04</span>
+                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#202020] mt-1 mb-3 ff-heading">
                     AI Quality Copilot & Data Agents
                   </h3>
-                  <div className="inline-block text-[13px] font-mono text-[#863B32] font-bold bg-[#FDF2F0] px-3 py-1 rounded-md mb-4 border border-[#F5D5D0]">
+                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-md mb-4">
                     Tenant-Isolated RAG · Human-in-the-Loop Validation
                   </div>
-                  <p className="text-[16px] leading-[1.65] text-[#4D4D4D] mb-6">
+                  <p className="text-[15.5px] leading-[1.65] text-[#4D4D4D] mb-5">
                     Our AI agents suggest failure modes, causes, and detection controls based strictly on your historical FMEA knowledge base. AI suggestions never overwrite live analysis rows without explicit engineering approval.
                   </p>
                   <button
                     onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#202020] hover:text-[#863B32] transition-colors"
+                    className="inline-flex items-center gap-2 text-[13.5px] font-bold text-[#202020] hover:text-[#FF682C] transition-colors"
                   >
                     <span>Discover AI Copilot architecture</span>
                     <span>→</span>
                   </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-[18px] bg-[#FBF9F7] border border-[#EBE6DD] p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2 h-2 rounded-full bg-[#FF682C] animate-pulse" />
-                    <span className="text-[11.5px] font-mono text-[#202020] font-bold uppercase">AI Copilot Recommendation</span>
+                <div className="lg:col-span-6 rounded-[16px] bg-[#F9F9F8] border border-[#E4E4E4] p-5">
+                  <div className="flex items-center gap-2 text-[11px] font-mono font-bold text-[#FF682C] mb-2 uppercase">
+                    <span>✦ AI Copilot Recommendation</span>
                   </div>
-                  <div className="p-4 rounded-xl bg-white border border-[#E4E4E4] shadow-sm text-[13px]">
-                    <div className="text-[11px] text-[#828282] font-mono">Based on 14 similar welding operations in database</div>
-                    <div className="font-bold text-[#202020] mt-1">Suggested Detection Control: High-frequency ultrasonic weld inspection</div>
-                    <div className="mt-3 flex gap-2">
-                      <button className="px-3 py-1 rounded-full bg-[#202020] text-white text-[11px] font-bold">Accept Suggestion</button>
-                      <button className="px-3 py-1 rounded-full border border-[#D4D4D8] text-[11px] font-medium">Modify</button>
-                    </div>
+                  <div className="text-[12px] text-[#4D4D4D] mb-3">Based on 14 similar welding operations in database:</div>
+                  <div className="p-3 bg-white rounded-lg border border-[#E4E4E4] text-[13px] font-semibold text-[#202020] mb-3">
+                    Suggested Detection Control: High-frequency ultrasonic weld inspection
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="px-2.5 py-1 rounded bg-[#202020] text-white text-[11px] font-bold">Accept Suggestion</span>
+                    <span className="px-2.5 py-1 rounded border border-[#E4E4E4] text-[#4D4D4D] text-[11px]">Modify</span>
                   </div>
                 </div>
               </div>
@@ -406,162 +403,170 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Interactive Risk Priority Decision Simulator ─────────── */}
-      <section className="py-20 sm:py-28 px-5 sm:px-8 lg:px-12 bg-[#FFFFFF] border-b border-[#E4E4E4]" id="calculator">
+      {/* ── Interactive Risk Simulator ──────────────────────────── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#FFFFFF] border-b border-[#E4E4E4]" id="simulator">
         <div className="max-w-[1440px] mx-auto">
-          <div className="text-center max-w-[600px] mx-auto mb-14">
-            <span className="text-[12px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">Interactive Tool</span>
-            <h2 className="text-[34px] sm:text-[44px] font-extrabold tracking-[-0.03em] text-[#202020] ff-heading mt-2">
+          <div className="text-center max-w-[620px] mx-auto mb-10">
+            <span className="text-[11.5px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">Interactive Tool</span>
+            <h2 className="text-[32px] sm:text-[42px] font-extrabold tracking-[-0.03em] text-[#202020] mt-1.5 ff-heading">
               Simulate Action Priority in real-time
             </h2>
-            <p className="mt-3 text-[16px] text-[#4D4D4D]">
+            <p className="mt-2.5 text-[15.5px] text-[#4D4D4D]">
               Adjust Severity, Occurrence, and Detection sliders to see how AIAG-VDA 2019 prioritizes corrective action tasks.
             </p>
           </div>
 
-          <RiskCalculatorWidget />
-        </div>
-      </section>
-
-      {/* ── Technical Specifications Bento ─────────────────────── */}
-      <section className="py-20 sm:py-28 px-5 sm:px-8 lg:px-12 bg-[#FAF9F6] border-b border-[#E4E4E4]" id="specs">
-        <div className="max-w-[920px] mx-auto">
-          <span className="text-[12px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">Engineering Specs</span>
-          <h2 className="text-[34px] sm:text-[42px] font-extrabold tracking-[-0.03em] text-[#202020] ff-heading mt-2 mb-4">
-            Built for enterprise manufacturing scale
-          </h2>
-          <p className="text-[16px] text-[#4D4D4D] mb-10">
-            Engineered from day one with row-level tenant isolation, cryptographic audit trails, and zero spreadsheet dependencies.
-          </p>
-
-          <div className="rounded-[20px] border border-[#E4E4E4] bg-white overflow-hidden divide-y divide-[#E4E4E4] shadow-sm">
-            {SPECS.map(([k, v]) => (
-              <div key={k} className="grid sm:grid-cols-[240px_1fr] px-6 py-4 items-center hover:bg-[#FDFCFB] transition-colors">
-                <span className="text-[12.5px] font-mono font-bold text-[#816729] uppercase tracking-wider">{k}</span>
-                <span className="text-[14.5px] text-[#202020] font-medium">{v}</span>
-              </div>
-            ))}
+          <div className="max-w-[1000px] mx-auto">
+            <RiskCalculatorWidget />
           </div>
         </div>
       </section>
 
-      {/* ── Ventriloc-Styled Contact Section (pb-row-contact) ───── */}
-      <section className="py-24 sm:py-32 px-5 sm:px-8 lg:px-12 bg-[#FFFFFF]" id="contact">
-        <div className="max-w-[1440px] mx-auto grid lg:grid-cols-[1fr_1.3fr] gap-12 lg:gap-20 items-start">
-          <div>
-            <span className="text-[12px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">Get In Touch</span>
-            <h2 className="text-[38px] sm:text-[48px] font-extrabold tracking-[-0.03em] text-[#202020] ff-heading mt-2 mb-6 leading-[1.08]">
-              Ready to talk about your next quality transformation?
+      {/* ── Technical Specifications Bento ──────────────────────── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6] border-b border-[#E4E4E4]">
+        <div className="max-w-[1440px] mx-auto">
+          <div className="mb-8">
+            <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">Engineering Specs</span>
+            <h2 className="text-[28px] sm:text-[36px] font-extrabold tracking-[-0.025em] text-[#202020] mt-1 ff-heading">
+              Built for enterprise manufacturing scale
             </h2>
-            <p className="text-[17px] leading-[1.65] text-[#4D4D4D] max-w-[440px] mb-8">
-              Whether you need an on-premise Docker deployment, migration from legacy spreadsheets, or a custom demo with your engineering team, our quality architects are ready.
+            <p className="mt-2 text-[15px] text-[#4D4D4D]">
+              Engineered from day one with row-level tenant isolation, cryptographic audit trails, and zero spreadsheet dependencies.
             </p>
+          </div>
 
-            <div className="space-y-4 mb-8 text-[14px] text-[#4D4D4D]">
-              <div className="flex items-center gap-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-                <span>Response time SLA: <strong>Within 4 business hours</strong></span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FF682C]" />
-                <span>Direct email: <strong>quality@fmeapex.com</strong></span>
+          <div className="rounded-[16px] bg-white border border-[#E4E4E4] overflow-hidden shadow-sm">
+            <div className="divide-y divide-[#E4E4E4]">
+              {SPECS.map(([label, value]) => (
+                <div key={label} className="grid grid-cols-1 sm:grid-cols-12 p-4 text-[13.5px] hover:bg-[#F9F9F8] transition-colors">
+                  <div className="sm:col-span-3 font-mono font-bold text-[#816729] text-[11px] uppercase tracking-wider">
+                    {label}
+                  </div>
+                  <div className="sm:col-span-9 font-mono text-[#202020] mt-1 sm:mt-0 font-medium">
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Contact Section ─────────────────────────────────────── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#FFFFFF]" id="contact">
+        <div className="max-w-[1440px] mx-auto">
+          <div className="grid lg:grid-cols-12 gap-12 items-start">
+            <div className="lg:col-span-5">
+              <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#FF682C] font-bold">Get In Touch</span>
+              <h2 className="text-[34px] sm:text-[44px] font-extrabold tracking-[-0.03em] text-[#202020] mt-2 mb-4 ff-heading leading-[1.1]">
+                Ready to talk about your next quality transformation?
+              </h2>
+              <p className="text-[16px] leading-[1.65] text-[#4D4D4D] mb-6">
+                Whether you need an on-premise Docker deployment, migration from legacy spreadsheets, or a custom demo with your engineering team, our quality architects are ready.
+              </p>
+              <div className="space-y-2 text-[13px] font-mono text-[#828282]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+                  <span>Response time SLA: <strong className="text-[#202020]">Within 4 business hours</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#FF682C]" />
+                  <span>Direct email: <a href="mailto:quality@fmeapex.com" className="text-[#FF682C] font-bold hover:underline">quality@fmeapex.com</a></span>
+                </div>
               </div>
             </div>
 
-            <button
-              onClick={handlePrimaryCTA}
-              disabled={guestLoading}
-              className="btn-ventriloc-primary h-[50px] px-8 text-[14.5px]"
-            >
-              {guestLoading ? 'Loading…' : token ? 'Open Workspace' : 'Launch Free Preview'}
-            </button>
-          </div>
+            <div className="lg:col-span-7 bg-[#FAF9F6] border border-[#E4E4E4] rounded-[20px] p-6 sm:p-8">
+              {contactSuccess ? (
+                <div className="p-8 text-center bg-white rounded-xl border border-[#A7F3D0]">
+                  <div className="w-12 h-12 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center mx-auto mb-4 text-[20px]">✓</div>
+                  <h3 className="text-[20px] font-bold text-[#202020] mb-2">Message received</h3>
+                  <p className="text-[14px] text-[#4D4D4D]">Thank you for reaching out. A quality engineer will get in touch with you shortly.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  {contactError && (
+                    <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-[13px] rounded-lg">
+                      {contactError}
+                    </div>
+                  )}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-1.5">Your Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={contactForm.name}
+                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                        placeholder="Jane Doe"
+                        className="w-full h-[44px] px-3.5 rounded-lg bg-white border border-[#E4E4E4] text-[14px] text-[#202020] focus:outline-none focus:border-[#202020]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-1.5">Corporate Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                        placeholder="jane@manufacturer.com"
+                        className="w-full h-[44px] px-3.5 rounded-lg bg-white border border-[#E4E4E4] text-[14px] text-[#202020] focus:outline-none focus:border-[#202020]"
+                      />
+                    </div>
+                  </div>
 
-          {/* Contact Form Card */}
-          <div className="rounded-[24px] border border-[#E4E4E4] bg-[#FAF9F6] p-8 sm:p-10 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.08)]">
-            {contactError && (
-              <div className="mb-5 px-4 py-3 rounded-xl bg-[#FEF2F2] border border-[#FCA5A5] text-[13px] text-[#B91C1C]">
-                {contactError}
-              </div>
-            )}
-            {contactSuccess && (
-              <div className="mb-5 px-4 py-3 rounded-xl bg-[#F0FDF4] border border-[#86EFAC] text-[13px] text-[#15803D]">
-                Thank you. Our engineering architect will contact you shortly.
-              </div>
-            )}
-            <form onSubmit={handleContactSubmit} className="space-y-5">
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[12px] font-mono font-bold text-[#816729] uppercase tracking-wider mb-2">Your Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="Jane Doe"
-                    className="w-full h-[48px] px-4 rounded-xl border border-[#D4CFC4] bg-white text-[14.5px] text-[#202020] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#FF682C]/30 focus:border-[#FF682C] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[12px] font-mono font-bold text-[#816729] uppercase tracking-wider mb-2">Corporate Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="jane@manufacturer.com"
-                    className="w-full h-[48px] px-4 rounded-xl border border-[#D4CFC4] bg-white text-[14.5px] text-[#202020] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#FF682C]/30 focus:border-[#FF682C] transition"
-                  />
-                </div>
-              </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-1.5">Company / Plant</label>
+                      <input
+                        type="text"
+                        value={contactForm.company}
+                        onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+                        placeholder="Continental Plant 4"
+                        className="w-full h-[44px] px-3.5 rounded-lg bg-white border border-[#E4E4E4] text-[14px] text-[#202020] focus:outline-none focus:border-[#202020]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-1.5">Inquiry Type</label>
+                      <select
+                        value={contactForm.type}
+                        onChange={(e) => setContactForm({ ...contactForm, type: e.target.value })}
+                        className="w-full h-[44px] px-3.5 rounded-lg bg-white border border-[#E4E4E4] text-[14px] text-[#202020] focus:outline-none focus:border-[#202020]"
+                      >
+                        {INQUIRY_TYPES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="grid sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[12px] font-mono font-bold text-[#816729] uppercase tracking-wider mb-2">Company / Plant</label>
-                  <input
-                    type="text"
-                    value={contactForm.company}
-                    onChange={(e) => setContactForm((f) => ({ ...f, company: e.target.value }))}
-                    placeholder="e.g. Continental Plant 4"
-                    className="w-full h-[48px] px-4 rounded-xl border border-[#D4CFC4] bg-white text-[14.5px] text-[#202020] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#FF682C]/30 focus:border-[#FF682C] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[12px] font-mono font-bold text-[#816729] uppercase tracking-wider mb-2">Inquiry Type</label>
-                  <select
-                    value={contactForm.type}
-                    onChange={(e) => setContactForm((f) => ({ ...f, type: e.target.value }))}
-                    className="w-full h-[48px] px-4 rounded-xl border border-[#D4CFC4] bg-white text-[14.5px] text-[#202020] focus:outline-none focus:ring-2 focus:ring-[#FF682C]/30 focus:border-[#FF682C] transition"
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#828282] font-bold mb-1.5">Project Details / Goals</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      placeholder="Tell us about your production lines, current FMEA tools, or migration requirements..."
+                      className="w-full p-3.5 rounded-lg bg-white border border-[#E4E4E4] text-[14px] text-[#202020] focus:outline-none focus:border-[#202020]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={contactSubmitting}
+                    className="w-full btn-ventriloc-primary h-[48px] text-[14px] font-bold shadow-sm"
                   >
-                    {INQUIRY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-mono font-bold text-[#816729] uppercase tracking-wider mb-2">Project Details / Goals</label>
-                <textarea
-                  rows={4}
-                  required
-                  value={contactForm.message}
-                  onChange={(e) => setContactForm((f) => ({ ...f, message: e.target.value }))}
-                  placeholder="Tell us about your production lines, current FMEA tools, or migration requirements…"
-                  className="w-full px-4 py-3 rounded-xl border border-[#D4CFC4] bg-white text-[14.5px] text-[#202020] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#FF682C]/30 focus:border-[#FF682C] transition resize-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={contactSubmitting}
-                className="w-full btn-ventriloc-primary h-[50px] text-[15px] font-bold"
-              >
-                {contactSubmitting ? 'Sending inquiry…' : 'Send Message →'}
-              </button>
-            </form>
+                    {contactSubmitting ? 'Sending...' : 'Send Message →'}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
+      {/* ── Footer ──────────────────────────────────────────────── */}
       <SiteFooter />
     </div>
   );
