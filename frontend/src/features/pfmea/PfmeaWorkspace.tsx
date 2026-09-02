@@ -22,6 +22,7 @@ import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
 import { PfmeaStructureTree } from './components/PfmeaStructureTree';
 import { AddFunctionDialog } from './components/AddFunctionDialog';
+import type { BreadcrumbItem } from '../../components/HierarchyBreadcrumbs';
 import { AddFailureDialog } from './components/AddFailureDialog';
 import { MultiAddWorkElementDialog } from './components/MultiAddWorkElementDialog';
 import { dialogSelectProps } from '../../theme/muiSelectConfig';
@@ -96,6 +97,7 @@ export const PfmeaWorkspace: React.FC = () => {
   const [pfmeaRevisionId, setPfmeaRevisionId] = useState<string | null>(null);
   const [pfdRevisionId, setPfdRevisionId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string>('');
+  const [projectData, setProjectData] = useState<any>(null);
 
   // Data states
   const [rows, setRows] = useState<PfmeaRow[]>([]);
@@ -124,6 +126,7 @@ export const PfmeaWorkspace: React.FC = () => {
 
   // PFMEA Excel Import Wizard state
   const [pfmeaImportOpen, setPfmeaImportOpen] = useState(false);
+
 
   // Floating horizontal scrollbar controller states
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -215,6 +218,67 @@ export const PfmeaWorkspace: React.FC = () => {
   const [structFailFunctionId, setStructFailFunctionId] = useState<string | null>(null);
   const [structFailFunctionNarration, setStructFailFunctionNarration] = useState('');
   const [structureFunctions, setStructureFunctions] = useState<any[]>([]);
+
+  // Helper to compute complete hierarchy chain for Add/Edit dialogs
+  const getHierarchyChain = useCallback((target: {
+    stepId?: string | null;
+    workElementName?: string | null;
+    functionId?: string | null;
+    functionNarration?: string | null;
+  }): BreadcrumbItem[] => {
+    const chain: BreadcrumbItem[] = [];
+
+    // 1. Project level
+    const pName = projectData?.partName
+      ? `${projectData.partName}${projectData.orgPartNumber ? ` (${projectData.orgPartNumber})` : ''}`
+      : (projectData?.name || projectName || 'Project');
+    chain.push({ level: 'Project', name: pName });
+
+    // 2. Process Step level
+    let sId = target.stepId;
+    let weName = target.workElementName;
+
+    if (target.functionId && !sId) {
+      const sf = structureFunctions.find((f) => f.id === target.functionId);
+      if (sf) {
+        if (sf.parentType === 'process_step') {
+          sId = sf.parentId;
+        } else if (sf.parentType === 'work_element') {
+          const parts = (sf.parentId || '').split('::');
+          sId = parts[0];
+          if (!weName) weName = parts[1];
+        }
+      }
+    }
+
+    if (sId) {
+      const foundStep = pfdSteps.find((s) => s.id === sId);
+      if (foundStep) {
+        chain.push({
+          level: 'Step',
+          name: `${foundStep.stepNumber ? `${foundStep.stepNumber} - ` : ''}${foundStep.name}`,
+        });
+      }
+    }
+
+    // 3. Work Element level
+    if (weName) {
+      chain.push({ level: '4M Element', name: weName });
+    }
+
+    // 4. Function level
+    if (target.functionNarration) {
+      chain.push({ level: 'Function', name: target.functionNarration });
+    } else if (target.functionId) {
+      const sf = structureFunctions.find((f) => f.id === target.functionId);
+      if (sf) {
+        chain.push({ level: 'Function', name: sf.narration });
+      }
+    }
+
+    return chain;
+  }, [projectData, projectName, pfdSteps, structureFunctions]);
+
 
   // Reusable Edit States for Failures
   const [structFailEditMode, setStructFailEditMode] = useState(false);
@@ -1383,7 +1447,7 @@ export const PfmeaWorkspace: React.FC = () => {
       <DocumentHeader
         projectId={projectId!}
         docType="PFMEA"
-        onHeaderLoaded={(p) => setProjectName(p.name)}
+        onHeaderLoaded={(p) => { setProjectName(p.name); setProjectData(p); }}
       />
 
       {/* Space-Optimized Shadcn Top Toolbar */}
@@ -2553,6 +2617,7 @@ export const PfmeaWorkspace: React.FC = () => {
           onClose={() => { setMultiAddWeDialogOpen(false); setTreeAddTargetStepId(null); }}
           processStepId={treeAddTargetStepId}
           revisionId={pfmeaRevisionId || undefined}
+          hierarchyChain={getHierarchyChain({ stepId: treeAddTargetStepId })}
           onConfirmSingle={handleConfirmAddWorkElementSingle}
           onConfirmMultiple={handleConfirmAddWorkElementsMultiple}
           onImportSuccess={() => fetchData()}
@@ -2573,6 +2638,16 @@ export const PfmeaWorkspace: React.FC = () => {
           editNodeId={structFuncEditNodeId}
           initialNarration={structFuncInitialNarration}
           initialLocation={structFuncInitialLocation}
+          hierarchyChain={(() => {
+            if (structFuncParentType === 'process_step') {
+              return getHierarchyChain({ stepId: structFuncParentId });
+            }
+            if (structFuncParentType === 'work_element') {
+              const parts = (structFuncParentId || '').split('::');
+              return getHierarchyChain({ stepId: parts[0], workElementName: parts[1] });
+            }
+            return getHierarchyChain({});
+          })()}
         />
       )}
 
@@ -2595,6 +2670,10 @@ export const PfmeaWorkspace: React.FC = () => {
           initialControlPrevention={structFailInitialControlPrevention}
           initialControlDetection={structFailInitialControlDetection}
           initialFilterCode={structFailInitialFilterCode}
+          hierarchyChain={getHierarchyChain({
+            functionId: structFailFunctionId,
+            functionNarration: structFailFunctionNarration,
+          })}
         />
       )}
       {token && pfmeaRevisionId && (

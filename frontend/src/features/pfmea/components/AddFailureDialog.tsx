@@ -30,6 +30,8 @@ import { RatingDropdown } from './RatingDropdown';
 import { API_BASE_URL } from '../../../config';
 import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
 import { parseApiError } from '../../../lib/api';
+import { HierarchyBreadcrumbs } from '../../../components/HierarchyBreadcrumbs';
+import type { BreadcrumbItem } from '../../../components/HierarchyBreadcrumbs';
 
 interface AddFailureDialogProps {
   open: boolean;
@@ -48,6 +50,7 @@ interface AddFailureDialogProps {
   initialControlPrevention?: string;
   initialControlDetection?: string;
   initialFilterCode?: string;
+  hierarchyChain?: BreadcrumbItem[];
 }
 
 interface FailureRow {
@@ -77,6 +80,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
   initialControlPrevention = '',
   initialControlDetection = '',
   initialFilterCode = '',
+  hierarchyChain,
 }) => {
   const { showToast } = useToast();
   const TextFieldAny = TextField as any;
@@ -353,24 +357,27 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
-        {/* Parent Function Context Banner */}
-        <Box
-          sx={{
-            p: 1.5,
-            bgcolor: 'rgba(15, 23, 42, 0.04)',
-            border: '1px solid rgba(15, 23, 42, 0.08)',
-            borderRadius: 2,
-            mb: 2,
-            mt: 1,
-          }}
-        >
-          <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>
-            Associated Function:
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
-            {functionNarration || '\u2014'}
-          </Typography>
-        </Box>
+        {hierarchyChain && hierarchyChain.length > 0 ? (
+          <HierarchyBreadcrumbs items={hierarchyChain} />
+        ) : (
+          /* Fallback Parent Function Context Banner */
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: '#f8fafc',
+              border: '1px solid #e4e4e7',
+              borderRadius: '8px',
+              mb: 2,
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#71717a', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.04em', display: 'block' }}>
+              Associated Function:
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#09090b', fontWeight: 600 }}>
+              {functionNarration || '\u2014'}
+            </Typography>
+          </Box>
+        )}
 
         {!editMode && (
           <Box sx={{ mb: 2.5, display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
@@ -519,47 +526,47 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
               Enter multiple failure {roleTitle.toLowerCase()} entries in the spreadsheet table below. Click "Add Row" to append more entries.
             </Typography>
 
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px', border: '1px solid #e4e4e7', overflow: 'hidden', boxShadow: 'none' }}>
               <Table size="small">
-                <TableHead sx={{ bgcolor: '#0f172a' }}>
-                  <TableRow sx={{ bgcolor: '#0f172a' }}>
-                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 200 }}>
+                <TableHead sx={{ bgcolor: '#fafafa' }}>
+                  <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
+                    <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', minWidth: 200, py: 1.25 }}>
                       {role === 'cause' ? 'Failure Cause Narration' : role === 'effect' ? 'Failure Effect Narration' : 'Failure Mode Narration'}
                     </TableCell>
                     {role === 'effect' && (
-                      <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 110 }}>
+                      <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', width: 110, py: 1.25 }}>
                         SEV
                       </TableCell>
                     )}
                     {role === 'cause' && (
                       <>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 180 }}>
+                        <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', minWidth: 180, py: 1.25 }}>
                           Current Prevention Control
                         </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 90 }}>
+                        <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', width: 90, py: 1.25 }}>
                           OCC
                         </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 180 }}>
+                        <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', minWidth: 180, py: 1.25 }}>
                           Current Detection Control
                         </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', width: 90 }}>
+                        <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', width: 90, py: 1.25 }}>
                           DET
                         </TableCell>
-                        <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155', minWidth: 130 }}>
+                        <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', minWidth: 130, py: 1.25 }}>
                           Filter Code
                         </TableCell>
                       </>
                     )}
-                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
+                    <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', width: 64, textAlign: 'center', py: 1.25 }}>
                       Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rows.map((row, idx) => (
-                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#fafafa', '&:hover': { bgcolor: '#f4f4f5' } }}>
                       {/* Narration Cell */}
-                      <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                      <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                         <TextFieldAny
                           value={row.narration}
                           onChange={(e: any) => handleRowChange(idx, 'narration', e.target.value)}
@@ -567,13 +574,22 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                           size="small"
                           fullWidth
                           variant="outlined"
-                          sx={{ bgcolor: '#ffffff' }}
+                          sx={{
+                            bgcolor: '#ffffff',
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '6px',
+                              fontSize: '0.8125rem',
+                              '& fieldset': { borderColor: '#e4e4e7' },
+                              '&:hover fieldset': { borderColor: '#a1a1aa' },
+                              '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                            }
+                          }}
                         />
                       </TableCell>
 
                       {/* Effect Severity Rating */}
                       {role === 'effect' && (
-                        <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                        <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                           <RatingDropdown
                             ratingType="severity"
                             value={row.severityRating}
@@ -586,7 +602,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                       {/* Cause Ratings & Controls */}
                       {role === 'cause' && (
                         <>
-                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                             <TextFieldAny
                               value={row.currentControlPrevention}
                               onChange={(e: any) => handleRowChange(idx, 'currentControlPrevention', e.target.value)}
@@ -594,10 +610,18 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                               size="small"
                               fullWidth
                               variant="outlined"
-                              sx={{ bgcolor: '#ffffff' }}
+                              sx={{
+                                bgcolor: '#ffffff',
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '6px',
+                                  fontSize: '0.8125rem',
+                                  '& fieldset': { borderColor: '#e4e4e7' },
+                                  '&:hover fieldset': { borderColor: '#a1a1aa' },
+                                }
+                              }}
                             />
                           </TableCell>
-                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                             <RatingDropdown
                               ratingType="occurrence"
                               value={row.occurrenceRating}
@@ -605,7 +629,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                               size="small"
                             />
                           </TableCell>
-                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                             <TextFieldAny
                               value={row.currentControlDetection}
                               onChange={(e: any) => handleRowChange(idx, 'currentControlDetection', e.target.value)}
@@ -613,10 +637,18 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                               size="small"
                               fullWidth
                               variant="outlined"
-                              sx={{ bgcolor: '#ffffff' }}
+                              sx={{
+                                bgcolor: '#ffffff',
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '6px',
+                                  fontSize: '0.8125rem',
+                                  '& fieldset': { borderColor: '#e4e4e7' },
+                                  '&:hover fieldset': { borderColor: '#a1a1aa' },
+                                }
+                              }}
                             />
                           </TableCell>
-                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                             <RatingDropdown
                               ratingType="detection"
                               value={row.detectionRating}
@@ -624,7 +656,7 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                               size="small"
                             />
                           </TableCell>
-                          <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                          <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                             <TextFieldAny
                               value={row.filterCode}
                               onChange={(e: any) => handleRowChange(idx, 'filterCode', e.target.value)}
@@ -632,19 +664,31 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
                               size="small"
                               fullWidth
                               variant="outlined"
-                              sx={{ bgcolor: '#ffffff' }}
+                              sx={{
+                                bgcolor: '#ffffff',
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '6px',
+                                  fontSize: '0.8125rem',
+                                  '& fieldset': { borderColor: '#e4e4e7' },
+                                  '&:hover fieldset': { borderColor: '#a1a1aa' },
+                                }
+                              }}
                             />
                           </TableCell>
                         </>
                       )}
 
                       {/* Action Cell */}
-                      <TableCell sx={{ p: 1, textAlign: 'center' }}>
+                      <TableCell sx={{ p: 1, textAlign: 'center', borderBottom: '1px solid #e4e4e7' }}>
                         <IconButton
-                          color="error"
                           size="small"
                           onClick={() => handleRemoveRow(idx)}
                           disabled={rows.length <= 1}
+                          sx={{
+                            color: '#a1a1aa',
+                            '&:hover': { color: '#ef4444', bgcolor: '#fee2e2' },
+                            '&.Mui-disabled': { color: '#e4e4e7' }
+                          }}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -656,11 +700,23 @@ export const AddFailureDialog: React.FC<AddFailureDialogProps> = ({
             </TableContainer>
 
             <Button
-              startIcon={<AddIcon />}
+              startIcon={<AddIcon fontSize="small" />}
               variant="outlined"
               size="small"
               onClick={handleAddRow}
-              sx={{ alignSelf: 'flex-start' }}
+              sx={{
+                alignSelf: 'flex-start',
+                bgcolor: '#ffffff',
+                color: '#09090b',
+                border: '1px solid #e4e4e7',
+                fontWeight: 600,
+                fontSize: '0.8125rem',
+                textTransform: 'none',
+                borderRadius: '7px',
+                px: 2,
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+              }}
             >
               Add Row
             </Button>

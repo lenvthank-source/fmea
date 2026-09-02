@@ -32,6 +32,7 @@ import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider
 import { parseApiError } from '../../lib/api';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ExcelImportWizard } from './components/ExcelImportWizard';
+import { HierarchyBreadcrumbs } from '../../components/HierarchyBreadcrumbs';
 
 export interface ProcessStep {
   id: string;
@@ -172,6 +173,7 @@ export const PfdWorkspace: React.FC = () => {
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [projectData, setProjectData] = useState<any>(null);
   const [dragAllowedIndex, setDragAllowedIndex] = useState<number | null>(null);
   const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
   const [editingFlowSymbolsStepId, setEditingFlowSymbolsStepId] = useState<string | null>(null);
@@ -952,7 +954,7 @@ export const PfdWorkspace: React.FC = () => {
       <DocumentHeader
         projectId={projectId!}
         docType="PFD"
-        onHeaderLoaded={(p) => setProjectName(p.name)}
+        onHeaderLoaded={(p) => { setProjectName(p.name); setProjectData(p); }}
         drawerOpen={addOpen || detailsOpen}
         drawerWidth={520}
       />
@@ -1414,7 +1416,7 @@ export const PfdWorkspace: React.FC = () => {
       >
         {selectedStep && (
           <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                 Step {selectedStep.stepNumber} Details
               </Typography>
@@ -1422,7 +1424,21 @@ export const PfdWorkspace: React.FC = () => {
                 <CloseIcon />
               </IconButton>
             </Box>
-            <Divider sx={{ mb: 3 }} />
+            <HierarchyBreadcrumbs
+              items={[
+                {
+                  level: 'Project',
+                  name: projectData?.partName
+                    ? `${projectData.partName}${projectData.orgPartNumber ? ` (${projectData.orgPartNumber})` : ''}`
+                    : (projectName || 'Project'),
+                },
+                {
+                  level: 'Step',
+                  name: `${selectedStep.stepNumber ? `${selectedStep.stepNumber} - ` : ''}${selectedStep.name}`,
+                },
+              ]}
+            />
+            <Divider sx={{ mb: 2 }} />
 
             <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
               <Stack spacing={3}>
@@ -1604,7 +1620,7 @@ export const PfdWorkspace: React.FC = () => {
         slotProps={{ paper: { sx: { width: { xs: '100%', sm: 520 }, p: 3.5, bgcolor: '#ffffff', borderLeft: '1px solid #e4e4e7', boxShadow: '-8px 0 30px rgba(0,0,0,0.06)' } } }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
               Add Process Step
             </Typography>
@@ -1612,7 +1628,17 @@ export const PfdWorkspace: React.FC = () => {
               <CloseIcon />
             </IconButton>
           </Box>
-          <Divider sx={{ mb: 3 }} />
+          <HierarchyBreadcrumbs
+            items={[
+              {
+                level: 'Project',
+                name: projectData?.partName
+                  ? `${projectData.partName}${projectData.orgPartNumber ? ` (${projectData.orgPartNumber})` : ''}`
+                  : (projectName || 'Project'),
+              },
+            ]}
+          />
+          <Divider sx={{ mb: 2 }} />
 
           <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
             <Stack spacing={3}>

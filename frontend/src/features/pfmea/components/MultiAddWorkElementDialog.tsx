@@ -36,6 +36,8 @@ import { dialogSelectProps } from '../../../theme/muiSelectConfig';
 import { PackagePreviewCard } from '../../repository/PackagePreviewCard';
 import { useToast, getToastSeverity } from '../../../components/Toast/ToastProvider';
 import { parseApiError } from '../../../lib/api';
+import { HierarchyBreadcrumbs } from '../../../components/HierarchyBreadcrumbs';
+import type { BreadcrumbItem } from '../../../components/HierarchyBreadcrumbs';
 
 interface MultiAddWorkElementDialogProps {
   open: boolean;
@@ -45,6 +47,7 @@ interface MultiAddWorkElementDialogProps {
   onConfirmSingle: (name: string) => void;
   onConfirmMultiple: (names: string[]) => void;
   onImportSuccess: () => void;
+  hierarchyChain?: BreadcrumbItem[];
 }
 
 export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps> = ({
@@ -55,6 +58,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
   onConfirmSingle,
   onConfirmMultiple,
   onImportSuccess,
+  hierarchyChain,
 }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
@@ -223,6 +227,7 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ px: 3, py: 2.5, bgcolor: '#ffffff' }}>
+        <HierarchyBreadcrumbs items={hierarchyChain} />
         <Box sx={{ mb: 2.5, display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7', flexWrap: 'wrap' }}>
           {[
             { id: 0, label: 'Single Element' },
@@ -272,22 +277,22 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
               Enter multiple work element names below. Each row will be added to this process step.
             </Typography>
 
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '8px', border: '1px solid #e4e4e7', overflow: 'hidden', boxShadow: 'none' }}>
               <Table size="small">
-                <TableHead sx={{ bgcolor: '#0f172a' }}>
-                  <TableRow sx={{ bgcolor: '#0f172a' }}>
-                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', borderRight: '1px solid #334155' }}>
+                <TableHead sx={{ bgcolor: '#fafafa' }}>
+                  <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
+                    <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', borderRight: '1px solid #e4e4e7', py: 1.25 }}>
                       Work Element Name
                     </TableCell>
-                    <TableCell sx={{ bgcolor: '#0f172a !important', color: '#ffffff !important', fontWeight: 'bold', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase', width: 60, textAlign: 'center' }}>
+                    <TableCell sx={{ color: '#71717a !important', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.05em', textTransform: 'uppercase', width: 64, textAlign: 'center', py: 1.25 }}>
                       Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {multipleNames.map((name, idx) => (
-                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                      <TableCell sx={{ p: 1, borderRight: '1px solid #e2e8f0' }}>
+                    <TableRow key={idx} sx={{ bgcolor: idx % 2 === 0 ? '#ffffff' : '#fafafa', '&:hover': { bgcolor: '#f4f4f5' } }}>
+                      <TableCell sx={{ p: 1, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7' }}>
                         <TextField
                           value={name}
                           onChange={(e) => handleRowChange(idx, e.target.value)}
@@ -295,15 +300,28 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
                           size="small"
                           fullWidth
                           variant="outlined"
-                          sx={{ bgcolor: '#ffffff' }}
+                          sx={{
+                            bgcolor: '#ffffff',
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '6px',
+                              fontSize: '0.8125rem',
+                              '& fieldset': { borderColor: '#e4e4e7' },
+                              '&:hover fieldset': { borderColor: '#a1a1aa' },
+                              '&.Mui-focused fieldset': { borderColor: '#09090b' },
+                            }
+                          }}
                         />
                       </TableCell>
-                      <TableCell sx={{ p: 1, textAlign: 'center' }}>
+                      <TableCell sx={{ p: 1, textAlign: 'center', borderBottom: '1px solid #e4e4e7' }}>
                         <IconButton
-                          color="error"
                           size="small"
                           onClick={() => handleRemoveRow(idx)}
                           disabled={multipleNames.length <= 1}
+                          sx={{
+                            color: '#a1a1aa',
+                            '&:hover': { color: '#ef4444', bgcolor: '#fee2e2' },
+                            '&.Mui-disabled': { color: '#e4e4e7' }
+                          }}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -314,7 +332,25 @@ export const MultiAddWorkElementDialog: React.FC<MultiAddWorkElementDialogProps>
               </Table>
             </TableContainer>
 
-            <Button startIcon={<AddIcon />} variant="outlined" size="small" onClick={handleAddRow} sx={{ alignSelf: 'flex-start' }}>
+            <Button
+              startIcon={<AddIcon fontSize="small" />}
+              variant="outlined"
+              size="small"
+              onClick={handleAddRow}
+              sx={{
+                alignSelf: 'flex-start',
+                bgcolor: '#ffffff',
+                color: '#09090b',
+                border: '1px solid #e4e4e7',
+                fontWeight: 600,
+                fontSize: '0.8125rem',
+                textTransform: 'none',
+                borderRadius: '7px',
+                px: 2,
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#f4f4f5', borderColor: '#d4d4d8' }
+              }}
+            >
               Add Row
             </Button>
           </Stack>
