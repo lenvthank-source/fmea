@@ -949,7 +949,13 @@ export const PfdWorkspace: React.FC = () => {
       )}
 
       {/* Reusable Collapsible Document Header */}
-      <DocumentHeader projectId={projectId!} docType="PFD" onHeaderLoaded={(p) => setProjectName(p.name)} />
+      <DocumentHeader
+        projectId={projectId!}
+        docType="PFD"
+        onHeaderLoaded={(p) => setProjectName(p.name)}
+        drawerOpen={addOpen || detailsOpen}
+        drawerWidth={520}
+      />
 
       {activeTab === 'table' ? (
         <>
@@ -1403,6 +1409,7 @@ export const PfdWorkspace: React.FC = () => {
         anchor="right"
         open={detailsOpen}
         onClose={(_, reason) => { if (reason !== 'backdropClick') setDetailsOpen(false); }}
+        sx={{ zIndex: { xs: 1400, sm: 1200 } }}
         slotProps={{ paper: { sx: { width: { xs: '100%', sm: 520 }, p: 3.5, bgcolor: '#ffffff', borderLeft: '1px solid #e4e4e7', boxShadow: '-8px 0 30px rgba(0,0,0,0.06)' } } }}
       >
         {selectedStep && (
@@ -1593,6 +1600,7 @@ export const PfdWorkspace: React.FC = () => {
         anchor="right"
         open={addOpen}
         onClose={(_, reason) => { if (reason !== 'backdropClick') setAddOpen(false); }}
+        sx={{ zIndex: { xs: 1400, sm: 1200 } }}
         slotProps={{ paper: { sx: { width: { xs: '100%', sm: 520 }, p: 3.5, bgcolor: '#ffffff', borderLeft: '1px solid #e4e4e7', boxShadow: '-8px 0 30px rgba(0,0,0,0.06)' } } }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

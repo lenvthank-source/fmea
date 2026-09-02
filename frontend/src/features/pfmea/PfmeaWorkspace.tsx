@@ -7,7 +7,6 @@ import {
   Grid, TablePagination, Slider
 } from '@mui/material';
 import {
-  Add as AddIcon,
   Download as DownloadIcon,
   InfoOutlined as DetailsIcon,
   Delete as DeleteIcon,
@@ -1445,26 +1444,6 @@ export const PfmeaWorkspace: React.FC = () => {
 
         {/* Action Buttons */}
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => setAddDialogOpen(true)}
-            startIcon={<AddIcon fontSize="small" />}
-            sx={{
-              bgcolor: '#09090b',
-              color: '#ffffff',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: '7px',
-              px: 1.75,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
-            }}
-          >
-            Add Analysis Row
-          </Button>
-
           <Button
             variant="outlined"
             size="small"

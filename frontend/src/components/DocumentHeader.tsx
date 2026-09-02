@@ -8,9 +8,19 @@ interface DocumentHeaderProps {
   projectId: string;
   docType: 'PFD' | 'PFMEA' | 'CONTROL_PLAN' | 'DFMEA';
   onHeaderLoaded?: (projectData: any) => void;
+  drawerOpen?: boolean;
+  drawerWidth?: number | string;
+  sx?: any;
 }
 
-export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docType, onHeaderLoaded }) => {
+export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
+  projectId,
+  docType,
+  onHeaderLoaded,
+  drawerOpen,
+  drawerWidth,
+  sx: customSx,
+}) => {
   const { token } = useAuth();
   const [project, setProject] = useState<any>(null);
   const [expanded, setExpanded] = useState<boolean>(false);
@@ -141,7 +151,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({ projectId, docTy
       position: 'sticky',
       top: 0,
       zIndex: 1350, /* Placed above modal backdrops (1300) so it is never dimmed or blurred when adding functions/failures/steps */
-      boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+      boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+      mr: drawerOpen ? { xs: 0, sm: typeof drawerWidth === 'number' ? `${drawerWidth}px` : (drawerWidth || '520px') } : 0,
+      transition: 'margin-right 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      ...customSx,
     }}>
       {/* Header bar always visible */}
       <Box sx={{
