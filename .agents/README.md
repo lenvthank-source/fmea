@@ -19,12 +19,16 @@ When `.agents/` conflicts with source code, **source code wins**.
 ├── README.md              ← You are here (always load)
 ├── AGENTS.md              ← Core project rules (always load)
 ├── rules/                 ← Stable coding & architecture rules
+│   ├── README.md            ← Rules navigation catalog
 │   ├── architecture.md
 │   ├── coding-style.md
 │   ├── testing.md
 │   ├── security.md
-│   └── git.md
+│   ├── git.md
+│   ├── ui-theme.md
+│   └── no_drift_clarification.md ← Anti-drift & halt-on-uncertainty
 ├── context/               ← Project & domain knowledge
+│   ├── README.md            ← Context navigation catalog
 │   ├── project.md
 │   ├── architecture.md
 │   ├── domain.md
@@ -36,6 +40,7 @@ When `.agents/` conflicts with source code, **source code wins**.
 │   ├── versioning.md        ← ledger index + schema linkage
 │   └── routing.md           ← orchestrator dispatch table (keyword→agent, priority, fencing)
 ├── agents/                ← Role + specialist definitions (portable mesh)
+│   ├── README.md            ← Agent roster & delegation matrix
 │   ├── orchestrator/AGENT.md  ← Head orchestrator (primary, tri-compat)
 │   ├── pfd/AGENT.md           ← PFD specialist
 │   ├── pfmea/AGENT.md         ← PFMEA specialist
@@ -47,28 +52,35 @@ When `.agents/` conflicts with source code, **source code wins**.
 │   ├── auth/AGENT.md          ← SSO/tenant/RBAC
 │   ├── repository/AGENT.md    ← Repo/enterprise
 │   ├── ai-suggestion/AGENT.md ← HITL review
-│   ├── developer.md           ← Generic developer
-│   ├── reviewer.md
-│   ├── tester.md
-│   └── architect.md
+│   ├── developer.md           ← Generic fullstack developer
+│   ├── reviewer.md            ← Compliance & code reviewer
+│   ├── tester.md              ← Test & QA verification
+│   └── architect.md           ← Subsystems & schema architect
 ├── workflows/             ← Step-by-step task workflows
+│   ├── README.md            ← Workflows catalog
 │   ├── feature.md
 │   ├── bugfix.md
 │   ├── code-review.md
 │   ├── refactor.md
 │   └── release.md
-├── skills/                ← Domain-specific skill guides (existing)
+├── skills/                ← Domain-specific skill guides & scripts
+│   └── README.md            ← Skills catalog & CLI usage
 ├── prompts/               ← Reusable agent prompts
 │   ├── feature.md
 │   ├── review.md
 │   └── debugging.md
 ├── checklists/            ← Verification checklists
+│   ├── README.md            ← Checklists catalog
 │   ├── pre-commit.md
 │   ├── pull-request.md
 │   └── release.md
 ├── scripts/               ← Portable dispatch helper
 │   └── dispatch.py          ← routing→prompt + blackboard bus (any IDE)
-└── memory/                ← Durable decisions + bus
+└── memory/                ← Deep domain specs, durable decisions + bus
+    ├── README.md            ← Memory catalog
+    ├── domain_algorithms.md ← AIAG-VDA AP tables, S/O/D ratings, failure chains
+    ├── external_providers.md← Neon pgvector, Cloudflare R2/Pages, Render
+    ├── data_schemas.md      ← 41 Prisma models, CP sync, action junctions
     ├── decisions.md         ← ADRs
     └── blackboard.md        ← orchestration bus (pending/in_progress/completed)
 ```

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { SEO } from '../../components/SEO/SEO';
 import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
+import { ChevronRight, ArrowRight } from 'lucide-react';
 
 interface ArticleData {
   slug: string;
@@ -261,7 +262,7 @@ export const PillarPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen text-[#18181B] font-sans antialiased">
+    <div className="bg-[#FBFBFC] min-h-screen text-slate-900 font-sans antialiased selection:bg-[#FF5500]/20 selection:text-slate-900">
       <SEO
         title={article.seoTitle}
         description={article.seoDesc}
@@ -269,60 +270,61 @@ export const PillarPage: React.FC = () => {
         jsonLd={[articleSchema, faqSchema]}
       />
 
-      {/* Floating Translucent Header */}
+      {/* Navigation Header */}
       <SiteHeader />
 
-      {/* Hero Banner Tile */}
-      <section className="pt-28 sm:pt-36 pb-14 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+      {/* Hero Banner */}
+      <section className="pt-32 sm:pt-40 pb-14 px-4 sm:px-6 lg:px-8 bg-tech-dots border-b border-slate-200">
         <div className="max-w-[1240px] mx-auto">
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-2 text-[12px] font-mono text-[#71717A] mb-6">
-            <Link to="/" className="hover:text-[#18181B] transition-colors">Home</Link>
-            <span>/</span>
-            <Link to="/learn" className="hover:text-[#18181B] transition-colors">Learn Hub</Link>
-            <span>/</span>
-            <span className="text-[#FF682C] font-bold">{article.badge}</span>
+          <nav className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-6">
+            <Link to="/" className="hover:text-slate-900 transition-colors">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <Link to="/learn" className="hover:text-slate-900 transition-colors">Quality Guides</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-900 font-bold">{article.badge}</span>
           </nav>
 
           {/* Badge Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E5E0D8] text-[11.5px] font-mono font-bold text-[#816729] shadow-xs mb-5">
-            <span className="text-[#FF682C]">✦</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700 shadow-xs mb-5">
+            <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
             <span>{article.badge}</span>
           </div>
 
-          {/* Editorial Headline */}
-          <h1 className="text-[34px] sm:text-[48px] lg:text-[56px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[#18181B] mb-6 ff-heading max-w-[960px]">
+          {/* Headline */}
+          <h1 className="text-[34px] sm:text-[48px] lg:text-[54px] font-extrabold leading-[1.08] tracking-[-0.03em] text-slate-900 mb-6 ff-heading max-w-[960px]">
             {article.title}
           </h1>
 
-          {/* Author Metadata Strip */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-[13px] text-[#71717A] pt-2 border-t border-[#E5E0D8]">
-            <div className="flex items-center gap-2 text-[#18181B] font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+          {/* Author Metadata */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap text-xs text-slate-500 pt-2 border-t border-slate-200 font-mono">
+            <div className="flex items-center gap-2 text-slate-900 font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>{article.author}</span>
             </div>
             <span>•</span>
             <span>{article.authorTitle}</span>
             <span>•</span>
-            <span className="font-mono text-[12px]">Updated {article.updatedDate}</span>
+            <span>Updated {article.updatedDate}</span>
           </div>
         </div>
       </section>
 
       {/* Main Content Layout */}
-      <section className="pb-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-[#E5E0D8] pt-12">
+      <section className="pb-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-slate-200 pt-12">
         <div className="max-w-[1240px] mx-auto grid lg:grid-cols-12 gap-12 items-start">
           {/* Main Article Column */}
           <div className="lg:col-span-8 space-y-10">
-            {/* Princeton GEO Extractable Answer Block */}
-            <div className="rounded-[24px] bg-[#FAF9F6] border-2 border-[#FF682C]/30 p-7 sm:p-8 shadow-xs relative overflow-hidden">
-              <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-wider text-[#FF682C] mb-2">
+            {/* Extractable Answer Block */}
+            <div className="rounded-2xl bg-[#FBFBFC] border-2 border-slate-900 p-7 sm:p-8 shadow-xs relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-2 h-full bg-[#FF5500]" />
+              <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#FF5500] mb-2">
                 <span>✦ Key Definition & Summary</span>
               </div>
-              <h2 className="text-[20px] sm:text-[22px] font-extrabold text-[#18181B] mb-3 ff-heading">
+              <h2 className="text-[20px] sm:text-[22px] font-extrabold text-slate-900 mb-3 ff-heading">
                 {article.definitionBlock.question}
               </h2>
-              <p className="text-[15.5px] leading-relaxed text-[#52525B]">
+              <p className="text-[15.5px] leading-relaxed text-slate-700">
                 {article.definitionBlock.answer}
               </p>
             </div>
@@ -330,12 +332,12 @@ export const PillarPage: React.FC = () => {
             {/* Article Content Sections */}
             {article.content.map((sec) => (
               <div key={sec.id} id={sec.id} className="space-y-4 pt-4">
-                <h2 className="text-[24px] sm:text-[30px] font-extrabold text-[#18181B] pb-3 border-b border-[#E5E0D8] ff-heading">
+                <h2 className="text-[24px] sm:text-[28px] font-extrabold text-slate-900 pb-3 border-b border-slate-200 ff-heading">
                   {sec.h2}
                 </h2>
 
                 {sec.text.map((paragraph, idx) => (
-                  <p key={idx} className="text-[16px] leading-[1.75] text-[#52525B]">
+                  <p key={idx} className="text-[15.5px] leading-[1.75] text-slate-700">
                     {paragraph}
                   </p>
                 ))}
@@ -344,15 +346,15 @@ export const PillarPage: React.FC = () => {
                   <div className="space-y-2.5 my-4 pl-1">
                     {sec.bulletPoints.map((pt, idx) => (
                       <div key={idx} className="flex items-start gap-3">
-                        <span className="text-[#FF682C] font-bold text-[16px] leading-none mt-1">✓</span>
-                        <span className="text-[15px] font-medium text-[#18181B]">{pt}</span>
+                        <span className="text-[#FF5500] font-bold text-[16px] leading-none mt-1">✓</span>
+                        <span className="text-[15px] font-medium text-slate-800">{pt}</span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {sec.callout && (
-                  <div className="p-5 rounded-2xl bg-[#FAF9F6] border border-[#816729]/30 text-[#816729] text-[14.5px] font-medium">
+                  <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-sm font-medium">
                     💡 {sec.callout}
                   </div>
                 )}
@@ -361,14 +363,14 @@ export const PillarPage: React.FC = () => {
 
             {/* FAQ Section */}
             <div id="faq" className="pt-8 space-y-4">
-              <h2 className="text-[26px] sm:text-[32px] font-extrabold text-[#18181B] ff-heading">
+              <h2 className="text-[24px] sm:text-[30px] font-extrabold text-slate-900 ff-heading">
                 Frequently Asked Questions
               </h2>
               <div className="space-y-3">
                 {article.faq.map((item, idx) => (
-                  <div key={idx} className="rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-5 sm:p-6">
-                    <h3 className="text-[16.5px] font-bold text-[#18181B] mb-2">{item.q}</h3>
-                    <p className="text-[15px] leading-relaxed text-[#52525B]">{item.a}</p>
+                  <div key={idx} className="rounded-2xl bg-[#FBFBFC] border border-slate-200 p-5 sm:p-6">
+                    <h3 className="text-[16px] font-bold text-slate-900 mb-2">{item.q}</h3>
+                    <p className="text-[14.5px] leading-relaxed text-slate-600">{item.a}</p>
                   </div>
                 ))}
               </div>
@@ -378,45 +380,43 @@ export const PillarPage: React.FC = () => {
           {/* Sticky Sidebar */}
           <div className="lg:col-span-4 sticky top-24 space-y-6">
             {/* Table of Contents Tile */}
-            <div className="rounded-[24px] bg-[#FAF9F6] border border-[#E5E0D8] p-6 shadow-xs">
-              <h3 className="text-[11.5px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-4">
+            <div className="rounded-2xl bg-[#FBFBFC] border border-slate-200 p-6 shadow-xs">
+              <h3 className="text-[11.5px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-4">
                 Table of Contents
               </h3>
-              <ul className="space-y-2.5 text-[13.5px]">
+              <ul className="space-y-2.5 text-xs font-mono">
                 {article.toc.map((item) => (
                   <li key={item.id}>
                     <button
                       onClick={() => scrollTo(item.id)}
-                      className="text-left text-[#52525B] hover:text-[#FF682C] transition-colors font-medium"
+                      className="text-left text-slate-600 hover:text-[#FF5500] transition-colors font-medium"
                     >
-                      {item.title}
+                      → {item.title}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* High-Impact Sandbox Conversion Card with Slap Cap */}
-            <div className="rounded-[24px] bg-white border border-[#E5E0D8] p-7 shadow-[0_12px_40px_rgba(0,0,0,0.06)] relative overflow-hidden">
-              <div className="w-10 h-1 bg-[#FF682C] rounded-full mb-4" />
-              <h3 className="text-[19px] font-extrabold text-[#18181B] mb-2 ff-heading">
+            {/* Handcrafted Sandbox Conversion Card */}
+            <div className="rounded-2xl bg-slate-900 text-white p-7 shadow-lg relative overflow-hidden space-y-4">
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-[#FF5500] font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+                <span>Interactive Verification</span>
+              </div>
+              <h3 className="text-xl font-bold text-white ff-heading leading-snug">
                 Ready to Automate Your FMEA?
               </h3>
-              <p className="text-[13.5px] text-[#52525B] leading-relaxed mb-6">
-                Explore the AIAG-VDA 7-step quality workspace instantly in our guest sandbox. Pre-loaded with automotive assembly lines.
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Explore the AIAG-VDA 7-step quality workspace instantly in our guest sandbox. Pre-loaded with automotive EDU and battery welding lines.
               </p>
-              <div className="relative inline-flex w-full items-center">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full h-11 rounded-full bg-[#FF682C] hover:bg-[#E05219] text-white text-[13.5px] font-semibold transition-all shadow-[0_4px_14px_rgba(255,104,44,0.35)] flex items-center justify-center gap-2"
-                >
-                  <span>Launch Free Sandbox</span>
-                  <span>→</span>
-                </button>
-                <span className="absolute -top-2 -right-1 px-2 py-0.5 rounded-md bg-[#18181B] text-white border border-white text-[9px] font-mono font-black uppercase shadow-xs transform rotate-[8deg] pointer-events-none">
-                  FREE
-                </span>
-              </div>
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full h-11 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] text-white text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <span>Launch Free Guest Sandbox</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

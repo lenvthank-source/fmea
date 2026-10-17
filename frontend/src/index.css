@@ -9,44 +9,33 @@
   }
   :root {
     --bg: #FFFFFF;
-    --bg-soft: #F5F5F5;
-    --ink: #202020;
-    --ink-soft: #4D4D4D;
-    --line: #E4E4E4;
-    --teal: #0D9488;
-    --teal-dark: #0F766E;
+    --bg-soft: #F8F9FA;
+    --ink: #0F172A;
+    --ink-soft: #475569;
+    --line: #E2E8F0;
     --radius: 16px;
 
-    /* Ventriloc Design Tokens */
-    --color-black: #000000;
-    --color-white: #ffffff;
-    --color-primary: #202020;
-    --color-secondary: #816729;
-    --color-laiton: #816729;
-    --color-orange: #ff682c;
-    --color-bordeau: #6b1e1c;
-    --color-bordeau-light: #863b32;
-    --color-ivory: #ebe6dd;
-    --gray-100: #f5f5f5;
-    --gray-200: #efefef;
-    --gray-300: #e4e4e4;
-    --gray-400: #828282;
-    --gray-700: #4d4d4d;
-    --gray-900: #202020;
-
+    /* Industrial & Quality Engineering Palette */
+    --color-primary: #0F172A;
+    --color-orange: #FF5500;
+    --color-orange-dark: #E04B00;
+    --color-amber: #D97706;
+    --color-emerald: #059669;
+    --color-crimson: #DC2626;
+    --color-cyan: #0284C7;
+    
     --ff-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
     --ff-body: 'Inter', -apple-system, sans-serif;
-    --ff-mono: 'DM Mono', monospace;
+    --ff-mono: 'JetBrains Mono', 'DM Mono', monospace;
   }
-
-  /* Tailwind v4 preflight already handles box-sizing & margin reset.
-     Do NOT add an unlayered `*` reset — it overrides ALL @layer utilities. */
 
   *:not(input):not(textarea):not([contenteditable="true"]) {
     caret-color: transparent;
   }
 
-  html { scroll-behavior: smooth; }
+  html { 
+    scroll-behavior: smooth; 
+  }
 
   body {
     background: var(--bg);
@@ -54,12 +43,16 @@
     font-family: var(--ff-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
-  ::selection { background: rgba(255, 104, 44, 0.22); color: #202020; }
+  ::selection { 
+    background: rgba(255, 85, 0, 0.2); 
+    color: #0F172A; 
+  }
 }
 
-/* ── Keyframes (outside layers — they don't affect cascade) ── */
+/* ── Keyframes ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -72,109 +65,136 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-@keyframes underlineExpand {
-  0% { width: 0%; }
-  100% { width: 100%; }
-}
-@keyframes drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(12px, -8px) scale(1.05); }
-  50% { transform: translate(-6px, 10px) scale(0.95); }
-  75% { transform: translate(8px, 4px) scale(1.02); }
-}
 
 /* ── Custom component classes ── */
 @layer components {
-  .ff-heading { font-family: var(--ff-heading); letter-spacing: -0.025em; }
-  .ff-mono { font-family: var(--ff-mono); }
-
-  .reveal { animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .reveal-2 { animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
-  .reveal-3 { animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both; }
-
-  .animate-ticker {
-    display: flex;
-    width: max-content;
-    animation: ticker 32s linear infinite;
+  .ff-heading { 
+    font-family: var(--ff-heading); 
+    letter-spacing: -0.03em; 
   }
-  .animate-ticker:hover {
-    animation-play-state: paused;
+  .ff-mono { 
+    font-family: var(--ff-mono); 
+    font-feature-settings: 'zero' 1;
   }
 
-  /* Ventriloc Signature Accent */
-  .title-highlight {
-    position: relative;
-    display: inline-block;
-    color: var(--color-orange);
+  .reveal { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .reveal-2 { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both; }
+  .reveal-3 { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both; }
+
+  /* Technical Engineering Background Grids */
+  .bg-tech-grid {
+    background-image: 
+      linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 
-  /* Ventriloc Buttons */
-  .btn-ventriloc-primary {
+  .bg-tech-dots {
+    background-image: radial-gradient(circle, rgba(15, 23, 42, 0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .dark-tech-grid {
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Precision Industrial Cards */
+  .card-industrial {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-industrial:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+  }
+
+  /* Action Priority Badges */
+  .badge-high-ap {
+    background-color: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+  }
+  .badge-med-ap {
+    background-color: #FFFBEB;
+    color: #D97706;
+    border: 1px solid #FDE68A;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+  }
+  .badge-low-ap {
+    background-color: #ECFDF5;
+    color: #059669;
+    border: 1px solid #A7F3D0;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+  }
+
+  /* Buttons */
+  .btn-engineering-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-orange);
-    color: #ffffff;
-    border-radius: 9999px;
+    background: #0F172A;
+    color: #FFFFFF;
+    border-radius: 12px;
     font-weight: 600;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .btn-ventriloc-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 28px -6px rgba(255, 104, 44, 0.45);
+  .btn-engineering-primary:hover {
+    background: #1E293B;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.25);
   }
 
-  .btn-ventriloc-outline {
+  .btn-engineering-accent {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    color: var(--color-primary);
-    border: 1.5px solid var(--color-primary);
-    border-radius: 9999px;
+    background: #FF5500;
+    color: #FFFFFF;
+    border-radius: 12px;
     font-weight: 600;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .btn-ventriloc-outline:hover {
-    background: var(--color-primary);
-    color: #ffffff;
-    transform: translateY(-2px);
+  .btn-engineering-accent:hover {
+    background: #E04B00;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -4px rgba(255, 85, 0, 0.35);
   }
 
-  .btn-ventriloc-dark {
+  .btn-engineering-outline {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-primary);
-    color: #ffffff;
-    border-radius: 9999px;
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
     font-weight: 600;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .btn-ventriloc-dark:hover {
-    background: #000000;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25);
-  }
-
-  /* Core Module Cards */
-  .sticky-stack-card {
-    border-radius: 24px;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  .btn-engineering-outline:hover {
+    background: #F8F9FA;
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
   }
 
-  /* Subtle link underline for body links */
-  .link-accent { color: var(--color-orange); text-decoration: none; border-bottom: 1px solid rgba(255,104,44,0.35); transition: border-color .2s, color .2s; }
-  .link-accent:hover { color: #e05219; border-color: #e05219; }
-
-  /* Custom range slider (light) */
+  /* Custom range slider (precision engineering look) */
   input[type="range"].fmea-range {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 4px;
+    height: 6px;
     border-radius: 999px;
-    background: #E5E7EB;
+    background: #E2E8F0;
     outline: none;
     cursor: pointer;
   }
@@ -184,18 +204,25 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--teal);
-    box-shadow: 0 1px 4px rgba(15,23,42,0.18);
+    background: #0F172A;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
     transition: transform .15s;
   }
-  input[type="range"].fmea-range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+  input[type="range"].fmea-range::-webkit-slider-thumb:hover { 
+    transform: scale(1.15); 
+  }
   input[type="range"].fmea-range::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #fff; border: 2px solid var(--teal);
-    box-shadow: 0 1px 4px rgba(15,23,42,0.18);
+    width: 18px; 
+    height: 18px; 
+    border-radius: 50%;
+    background: #0F172A; 
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
   }
   input[type="range"].fmea-range::-moz-range-track {
-    height: 4px; border-radius: 999px; background: #E5E7EB;
+    height: 6px; 
+    border-radius: 999px; 
+    background: #E2E8F0;
   }
 }

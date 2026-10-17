@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { API_BASE_URL } from '../config';
 
 interface BackendWarmupContextType {
@@ -52,3 +52,8 @@ export const useBackendWarmup = () => {
 
 export const BackendWarmupProvider = BackendWarmupContext.Provider;
 export const useBackendReady = () => useContext(BackendWarmupContext);
+
+export const BackendWarmupContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isBackendReady } = useBackendWarmup();
+  return React.createElement(BackendWarmupContext.Provider, { value: { isBackendReady } }, children);
+};

@@ -6,36 +6,148 @@ import { SiteFooter } from '../../components/site/SiteFooter';
 import { VentrilocDashboard } from '../../components/site/VentrilocDashboard';
 import { RiskCalculatorWidget } from './RiskCalculatorWidget';
 import { useAuth } from '../auth/AuthContext';
+import { useBackendReady } from '../../hooks/useBackendWarmup';
 import { API_BASE_URL } from '../../config';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  ShieldCheck,
+  Cpu,
+  Layers,
+  GitBranch,
+  FileSpreadsheet,
+  Lock,
+  Server,
+  ChevronRight,
+  Check,
+  X,
+  Workflow
+} from 'lucide-react';
 
-const LOGOS = [
-  'BOSCH', 'MAGNA', 'CONTINENTAL', 'SIEMENS', 'ZF GROUP',
-  'VALEO', 'TATA MOTORS', 'MAHINDRA', 'ABB', 'SCHNEIDER', 'DENSO'
+const SEVEN_STEPS = [
+  {
+    step: 1,
+    name: 'Planning & Preparation',
+    tag: '5Ts Initiation',
+    desc: 'Define scope, project boundaries, cross-functional team (CFT), and schedule using the 5Ts framework.',
+    input: 'Customer requirements, engineering scope, project milestones',
+    output: 'FMEA Project Charter, 5Ts matrix, Team member assignments',
+    gating: 'Scope definition and CFT sign-off required before structure decomposition.',
+  },
+  {
+    step: 2,
+    name: 'Structure Analysis',
+    tag: '4M Tree Allocation',
+    desc: 'Map the complete manufacturing sequence from PFD down to Station Work Elements across 4M: Machine, Man, Material, Method.',
+    input: 'Process Flow Diagram (PFD) or Bill of Materials (DFMEA)',
+    output: 'Structural hierarchy tree with zero orphan operation steps',
+    gating: 'Every process step must link to at least one 4M work element.',
+  },
+  {
+    step: 3,
+    name: 'Function Analysis',
+    tag: 'Requirements & Specs',
+    desc: 'Establish functions and engineering specifications for each structure level: Item Function → Step Function → Element Function.',
+    input: 'Product specifications, drawing tolerances, process parameters',
+    output: 'Functional network linking process parameters to product characteristics',
+    gating: 'Functions must have quantifiable engineering tolerances or acceptance criteria.',
+  },
+  {
+    step: 4,
+    name: 'Failure Analysis',
+    tag: 'Cause → Mode → Effect',
+    desc: 'Construct deterministic failure chains: Failure Cause (at Work Element) → Failure Mode (at Station) → Failure Effect (Customer / Plant).',
+    input: 'Historical warranty data, scrap logs, process risk brainstorming',
+    output: 'Validated failure chains with inherited severity from worst-case effect',
+    gating: 'Completeness rule: Each failure mode must link to ≥1 effect and ≥1 cause.',
+  },
+  {
+    step: 5,
+    name: 'Risk Analysis',
+    tag: 'S / O / D & Action Priority',
+    desc: 'Evaluate Severity (S), Occurrence (O), and Detection (D) ratings [1-10]. Action Priority (High, Medium, Low) is looked up deterministically.',
+    input: 'AIAG-VDA 2019 rating tables and prevention/detection control methods',
+    output: 'Read-only Action Priority (AP) calculation; legacy RPN comparison',
+    gating: 'Ratings strictly restricted to integer range [1, 10]; AP cannot be manually edited.',
+  },
+  {
+    step: 6,
+    name: 'Optimization',
+    tag: 'High-AP Corrective Actions',
+    desc: 'Mandatory corrective action tracking for all High-AP risks. Actions require assigned owners, target dates, and verified evidence files.',
+    input: 'Engineering redesign, automated Poka-Yoke, upgraded inspection sensors',
+    output: 'Post-action S/O/D ratings, recalculated AP, Cloudflare R2 evidence',
+    gating: 'Action closure blocked until evidence uploaded and post-action ratings verified.',
+  },
+  {
+    step: 7,
+    name: 'Documentation',
+    tag: '21 CFR Part 11 Lock',
+    desc: 'Formal CFT review, reviewer segregation verification, cryptographic SHA-256 digital signature, and revision locking.',
+    input: 'Completed CFT reviews and verified corrective action closures',
+    output: 'Locked immutable revision, Control Plan auto-flow, audit ledger entry',
+    gating: 'Locked revisions reject all future writes; audit trail rejects UPDATE and DELETE.',
+  },
 ];
 
-const SPECS: [string, string][] = [
-  ['Standards Compliance', 'AIAG-VDA 2019 (1st Edition) · 21 CFR Part 11 · IATF 16949 · ISO 9001'],
-  ['Document Coverage', 'PFMEA · DFMEA · Process Flow Diagrams (PFD) · Control Plans (CP)'],
-  ['AI Vector Engine', 'Tenant-isolated RAG · OpenAI Embeddings · Neon pgvector HNSW Indexing'],
-  ['Database Architecture', 'PostgreSQL 15 Serverless · Strict Row-Level Security (RLS) isolation'],
-  ['Security & Auth', 'RS256 JWT · RBAC 22 granular scopes · HMAC-SHA256 outbound webhooks'],
-  ['Deployment Targets', 'Cloudflare Pages Edge + Managed Render + Docker / Podman on-premises'],
-  ['Evidence Storage', 'Cloudflare R2 / S3-compatible · 50MB max file size · Pre-signed upload URLs'],
+const COMPARISON_ROWS = [
+  {
+    feature: 'Action Priority (AP) Calculation',
+    excel: 'Manual nested IF formulas that easily break or get altered across users',
+    fmeapex: 'Deterministic AIAG-VDA 2019 matrix lookup engine locked at database level',
+  },
+  {
+    feature: 'PFD ↔ PFMEA Synchronization',
+    excel: 'Disconnected sheets; steps added to PFD are forgotten in PFMEA',
+    fmeapex: 'Bidirectional sync with automatic orphan operation detection & coverage alerts',
+  },
+  {
+    feature: 'Control Plan (CP) Flow-Down',
+    excel: 'Manual copy-paste of controls into separate Word or Excel templates',
+    fmeapex: 'Dynamic automated compilation; tolerance edits propagate bidirectionally in serializable transactions',
+  },
+  {
+    feature: 'High-Risk Action Mandates',
+    excel: 'RPN thresholds (e.g. >100) ignore high-severity hazards (e.g. S=10, O=2, D=2 = RPN 40)',
+    fmeapex: 'Mandatory action workflows automatically triggered for all High-AP ratings',
+  },
+  {
+    feature: 'Audit Trail & Immutability',
+    excel: 'File modification timestamps easily manipulated; no change history',
+    fmeapex: '21 CFR Part 11 compliant SHA-256 signatures; PostgreSQL immutable audit partition',
+  },
+  {
+    feature: 'AI Quality Knowledge Retrieval',
+    excel: 'Engineers recreate failure modes from scratch for every new project',
+    fmeapex: 'Tenant-isolated pgvector RAG retrieves proven controls from approved revisions',
+  },
 ];
 
-const INQUIRY_TYPES = ['Demo Request', 'Enterprise License', 'Quality Data Migration', 'General Inquiry'];
+const TECHNICAL_SPECS: [string, string, string][] = [
+  ['AIAG-VDA 2019 (1st Ed)', 'Methodology', 'Strict 7-Step gating, deterministic AP tables, 4M structure allocation'],
+  ['21 CFR Part 11 & Annex 11', 'Regulatory', 'Cryptographic SHA-256 digital signatures, reviewer segregation, immutable log partition'],
+  ['PostgreSQL 15 Serverless', 'Database', 'Row-Level Security (RLS) with session tenant variables on all queries'],
+  ['Tenant-Isolated Vector RAG', 'AI Engine', 'OpenAI Embeddings + Neon pgvector HNSW indexing (M=16, ef_construction=64)'],
+  ['Cloudflare R2 Storage', 'Evidence', '50MB max file size with pre-signed upload URLs for corrective action validation'],
+  ['On-Premises Deployment', 'Infrastructure', 'Single-command Docker Compose deployment ready for air-gapped corporate firewalls'],
+];
+
+const INQUIRY_TYPES = ['Demo Request', 'Enterprise On-Premises License', 'Excel Data Migration', 'Architecture & Security Review'];
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { token, guestLogin } = useAuth();
+  const { isBackendReady } = useBackendReady();
 
   const [guestLoading, setGuestLoading] = useState(false);
+  const [activeStepTab, setActiveStepTab] = useState(1);
   const [contactForm, setContactForm] = useState({ name: '', email: '', company: '', type: 'Demo Request', message: '' });
   const [contactSubmitting, setContactSubmitting] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
   const [contactError, setContactError] = useState('');
 
-  // Handle smooth scroll to simulator if requested via ?scroll=simulator or hash
+  // Handle smooth scroll target if provided in query string or hash
   React.useEffect(() => {
     const handleScrollTarget = () => {
       const params = new URLSearchParams(window.location.search);
@@ -67,321 +179,261 @@ export const LandingPage: React.FC = () => {
       setContactSuccess(true);
       setContactForm({ name: '', email: '', company: '', type: 'Demo Request', message: '' });
     } catch {
-      setContactError('Could not send your message. Please try again later.');
+      setContactError('Could not deliver your inquiry. Please email quality@fmeapex.online directly.');
     } finally {
       setContactSubmitting(false);
     }
   }, [contactForm]);
 
   const handlePrimaryCTA = async () => {
-    if (token) { navigate('/app/projects'); return; }
+    if (token) {
+      navigate('/app/projects');
+      return;
+    }
     setGuestLoading(true);
     try {
       await guestLogin();
       navigate('/app/projects');
     } catch (err) {
       console.error('Guest login failed:', err);
+      navigate('/login');
     } finally {
       setGuestLoading(false);
     }
   };
 
+  const selectedStep = SEVEN_STEPS.find((s) => s.step === activeStepTab) || SEVEN_STEPS[0];
+
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#18181B] font-sans antialiased">
+    <div className="min-h-screen bg-[#FBFBFC] text-slate-900 font-sans antialiased selection:bg-[#FF5500]/20 selection:text-slate-900">
       <SEO
-        title="FMEApex — Trusted Experts in AIAG-VDA 2019 Quality Intelligence & PFMEA"
-        description="Turn your manufacturing quality data into a zero-defect growth engine with advanced AIAG-VDA 2019 FMEA, PFD linking, and 21 CFR Part 11 intelligence."
+        title="FMEApex — Deterministic AIAG-VDA 2019 Quality Intelligence Platform"
+        description="Replace fragile Excel sheets with deterministic AIAG-VDA 2019 FMEA intelligence. PFD-PFMEA linking, Control Plan auto-flow, and 21 CFR Part 11 compliance."
         canonical="/"
       />
 
-      {/* ── 1. Floating Capsule Site Header ──────────────────── */}
+      {/* ── 1. Handcrafted Precision Navigation ────────────── */}
       <SiteHeader />
 
-      {/* ── 2. Hero Tile (Warm Ivory Canvas) ────────────────── */}
-      <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
-        <div className="max-w-[1360px] mx-auto">
-          {/* Top Hero Container */}
-          <div className="max-w-[920px] mx-auto text-center mb-12">
-            {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#E5E0D8] text-[12px] font-mono font-bold text-[#816729] shadow-xs mb-7">
-              <span className="text-[#FF682C]">✦</span>
-              <span>AIAG-VDA 2019 Standard</span>
-              <span className="text-[#D4D4D8]">•</span>
-              <span>21 CFR Part 11 Compliant</span>
+      {/* ── 2. Hero Section (Industrial Canvas) ────────────── */}
+      <section className="relative pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-tech-dots border-b border-slate-200/70">
+        <div className="max-w-[1320px] mx-auto">
+          {/* Hero Core Content */}
+          <div className="max-w-[960px] mx-auto text-center mb-12 sm:mb-16">
+            {/* Standards Compliance Capsule */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700 shadow-xs mb-6">
+              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+              <span>AIAG-VDA 2019 (1st Ed.)</span>
+              <span className="text-slate-300">•</span>
+              <span>IATF 16949 §8.3.5</span>
+              <span className="text-slate-300">•</span>
+              <span>21 CFR Part 11</span>
             </div>
 
-            {/* Ventriloc Signature Editorial Headline */}
-            <h1 className="text-[40px] sm:text-[58px] lg:text-[70px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[#18181B] mb-6 ff-heading">
-              Your Quality.<br />
-              Our Analytics Expertise.<br />
-              Powering Your <span className="text-[#FF682C]">Zero-Defect Growth</span>.
+            {/* Authoritative Engineering Headline */}
+            <h1 className="text-[38px] sm:text-[56px] lg:text-[68px] font-extrabold leading-[1.05] tracking-[-0.035em] text-slate-900 mb-6 ff-heading">
+              The Deterministic FMEA Platform.<br />
+              <span className="text-[#FF5500]">Engineered for Zero-Defect Manufacturing.</span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-[17px] sm:text-[20px] leading-[1.6] text-[#52525B] max-w-[720px] mx-auto mb-9 font-normal">
-              FMEApex puts business intelligence, manufacturing data engineering, and AIAG-VDA expertise to work for your engineering team. Unlocking zero-defect quality with deterministic risk matrices and immutable compliance.
+            {/* Subtitle addressing actual engineering pain points */}
+            <p className="text-[17px] sm:text-[20px] leading-[1.6] text-slate-600 max-w-[760px] mx-auto mb-10 font-normal">
+              Eliminate spreadsheet chaos and OEM audit anxiety. FMEApex unifies Process Flow Diagrams (PFD), PFMEAs, and Control Plans in a single cryptographic system of record with strict AIAG-VDA 7-step gating.
             </p>
 
-            {/* Dual CTAs */}
-            <div className="flex flex-wrap items-center justify-center gap-4 mb-12">
+            {/* Action Row */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
               <button
                 onClick={handlePrimaryCTA}
                 disabled={guestLoading}
-                className="h-12 px-8 rounded-full bg-[#FF682C] hover:bg-[#E05219] disabled:opacity-50 text-white text-[15px] font-semibold transition-all shadow-[0_6px_20px_rgba(255,104,44,0.35)] hover:shadow-[0_8px_25px_rgba(255,104,44,0.45)] flex items-center gap-2"
+                className="h-12 px-7 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white text-[14.5px] font-semibold transition-all shadow-md flex items-center gap-2 group"
               >
                 {guestLoading ? (
-                  <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span>{isBackendReady ? 'Entering Sandbox...' : 'Warming Services...'}</span>
+                  </span>
                 ) : (
                   <>
                     <span>Launch Free Guest Sandbox</span>
-                    <span className="text-[16px]">→</span>
+                    <ArrowRight className="w-4 h-4 text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
               </button>
 
               <button
-                onClick={() => navigate('/product')}
-                className="h-12 px-7 rounded-full border border-[#18181B] bg-transparent hover:bg-[#18181B] hover:text-white text-[#18181B] text-[15px] font-semibold transition-all"
+                onClick={() => {
+                  const el = document.getElementById('simulator');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="h-12 px-6 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-[14.5px] font-semibold transition-all shadow-xs"
               >
-                Explore Platform
+                Simulate Action Priority (AP)
+              </button>
+
+              <button
+                onClick={() => {
+                  const el = document.getElementById('workflow');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="h-12 px-5 rounded-xl text-slate-600 hover:text-slate-900 text-[14px] font-medium transition-colors flex items-center gap-1"
+              >
+                <span>7-Step Method</span>
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Trust Metrics Pill Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 max-w-[860px] mx-auto text-center">
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-xs">
-                <div className="text-[24px] font-extrabold text-[#18181B] font-mono">99.8%</div>
-                <div className="text-[12px] text-[#71717A] font-medium mt-0.5">Audit Pass Rate</div>
+            {/* Four Concrete Verification Badges */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[920px] mx-auto text-left">
+              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#FF5500] font-bold">
+                  <Cpu className="w-4 h-4" />
+                  <span>STEP 5 RISK</span>
+                </div>
+                <div className="text-[17px] font-extrabold text-slate-900 mt-1">Deterministic AP</div>
+                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
+                  High, Medium, Low lookup table. Replaces flawed legacy RPN.
+                </div>
               </div>
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-xs">
-                <div className="text-[24px] font-extrabold text-[#10B981] font-mono">100%</div>
-                <div className="text-[12px] text-[#71717A] font-medium mt-0.5">7-Step Gating</div>
+
+              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-mono text-emerald-600 font-bold">
+                  <Workflow className="w-4 h-4" />
+                  <span>7-STEP GATING</span>
+                </div>
+                <div className="text-[17px] font-extrabold text-slate-900 mt-1">Zero Skipped Phases</div>
+                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
+                  Prerequisites strictly enforced before revision progression.
+                </div>
               </div>
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-xs">
-                <div className="text-[24px] font-extrabold text-[#FF682C] font-mono">&lt;120ms</div>
-                <div className="text-[12px] text-[#71717A] font-medium mt-0.5">Vector RAG Retrieval</div>
+
+              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-mono text-blue-600 font-bold">
+                  <GitBranch className="w-4 h-4" />
+                  <span>TRI-DIRECTIONAL</span>
+                </div>
+                <div className="text-[17px] font-extrabold text-slate-900 mt-1">PFD ↔ PFMEA ↔ CP</div>
+                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
+                  Serializable bidirectional sync prevents orphan operations.
+                </div>
               </div>
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-xs">
-                <div className="text-[24px] font-extrabold text-[#18181B] font-mono">Zero</div>
-                <div className="text-[12px] text-[#71717A] font-medium mt-0.5">Spreadsheet Loss</div>
+
+              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-700 font-bold">
+                  <Lock className="w-4 h-4" />
+                  <span>PART 11 COMPLIANT</span>
+                </div>
+                <div className="text-[17px] font-extrabold text-slate-900 mt-1">SHA-256 Signatures</div>
+                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
+                  Immutable audit log partition rejects UPDATE and DELETE queries.
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ── 3. The Studio Tile (Interactive Preview Canvas) ── */}
-          <div className="shadow-[0_20px_60px_rgba(0,0,0,0.08)]  rounded-[24px]">
+          {/* ── 3. The Studio Canvas (Interactive Workbench Proof) ── */}
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-800 shadow-[0_20px_60px_rgba(15,23,42,0.18)] overflow-hidden">
             <VentrilocDashboard />
           </div>
         </div>
       </section>
 
-      {/* ── 4. Partner Marquee Tile ─────────────────────────── */}
-      <section className="py-9 bg-white border-y border-[#E5E0D8] overflow-hidden">
-        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 mb-3 flex items-center justify-between">
-          <p className="text-[11.5px] font-mono uppercase tracking-[0.14em] text-[#816729] font-bold">
-            Trusted by 80+ global manufacturing leaders
-          </p>
-          <span className="text-[11px] font-mono text-[#A1A1AA] hidden sm:inline">Automotive & Aerospace Tier 1</span>
-        </div>
+      {/* ── 4. The 7-Step AIAG-VDA Interactive Methodology ── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200" id="workflow">
+        <div className="max-w-[1320px] mx-auto">
+          {/* Section Header */}
+          <div className="max-w-[720px] mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-100 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
+              <Layers className="w-3.5 h-3.5 text-[#FF5500]" />
+              <span>AIAG-VDA 2019 Core Standard</span>
+            </div>
+            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
+              The 7-Step Quality Analysis Methodology.
+            </h2>
+            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
+              AIAG-VDA 2019 eliminated guesswork by replacing informal brainstorming with a phased, gated quality architecture. Every step produces verifiable outputs required by the next.
+            </p>
+          </div>
 
-        <div className="relative w-full overflow-hidden flex items-center">
-          <div className="animate-ticker flex items-center gap-12 sm:gap-16 py-1.5">
-            {[...LOGOS, ...LOGOS].map((brand, i) => (
-              <span
-                key={`${brand}-${i}`}
-                className="text-[14.5px] sm:text-[16px] font-extrabold tracking-[0.16em] text-[#A1A1AA] hover:text-[#18181B] transition-colors cursor-default whitespace-nowrap"
+          {/* Interactive Step Navigation Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-8">
+            {SEVEN_STEPS.map((s) => (
+              <button
+                key={s.step}
+                onClick={() => setActiveStepTab(s.step)}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  activeStepTab === s.step
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-[#FBFBFC] hover:bg-slate-100 text-slate-700 border-slate-200'
+                }`}
               >
-                {brand}
-              </span>
+                <div className={`text-[11px] font-mono font-bold ${activeStepTab === s.step ? 'text-[#FF5500]' : 'text-slate-400'}`}>
+                  STEP 0{s.step}
+                </div>
+                <div className="text-[13px] font-bold mt-1 line-clamp-1">
+                  {s.name}
+                </div>
+              </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── 5. Four Core Quality Feature Tiles ──────────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]" id="solutions">
-        <div className="max-w-[1360px] mx-auto">
-          <div className="max-w-[640px] mb-14">
-            <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Our Core Modules</span>
-            <h2 className="text-[34px] sm:text-[46px] font-extrabold tracking-tight text-[#18181B] mt-2 leading-[1.08] ff-heading">
-              Engineered for absolute quality adoption.
-            </h2>
-            <p className="mt-3 text-[16.5px] text-[#52525B] leading-relaxed">
-              Every module is designed to be understood, adopted, and used daily on the shop floor and in engineering review rooms.
-            </p>
-          </div>
-
-          {/* Four High-End Distinct Tiles */}
-          <div className="space-y-8">
-            {/* Tile 1: PFD ↔ PFMEA Sync */}
-            <div className="bg-white rounded-[32px] border border-[#E5E0D8] p-8 sm:p-12 shadow-xs hover:border-[#D4D4D8] transition-all">
-              <div className="grid lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-6">
-                  <div className="w-12 h-1 bg-[#FF682C] rounded-full mb-5" />
-                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Module 01</span>
-                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#18181B] mt-1 mb-3 ff-heading">
-                    Process Flow & Structure Analysis
-                  </h3>
-                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-lg mb-4">
-                    AIAG-VDA Step 2 & 3 · PFD ↔ PFMEA Bidirectional Sync
-                  </div>
-                  <p className="text-[15.5px] leading-relaxed text-[#52525B] mb-6">
-                    Extract, map, and synchronize every manufacturing operation from your Process Flow Diagram directly into the PFMEA grid with zero data loss. Automatic orphan process detection prevents missing inspection gates.
-                  </p>
-                  <button
-                    onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#18181B] hover:text-[#FF682C] transition-colors"
-                  >
-                    <span>Explore PFD ↔ PFMEA linking</span>
-                    <span>→</span>
-                  </button>
+          {/* Step Detail Inspection Card */}
+          <div className="rounded-2xl border border-slate-200 bg-[#FBFBFC] p-6 sm:p-10 shadow-xs">
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column: Concept & Description */}
+              <div className="lg:col-span-6 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200/80 text-xs font-mono font-bold text-slate-800">
+                  <span>Step 0{selectedStep.step}</span>
+                  <span>•</span>
+                  <span>{selectedStep.tag}</span>
                 </div>
+                <h3 className="text-[26px] sm:text-[32px] font-extrabold text-slate-900 ff-heading">
+                  {selectedStep.name}
+                </h3>
+                <p className="text-[15.5px] leading-relaxed text-slate-600">
+                  {selectedStep.desc}
+                </p>
 
-                <div className="lg:col-span-6 rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-6 font-mono text-[12px] space-y-3">
-                  <div className="text-[#816729] font-bold uppercase tracking-wider text-[11px]">Process Synchronization Engine</div>
-                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D8] shadow-xs">
-                    <div className="flex justify-between items-center text-[#18181B] font-bold text-[13px]">
-                      <span>PFD Step 10: Automatic Bearing Press</span>
-                      <span className="text-[#10B981] font-bold">SYNCED</span>
-                    </div>
-                    <div className="text-[#71717A] text-[11.5px] mt-1">4M Allocation: Machine (Press-04) · Man (Operator 2)</div>
-                  </div>
-                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D8] shadow-xs">
-                    <div className="flex justify-between items-center text-[#18181B] font-bold text-[13px]">
-                      <span>PFMEA Row 10.1: Insufficient Press Force</span>
-                      <span className="text-[#FF682C] font-bold">S=8 · O=3 · D=4</span>
-                    </div>
-                    <div className="text-[#71717A] text-[11.5px] mt-1">Directly propagates to Control Plan Dimension Tolerances</div>
-                  </div>
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    onClick={() => navigate('/learn/aiag-vda-7-step-fmea')}
+                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#FF5500] hover:text-slate-900 transition-colors"
+                  >
+                    <span>Read in-depth AIAG-VDA 7-Step handbook</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Tile 2: Risk Visualization & Action Priority */}
-            <div className="bg-[#FAF9F6] rounded-[32px] border border-[#E5E0D8] p-8 sm:p-12 shadow-xs hover:border-[#D4D4D8] transition-all">
-              <div className="grid lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-6">
-                  <div className="w-12 h-1 bg-[#816729] rounded-full mb-5" />
-                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#816729] font-bold">Module 02</span>
-                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#18181B] mt-1 mb-3 ff-heading">
-                    Risk Visualization & Action Priority
-                  </h3>
-                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-lg mb-4">
-                    Deterministic AIAG-VDA AP (High, Medium, Low)
+              {/* Right Column: Gating Rule & Data I/O */}
+              <div className="lg:col-span-6 space-y-3 font-mono text-xs">
+                {/* Input Artifact */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                  <div className="text-slate-400 font-bold uppercase text-[10.5px]">Required Entry Input</div>
+                  <div className="text-slate-800 font-medium text-[13px] mt-1 font-sans">
+                    {selectedStep.input}
                   </div>
-                  <p className="text-[15.5px] leading-relaxed text-[#52525B] mb-6">
-                    Our methodology is design-driven: every visual is crafted with the quality engineer in mind, providing instant visual hierarchy over Severity, Occurrence, and Detection ratings. High-AP mandates trigger automated action tasks.
-                  </p>
-                  <button
-                    onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#18181B] hover:text-[#816729] transition-colors"
-                  >
-                    <span>View Action Priority logic</span>
-                    <span>→</span>
-                  </button>
                 </div>
 
-                <div className="lg:col-span-6 rounded-2xl bg-white border border-[#E5E0D8] p-6 shadow-xs">
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-3">Live Matrix Evaluation</div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="p-3.5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl">
-                      <span className="text-[10.5px] font-mono font-bold uppercase text-[#EF4444]">High AP</span>
-                      <div className="text-[16px] font-bold text-[#991B1B] mt-1">Mandatory</div>
-                      <div className="text-[10.5px] text-[#DC2626] mt-0.5">Action Required</div>
-                    </div>
-                    <div className="p-3.5 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl">
-                      <span className="text-[10.5px] font-mono font-bold uppercase text-[#D97706]">Medium AP</span>
-                      <div className="text-[16px] font-bold text-[#92400E] mt-1">Review</div>
-                      <div className="text-[10.5px] text-[#B45309] mt-0.5">Discretionary</div>
-                    </div>
-                    <div className="p-3.5 bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl">
-                      <span className="text-[10.5px] font-mono font-bold uppercase text-[#059669]">Low AP</span>
-                      <div className="text-[16px] font-bold text-[#065F46] mt-1">Acceptable</div>
-                      <div className="text-[10.5px] text-[#047857] mt-0.5">Controls Verified</div>
-                    </div>
+                {/* Output Artifact */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                  <div className="text-emerald-600 font-bold uppercase text-[10.5px] flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Mandated Output Artifact</span>
+                  </div>
+                  <div className="text-slate-800 font-medium text-[13px] mt-1 font-sans">
+                    {selectedStep.output}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Tile 3: Regulatory Governance & 21 CFR Part 11 */}
-            <div className="bg-[#FAF9F6] rounded-[32px] border border-[#E5E0D8] p-8 sm:p-12 shadow-xs hover:border-[#D4D4D8] transition-all">
-              <div className="grid lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-6">
-                  <div className="w-12 h-1 bg-[#816729] rounded-full mb-5" />
-                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#816729] font-bold">Module 03</span>
-                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#18181B] mt-1 mb-3 ff-heading">
-                    Regulatory Governance & 21 CFR Part 11
-                  </h3>
-                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-lg mb-4 border border-[#D4CFC4]">
-                    Electronic Signatures · Reviewer Segregation · Immutable Audit Trail
+                {/* Platform Gating Rule */}
+                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900">
+                  <div className="font-bold uppercase text-[10.5px] flex items-center gap-1.5 text-amber-700">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>Prerequisite Gating Constraint</span>
                   </div>
-                  <p className="text-[15.5px] leading-relaxed text-[#52525B] mb-6">
-                    Establish strict regulatory controls, cryptographic digital signatures, and locked document revisions ensuring flawless regulatory inspection readiness. Database constraints permanently reject deletions on audit records.
-                  </p>
-                  <button
-                    onClick={() => navigate('/learn/21-cfr-part-11-fmea')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#18181B] hover:text-[#816729] transition-colors"
-                  >
-                    <span>Read 21 CFR Part 11 specification</span>
-                    <span>→</span>
-                  </button>
-                </div>
-
-                <div className="lg:col-span-6 rounded-2xl bg-white border border-[#E5E0D8] p-6 font-mono text-[12px] text-[#52525B] space-y-3 shadow-xs">
-                  <div className="flex justify-between items-center pb-2.5 border-b border-[#E5E0D8] text-[10.5px] uppercase font-bold text-[#71717A]">
-                    <span>Immutable Audit Trail Partition</span>
-                    <span className="text-emerald-600 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active Lock</span>
-                  </div>
-                  <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[#18181B]">
-                    <span className="text-[#FF682C] font-bold">2026-09-01T08:14:05Z</span> · Rev C Approved by QA Director · Hash: <span className="text-[#816729] font-bold">e8046277</span>
-                  </div>
-                  <div className="p-3.5 bg-[#FAFAF8] rounded-xl border border-[#E5E0D8] text-[#52525B]">
-                    <span className="text-[#71717A]">2026-09-01T08:02:14Z</span> · ACT-102 Evidence Uploaded (R2) · S=8, O=3, D=3
-                  </div>
-                  <div className="flex items-center justify-between pt-2 text-[10.5px] text-[#71717A]">
-                    <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> 21 CFR Part 11 Signed</span>
-                    <span className="text-[#816729] font-bold">SHA-256 Verified</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tile 4: AI Quality Copilot & Data Agents */}
-            <div className="bg-white rounded-[32px] border border-[#E5E0D8] p-8 sm:p-12 shadow-xs hover:border-[#D4D4D8] transition-all">
-              <div className="grid lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-6">
-                  <div className="w-12 h-1 bg-[#FF682C] rounded-full mb-5" />
-                  <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Module 04</span>
-                  <h3 className="text-[26px] sm:text-[34px] font-extrabold text-[#18181B] mt-1 mb-3 ff-heading">
-                    AI Quality Copilot & Data Agents
-                  </h3>
-                  <div className="inline-block text-[12px] font-mono text-[#816729] font-bold bg-[#EBE6DD] px-3 py-1 rounded-lg mb-4">
-                    Tenant-Isolated Vector RAG · Human-in-the-Loop Validation
-                  </div>
-                  <p className="text-[15.5px] leading-relaxed text-[#52525B] mb-6">
-                    Our AI agents suggest failure modes, causes, and detection controls based strictly on your historical FMEA knowledge base. AI suggestions never overwrite live analysis rows without explicit engineering approval.
-                  </p>
-                  <button
-                    onClick={() => navigate('/product')}
-                    className="inline-flex items-center gap-2 text-[14px] font-bold text-[#18181B] hover:text-[#FF682C] transition-colors"
-                  >
-                    <span>Discover AI Copilot architecture</span>
-                    <span>→</span>
-                  </button>
-                </div>
-
-                <div className="lg:col-span-6 rounded-2xl bg-[#FAF9F6] border border-[#E5E0D8] p-6 space-y-3">
-                  <div className="flex items-center gap-2 text-[11px] font-mono font-bold text-[#FF682C] uppercase">
-                    <span>✦ AI Quality Recommendation</span>
-                  </div>
-                  <div className="text-[12.5px] text-[#52525B]">Based on 14 similar welding operations in database:</div>
-                  <div className="p-3.5 bg-white rounded-xl border border-[#E5E0D8] text-[13.5px] font-semibold text-[#18181B] shadow-xs">
-                    Suggested Detection Control: High-frequency ultrasonic weld inspection
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <span className="px-3 py-1 rounded-lg bg-[#18181B] text-white text-[11.5px] font-bold">Accept Suggestion</span>
-                    <span className="px-3 py-1 rounded-lg border border-[#E5E0D8] text-[#52525B] text-[11.5px] font-semibold">Modify</span>
+                  <div className="font-sans text-[12.5px] mt-1 text-amber-800">
+                    {selectedStep.gating}
                   </div>
                 </div>
               </div>
@@ -390,46 +442,208 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── 6. Interactive Action Priority Simulator Tile ──── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-y border-[#E5E0D8]" id="simulator">
-        <div className="max-w-[1360px] mx-auto">
-          <div className="text-center max-w-[640px] mx-auto mb-12">
-            <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Interactive Tool</span>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-[#18181B] mt-2 ff-heading">
-              Simulate Action Priority in real-time
+      {/* ── 5. The Golden Thread (PFD ↔ PFMEA ↔ Control Plan Sync) ── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC] border-b border-slate-200" id="sync">
+        <div className="max-w-[1320px] mx-auto">
+          <div className="max-w-[720px] mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200/70 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
+              <GitBranch className="w-3.5 h-3.5 text-[#FF5500]" />
+              <span>Bidirectional Data Synchronization</span>
+            </div>
+            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
+              The Golden Thread: Never Out of Sync.
             </h2>
-            <p className="mt-3 text-[16px] text-[#52525B]">
-              Adjust Severity, Occurrence, and Detection sliders to see how AIAG-VDA 2019 prioritizes corrective action tasks.
+            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
+              When a manufacturing engineer modifies a process parameter or tolerance in the Control Plan, traditional teams rely on manual memory to update the PFMEA. FMEApex links them in a serializable, bidirectional transaction.
             </p>
           </div>
 
-          <div className="max-w-[1020px] mx-auto">
+          {/* Tri-Directional Sync Visualizer */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Box 1: PFD */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-7 shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-4 font-mono font-bold text-sm">
+                01
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                Process Flow Diagram (PFD)
+              </h3>
+              <p className="text-xs text-slate-500 font-mono mb-4">
+                Shop Floor Operations Sequence
+              </p>
+              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center text-slate-800 font-bold">
+                  <span>Op 20: Stator Fastener Torque</span>
+                  <span className="text-emerald-600 text-[10px]">SYNCED</span>
+                </div>
+                <div className="text-[11px] text-slate-500">Work Element: Multi-Spindle Tooling</div>
+                <div className="text-[11px] text-slate-500">4M Category: Machine (M-04)</div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Orphan operations flagged automatically</span>
+              </div>
+            </div>
+
+            {/* Box 2: PFMEA */}
+            <div className="rounded-2xl bg-white border-2 border-slate-900 p-6 sm:p-7 shadow-md relative">
+              <div className="absolute -top-3 right-6 px-2.5 py-0.5 rounded-md bg-[#FF5500] text-white text-[10.5px] font-mono font-bold uppercase tracking-wider">
+                Active Core
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center mb-4 font-mono font-bold text-sm">
+                02
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                AIAG-VDA PFMEA Matrix
+              </h3>
+              <p className="text-xs text-slate-500 font-mono mb-4">
+                Failure Chain & Risk Analysis
+              </p>
+              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center text-slate-800 font-bold">
+                  <span>Row 20.1: Under-torque</span>
+                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">HIGH AP</span>
+                </div>
+                <div className="text-[11px] text-slate-500">S=9 · O=4 · D=4 (Worst-case inherited)</div>
+                <div className="text-[11px] text-slate-500">Action: Dynamic angle-torque window</div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Inherits severity from worst-case customer effect</span>
+              </div>
+            </div>
+
+            {/* Box 3: Control Plan */}
+            <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-7 shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-4 font-mono font-bold text-sm">
+                03
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                Control Plan (CP)
+              </h3>
+              <p className="text-xs text-slate-500 font-mono mb-4">
+                Quality Inspection Specifications
+              </p>
+              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <div className="flex justify-between items-center text-slate-800 font-bold">
+                  <span>Fastener Clamp Torque</span>
+                  <span className="text-blue-600 text-[10px]">AUTO-FLOW</span>
+                </div>
+                <div className="text-[11px] text-slate-500">Spec: 48.0 ± 2.5 N·m</div>
+                <div className="text-[11px] text-slate-500">Evaluation: 100% per fastener transducer</div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Editing CP tolerance synchronizes back to PFMEA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. Excel Spreadsheets vs. FMEApex Engine ────────── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200">
+        <div className="max-w-[1320px] mx-auto">
+          <div className="max-w-[720px] mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-rose-50 text-xs font-mono font-bold text-rose-700 uppercase tracking-wider mb-3">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-rose-600" />
+              <span>Spreadsheet Risk Elimination</span>
+            </div>
+            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
+              Why Tier 1 Manufacturers are Retiring Excel.
+            </h2>
+            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
+              Excel is a blank calculator, not a quality engineering database. Disconnected files, broken cell formulas, and unverified change histories lead to audit failure findings and costly recall liabilities.
+            </p>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="grid grid-cols-12 bg-slate-900 text-white p-4 sm:p-5 text-xs font-mono font-bold uppercase tracking-wider">
+              <div className="col-span-12 sm:col-span-4">Engineering Requirement</div>
+              <div className="col-span-6 sm:col-span-4 text-slate-400 mt-2 sm:mt-0 flex items-center gap-1.5">
+                <X className="w-4 h-4 text-rose-400" />
+                <span>Legacy Excel Spreadsheets</span>
+              </div>
+              <div className="col-span-6 sm:col-span-4 text-emerald-400 mt-2 sm:mt-0 flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>FMEApex Quality OS</span>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-200 bg-[#FBFBFC]">
+              {COMPARISON_ROWS.map((row) => (
+                <div key={row.feature} className="grid grid-cols-12 p-4 sm:p-5 text-sm items-start hover:bg-white transition-colors">
+                  <div className="col-span-12 sm:col-span-4 font-bold text-slate-900 mb-2 sm:mb-0">
+                    {row.feature}
+                  </div>
+                  <div className="col-span-12 sm:col-span-4 text-slate-600 text-xs sm:text-sm pr-4 mb-2 sm:mb-0">
+                    <span className="sm:hidden font-mono text-[10px] uppercase text-rose-500 font-bold block mb-0.5">Legacy Excel:</span>
+                    {row.excel}
+                  </div>
+                  <div className="col-span-12 sm:col-span-4 text-slate-900 font-medium text-xs sm:text-sm pl-0 sm:pl-2">
+                    <span className="sm:hidden font-mono text-[10px] uppercase text-emerald-600 font-bold block mb-0.5">FMEApex:</span>
+                    <span className="text-emerald-950 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-200/60 inline-block">
+                      {row.fmeapex}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. Interactive Action Priority Simulator Tile ──── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC] border-b border-slate-200" id="simulator">
+        <div className="max-w-[1320px] mx-auto">
+          <div className="max-w-[720px] mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
+              <Cpu className="w-3.5 h-3.5 text-[#FF5500]" />
+              <span>Interactive Simulator</span>
+            </div>
+            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
+              Simulate Action Priority in Real-Time.
+            </h2>
+            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
+              Test how AIAG-VDA 2019 prioritizes Severity (S), Occurrence (O), and Detection (D) into High, Medium, or Low Action Priority. See firsthand why OEM auditors banned arbitrary RPN cutoffs.
+            </p>
+          </div>
+
+          <div className="max-w-[1100px] mx-auto">
             <RiskCalculatorWidget />
           </div>
         </div>
       </section>
 
-      {/* ── 7. Technical Specifications Architecture Tile ──── */}
-      <section className="py-20 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6] border-b border-[#E5E0D8]">
-        <div className="max-w-[1360px] mx-auto">
-          <div className="mb-10 max-w-[620px]">
-            <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#816729] font-bold">Technical Specifications</span>
-            <h2 className="text-[28px] sm:text-[38px] font-extrabold tracking-tight text-[#18181B] mt-1.5 ff-heading">
-              Built for enterprise manufacturing scale
+      {/* ── 8. Technical Specifications Architecture ────────── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200" id="specs">
+        <div className="max-w-[1320px] mx-auto">
+          <div className="max-w-[720px] mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-100 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
+              <Server className="w-3.5 h-3.5 text-[#FF5500]" />
+              <span>Enterprise Infrastructure</span>
+            </div>
+            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
+              Engineered for Enterprise Manufacturing Scale.
             </h2>
-            <p className="mt-2 text-[15.5px] text-[#52525B]">
-              Engineered from day one with row-level tenant isolation, cryptographic audit trails, and zero spreadsheet dependencies.
+            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
+              Row-level PostgreSQL data isolation, cryptographic SHA-256 digital signature chains, pre-signed Cloudflare R2 evidence storage, and one-command Docker on-premises deployment.
             </p>
           </div>
 
-          <div className="rounded-[24px] bg-white border border-[#E5E0D8] divide-y divide-[#E5E0D8] overflow-hidden shadow-xs">
-            {SPECS.map(([label, value]) => (
-              <div key={label} className="grid grid-cols-1 sm:grid-cols-12 p-4 sm:p-5 text-[13.5px] hover:bg-[#FDFCFB] transition-colors">
-                <div className="sm:col-span-4 font-mono font-bold text-[#816729] uppercase text-[11.5px] tracking-wider">
-                  {label}
+          {/* Technical Spec List */}
+          <div className="rounded-2xl border border-slate-200 divide-y divide-slate-200 overflow-hidden bg-[#FBFBFC]">
+            {TECHNICAL_SPECS.map(([name, cat, detail]) => (
+              <div key={name} className="grid grid-cols-1 sm:grid-cols-12 p-4 sm:p-5 text-sm items-center hover:bg-white transition-colors">
+                <div className="sm:col-span-4 font-mono font-bold text-slate-900 text-[13px]">
+                  {name}
                 </div>
-                <div className="sm:col-span-8 font-mono text-[#18181B] font-medium mt-1 sm:mt-0">
-                  {value}
+                <div className="sm:col-span-2 text-xs font-mono text-[#FF5500] font-bold uppercase mt-1 sm:mt-0">
+                  {cat}
+                </div>
+                <div className="sm:col-span-6 text-slate-600 text-xs sm:text-sm mt-1 sm:mt-0">
+                  {detail}
                 </div>
               </div>
             ))}
@@ -437,86 +651,111 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── 8. Contact & Transformation Tile ────────────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white" id="contact">
-        <div className="max-w-[1360px] mx-auto">
+      {/* ── 9. Direct Engineering Contact & Demo ──────────── */}
+      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC]" id="contact">
+        <div className="max-w-[1320px] mx-auto">
           <div className="grid lg:grid-cols-12 gap-12 items-start">
-            <div className="lg:col-span-5">
-              <span className="text-[11.5px] font-mono uppercase tracking-wider text-[#FF682C] font-bold">Get In Touch</span>
-              <h2 className="text-[34px] sm:text-[44px] font-extrabold tracking-tight text-[#18181B] mt-2 mb-4 leading-tight ff-heading">
-                Ready to talk about your quality transformation?
+            {/* Left Column: Direct Outreach Info */}
+            <div className="lg:col-span-5 space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#FF5500]" />
+                <span>Talk to a Quality Architect</span>
+              </div>
+              <h2 className="text-[32px] sm:text-[42px] font-extrabold tracking-tight text-slate-900 leading-tight ff-heading">
+                Ready to Upgrade Your Quality Infrastructure?
               </h2>
-              <p className="text-[16px] leading-relaxed text-[#52525B] mb-7">
-                Whether you need an on-premise Docker deployment, migration from legacy spreadsheets, or a custom demo with your engineering team, our quality architects are ready.
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Whether you need an on-premises air-gapped Docker deployment, migration from legacy Excel or APIS IQ databases, or an interactive demonstration for your CFT engineering team, our quality architects are ready.
               </p>
-              <div className="space-y-2.5 text-[13px] font-mono text-[#71717A]">
+
+              <div className="space-y-3 font-mono text-xs text-slate-600 pt-2">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-                  <span>Response time SLA: <strong className="text-[#18181B]">Within 4 business hours</strong></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>SLA Response Window: <strong className="text-slate-900">Within 4 business hours</strong></span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#FF682C]" />
-                  <span>Direct email: <a href="mailto:quality@fmeapex.online" className="text-[#FF682C] font-bold hover:underline">quality@fmeapex.online</a></span>
+                  <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
+                  <span>Engineering Desk: <a href="mailto:quality@fmeapex.online" className="text-[#FF5500] font-bold hover:underline">quality@fmeapex.online</a></span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span>Deployment Targets: Cloudflare Edge, Render Cloud, or Docker On-Prem</span>
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-[#FAF9F6] border border-[#E5E0D8] rounded-[28px] p-7 sm:p-10 shadow-xs">
+            {/* Right Column: Inquiry Submission Form */}
+            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 sm:p-9 shadow-sm">
               {contactSuccess ? (
-                <div className="p-8 text-center bg-white rounded-2xl border border-[#A7F3D0]">
-                  <div className="w-12 h-12 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center mx-auto mb-4 text-[20px]">✓</div>
-                  <h3 className="text-[19px] font-bold text-[#18181B] mb-1.5">Message received</h3>
-                  <p className="text-[14px] text-[#52525B]">Thank you for reaching out. A quality engineer will get in touch with you shortly.</p>
+                <div className="p-8 text-center bg-emerald-50 rounded-xl border border-emerald-200">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">Inquiry Dispatched</h3>
+                  <p className="text-sm text-slate-600">
+                    Thank you. An FMEA Quality Systems Architect will review your manufacturing details and respond within 4 business hours.
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleContactSubmit} className="space-y-4">
                   {contactError && (
-                    <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-[13px] rounded-xl">
+                    <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl">
                       {contactError}
                     </div>
                   )}
+
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-1.5">Your Name</label>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                        Your Full Name
+                      </label>
                       <input
                         type="text"
                         required
                         value={contactForm.name}
                         onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                        placeholder="Jane Doe"
-                        className="w-full h-11 px-4 rounded-xl bg-white border border-[#E5E0D8] text-[14px] text-[#18181B] focus:outline-none focus:border-[#18181B]"
+                        placeholder="Dr. Markus Weber"
+                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
                       />
                     </div>
+
                     <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-1.5">Corporate Email</label>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                        Corporate Email
+                      </label>
                       <input
                         type="email"
                         required
                         value={contactForm.email}
                         onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                        placeholder="jane@manufacturer.com"
-                        className="w-full h-11 px-4 rounded-xl bg-white border border-[#E5E0D8] text-[14px] text-[#18181B] focus:outline-none focus:border-[#18181B]"
+                        placeholder="m.weber@powertrain-oem.com"
+                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
                       />
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-1.5">Company / Plant</label>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                        Manufacturing Facility / Plant
+                      </label>
                       <input
                         type="text"
                         value={contactForm.company}
                         onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                        placeholder="Tier 1 Automotive Plant"
-                        className="w-full h-11 px-4 rounded-xl bg-white border border-[#E5E0D8] text-[14px] text-[#18181B] focus:outline-none focus:border-[#18181B]"
+                        placeholder="Tier 1 Propulsion Assembly"
+                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
                       />
                     </div>
+
                     <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-1.5">Inquiry Type</label>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                        Inquiry Scope
+                      </label>
                       <select
                         value={contactForm.type}
                         onChange={(e) => setContactForm({ ...contactForm, type: e.target.value })}
-                        className="w-full h-11 px-4 rounded-xl bg-white border border-[#E5E0D8] text-[14px] text-[#18181B] focus:outline-none focus:border-[#18181B]"
+                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
                       >
                         {INQUIRY_TYPES.map((t) => (
                           <option key={t} value={t}>{t}</option>
@@ -526,23 +765,25 @@ export const LandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-[#71717A] font-bold mb-1.5">Project Details</label>
+                    <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
+                      Process Operations & Scope Details
+                    </label>
                     <textarea
                       rows={3}
                       required
                       value={contactForm.message}
                       onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                      placeholder="Tell us about your production lines, current FMEA tools, or migration requirements..."
-                      className="w-full p-4 rounded-xl bg-white border border-[#E5E0D8] text-[14px] text-[#18181B] focus:outline-none focus:border-[#18181B]"
+                      placeholder="Describe your current FMEA tooling (Excel, APIS IQ), number of assembly lines, or on-premises requirements..."
+                      className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={contactSubmitting}
-                    className="w-full h-12 rounded-xl bg-[#FF682C] hover:bg-[#E05219] text-white text-[14.5px] font-semibold transition-all shadow-[0_4px_14px_rgba(255,104,44,0.3)] flex items-center justify-center gap-2"
+                    className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2"
                   >
-                    {contactSubmitting ? 'Sending...' : 'Send Message →'}
+                    {contactSubmitting ? 'Transmitting Details...' : 'Send Inquiry to Quality Team →'}
                   </button>
                 </form>
               )}
@@ -551,7 +792,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── 9. Ventriloc Modern Minimalist Footer ───────────── */}
+      {/* ── 10. Handcrafted Technical Footer ─────────────────── */}
       <SiteFooter />
     </div>
   );

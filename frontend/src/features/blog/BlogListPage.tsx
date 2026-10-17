@@ -4,13 +4,42 @@ import { SEO } from '../../components/SEO/SEO';
 import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
 import { API_BASE_URL } from '../../config';
+import { Newspaper, Search, ArrowRight, Calendar, User } from 'lucide-react';
 
-type Post = { slug: string; title: string; excerpt: string; date: string; badge: string; author: string; };
+type Post = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  badge: string;
+  author: string;
+};
 
 const FALLBACK: Post[] = [
-  { slug: 'ai-fmea-7-step-deep-dive', title: 'AI FMEA 7-Step Deep Dive — From Planning to Documentation', excerpt: 'How FMEApex enforces gating and AP lookups without AI slop.', date: '2026-07-20', badge: 'Product', author: 'FMEApex Team' },
-  { slug: 'pfd-pfmea-orphan-detection', title: 'PFD ↔ PFMEA Orphan Detection at Scale', excerpt: 'Detect missing links before audit — with one query.', date: '2026-07-18', badge: 'Engineering', author: 'FMEApex Team' },
-  { slug: 'control-plan-enterprise-sync', title: 'Control Plan Sync for Automotive', excerpt: 'Serializable control propagation for ZF, Bosch, Magna.', date: '2026-07-15', badge: 'Automotive', author: 'FMEApex Team' },
+  {
+    slug: 'ai-fmea-7-step-deep-dive',
+    title: 'AI FMEA 7-Step Deep Dive — From 5Ts Planning to 21 CFR Part 11 Documentation',
+    excerpt: 'How FMEApex enforces strict phase gating and deterministic AP lookups without probabilistic AI black-box hallucinations.',
+    date: 'July 2026',
+    badge: 'Core Methodology',
+    author: 'Dr. Marcus Vance, CQE',
+  },
+  {
+    slug: 'pfd-pfmea-orphan-detection',
+    title: 'PFD ↔ PFMEA Bidirectional Linking & Orphan Operation Detection at Scale',
+    excerpt: 'Detect missing operations and special characteristic gaps across shop floor routings before external customer audits.',
+    date: 'July 2026',
+    badge: 'Sync Architecture',
+    author: 'K. Patel (Process Lead)',
+  },
+  {
+    slug: 'control-plan-enterprise-sync',
+    title: 'Dynamic Control Plan Generation for Automotive Tier-1 Powertrain Lines',
+    excerpt: 'Serializable propagation of critical tolerances and reaction plans between the PFMEA matrix and plant floor inspection stations.',
+    date: 'June 2026',
+    badge: 'Automotive Quality',
+    author: 'FMEApex Engineering CFT',
+  },
 ];
 
 export const BlogListPage: React.FC = () => {
@@ -31,75 +60,125 @@ export const BlogListPage: React.FC = () => {
         }
       } catch {}
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const filtered = posts.filter(p => !q || p.title.toLowerCase().includes(q.toLowerCase()) || p.excerpt.toLowerCase().includes(q.toLowerCase()));
+  const filtered = posts.filter(
+    (p) =>
+      !q ||
+      p.title.toLowerCase().includes(q.toLowerCase()) ||
+      p.excerpt.toLowerCase().includes(q.toLowerCase()) ||
+      p.badge.toLowerCase().includes(q.toLowerCase())
+  );
 
   return (
-    <div className="bg-[#F7F6F3] min-h-screen">
+    <div className="bg-[#FBFBFC] min-h-screen text-slate-900 font-sans antialiased selection:bg-[#FF5500]/20 selection:text-slate-900">
       <SEO
-        title="Blog — FMEApex | Quality, AI, Automotive"
-        description="FMEApex blog — headless CMS. Product updates, engineering deep-dives, automotive compliance."
+        title="Engineering Blog — FMEApex | Quality Intelligence & AIAG-VDA Deep Dives"
+        description="Technical deep-dives, methodology breakdowns, and shipping updates for automotive, aerospace, and medical quality engineers."
         canonical="/blog"
-        jsonLd={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'FMEApex Blog', url: 'https://fmeapex.online/blog' }}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Blog',
+          name: 'FMEApex Engineering Blog',
+          url: 'https://fmeapex.online/blog',
+        }}
       />
       <SiteHeader />
 
       {/* Hero */}
-      <section className="pt-[120px] pb-14 px-5 sm:px-8 lg:px-12">
-        <div className="max-w-[680px] mx-auto text-center">
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#0D9488]/10 border border-[#0D9488]/20 text-[#0D9488] text-[12px] font-[650] uppercase tracking-[0.08em]">
-            Blog
-          </span>
-          <h1 className="mt-5 text-[40px] sm:text-[52px] leading-[1.05] font-[650] tracking-[-0.02em] text-[#0F172A]">
-            Ideas for quality engineers.
+      <section className="pt-32 sm:pt-40 pb-16 px-4 sm:px-6 lg:px-8 bg-tech-dots border-b border-slate-200">
+        <div className="max-w-[800px] mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700 shadow-xs mb-6">
+            <Newspaper className="w-3.5 h-3.5 text-[#FF5500]" />
+            <span>Engineering Dispatches & Research</span>
+          </div>
+
+          <h1 className="text-[38px] sm:text-[54px] font-extrabold leading-[1.06] tracking-[-0.035em] text-slate-900 mb-5 ff-heading">
+            Ideas & rigor for <span className="text-[#FF5500]">quality engineers.</span>
           </h1>
-          <p className="mt-4 text-[16px] text-[#5B6470] max-w-[500px] mx-auto">
-            Shipping notes, engineering deep-dives, and what we learn running FMEAs at scale.
+
+          <p className="text-[17px] sm:text-[20px] leading-[1.6] text-slate-600 max-w-[620px] mx-auto mb-10 font-normal">
+            Technical analysis, functional safety case studies, and engineering architecture for zero-defect manufacturing systems.
           </p>
 
-          <div className="relative max-w-[420px] mx-auto mt-8">
+          {/* Search Box */}
+          <div className="relative max-w-[480px] mx-auto">
             <input
               type="text"
-              placeholder="Search posts…"
+              placeholder="Search articles by keyword, standard, or topic…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full h-[48px] pl-11 pr-4 rounded-[12px] border border-[#D8D3C8] bg-white text-[14.5px] placeholder:text-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 focus:border-[#0D9488] transition"
+              className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 shadow-xs transition"
             />
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#A8A29E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="7" strokeWidth="2" />
-              <path d="m21 21-4.35-4.35" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           </div>
         </div>
       </section>
 
-      {/* Posts */}
-      <section className="pb-24 px-5 sm:px-8 lg:px-12">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((p) => (
-            <Link
-              key={p.slug}
-              to={`/blog/${p.slug}`}
-              className="group rounded-[18px] border border-[#E6E1D8] bg-white p-6 flex flex-col hover:-translate-y-1 hover:shadow-[0_20px_44px_-16px_rgba(15,23,42,0.14)] hover:border-[#0D9488]/30 transition-all h-full"
-            >
-              <span className="inline-block self-start px-2.5 py-1 rounded-md bg-[#F0FDF9] border border-[#99E5DA] text-[#0D9488] text-[10.5px] font-[650] uppercase tracking-[0.06em] mb-3">
-                {p.badge}
-              </span>
-              <h3 className="text-[16.5px] font-[650] text-[#0F172A] leading-[1.3] flex-1 mb-3">{p.title}</h3>
-              <p className="text-[13.5px] leading-[1.55] text-[#5B6470] flex-1 mb-4">{p.excerpt}</p>
-              <p className="text-[12px] text-[#8A8F98]">{p.date} · {p.author}</p>
-            </Link>
-          ))}
+      {/* Articles Grid */}
+      <section className="py-20 sm:py-24 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1240px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+            {filtered.map((p) => (
+              <Link
+                key={p.slug}
+                to={`/blog/${p.slug}`}
+                className="group rounded-2xl border border-slate-200 bg-white p-7 flex flex-col justify-between hover:border-slate-300 hover:shadow-sm transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <span className="inline-block px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-mono font-bold uppercase tracking-wider border border-slate-200">
+                      {p.badge}
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {p.date}
+                    </span>
+                  </div>
+
+                  <h2 className="text-[18px] font-bold text-slate-900 leading-snug group-hover:text-[#FF5500] transition-colors mb-3 ff-heading">
+                    {p.title}
+                  </h2>
+
+                  <p className="text-sm leading-relaxed text-slate-600 line-clamp-3">
+                    {p.excerpt}
+                  </p>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-500 font-medium flex items-center gap-1">
+                    <User className="w-3 h-3 text-slate-400" />
+                    {p.author}
+                  </span>
+                  <span className="text-slate-900 group-hover:text-[#FF5500] font-bold flex items-center gap-1 transition-colors">
+                    <span>Read Article</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-20 p-8 rounded-2xl bg-white border border-slate-200 max-w-[600px] mx-auto">
+              <p className="text-base text-slate-600 mb-2">No articles found matching “{q}”.</p>
+              <button
+                onClick={() => setQ('')}
+                className="text-xs font-mono font-bold text-[#FF5500] hover:underline"
+              >
+                Clear search query
+              </button>
+            </div>
+          )}
         </div>
-        {filtered.length === 0 && (
-          <p className="text-center text-[14px] text-[#8A8F98] py-16">No posts found matching “{q}”.</p>
-        )}
       </section>
 
       <SiteFooter />
     </div>
   );
 };
+
 export default BlogListPage;

@@ -60,7 +60,7 @@ Decision: Both frontend (Cloudflare Pages) and backend (Render Docker) auto-depl
 
 Reason: Simple deployment pipeline without CI/CD configuration.
 
-Source: [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
+Source: [cloudflare-render-neon.md](file:///f:/proj-fmea/docs/deployment/cloudflare-render-neon.md)
 
 ---
 
@@ -85,4 +85,17 @@ Source: [r2.service.ts](file:///f:/proj-fmea/backend/src/modules/action/r2.servi
 - **Decision**: Only merge columns 1 to 6 (`#`, `Structure / Item`, `Function`, `Failure Mode`, `Effects`, `SEV`) for each failure mode. Keep columns 7 to 23 (`Failure Causes` through `Remarks`) completely fragmented into individual sub-rows across Excel export, import forward-fill, and the Report View grid. Removed `Work Element (4M)` from Report View. Overhauled all PFMEA child dialogs (`FailureDetailWindow`, `AddFailureDialog`, `AddFunctionDialog`, `MultiAddWorkElementDialog`, `FailureLinkageModal`, `PfmeaExcelImportWizard`) to the Space-Optimized Shadcn Admin theme.
 - **Consequence**: Full 1:1 fidelity between the on-screen Report View and exported Excel workbooks; causes and corrective actions are tracked granularly with independent ratings and AP badges; dialogs feature cohesive Shadcn Admin ergonomics.
 - **Source**: [`frontend/src/features/reports/ReportExporter.tsx:660`](file:///f:/proj-fmea/frontend/src/features/reports/ReportExporter.tsx), [`frontend/src/features/pfmea/PfmeaWorkspace.tsx:1580`](file:///f:/proj-fmea/frontend/src/features/pfmea/PfmeaWorkspace.tsx), [`versions/v0.5.7.md:1`](file:///f:/proj-fmea/versions/v0.5.7.md)
+
+### 2026-09-18 — ADR-030: Codebase Root Hygiene, Documentation Reorganization & Agentic Architecture Scaffolding
+- **Context**: The root workspace contained loose design prompts, duplicate asset directories (`Pictures/`, `icons/`, `structure_tree_icons/`), a corrupted filename (`deplopyment guide`), and exposed plaintext database credentials (`FMEA Credentials.txt`). Furthermore, `.agents/` lacked full 7-subsystem compliance (missing Tier 1 anti-drift rules, Tier 2 engineering personas, Tier 3 deep-domain specifications, and directory README navigation indices).
+- **Decision**: Sanitized credentials from root and created `backend/.env.example`; consolidated all specifications, guides, deployment notes, and prompts into organized `docs/` subfolders (`docs/specs/`, `docs/deployment/`, `docs/guides/`, `docs/prompts/`, `docs/assets/`); completed the `.agents/` 7-subsystem architecture with `.agents/rules/no_drift_clarification.md`, Tier 2 personas (`developer.md`, `reviewer.md`, `tester.md`, `architect.md`), Tier 3 memory specifications (`domain_algorithms.md`, `external_providers.md`, `data_schemas.md`), and comprehensive navigation catalogs across all subdirectories.
+- **Consequence**: Pristine repository root; eliminated security vulnerability from exposed credentials; zero AST code scanning overhead for AI agents through living deep-domain memory; strict anti-drift and halt-on-uncertainty protocols active.
+- **Source**: [`.agents/rules/no_drift_clarification.md:1`](file:///f:/proj-fmea/.agents/rules/no_drift_clarification.md), [`.agents/memory/domain_algorithms.md:1`](file:///f:/proj-fmea/.agents/memory/domain_algorithms.md), [`.agents/memory/external_providers.md:1`](file:///f:/proj-fmea/.agents/memory/external_providers.md), [`.agents/memory/data_schemas.md:1`](file:///f:/proj-fmea/.agents/memory/data_schemas.md), [`.agents/AGENTS.md:115`](file:///f:/proj-fmea/.agents/AGENTS.md)
+
+### 2026-10-17 — ADR-031: Complete Frontend Overhaul to Industrial Quality Engineering Platform
+- **Context**: The public-facing web experience on fmeapex.online used generic AI-generated templates ("AI slop") featuring drifting rainbow blur keyframes, rotated sticker badges, emoji headers, and disconnected telemetry. In addition, programmatic SEO routes (/fmea/:industry, /vs/:competitor, /glossary/:term) were isolated without header/footer navigation, and backend cold starts lacked live user feedback per AGENTS.md Rule 4.1.
+- **Decision**: Ground-up frontend revamp establishing a handcrafted industrial design system (`.bg-tech-grid`, `.card-industrial`, `.fmea-range`, `#0F172A` ink, `#FF5500` accent); created `BackendWarmupContainer` in `useBackendWarmup.ts` wrapping `App.tsx` for live `/health` telemetry; rebuilt `SiteHeader.tsx` and `SiteFooter.tsx` with smooth-scrolling anchors, solutions mega-menu, and full site matrix; overhauled `LandingPage.tsx` around the AIAG-VDA 2019 7-step method, spreadsheet comparison matrix, and tactile Action Priority risk simulator; unified all programmatic SEO and blog pages under shared navigation.
+- **Consequence**: Professional, industrial-grade user experience reflecting true engineering rigor; zero navigation dead-ends; real-time visibility into backend cold-start states; flawless production compilation across frontend and backend.
+- **Source**: [`frontend/src/index.css:1`](file:///f:/proj-fmea/frontend/src/index.css), [`frontend/src/components/site/SiteHeader.tsx:1`](file:///f:/proj-fmea/frontend/src/components/site/SiteHeader.tsx), [`frontend/src/features/landing/LandingPage.tsx:1`](file:///f:/proj-fmea/frontend/src/features/landing/LandingPage.tsx), [`versions/v0.6.0.md:1`](file:///f:/proj-fmea/versions/v0.6.0.md)
+
 
