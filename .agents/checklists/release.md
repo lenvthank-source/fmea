@@ -7,6 +7,7 @@
 - [ ] Backend tests: `cd backend && npm test`
 - [ ] Database schema synced: `cd backend && npx prisma db push`
 - [ ] Environment variables updated on hosting platform if needed
+- [ ] Non-blocking Git push helper verified: `git config --local credential.helper wincred` per [rules/git.md](file:///f:/proj-fmea/.agents/rules/git.md)
 
 ## Post-Deploy
 - [ ] Cloudflare Pages deployment succeeded (frontend)
@@ -16,4 +17,4 @@
 - [ ] Guest sandbox login works
 - [ ] Core workspaces load: PFD, PFMEA, Control Plan, Actions
 
-Source: [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
+Source: [cloudflare-render-neon.md](file:///f:/proj-fmea/docs/deployment/cloudflare-render-neon.md)

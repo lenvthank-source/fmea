@@ -109,6 +109,11 @@ Enforce granular permissions matching the active JWT user payload. The 5 roles a
 - The `versions/` folder is append-only; never edit an existing version file, add a new one.
 - Version files are the auditable map of product change — keep them concrete (what changed, why, which files), not marketing copy.
 
+### 5.1 Non-Blocking Git Push Protocol (Windows / Agent Subshells)
+- **Avoid GCM Hangs**: System Git on Windows defaults to `credential.helper=manager` (GUI Git Credential Manager), which hangs on modal/tty prompts when run inside background subshells.
+- **Mandatory Helper**: Always enforce `credential.helper=wincred` locally (`git config --local credential.helper wincred`) so Git reads securely from the Windows Credential Store without modal interruption.
+- **Diagnostics & Rules**: Detailed troubleshooting and configuration steps are codified in [rules/git.md](file:///f:/proj-fmea/.agents/rules/git.md).
+
 ---
 
 ## 6. Agent Knowledge & Maintenance Rules — Keep `.agents/` Fresh
