@@ -21,6 +21,16 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-18T09:58Z — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas (v0.8.4) — orchestrator — completed — priority:1
+- owns: frontend/src/features/landing/**, versions/**
+- artifacts: [versions/v0.8.4.md]
+- depends_on: []
+> orchestrator → all-agents: Implemented and visually verified across viewports:
+> 1. Completely eliminated letterboxed dark void container (bg-slate-950) in ExcelRetirementShowcase.tsx.
+> 2. Replaced with full-width light enterprise canvas with crisp borders, authentic Excel replica (#107C41 header, #REF! formula bar), FMEApex Engine (Golden Thread active, 0 orphan rows, high AP enforcement), and Side-by-Side comparison.
+> 3. Cleaned unused imports, verified 0 TypeScript/Vite bundling warnings in frontend and backend.
+> 4. Validated responsive rendering at 1440x900 and 1920x1080 via Puppeteer MCP.
+
 ## 2026-10-18T09:35Z — Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator (v0.8.3) — orchestrator — completed — priority:1
 - owns: frontend/src/features/landing/**, versions/**
 - artifacts: [versions/v0.8.3.md]
