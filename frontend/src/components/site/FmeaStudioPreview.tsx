@@ -2,862 +2,644 @@ import React, { useState } from 'react';
 import {
   Layers,
   GitBranch,
-  ShieldAlert,
-  FileCheck2,
+  FileSpreadsheet,
+  LayoutDashboard,
+  ShieldCheck,
+  ChevronRight,
+  ChevronDown,
+  ArrowUpRight,
+  Search,
   Lock,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-  Filter,
-  Cpu,
-  Check,
-  FileSpreadsheet
+  CheckCircle2
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-type StudioView = 'pfmea' | 'pfd' | 'chain' | 'control_plan' | 'audit_trail';
+type StudioView = 'pfd' | 'pfmea' | 'control_plan' | 'dashboard';
 
-interface RowData {
-  id: string;
-  stepNo: string;
-  stepName: string;
-  fourM: 'Machine' | 'Man' | 'Material' | 'Method';
-  workElement: string;
-  functionDesc: string;
-  failureMode: string;
-  failureEffect: string;
-  severity: number;
-  failureCause: string;
-  occurrence: number;
-  prevControl: string;
-  detControl: string;
-  detection: number;
-  ap: 'H' | 'M' | 'L';
-  actionDesc: string;
-  actionOwner: string;
-  status: 'Open' | 'InProgress' | 'Verified';
-}
-
-const PRESETS = {
-  edu: {
-    title: 'Electric Drive Unit (EDU) Assembly',
-    docNo: 'FMEA-2026-EDU-08',
-    rev: 'Rev C.2',
-    line: 'Station 20 — High-Speed Rotor Insertion',
-    rows: [
-      {
-        id: 'ROW-101',
-        stepNo: 'Op 10',
-        stepName: 'Bearing Press-Fit',
-        fourM: 'Machine',
-        workElement: 'Hydraulic Press HP-04 (Force transducer)',
-        functionDesc: 'Press needle bearing to 45.2 ± 0.1 mm depth',
-        failureMode: 'Bearing seated below minimum press depth (<45.1mm)',
-        failureEffect: 'Rotor axial play, bearing race fatigue, motor noise (FE-01)',
-        severity: 8,
-        failureCause: 'Load cell drift > 2.5% during continuous cycling',
-        occurrence: 3,
-        prevControl: 'Daily calibration check before shift start (PC-01)',
-        detControl: 'In-situ displacement LVDT sensor at stroke end',
-        detection: 3,
-        ap: 'M',
-        actionDesc: 'Integrate dynamic closed-loop servo press with real-time envelope curve',
-        actionOwner: 'M. Weber (Tooling)',
-        status: 'Verified',
-      },
-      {
-        id: 'ROW-102',
-        stepNo: 'Op 20',
-        stepName: 'Torque Fastener M10',
-        fourM: 'Machine',
-        workElement: 'Atlas Copco Multi-Spindle Nutrunner (Station 20)',
-        functionDesc: 'Tighten 6x stator bolts to 48.0 ± 2.5 N·m',
-        failureMode: 'Fastener under-torqued (<45.5 N·m clamp load)',
-        failureEffect: 'Stator housing vibration, loose ground connection, safety loss (FE-02)',
-        severity: 9,
-        failureCause: 'Angle encoder slip or friction variation on unlubricated bolt threads',
-        occurrence: 4,
-        prevControl: 'Calibrated transducer tool + automatic bolt feeder (PC-02)',
-        detControl: 'Angle-monitoring torque window (Torque + Angle gating)',
-        detection: 4,
-        ap: 'H',
-        actionDesc: 'Mandatory torque-angle signature logging into MES; reject bin interlock',
-        actionOwner: 'K. Patel (Quality Lead)',
-        status: 'InProgress',
-      },
-      {
-        id: 'ROW-103',
-        stepNo: 'Op 30',
-        stepName: 'Dispense Thermal Paste',
-        fourM: 'Method',
-        workElement: 'Nordson Automated Dispensing Robot (Robot Arm 2)',
-        functionDesc: 'Apply continuous 2.0 ± 0.2 mm thermal interface bead',
-        failureMode: 'Discontinuous paste bead / air bubble entrapment',
-        failureEffect: 'Inadequate inverter heat dissipation, thermal derating (FE-03)',
-        severity: 7,
-        failureCause: 'Dispense nozzle partial crystallization during conveyor stoppage',
-        occurrence: 3,
-        prevControl: 'Purge cycle automated after 120s idle time (PC-03)',
-        detControl: 'Cognex 3D line-laser profilometer for 100% bead height check',
-        detection: 2,
-        ap: 'L',
-        actionDesc: 'Heated fluid circulation nozzle upgrade with viscosity feedback',
-        actionOwner: 'S. Tanaka (Process)',
-        status: 'Verified',
-      },
-      {
-        id: 'ROW-104',
-        stepNo: 'Op 40',
-        stepName: 'End-of-Line Vision & Dielectric',
-        fourM: 'Machine',
-        workElement: 'Chroma Automated Hi-Pot / Dielectric Isolation Tester',
-        functionDesc: 'Verify 2.5 kV insulation resistance > 100 MΩ',
-        failureMode: 'Dielectric breakdown under 2.5 kV test voltage',
-        failureEffect: 'High-voltage leakage to chassis; immediate vehicle shutdown (FE-04)',
-        severity: 10,
-        failureCause: 'Pin-hole nick in phase wire insulation during stator insertion',
-        occurrence: 2,
-        prevControl: 'Guide sleeve polymer tooling with radius chamfers (PC-04)',
-        detControl: '100% automated dielectric leakage test (Chroma 19052)',
-        detection: 2,
-        ap: 'M',
-        actionDesc: 'Add high-resolution optical inspection before winding insertion',
-        actionOwner: 'D. Rossi (Electrical QA)',
-        status: 'Open',
-      },
-    ] as RowData[],
-  },
-  battery: {
-    title: 'EV Battery Module Laser Welding',
-    docNo: 'FMEA-2026-BAT-14',
-    rev: 'Rev D.1',
-    line: 'Station 45 — Busbar Ultrasonic & Fiber Laser Weld',
-    rows: [
-      {
-        id: 'ROW-201',
-        stepNo: 'Op 15',
-        stepName: 'Cell Terminal Surface Clean',
-        fourM: 'Material',
-        workElement: 'Pulsed Laser Cleaning Head (50W Fiber)',
-        functionDesc: 'Remove surface oxide layer from aluminum cell poles',
-        failureMode: 'Residual oxide / oil film remaining on weld surface',
-        failureEffect: 'Laser weld spatter, high joint resistance, thermal hot spot (FE-11)',
-        severity: 8,
-        failureCause: 'Exhaust suction nozzle clogged with ablated particulate',
-        occurrence: 3,
-        prevControl: 'Differential pressure sensor on exhaust filter (PC-11)',
-        detControl: 'Optical emission spectroscopy inline clean check',
-        detection: 3,
-        ap: 'M',
-        actionDesc: 'Install automatic blow-back pulse jet cleaner on exhaust filter',
-        actionOwner: 'R. Schmidt (Welding Eng)',
-        status: 'Verified',
-      },
-      {
-        id: 'ROW-202',
-        stepNo: 'Op 25',
-        stepName: 'Laser Busbar Welding',
-        fourM: 'Machine',
-        workElement: 'Trumpf 4kW Fiber Laser with Wobble Scan Head',
-        functionDesc: 'Weld nickel-copper busbar to cell pole (shear force > 1.2 kN)',
-        failureMode: 'Insufficient weld penetration depth (< 0.45 mm)',
-        failureEffect: 'Busbar separation under vehicle shock, open circuit (FE-12)',
-        severity: 9,
-        failureCause: 'Focus shift due to thermally induced lens deformation',
-        occurrence: 3,
-        prevControl: 'Water-cooled optical collimator with temp telemetry (PC-12)',
-        detControl: 'Precitec inline weld depth OCT (Optical Coherence Tomography)',
-        detection: 2,
-        ap: 'M',
-        actionDesc: 'Real-time laser power compensation linked directly to OCT depth',
-        actionOwner: 'L. Chen (Advanced QA)',
-        status: 'InProgress',
-      },
-    ] as RowData[],
-  },
-};
-
-export const FmeaStudioPreview: React.FC = () => {
-  const [activePreset, setActivePreset] = useState<'edu' | 'battery'>('edu');
+export const FmeaStudioPreview: React.FC<{ compact?: boolean }> = () => {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState<StudioView>('pfmea');
-  const [selectedRowId, setSelectedRowId] = useState<string>('ROW-102');
-  const [showAiModal, setShowAiModal] = useState(false);
-  const [filterAp, setFilterAp] = useState<'ALL' | 'H' | 'M' | 'L'>('ALL');
+  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
 
-  const preset = PRESETS[activePreset];
-  const selectedRow = preset.rows.find((r) => r.id === selectedRowId) || preset.rows[0];
+  const toggleStep = (stepId: string) => {
+    setExpandedSteps((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
+  };
 
-  const filteredRows = preset.rows.filter((r) => {
-    if (filterAp === 'ALL') return true;
-    return r.ap === filterAp;
-  });
+  const handleLaunch = () => {
+    navigate('/app/projects');
+  };
 
   return (
-    <div className="w-full rounded-2xl sm:rounded-3xl bg-[#090D16] border border-slate-800 text-slate-100 shadow-[0_25px_70px_rgba(0,0,0,0.55)] overflow-hidden font-sans">
-      {/* ── Precision Application Chrome ─────────────────── */}
-      <div className="flex flex-wrap items-center justify-between px-4 sm:px-6 py-3 bg-[#0D1322] border-b border-slate-800 gap-3">
-        {/* Left: Window Controls + Project Breadcrumb */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
-          </div>
+    <div className="w-full bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-[0_20px_50px_rgba(15,23,42,0.08)] overflow-hidden text-left font-sans text-slate-800">
+      {/* ── 1. Top Browser Chrome Bar ──────────────────────── */}
+      <div className="px-4 py-3 bg-[#f8fafc] border-b border-slate-200 flex items-center justify-between gap-4">
+        {/* Left: Window Controls */}
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#ef4444]/80 border border-[#dc2626]" />
+          <div className="w-3 h-3 rounded-full bg-[#f59e0b]/80 border border-[#d97706]" />
+          <div className="w-3 h-3 rounded-full bg-[#10b981]/80 border border-[#059669]" />
+        </div>
 
-          <div className="h-4 w-px bg-slate-800 hidden sm:block" />
-
-          {/* Preset Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-900/90 px-2.5 py-1 rounded-lg border border-slate-700/60 text-xs font-mono">
-            <span className="text-slate-400">Project:</span>
-            <select
-              value={activePreset}
-              aria-label="Active Project"
-              onChange={(e) => setActivePreset(e.target.value as 'edu' | 'battery')}
-              className="bg-transparent text-cyan-400 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="edu" className="bg-slate-900 text-slate-200">EDU Stator Assembly</option>
-              <option value="battery" className="bg-slate-900 text-slate-200">Battery Module Laser</option>
-            </select>
-          </div>
-
-          {/* Document Metadata Badges */}
-          <div className="hidden lg:flex items-center gap-2 text-[11px] font-mono text-slate-400">
-            <span className="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/50">
-              {preset.docNo}
+        {/* Center: Real App URL Address Bar */}
+        <div className="flex-1 max-w-[580px] hidden sm:flex items-center justify-center">
+          <div className="w-full h-8 px-3 rounded-lg bg-white border border-slate-200 flex items-center gap-2 text-xs text-slate-500 shadow-xs">
+            <Lock className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+            <span className="font-mono text-slate-700 truncate">
+              https://app.fmeapex.online/app/
+              {activeView === 'pfd'
+                ? 'pfd/c439cfbe'
+                : activeView === 'pfmea'
+                ? 'pfmea/c439cfbe'
+                : activeView === 'control_plan'
+                ? 'control-plan/c439cfbe'
+                : 'projects'}
             </span>
-            <span className="px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-400 border border-emerald-800/50 flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              {preset.rev} Locked
-            </span>
-            <span className="text-slate-500">•</span>
-            <span>AIAG-VDA 2019 (1st Ed)</span>
           </div>
         </div>
 
-        {/* Right: AI Copilot Status & Action */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAiModal(!showAiModal)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-800/60 text-xs font-medium transition-all shadow-[0_0_12px_rgba(6,182,212,0.15)]"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>AI Copilot Suggestions</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold">
-              3 new
-            </span>
-          </button>
+        {/* Right: Launch App Action */}
+        <button
+          onClick={handleLaunch}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all"
+        >
+          <span>Open Live Workspace</span>
+          <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500]" />
+        </button>
+      </div>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-[11px] font-mono text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Postgres RLS Locked</span>
+      {/* ── 2. Real App Shell Header Bar ───────────────────── */}
+      <div className="px-4 sm:px-6 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 font-bold text-slate-900 tracking-tight text-[13px]">
+            <span className="text-slate-400 font-normal">/</span>
+            <span className="text-slate-900 font-extrabold tracking-tight">FMEApex</span>
+            <span className="hidden md:inline-block ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-normal text-[11px]">
+              Quality Workspace
+            </span>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-slate-200 text-slate-500">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200/80 text-[11px]">
+              <Search className="w-3 h-3 text-slate-400" />
+              <span>Search programs, causes...</span>
+              <kbd className="ml-2 font-mono text-[9px] bg-slate-200/70 px-1 rounded text-slate-600">⌘K</kbd>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Context & User Avatar */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>AIAG-VDA 2019 AP Gated</span>
+          </div>
+
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center">
+              QE
+            </div>
+            <div className="hidden sm:block text-[11px] font-semibold text-slate-800 leading-tight">
+              Quality Lead
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Studio Navigation Tabs ──────────────────────── */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-2 bg-[#090D16] border-b border-slate-800/80 overflow-x-auto text-xs">
+      {/* ── 3. Real Project Document Subheader ──────────────── */}
+      <div className="px-4 sm:px-6 py-2.5 bg-[#fafafa] border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-bold text-slate-900 text-[13px]">E vacuum pump</span>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-600 font-mono text-[11px]">Part No: 861000000</span>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-600 text-[11px]">Rev: 1.0</span>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-600 text-[11px]">Cust: TML</span>
+          <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">
+            PROTOTYPE (SAFE LAUNCH)
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 text-[11px] text-slate-500">
+          <span>AIAG-VDA 7-Step Verified</span>
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 ml-1" />
+        </div>
+      </div>
+
+      {/* ── 4. Real App Navigation Tabs ────────────────────── */}
+      <div className="px-4 sm:px-6 pt-2 bg-white border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto text-xs">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setActiveView('pfmea')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
-              activeView === 'pfmea'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            <span>PFMEA 7-Step Grid</span>
-            <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1.5 py-0.2 rounded">
-              {preset.rows.length}
-            </span>
-          </button>
-
-          <button
             onClick={() => setActiveView('pfd')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-semibold border-b-2 transition-all ${
               activeView === 'pfd'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                ? 'border-[#FF5500] text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <GitBranch className="w-3.5 h-3.5 text-amber-400" />
-            <span>PFD ↔ PFMEA Sync</span>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-800/40">
-              Synced
+            <GitBranch className="w-3.5 h-3.5 text-blue-600" />
+            <span>Process Flow Diagram (PFD)</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">
+              12
             </span>
           </button>
 
           <button
-            onClick={() => setActiveView('chain')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
-              activeView === 'chain'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            onClick={() => setActiveView('pfmea')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-semibold border-b-2 transition-all ${
+              activeView === 'pfmea'
+                ? 'border-[#FF5500] text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Failure Chain Graph</span>
+            <Layers className="w-3.5 h-3.5 text-emerald-600" />
+            <span>PFMEA 7-Step Grid</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">
+              AIAG-VDA
+            </span>
           </button>
 
           <button
             onClick={() => setActiveView('control_plan')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-semibold border-b-2 transition-all ${
               activeView === 'control_plan'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                ? 'border-[#FF5500] text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600" />
             <span>Control Plan (CP) Sync</span>
           </button>
 
           <button
-            onClick={() => setActiveView('audit_trail')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
-              activeView === 'audit_trail'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+            onClick={() => setActiveView('dashboard')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 font-semibold border-b-2 transition-all ${
+              activeView === 'dashboard'
+                ? 'border-[#FF5500] text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <FileCheck2 className="w-3.5 h-3.5 text-rose-400" />
-            <span>21 CFR Part 11 Audit</span>
+            <LayoutDashboard className="w-3.5 h-3.5 text-amber-600" />
+            <span>Workspace Overview</span>
           </button>
         </div>
 
-        {/* Filter AP Pill Options */}
-        {activeView === 'pfmea' && (
-          <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 font-mono">
-            <span className="flex items-center gap-1">
-              <Filter className="w-3 h-3 text-slate-500" />
-              AP:
-            </span>
-            {(['ALL', 'H', 'M', 'L'] as const).map((level) => (
-              <button
-                key={level}
-                onClick={() => setFilterAp(level)}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
-                  filterAp === level
-                    ? level === 'H'
-                      ? 'bg-rose-500 text-white'
-                      : level === 'M'
-                      ? 'bg-amber-500 text-slate-950'
-                      : level === 'L'
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-slate-700 text-white'
-                    : 'bg-slate-900 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* View Actions */}
+        <div className="hidden sm:flex items-center gap-2 pb-1.5">
+          <span className="text-[11px] text-slate-400 font-medium">Click tabs to inspect actual internal screens</span>
+        </div>
       </div>
 
-      {/* ── AI Suggestion Toast Drawer (Collapsible) ───── */}
-      {showAiModal && (
-        <div className="p-4 bg-gradient-to-r from-cyan-950/70 via-slate-900 to-slate-950 border-b border-cyan-800/40">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-cyan-900/40 border border-cyan-700/50 text-cyan-300">
-                <Sparkles className="w-5 h-5 text-cyan-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
-                    Tenant-Isolated Vector RAG Suggestion
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded">
-                    Cos-Sim: 0.941
-                  </span>
-                </div>
-                <div className="text-sm font-semibold text-slate-100 mt-0.5">
-                  Suggested Detection Control for Row 102: "Automated torque-angle gradient derivative check (dM/dα)"
-                </div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  Referenced from historical FMEA-2024-POWERTRAIN approved by Lead QA. Never committed without engineer review.
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-end sm:self-center">
-              <button
-                onClick={() => setShowAiModal(false)}
-                className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Accept Suggestion</span>
-              </button>
-              <button
-                onClick={() => setShowAiModal(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition-colors"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Main Canvas Viewport ────────────────────────── */}
-      <div className="p-4 sm:p-6 bg-[#0B0F19] min-h-[460px]">
-        {/* VIEW 1: PFMEA GRID (AIAG-VDA Multi-Column Standard) */}
-        {activeView === 'pfmea' && (
-          <div className="space-y-4">
-            {/* AIAG-VDA Grouped Hierarchy Banner */}
-            <div className="hidden lg:grid grid-cols-12 gap-1 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-[10px] font-mono uppercase tracking-wider font-bold text-slate-400 text-center">
-              <div className="col-span-2 text-left pl-2 text-cyan-400">Step 2: Structure Analysis</div>
-              <div className="col-span-2 text-left text-slate-300">Step 3: Function</div>
-              <div className="col-span-3 text-left text-amber-400">Step 4: Failure Chain (FE ← FM ← FC)</div>
-              <div className="col-span-3 text-center text-rose-400">Step 5: Risk & Action Priority</div>
-              <div className="col-span-2 text-right pr-2 text-emerald-400">Step 6: Optimization</div>
-            </div>
-
-            {/* Table Container */}
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-inner">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/90 text-[11px] font-mono text-slate-400 uppercase">
-                    <th className="py-2.5 px-3">Op #</th>
-                    <th className="py-2.5 px-3">4M / Work Element</th>
-                    <th className="py-2.5 px-3">Failure Mode (FM)</th>
-                    <th className="py-2.5 px-3">Failure Effect (FE)</th>
-                    <th className="py-2.5 px-2 text-center text-rose-300 font-bold">S</th>
-                    <th className="py-2.5 px-3">Failure Cause (FC)</th>
-                    <th className="py-2.5 px-2 text-center text-amber-300 font-bold">O</th>
-                    <th className="py-2.5 px-3">Detection Control</th>
-                    <th className="py-2.5 px-2 text-center text-cyan-300 font-bold">D</th>
-                    <th className="py-2.5 px-3 text-center">AP</th>
-                    <th className="py-2.5 px-3 text-right">Corrective Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {filteredRows.map((row) => {
-                    const isSelected = row.id === selectedRowId;
-                    return (
-                      <tr
-                        key={row.id}
-                        onClick={() => setSelectedRowId(row.id)}
-                        className={`cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-slate-800/80 border-l-2 border-l-cyan-400'
-                            : 'hover:bg-slate-800/40'
-                        }`}
-                      >
-                        <td className="py-3 px-3 font-mono font-bold text-slate-300 whitespace-nowrap">
-                          {row.stepNo}
-                        </td>
-                        <td className="py-3 px-3 max-w-[150px]">
-                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-cyan-300 border border-slate-700/60 mb-1">
-                            {row.fourM}
-                          </span>
-                          <div className="font-medium text-slate-200 truncate">{row.workElement}</div>
-                        </td>
-                        <td className="py-3 px-3 max-w-[180px] font-medium text-slate-100">
-                          {row.failureMode}
-                        </td>
-                        <td className="py-3 px-3 max-w-[170px] text-slate-300">
-                          {row.failureEffect}
-                        </td>
-                        <td className="py-3 px-2 text-center font-mono font-black text-rose-400">
-                          {row.severity}
-                        </td>
-                        <td className="py-3 px-3 max-w-[170px] text-slate-300">
-                          {row.failureCause}
-                        </td>
-                        <td className="py-3 px-2 text-center font-mono font-black text-amber-400">
-                          {row.occurrence}
-                        </td>
-                        <td className="py-3 px-3 max-w-[160px] text-slate-300">
-                          {row.detControl}
-                        </td>
-                        <td className="py-3 px-2 text-center font-mono font-black text-cyan-400">
-                          {row.detection}
-                        </td>
-                        <td className="py-3 px-3 text-center">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-mono font-black ${
-                              row.ap === 'H'
-                                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                                : row.ap === 'M'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                            }`}
-                          >
-                            {row.ap === 'H' ? 'HIGH' : row.ap === 'M' ? 'MED' : 'LOW'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-right max-w-[160px]">
-                          <div className="text-slate-200 font-medium truncate">{row.actionDesc}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            {row.actionOwner} ·{' '}
-                            <span
-                              className={
-                                row.status === 'Verified'
-                                  ? 'text-emerald-400'
-                                  : row.status === 'InProgress'
-                                  ? 'text-cyan-400'
-                                  : 'text-amber-400'
-                              }
-                            >
-                              {row.status}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Selected Row Deep-Inspection Card */}
-            <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60">
-                    Row Selected: {selectedRow.id} ({selectedRow.stepNo} — {selectedRow.stepName})
-                  </span>
-                  <span className="text-xs text-slate-400 font-mono">
-                    AIAG-VDA AP Table Evaluated: S={selectedRow.severity}, O={selectedRow.occurrence}, D={selectedRow.detection}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-300">
-                  <strong className="text-slate-100">Root Cause Linkage:</strong> {selectedRow.failureCause} →{' '}
-                  <span className="text-cyan-400 font-medium">Auto-propagates to Control Plan & Reaction Instructions</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <button className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors">
-                  View 4M Ishikawa
-                </button>
-                <button className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5">
-                  <span>Open Optimization Action</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* VIEW 2: PFD ↔ PFMEA SYNCHRONIZATION ENGINE */}
+      {/* ── 5. Actual Screen Content Views ─────────────────── */}
+      <div className="bg-white overflow-x-auto min-h-[380px]">
+        {/* VIEW A: Process Flow Diagram (PFD) — Exact match to Image 1 */}
         {activeView === 'pfd' && (
-          <div className="space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
-              <div>
-                <h4 className="text-sm font-bold text-slate-100">
-                  Process Flow Diagram (PFD) ↔ PFMEA Synchronization Status
-                </h4>
-                <p className="text-xs text-slate-400">
-                  Every PFD manufacturing station must link to corresponding PFMEA operations with zero orphan steps.
-                </p>
+          <div className="min-w-[980px]">
+            {/* PFD Table Top Controls */}
+            <div className="px-4 py-2 bg-slate-50/60 border-b border-slate-200/80 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">Table View (12 Steps)</span>
+                <span className="text-slate-400">•</span>
+                <span className="text-slate-500 text-[11px]">Default Collapsed Ergonomic State</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-mono">
-                <span className="px-2 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-                  Orphans: 0 Detected
-                </span>
-                <span className="px-2 py-1 rounded bg-slate-800 text-cyan-400 border border-slate-700">
-                  Sync Latency: &lt; 40ms
-                </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setExpandedSteps({ 'op-10': true, 'op-20': true, 'op-0b': true, 'op-0c': true, 'op-30': true })}
+                  className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-medium text-[11px]"
+                >
+                  Expand All
+                </button>
+                <button
+                  onClick={() => setExpandedSteps({})}
+                  className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-medium text-[11px]"
+                >
+                  Collapse All
+                </button>
               </div>
             </div>
 
-            {/* Interactive Process Sequence Flow */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              {[
-                { op: 'Op 10', name: 'Bearing Press', type: 'Operation', sync: true, cc: 'Depth Ø45.2', rows: 2 },
-                { op: 'Op 20', name: 'Stator Bolt Torque', type: 'Fastening', sync: true, cc: 'Torque 48 N·m', rows: 3 },
-                { op: 'Op 30', name: 'Dispense Thermal', type: 'Dispensing', sync: true, cc: 'Bead Width 2.0', rows: 1 },
-                { op: 'Op 40', name: 'EOL Vision & Hi-Pot', type: 'Inspection', sync: true, cc: 'Dielectric 2.5kV', rows: 2 },
-              ].map((step, idx) => (
-                <div
-                  key={step.op}
-                  className="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all relative group"
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#f8fafc] text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-2.5 px-3 w-16">STEP #</th>
+                  <th className="py-2.5 px-3 min-w-[160px]">PROCESS DESCRIPTION</th>
+                  <th className="py-2.5 px-3 min-w-[180px]">INCOMING SOURCE OF VARIATION</th>
+                  <th className="py-2.5 px-2 w-16 text-center">SPEC. CLASS</th>
+                  <th className="py-2.5 px-2 w-24 text-center">FLOW SYMBOLS</th>
+                  <th className="py-2.5 px-3 min-w-[200px]">MACHINES / EQUIPMENT / DOCS</th>
+                  <th className="py-2.5 px-3 min-w-[190px]">DESIRED OUTCOME</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">PROCESS CHARACTERISTICS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {/* OP10 */}
+                <tr
+                  onClick={() => toggleStep('op-10')}
+                  className="hover:bg-slate-50/80 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono font-bold text-cyan-400 text-xs">{step.op}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
-                      <CheckCircle2 className="w-2.5 h-2.5" />
-                      PFMEA Linked
+                  <td className="py-2 px-3 font-bold font-mono text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {expandedSteps['op-10'] ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>OP10</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 font-semibold text-slate-900">Bush Pressing</td>
+                  <td className="py-2 px-3 text-slate-600">
+                    {expandedSteps['op-10'] ? (
+                      <div className="space-y-0.5">
+                        <div>1. Child part variation</div>
+                        <div>2. Fixture parameter</div>
+                        <div>3. Pokayoke interlock</div>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 truncate block max-w-[220px]">1. Child part variation, 2. Fixture...</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[10px]">SC</span>
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="inline-block px-1.5 py-0.5 rounded-full border border-slate-300 font-mono font-bold text-[10px] text-slate-700">WIP</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    {expandedSteps['op-10'] ? (
+                      <div className="space-y-0.5">
+                        <div>1. Servo press HP-04</div>
+                        <div>2. Part resting fixture</div>
+                        <div>3. Vision system calibration</div>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 truncate block max-w-[220px]">1. Servo press, 2. Part resting fixture...</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="truncate block max-w-[200px]">1. Assembly: All child parts in correct orientation</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="font-mono text-[11px] text-slate-700">1. Air pressure = 5~6 bar</span>
+                  </td>
+                </tr>
+
+                {/* OP20 */}
+                <tr
+                  onClick={() => toggleStep('op-20')}
+                  className="hover:bg-slate-50/80 cursor-pointer transition-colors bg-slate-50/30"
+                >
+                  <td className="py-2 px-3 font-bold font-mono text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {expandedSteps['op-20'] ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>OP20</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 font-semibold text-slate-900">Pump Assembly in vacuum pump</td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. Child part variation, 2. Fixture No-, 3. Machine...</span>
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-mono font-bold text-[10px]">CC</span>
+                  </td>
+                  <td className="py-2 px-2 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="px-1 py-0.2 rounded-full border border-slate-300 text-[9px] font-mono">OPER</span>
+                      <span className="px-1 py-0.2 rounded-full border border-slate-300 text-[9px] font-mono">INSP</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. Pokayoke no, 2. Part resting fixture, 3. Nutrunner...</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="truncate block max-w-[200px]">1. Screw tightening torque = 2.5Nm ~ 4Nm</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="font-mono text-[11px] text-slate-700">1. Air pressure: 4.5~7.2 bar</span>
+                  </td>
+                </tr>
+
+                {/* OP # 0B */}
+                <tr
+                  onClick={() => toggleStep('op-0b')}
+                  className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                >
+                  <td className="py-2 px-3 font-bold font-mono text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {expandedSteps['op-0b'] ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>OP # 0B</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 font-semibold text-slate-900">Receiving inspection</td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">Non conforming parts from supplier</span>
+                  </td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="px-1 py-0.2 rounded-full border border-slate-300 text-[9px] font-mono">INSP</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. CMM, 2. Digital vernier calliper, 3. Micrometer...</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="truncate block max-w-[200px]">Part should be OK as per respective drawings</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500">1. Supplier processes, 2. Material handling</span>
+                  </td>
+                </tr>
+
+                {/* OP # 0C */}
+                <tr
+                  onClick={() => toggleStep('op-0c')}
+                  className="hover:bg-slate-50/80 cursor-pointer transition-colors bg-slate-50/30"
+                >
+                  <td className="py-2 px-3 font-bold font-mono text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {expandedSteps['op-0c'] ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>Op # 0C</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 font-semibold text-slate-900">Storage</td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. Storage location not available, 2. FIFO not maintained</span>
+                  </td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="px-1 py-0.2 rounded-full border border-slate-300 text-[9px] font-mono">STOR</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. SAP system, 2. Batch sticker printing system</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="truncate block max-w-[200px]">Part should be placed at specified location</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500">1. FIFO maintained per SAP updating system</span>
+                  </td>
+                </tr>
+
+                {/* OP30 */}
+                <tr
+                  onClick={() => toggleStep('op-30')}
+                  className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                >
+                  <td className="py-2 px-3 font-bold font-mono text-slate-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      {expandedSteps['op-30'] ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>OP30</span>
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 font-semibold text-slate-900">Bush pressing & pump assy</td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. Child parts not as per Drawing, 2. PLC parameter</span>
+                  </td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center">
+                    <span className="px-1 py-0.2 rounded-full border border-slate-300 text-[9px] font-mono">OPER</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="text-slate-500 truncate block max-w-[220px]">1. Work Instructions, 2. Pressing fixture, 3. Vision...</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="truncate block max-w-[200px]">Distance from shaft top face = 11.9~12.0 mm</span>
+                  </td>
+                  <td className="py-2 px-3 text-slate-600">
+                    <span className="font-mono text-[11px] text-slate-700">Final load = 170 ~ 210 kg</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* VIEW B: PFMEA 7-Step Grid — Real AIAG-VDA Engineering Analysis */}
+        {activeView === 'pfmea' && (
+          <div className="min-w-[1040px]">
+            {/* Step 2-6 Header Grouping */}
+            <div className="grid grid-cols-12 bg-slate-100 border-b border-slate-200 text-[10px] font-bold font-mono text-slate-600 uppercase tracking-wider py-1.5 px-3">
+              <div className="col-span-2">STEP 2: STRUCTURE ANALYSIS</div>
+              <div className="col-span-4">STEP 4: FAILURE CHAIN (CAUSE → MODE → EFFECT)</div>
+              <div className="col-span-3">STEP 5: RISK & ACTION PRIORITY (AP)</div>
+              <div className="col-span-3">STEP 6: OPTIMIZATION & ACTIONS</div>
+            </div>
+
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#f8fafc] text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-2.5 px-3 w-16">OP #</th>
+                  <th className="py-2.5 px-3 w-44">4M / WORK ELEMENT</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">FAILURE MODE (FM)</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">FAILURE EFFECT (FE)</th>
+                  <th className="py-2.5 px-1.5 w-10 text-center font-mono">S</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">FAILURE CAUSE (FC)</th>
+                  <th className="py-2.5 px-1.5 w-10 text-center font-mono">O</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">DETECTION CONTROL</th>
+                  <th className="py-2.5 px-1.5 w-10 text-center font-mono">D</th>
+                  <th className="py-2.5 px-2 w-16 text-center">AP</th>
+                  <th className="py-2.5 px-3 min-w-[210px]">CORRECTIVE ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {/* Row 1: OP10 */}
+                <tr className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">OP10</td>
+                  <td className="py-2.5 px-3">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono text-[10px] font-bold mr-1.5">Machine</span>
+                    <span className="font-semibold text-slate-900 text-xs">Servo Press HP-04</span>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-800">Bearing seated below minimum press depth (&lt;45.1mm)</td>
+                  <td className="py-2.5 px-3 text-slate-600">Rotor axial play, motor noise (FE-01)</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">8</td>
+                  <td className="py-2.5 px-3 text-slate-600">Load cell drift &gt; 2.5% during continuous cycling</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">3</td>
+                  <td className="py-2.5 px-3 text-slate-600">In-situ displacement LVDT sensor at stroke end</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">3</td>
+                  <td className="py-2.5 px-2 text-center">
+                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[11px] font-mono border border-amber-300">
+                      MED
                     </span>
-                  </div>
-                  <div className="text-sm font-bold text-slate-200 mb-1">{step.name}</div>
-                  <div className="text-[11px] text-slate-400">Category: {step.type}</div>
-                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-amber-400">CC: {step.cc}</span>
-                    <span className="text-slate-400">{step.rows} FMEA Rows</span>
-                  </div>
-                  {idx < 3 && (
-                    <div className="hidden md:block absolute -right-2 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 text-slate-600">
-                      →
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="font-medium text-slate-900 leading-tight">Dynamic closed-loop servo press integration</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Owner: M. Weber • Status: Verified</div>
+                  </td>
+                </tr>
 
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 space-y-2">
-              <div className="font-semibold text-slate-200 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Special Characteristics Flow-Down Verified (IATF 16949 Section 8.3.5.2)</span>
-              </div>
-              <p className="text-slate-400 text-[11.5px] leading-relaxed">
-                Critical Characteristics (CC) and Significant Characteristics (SC) identified in the engineering drawings flow automatically from the DFMEA into the PFD process steps, then bind as mandatory coverage targets in the PFMEA and shop-floor Control Plan.
-              </p>
-            </div>
+                {/* Row 2: OP20 */}
+                <tr className="hover:bg-slate-50/80 transition-colors bg-red-50/20">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">OP20</td>
+                  <td className="py-2.5 px-3">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono text-[10px] font-bold mr-1.5">Machine</span>
+                    <span className="font-semibold text-slate-900 text-xs">Atlas Copco Nutrunner</span>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-800 font-medium">Fastener under-torqued (&lt;2.5 Nm clamp load)</td>
+                  <td className="py-2.5 px-3 text-slate-600">Stator housing vibration, loose ground connection (FE-02)</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-rose-700">9</td>
+                  <td className="py-2.5 px-3 text-slate-600">Angle encoder slip or friction variation on bolt threads</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">4</td>
+                  <td className="py-2.5 px-3 text-slate-600">Angle-monitoring torque window (Torque + Angle)</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">4</td>
+                  <td className="py-2.5 px-2 text-center">
+                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[11px] font-mono border border-rose-300">
+                      HIGH
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="font-medium text-slate-900 leading-tight">Mandatory torque-angle signature logging in MES</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Owner: K. Patel • Status: InProgress</div>
+                  </td>
+                </tr>
+
+                {/* Row 3: OP30 */}
+                <tr className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">OP30</td>
+                  <td className="py-2.5 px-3">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold mr-1.5">Method</span>
+                    <span className="font-semibold text-slate-900 text-xs">Pressing & Pump Assy</span>
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-800">Rotor shaft misaligned during bush insertion</td>
+                  <td className="py-2.5 px-3 text-slate-600">Increased current draw, premature pump bearing wear</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">7</td>
+                  <td className="py-2.5 px-3 text-slate-600">Manual positioning fixture wear / operator variation</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">3</td>
+                  <td className="py-2.5 px-3 text-slate-600">Poka-yoke guide pin + optical sensor confirmation</td>
+                  <td className="py-2.5 px-1.5 text-center font-mono font-bold text-slate-900">2</td>
+                  <td className="py-2.5 px-2 text-center">
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px] font-mono border border-emerald-300">
+                      LOW
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="font-medium text-slate-900 leading-tight">Hardened guide pin installation with automated interlock</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Owner: S. Tanaka • Status: Verified</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* VIEW 3: FAILURE CHAIN NETWORK (FE ← FM ← FC) */}
-        {activeView === 'chain' && (
-          <div className="space-y-4">
-            <div className="pb-2 border-b border-slate-800">
-              <h4 className="text-sm font-bold text-slate-100">
-                AIAG-VDA 2019 Step 4: Failure Chain Structural Network
-              </h4>
-              <p className="text-xs text-slate-400">
-                Visualize the deterministic failure propagation: Cause (Work Element) → Mode (Process Step) → Effect (System & End User).
-              </p>
-            </div>
-
-            {/* Visual 3-Node Failure Chain */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch py-4">
-              {/* Node 1: Failure Cause */}
-              <div className="p-4 rounded-xl bg-slate-900 border-2 border-amber-500/40 flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">
-                    Failure Cause (FC) · 4M Machine
-                  </span>
-                  <h5 className="text-sm font-bold text-slate-100 mt-2 mb-1">
-                    Angle encoder slip / friction coefficient drift
-                  </h5>
-                  <p className="text-xs text-slate-400">
-                    Work Element Level: Nutrunner motor transducer loses calibration under heat cycles.
-                  </p>
-                </div>
-                <div className="mt-4 pt-2 border-t border-slate-800 text-xs font-mono text-amber-300">
-                  Occurrence Rating: <strong>O = 4</strong>
-                </div>
-              </div>
-
-              {/* Node 2: Failure Mode */}
-              <div className="p-4 rounded-xl bg-slate-900 border-2 border-cyan-500/40 flex flex-col justify-between relative">
-                <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 text-cyan-400 font-bold text-lg">
-                  →
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
-                    Failure Mode (FM) · Process Step
-                  </span>
-                  <h5 className="text-sm font-bold text-slate-100 mt-2 mb-1">
-                    Fastener Under-Torqued (&lt;45.5 N·m)
-                  </h5>
-                  <p className="text-xs text-slate-400">
-                    Process Step Level: Bolt clamp load insufficient to maintain joint integrity.
-                  </p>
-                </div>
-                <div className="mt-4 pt-2 border-t border-slate-800 text-xs font-mono text-cyan-300">
-                  Detection Rating: <strong>D = 4</strong>
-                </div>
-                <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 text-cyan-400 font-bold text-lg">
-                  →
-                </div>
-              </div>
-
-              {/* Node 3: Failure Effect */}
-              <div className="p-4 rounded-xl bg-slate-900 border-2 border-rose-500/40 flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/40">
-                    Failure Effect (FE) · End User Hazard
-                  </span>
-                  <h5 className="text-sm font-bold text-slate-100 mt-2 mb-1">
-                    Stator Housing Vibration & Loss of Ground
-                  </h5>
-                  <p className="text-xs text-slate-400">
-                    System Level: Electromagnetic interference, vehicle stall on roadway.
-                  </p>
-                </div>
-                <div className="mt-4 pt-2 border-t border-slate-800 text-xs font-mono text-rose-400 font-bold">
-                  Inherited Severity: <strong>S = 9 (Critical Hazard)</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-rose-950/30 border border-rose-900/50 flex items-center justify-between">
-              <div className="flex items-center gap-2.5 text-xs text-rose-300">
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>
-                  <strong>AIAG-VDA Action Priority Rule Triggered:</strong> S=9, O=4, D=4 generates mandatory <strong>HIGH AP</strong>.
-                </span>
-              </div>
-              <span className="px-2.5 py-1 rounded bg-rose-500 text-white font-mono font-bold text-xs">
-                Corrective Action Required
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* VIEW 4: CONTROL PLAN (CP) DYNAMIC SYNC */}
+        {/* VIEW C: Control Plan (CP) Sync */}
         {activeView === 'control_plan' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div>
-                <h4 className="text-sm font-bold text-slate-100">
-                  Dynamic Control Plan (CP) Bidirectional Mapping
-                </h4>
-                <p className="text-xs text-slate-400">
-                  Control methods and tolerances are generated from PFMEA prevention and detection controls in real time.
-                </p>
-              </div>
-              <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800/40">
-                CP-2026-EDU-A Active
-              </span>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900 text-[10.5px] font-mono uppercase text-slate-400">
-                    <th className="py-2.5 px-3">Part/Process Step</th>
-                    <th className="py-2.5 px-3">Machine / Tool</th>
-                    <th className="py-2.5 px-3">Characteristic</th>
-                    <th className="py-2.5 px-3">Specification / Tolerance</th>
-                    <th className="py-2.5 px-3">Evaluation / Measurement Method</th>
-                    <th className="py-2.5 px-3">Sample Size & Freq</th>
-                    <th className="py-2.5 px-3">Reaction Plan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/70 text-slate-300 font-mono text-[11.5px]">
-                  <tr>
-                    <td className="py-3 px-3 text-slate-100 font-bold">10 — Bearing Press</td>
-                    <td className="py-3 px-3">HP-04 Hydraulic</td>
-                    <td className="py-3 px-3 text-cyan-400">Press Depth (CC)</td>
-                    <td className="py-3 px-3">45.2 ± 0.1 mm</td>
-                    <td className="py-3 px-3">Inline LVDT sensor</td>
-                    <td className="py-3 px-3">100% continuous</td>
-                    <td className="py-3 px-3 text-amber-400">Auto reject to quarantine bin</td>
-                  </tr>
-                  <tr className="bg-slate-850/50">
-                    <td className="py-3 px-3 text-slate-100 font-bold">20 — Bolt Torque</td>
-                    <td className="py-3 px-3">Atlas Multi-Spindle</td>
-                    <td className="py-3 px-3 text-rose-400 font-bold">Clamp Torque (CC)</td>
-                    <td className="py-3 px-3">48.0 ± 2.5 N·m</td>
-                    <td className="py-3 px-3">Torque + Angle transducer</td>
-                    <td className="py-3 px-3">100% per fastener</td>
-                    <td className="py-3 px-3 text-rose-400 font-bold">Lock line + alert supervisor</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-3 text-slate-100 font-bold">30 — Thermal Paste</td>
-                    <td className="py-3 px-3">Nordson Robot Arm</td>
-                    <td className="py-3 px-3 text-cyan-400">Bead Width (SC)</td>
-                    <td className="py-3 px-3">2.0 ± 0.2 mm</td>
-                    <td className="py-3 px-3">Cognex 3D line-laser</td>
-                    <td className="py-3 px-3">100% optical</td>
-                    <td className="py-3 px-3 text-amber-400">Repurge nozzle + manual re-inspect</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="text-xs text-slate-400 font-mono flex items-center gap-2 pt-1">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span>Bidirectional propagation: Editing a tolerance in the Control Plan immediately updates PFMEA Row 102.</span>
-            </div>
+          <div className="min-w-[980px]">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#f8fafc] text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-2.5 px-3 w-16">STEP #</th>
+                  <th className="py-2.5 px-3 min-w-[150px]">OPERATION NAME</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">CHARACTERISTIC</th>
+                  <th className="py-2.5 px-2 w-16 text-center">CLASS</th>
+                  <th className="py-2.5 px-3 min-w-[180px]">SPECIFICATION / TOLERANCE</th>
+                  <th className="py-2.5 px-3 min-w-[170px]">EVALUATION TECHNIQUE</th>
+                  <th className="py-2.5 px-3 min-w-[140px]">SAMPLE SIZE / FREQ</th>
+                  <th className="py-2.5 px-3 min-w-[180px]">REACTION PLAN</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">OP10</td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-900">Bush Pressing</td>
+                  <td className="py-2.5 px-3 text-slate-700">Bush insertion depth</td>
+                  <td className="py-2.5 px-2 text-center">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold text-[10px]">SC</span>
+                  </td>
+                  <td className="py-2.5 px-3 font-mono text-slate-700">45.2 ± 0.1 mm</td>
+                  <td className="py-2.5 px-3 text-slate-600">Linear Variable Displacement Transducer (LVDT)</td>
+                  <td className="py-2.5 px-3 text-slate-600">100% in-line automated</td>
+                  <td className="py-2.5 px-3 text-slate-600">Auto-reject to locked bin; alert line supervisor</td>
+                </tr>
+                <tr className="hover:bg-slate-50/80 transition-colors bg-slate-50/30">
+                  <td className="py-2.5 px-3 font-mono font-bold text-slate-900">OP20</td>
+                  <td className="py-2.5 px-3 font-semibold text-slate-900">Pump Assembly</td>
+                  <td className="py-2.5 px-3 text-slate-700">Fastener tightening torque</td>
+                  <td className="py-2.5 px-2 text-center">
+                    <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-mono font-bold text-[10px]">CC</span>
+                  </td>
+                  <td className="py-2.5 px-3 font-mono text-slate-700">2.5 Nm ~ 4.0 Nm</td>
+                  <td className="py-2.5 px-3 text-slate-600">Calibrated Multi-Spindle Nutrunner Transducer</td>
+                  <td className="py-2.5 px-3 text-slate-600">100% continuous cycle logging</td>
+                  <td className="py-2.5 px-3 text-slate-600">Interlock stops conveyor; manual inspection required</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* VIEW 5: 21 CFR PART 11 CRYPTOGRAPHIC AUDIT TRAIL */}
-        {activeView === 'audit_trail' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <div>
-                <h4 className="text-sm font-bold text-slate-100">
-                  21 CFR Part 11 Immutable Audit Partition & Digital Signatures
-                </h4>
-                <p className="text-xs text-slate-400">
-                  PostgreSQL database-level constraints permanently reject UPDATE and DELETE queries on the audit partition.
-                </p>
+        {/* VIEW D: Quality Workspace Dashboard View */}
+        {activeView === 'dashboard' && (
+          <div className="p-4 sm:p-6 bg-slate-50/60 min-w-[760px]">
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase">Active Programs</div>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">1</div>
+                <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">100% tenant-isolated</div>
               </div>
-              <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800/40 flex items-center gap-1.5">
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>SHA-256 Verified</span>
-              </span>
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase">Production Phase</div>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">Safe Launch</div>
+                <div className="text-[11px] text-blue-600 font-semibold mt-0.5">Prototypes & Launches</div>
+              </div>
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase">Audit Readiness</div>
+                <div className="text-2xl font-extrabold text-emerald-600 mt-1">99.8%</div>
+                <div className="text-[11px] text-slate-500 mt-0.5">21 CFR Part 11 compliant</div>
+              </div>
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase">AIAG-VDA Gating</div>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">Enforced</div>
+                <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">Zero skipped phases</div>
+              </div>
             </div>
 
-            {/* Audit Log Entries */}
-            <div className="space-y-2.5 font-mono text-xs">
-              {[
-                {
-                  ts: '2026-10-17T08:14:22Z',
-                  actor: 'Dr. Michael Vance (QA Director)',
-                  action: 'SIGN_AND_LOCK_REVISION',
-                  detail: 'Approved Rev C.2 for high-volume production release. Reviewer segregation validated.',
-                  hash: 'a7f9c812d45e8901cb67b34e12fa',
-                  status: 'VERIFIED',
-                },
-                {
-                  ts: '2026-10-17T07:42:05Z',
-                  actor: 'Kavita Patel (Quality Lead)',
-                  action: 'CORRECTIVE_ACTION_EVIDENCE_ATTACHED',
-                  detail: 'Cloudflare R2 evidence file uploaded: "Torque_Angle_Telemetry_Run_04.csv" (12.4 MB).',
-                  hash: '3e81b290ac947118fd0923e59b6c',
-                  status: 'VERIFIED',
-                },
-                {
-                  ts: '2026-10-16T18:30:11Z',
-                  actor: 'System / RAG Worker',
-                  action: 'AI_SUGGESTION_ACCEPTED',
-                  detail: 'User accepted detection control suggestion for Row 101: "LVDT sensor at stroke end".',
-                  hash: '901cf48201a93284bd8912e03a1f',
-                  status: 'VERIFIED',
-                },
-              ].map((entry) => (
-                <div
-                  key={entry.hash}
-                  className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-[11px]">{entry.ts}</span>
-                      <span className="text-cyan-400 font-bold">{entry.actor}</span>
-                      <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 text-[10px]">
-                        {entry.action}
-                      </span>
-                    </div>
-                    <div className="text-slate-200 text-xs font-sans">{entry.detail}</div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-[10px] text-slate-400">
-                      Hash: <span className="text-emerald-400 font-bold">{entry.hash}</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 justify-end mt-0.5">
-                      <Check className="w-3 h-3" />
-                      <span>Cryptographic Lock Active</span>
+            {/* Recent Activity List preview */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-bold text-slate-900 text-xs">Recent Quality Engineering Activity</div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]">Live Audit Trail</span>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] flex items-center justify-center">G</div>
+                    <div>
+                      <span className="font-semibold text-slate-900">PFMEA Revision v1.0 Created</span>
+                      <span className="text-slate-500 ml-2">Program: E vacuum pump • AIAG-VDA 2019 AP Gated</span>
                     </div>
                   </div>
+                  <span className="text-[11px] text-slate-400">Just now</span>
                 </div>
-              ))}
+                <div className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center">LT</div>
+                    <div>
+                      <span className="font-semibold text-slate-900">Control Plan Synchronized</span>
+                      <span className="text-slate-500 ml-2">Program: E vacuum pump • Inspection frequency verified</span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-slate-400">1h ago</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Studio Bottom Telemetry Bar ─────────────────── */}
-      <div className="flex flex-wrap items-center justify-between px-4 sm:px-6 py-2.5 bg-[#0D1322] border-t border-slate-800 text-xs font-mono text-slate-400 gap-3">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>AIAG-VDA 2019 AP Gating: 100% Enforced</span>
+      {/* ── 6. Bottom Status Footer ────────────────────────── */}
+      <div className="px-4 sm:px-6 py-2.5 bg-[#f8fafc] border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            AIAG-VDA 2019 7-Step Gating: <strong className="text-slate-900">100% Enforced</strong>
           </span>
-          <span className="hidden sm:inline text-slate-600">|</span>
-          <span className="hidden sm:inline">Active Tenant: automotive-tier1.fmeapex.cloud</span>
+          <span className="text-slate-300">|</span>
+          <span className="font-mono text-[11px] text-slate-500">PostgreSQL 15 RLS Isolated • 21 CFR Part 11</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-slate-500">PostgreSQL 15 Serverless RLS</span>
-          <span className="text-cyan-400 font-bold">21 CFR Part 11 Certified</span>
-        </div>
+        <button
+          onClick={handleLaunch}
+          className="font-semibold text-[#FF5500] hover:text-[#e04b00] flex items-center gap-1 text-xs"
+        >
+          <span>Try with live interactive demo data</span>
+          <ArrowUpRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

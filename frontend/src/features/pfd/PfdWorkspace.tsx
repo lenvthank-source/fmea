@@ -370,6 +370,10 @@ export const PfdWorkspace: React.FC = () => {
       if (!response.ok) throw new Error('Failed to load PFD steps');
       const data = await response.json();
       setSteps(data);
+      // Collapse all steps by default for maximum screen ergonomics and minimal scrolling
+      if (Array.isArray(data) && data.length > 0) {
+        setCollapsedSteps(new Set(data.map((s: any) => s.id)));
+      }
     } catch (err: any) {
       const msg = err.message || 'Failed to load process steps';
       setError(msg);
@@ -1081,7 +1085,7 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Incoming Variation */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell sx={{ verticalAlign: isCollapsed ? 'middle' : 'top', py: isCollapsed ? 0.85 : 1.5 }} onClick={(e) => e.stopPropagation()}>
                         <PfdCellWrapper
                           textToCopy={renderCollapsedPreview(step.incomingVariation)}
                           onEdit={() => {
@@ -1269,7 +1273,7 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Machines / Machinery / Docs */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell sx={{ verticalAlign: isCollapsed ? 'middle' : 'top', py: isCollapsed ? 0.85 : 1.5 }} onClick={(e) => e.stopPropagation()}>
                         <PfdCellWrapper
                           textToCopy={renderCollapsedPreview(step.machinesEquipmentDocs)}
                           onEdit={() => {
@@ -1291,7 +1295,7 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Desired Outcome */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell sx={{ verticalAlign: isCollapsed ? 'middle' : 'top', py: isCollapsed ? 0.85 : 1.5 }} onClick={(e) => e.stopPropagation()}>
                         <PfdCellWrapper
                           textToCopy={renderCollapsedPreview(step.desiredOutcome)}
                           onEdit={() => {
@@ -1313,7 +1317,7 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Process Characteristics */}
-                      <TableCell sx={{ verticalAlign: 'top', py: 1.5 }} onClick={(e) => e.stopPropagation()}>
+                      <TableCell sx={{ verticalAlign: isCollapsed ? 'middle' : 'top', py: isCollapsed ? 0.85 : 1.5 }} onClick={(e) => e.stopPropagation()}>
                         <PfdCellWrapper
                           textToCopy={renderCollapsedPreview(step.processCharacteristics)}
                           onEdit={() => {

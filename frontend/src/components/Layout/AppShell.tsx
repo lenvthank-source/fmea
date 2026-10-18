@@ -28,6 +28,7 @@ import { API_BASE_URL } from '../../config';
 import { useResponsive } from '../../hooks/useResponsive';
 import { FeedbackWidget } from '../FeedbackWidget/FeedbackWidget';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import { FmeaTutorialGuide } from '../../features/projects/components/FmeaTutorialGuide';
 
 export const AppShell: React.FC = () => {
   const { user, token, logout, hasPermission } = useAuth();
@@ -45,6 +46,16 @@ export const AppShell: React.FC = () => {
   const [pfmeaOpen, setPfmeaOpen] = useState(true);
   const [dfmeaOpen, setDfmeaOpen] = useState(false);
   const [autohideEnabled, setAutohideEnabled] = useState<boolean>(true);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.isGuest && sessionStorage.getItem('fmea_tutorial_dismissed') !== 'true') {
+      setTutorialOpen(true);
+    }
+    const handleOpen = () => setTutorialOpen(true);
+    window.addEventListener('fmea:open_tutorial', handleOpen);
+    return () => window.removeEventListener('fmea:open_tutorial', handleOpen);
+  }, [user]);
 
   const handleMouseEnter = () => {
     // Left bar auto-hide is enabled, but auto-unhide is disabled.
@@ -505,8 +516,16 @@ export const AppShell: React.FC = () => {
       <Box component="main" sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2, md: 2.5 }, minWidth: 0, bgcolor: '#fbfbfb' }}>
         <Outlet />
       </Box>
-    </Box>
+      </Box>
       <FeedbackWidget />
-  </Box>
+      <FmeaTutorialGuide
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        onSkipAll={() => {
+          sessionStorage.setItem('fmea_tutorial_dismissed', 'true');
+          setTutorialOpen(false);
+        }}
+      />
+    </Box>
   );
 };

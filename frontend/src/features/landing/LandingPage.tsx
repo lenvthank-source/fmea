@@ -332,7 +332,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* ── 3. The Studio Canvas (Interactive Workbench Proof) ── */}
-          <div className="rounded-2xl sm:rounded-3xl border border-slate-800 shadow-[0_20px_60px_rgba(15,23,42,0.18)] overflow-hidden">
+          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] overflow-hidden bg-white">
             <VentrilocDashboard />
           </div>
         </div>

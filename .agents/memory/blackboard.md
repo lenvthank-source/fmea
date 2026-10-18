@@ -21,6 +21,17 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-18T09:05Z — PFD Default Collapsed, Linked 7-Step Walkthrough Guide, Real Audit Feed & Actual App Screen Mockup (v0.8.2) — orchestrator — completed — priority:1
+- owns: frontend/src/features/pfd/**, frontend/src/features/projects/components/FmeaTutorialGuide.tsx, backend/src/modules/audit/audit-log.service.ts, frontend/src/components/site/**, frontend/src/features/landing/**, frontend/src/components/Layout/AppShell.tsx, frontend/src/app/router.tsx, versions/**
+- artifacts: [versions/v0.8.2.md]
+- depends_on: []
+> orchestrator → all-agents: Implemented and visually verified across all viewports:
+> 1. PFD Workspace default collapsed state (setCollapsedSteps) with single-line row ergonomics to eliminate vertical whitespace and table scrolling.
+> 2. Docked 7-step guide (FmeaTutorialGuide.tsx) linked to each screen with direct route navigation and strictly two primary buttons: 'Next' and 'Skip All'.
+> 3. Real PostgreSQL audit stream in Recent Activity (purged ephemeral guest user deletion logs and resolved human-readable DocumentRevision/Project entities).
+> 4. Cleaned landing page header of API warming badges and overhauled hero preview (FmeaStudioPreview.tsx) to faithfully replicate actual light-theme enterprise app screens.
+> 5. Green compilation across NestJS backend and Vite/TypeScript frontend; verified via Puppeteer screenshots.
+
 ## 2026-10-18T07:55Z — CIA Triad Remediation, Zero Credential Exposure & Instant Guest Access (v0.8.1) — orchestrator — completed — priority:1
 - owns: frontend/src/features/auth/**, frontend/src/components/Layout/AppShell.tsx, frontend/src/app/router.tsx, frontend/src/components/site/SiteHeader.tsx, frontend/src/features/landing/RiskCalculatorWidget.tsx, versions/**
 - artifacts: [versions/v0.8.1.md]

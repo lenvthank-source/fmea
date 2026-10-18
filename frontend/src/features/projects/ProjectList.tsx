@@ -23,7 +23,6 @@ import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
 import { unwrapPaginated } from '../../lib/pagination';
-import { FmeaTutorialGuide } from './components/FmeaTutorialGuide';
 
 interface Project {
   id: string;
@@ -568,14 +567,6 @@ export const ProjectList: React.FC = () => {
   const [phaseFilter, setPhaseFilter] = useState<string>('All');
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
-
-  // Auto-open tutorial on first visit for guests
-  useEffect(() => {
-    if (user?.isGuest && sessionStorage.getItem('fmea_tutorial_dismissed') !== 'true') {
-      setTutorialOpen(true);
-    }
-  }, [user]);
 
   // Fetch genuine audit events from backend /api/v1/audit-logs/recent
   const fetchRecentActivities = useCallback(async () => {
@@ -631,7 +622,7 @@ export const ProjectList: React.FC = () => {
               Browser session active • Exploring reference demo project. Guest accounts can create <strong>1 custom project</strong> (24h lifespan).
             </Typography>
           </Box>
-          <Button size="small" onClick={() => setTutorialOpen(true)} sx={{ color: '#b45309', fontWeight: 700, fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
+          <Button size="small" onClick={() => window.dispatchEvent(new CustomEvent('fmea:open_tutorial'))} sx={{ color: '#b45309', fontWeight: 700, fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
             Open 7-Step Guide →
           </Button>
         </Box>
@@ -665,7 +656,7 @@ export const ProjectList: React.FC = () => {
             variant="outlined"
             size="small"
             startIcon={<GuideIcon fontSize="small" sx={{ color: '#0284c7' }} />}
-            onClick={() => setTutorialOpen(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('fmea:open_tutorial'))}
             sx={{
               borderRadius: '7px',
               height: 34,
@@ -2351,16 +2342,6 @@ export const ProjectList: React.FC = () => {
           )}
         </DialogActions>
       </Dialog>
-
-      {/* ── 7-Step Interactive Guided Tutorial Walkthrough ──────── */}
-      <FmeaTutorialGuide
-        open={tutorialOpen}
-        onClose={() => setTutorialOpen(false)}
-        onSkipAll={() => {
-          sessionStorage.setItem('fmea_tutorial_dismissed', 'true');
-          setTutorialOpen(false);
-        }}
-      />
     </Box>
   );
 };

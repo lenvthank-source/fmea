@@ -105,6 +105,11 @@ export const AppRouter: React.FC = () => {
         <Route path="projects/:projectId/control-plan" element={<Suspense fallback={<div>Loading...</div>}><ControlPlanWorkspace /></Suspense>} />
         <Route path="projects/:projectId/linkage" element={<Suspense fallback={<div>Loading...</div>}><LinkageMap /></Suspense>} />
         <Route path="projects/:projectId/settings" element={<ProjectSettings />} />
+        {/* Direct workspace shortcuts */}
+        <Route path="pfd/:projectId" element={<Navigate to="/app/projects/:projectId/pfd" replace />} />
+        <Route path="pfmea/:projectId" element={<Navigate to="/app/projects/:projectId/pfmea" replace />} />
+        <Route path="control-plan/:projectId" element={<Navigate to="/app/projects/:projectId/control-plan" replace />} />
+        <Route path="linkage/:projectId" element={<Navigate to="/app/projects/:projectId/linkage" replace />} />
         <Route path="actions" element={<Suspense fallback={<div>Loading...</div>}><ActionsDashboard /></Suspense>} />
         <Route path="repository" element={<Suspense fallback={<div>Loading...</div>}><RepositoryPage /></Suspense>} />
         <Route path="admin" element={

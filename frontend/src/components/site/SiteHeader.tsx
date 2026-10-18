@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Activity, Menu, X, ArrowUpRight, Cpu, ChevronDown } from 'lucide-react';
-import { useBackendReady } from '../../hooks/useBackendWarmup';
 import { useAuth } from '../../features/auth/AuthContext';
 
 export const SiteHeader: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isBackendReady } = useBackendReady();
   const { token, guestLogin } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -174,25 +172,8 @@ export const SiteHeader: React.FC = () => {
             ))}
           </nav>
 
-          {/* Right: Telemetry Badge + Sandbox CTA */}
+          {/* Right: Sandbox CTA */}
           <div className="hidden sm:flex items-center gap-3">
-            {/* Live System Indicator connected to useBackendWarmup */}
-            <div
-              title={isBackendReady ? 'Backend operational and PostgreSQL RLS enforced' : 'Waking up cold-start backend services'}
-              className={`hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-colors ${
-                isBackendReady
-                  ? 'bg-emerald-50 border-emerald-200/70 text-emerald-700'
-                  : 'bg-amber-50 border-amber-200/70 text-amber-700'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isBackendReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-ping'
-                }`}
-              />
-              <span>{isBackendReady ? 'RLS Active • Live API' : 'Warming API...'}</span>
-            </div>
-
             <button
               onClick={handleLaunchSandbox}
               disabled={launching}
@@ -289,13 +270,9 @@ export const SiteHeader: React.FC = () => {
                   <Cpu className="w-3.5 h-3.5 text-slate-400" />
                   AIAG-VDA 2019
                 </span>
-                <span
-                  className={`flex items-center gap-1 font-bold ${
-                    isBackendReady ? 'text-emerald-600' : 'text-amber-600'
-                  }`}
-                >
+                <span className="flex items-center gap-1 font-bold text-emerald-600">
                   <Activity className="w-3.5 h-3.5" />
-                  {isBackendReady ? 'API Operational' : 'API Warming...'}
+                  Live Platform
                 </span>
               </div>
             </div>
