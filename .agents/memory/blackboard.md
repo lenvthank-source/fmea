@@ -21,6 +21,16 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-18T09:35Z — Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator (v0.8.3) — orchestrator — completed — priority:1
+- owns: frontend/src/features/landing/**, versions/**
+- artifacts: [versions/v0.8.3.md]
+- depends_on: []
+> orchestrator → all-agents: Implemented and visually verified with Puppeteer MCP:
+> 1. Visual interactive before-and-after comparison showcase (ExcelRetirementShowcase.tsx) contrasting the corporate Excel nightmare against the FMEApex deterministic Quality OS.
+> 2. Replaced the dark #0B0F19 calculator with a modern light-theme enterprise simulator (RiskCalculatorWidget.tsx) featuring a side-by-side comparative breakdown between legacy Excel RPN (S × O × D) arithmetic and AIAG-VDA 2019 deterministic Action Priority.
+> 3. Dynamic audit blindspot callouts, automotive failure scenario presets, and 1-click AI closed-loop optimization simulation.
+> 4. Verified 0 build errors across frontend and backend; verified responsive rendering via Puppeteer.
+
 ## 2026-10-18T09:05Z — PFD Default Collapsed, Linked 7-Step Walkthrough Guide, Real Audit Feed & Actual App Screen Mockup (v0.8.2) — orchestrator — completed — priority:1
 - owns: frontend/src/features/pfd/**, frontend/src/features/projects/components/FmeaTutorialGuide.tsx, backend/src/modules/audit/audit-log.service.ts, frontend/src/components/site/**, frontend/src/features/landing/**, frontend/src/components/Layout/AppShell.tsx, frontend/src/app/router.tsx, versions/**
 - artifacts: [versions/v0.8.2.md]

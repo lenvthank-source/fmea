@@ -4,25 +4,29 @@ import { calculateAP } from '../pfmea/utils/apCalculator';
 import { useAuth } from '../auth/AuthContext';
 import {
   Sparkles,
-  Info,
-  RotateCcw
+  RotateCcw,
+  FileSpreadsheet,
+  AlertTriangle,
+  ArrowRight,
+  ShieldAlert,
+  ShieldCheck
 } from 'lucide-react';
 
 const SEVERITY_DESCRIPTIONS: Record<number, { title: string; desc: string }> = {
-  10: { title: 'Hazardous without warning', desc: 'Failure affects safe operation without warning; non-compliance with regulations.' },
+  10: { title: 'Hazardous without warning', desc: 'Failure affects safe operation without warning; regulatory violation.' },
   9: { title: 'Hazardous with warning', desc: 'Failure affects safe operation with warning; non-compliance with regulations.' },
   8: { title: 'Loss of primary function', desc: 'Vehicle / assembly inoperable; primary function completely lost.' },
   7: { title: 'Degradation of primary function', desc: 'Vehicle / assembly operable but at reduced performance level.' },
   6: { title: 'Loss of secondary function', desc: 'Secondary function lost (e.g., HVAC, wipers, infotainment).' },
   5: { title: 'Degradation of secondary function', desc: 'Secondary function operable but at reduced performance.' },
-  4: { title: 'Moderate cosmetic / fit finish', desc: 'Noticeable defect by >75% of customers; causes customer dissatisfaction.' },
+  4: { title: 'Moderate cosmetic / fit finish', desc: 'Noticeable defect by >75% of customers; customer dissatisfaction.' },
   3: { title: 'Minor cosmetic / fit finish', desc: 'Noticeable defect by 50% of customers; minor rework required.' },
   2: { title: 'Very minor defect', desc: 'Noticeable only by discriminating customers; slight rework.' },
   1: { title: 'No discernible effect', desc: 'No customer impact or manufacturing consequence.' },
 };
 
 const OCCURRENCE_DESCRIPTIONS: Record<number, { title: string; desc: string }> = {
-  10: { title: 'Extremely High (>100 / 1,000)', desc: 'New technology or design without historical prevention controls.' },
+  10: { title: 'Extremely High (>100 / 1,000)', desc: 'New technology without historical prevention controls.' },
   9: { title: 'Very High (~50 / 1,000)', desc: 'Similar process has high historical failure frequency.' },
   8: { title: 'High (~20 / 1,000)', desc: 'Prevention controls are minimal or reliant on operator diligence.' },
   7: { title: 'Moderately High (~10 / 1,000)', desc: 'Basic prevention controls exist but occasional failures occur.' },
@@ -106,11 +110,11 @@ export const RiskCalculatorWidget: React.FC = () => {
   const { token, guestLogin } = useAuth();
   const [launching, setLaunching] = useState(false);
 
-  const [severity, setSeverity] = useState<number>(9);
-  const [occurrence, setOccurrence] = useState<number>(4);
-  const [detection, setDetection] = useState<number>(4);
-  const [activePresetIndex, setActivePresetIndex] = useState<number>(0);
-  const [showAiOptimized, setShowAiOptimized] = useState<boolean>(false);
+  const [activePresetIndex, setActivePresetIndex] = useState(0);
+  const [severity, setSeverity] = useState(9);
+  const [occurrence, setOccurrence] = useState(4);
+  const [detection, setDetection] = useState(4);
+  const [showAiOptimized, setShowAiOptimized] = useState(false);
 
   const handleLaunch = async () => {
     if (token) {
@@ -119,11 +123,11 @@ export const RiskCalculatorWidget: React.FC = () => {
     }
     setLaunching(true);
     try {
-      sessionStorage.removeItem('logged_out');
       await guestLogin();
       navigate('/app/projects');
-    } catch {
-      navigate('/app/projects');
+    } catch (err) {
+      console.error('Launch failed:', err);
+      navigate('/login');
     } finally {
       setLaunching(false);
     }
@@ -132,7 +136,7 @@ export const RiskCalculatorWidget: React.FC = () => {
   const ap = calculateAP(severity, occurrence, detection) || 'L';
   const rpn = severity * occurrence * detection;
 
-  // Optimized values (e.g., when quality controls are applied)
+  // Optimized values when engineering controls are applied
   const optO = Math.max(1, Math.min(occurrence, occurrence > 3 ? occurrence - 2 : 1));
   const optD = Math.max(1, Math.min(detection, detection > 2 ? 2 : 1));
   const optAp = calculateAP(severity, optO, optD) || 'L';
@@ -140,6 +144,8 @@ export const RiskCalculatorWidget: React.FC = () => {
 
   const currentAp = showAiOptimized ? optAp : ap;
   const currentRpn = showAiOptimized ? optRpn : rpn;
+  const activeO = showAiOptimized ? optO : occurrence;
+  const activeD = showAiOptimized ? optD : detection;
 
   const handleSelectPreset = (idx: number) => {
     const p = PRESETS[idx];
@@ -154,71 +160,81 @@ export const RiskCalculatorWidget: React.FC = () => {
     switch (priority) {
       case 'H':
         return {
-          bg: 'bg-rose-500/15',
-          border: 'border-rose-500/40',
-          text: 'text-rose-400',
-          badge: 'bg-rose-500 text-white',
+          bg: 'bg-rose-50',
+          border: 'border-rose-300',
+          badgeBg: 'bg-rose-600 text-white',
+          text: 'text-rose-950',
+          highlightText: 'text-rose-700',
           label: 'HIGH AP',
           mandate: 'Mandatory Corrective Action Required',
-          actionText: 'Must reduce Occurrence or improve Detection before SOP.',
+          actionText: 'Must reduce Occurrence or improve Detection controls before Start of Production (SOP).',
+          icon: <ShieldAlert className="w-5 h-5 text-rose-600" />
         };
       case 'M':
         return {
-          bg: 'bg-amber-500/15',
-          border: 'border-amber-500/40',
-          text: 'text-amber-300',
-          badge: 'bg-amber-500 text-slate-950',
+          bg: 'bg-amber-50',
+          border: 'border-amber-300',
+          badgeBg: 'bg-amber-600 text-white',
+          text: 'text-amber-950',
+          highlightText: 'text-amber-700',
           label: 'MEDIUM AP',
-          mandate: 'Engineering Review & Optimization Recommended',
-          actionText: 'Review prevention controls to determine cost/benefit feasibility.',
+          mandate: 'Engineering Review Recommended',
+          actionText: 'Review prevention controls to determine cost/benefit feasibility of additional error-proofing.',
+          icon: <AlertTriangle className="w-5 h-5 text-amber-600" />
         };
       case 'L':
       default:
         return {
-          bg: 'bg-emerald-500/15',
-          border: 'border-emerald-500/40',
-          text: 'text-emerald-400',
-          badge: 'bg-emerald-500 text-white',
+          bg: 'bg-emerald-50',
+          border: 'border-emerald-300',
+          badgeBg: 'bg-emerald-600 text-white',
+          text: 'text-emerald-950',
+          highlightText: 'text-emerald-700',
           label: 'LOW AP',
-          mandate: 'Controls Adequate / Discretionary Action',
-          actionText: 'Existing prevention and detection controls are sufficient.',
+          mandate: 'Controls Adequate · Discretionary Action',
+          actionText: 'Existing prevention and detection controls are sufficient. No mandatory rework required.',
+          icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />
         };
     }
   };
 
   const apMeta = getApColor(currentAp);
 
+  // Analyze whether legacy Excel RPN creates an audit failure or false panic
+  const isExcelBlindspot = severity >= 8 && currentRpn < 100;
+  const isExcelFalsePanic = severity <= 3 && currentRpn >= 100;
+
   return (
-    <div className="w-full rounded-2xl sm:rounded-3xl bg-[#0B0F19] border border-slate-800 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden font-sans">
-      {/* ── Console Header ──────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between px-5 sm:px-8 py-4 bg-[#0D1322] border-b border-slate-800 gap-4">
+    <div className="w-full rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] overflow-hidden font-sans">
+      {/* ── 1. Header with Scenario Presets ─────────────────── */}
+      <div className="flex flex-wrap items-center justify-between px-5 sm:px-8 py-5 bg-slate-50/80 border-b border-slate-200 gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 text-[11px] font-mono font-bold uppercase tracking-wider">
-              AIAG-VDA 2019 Standard (1st Edition)
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20 text-[11px] font-mono font-bold uppercase tracking-wider">
+              AIAG-VDA 2019 Standard
             </span>
-            <span className="text-slate-500 hidden sm:inline">•</span>
-            <span className="text-xs text-slate-400 hidden sm:inline font-mono">
-              Deterministic AP Decision Matrix
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <span className="text-xs text-slate-500 hidden sm:inline font-mono">
+              Deterministic AP Decision Matrix vs. Legacy Excel RPN
             </span>
           </div>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-100 mt-1">
+          <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">
             Action Priority (AP) Engine & Risk Simulator
           </h3>
         </div>
 
-        {/* 1-Click Failure Presets */}
+        {/* 1-Click Automotive Scenario Presets */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-mono hidden md:inline">Presets:</span>
+          <span className="text-xs text-slate-500 font-mono hidden md:inline">Scenarios:</span>
           <div className="flex flex-wrap gap-1.5">
             {PRESETS.map((p, idx) => (
               <button
                 key={p.name}
                 onClick={() => handleSelectPreset(idx)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activePresetIndex === idx
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                    ? 'bg-slate-900 text-white shadow-xs font-bold'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                 }`}
               >
                 {p.category}
@@ -228,12 +244,14 @@ export const RiskCalculatorWidget: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Active Preset Description Card ─────────────── */}
-      <div className="px-5 sm:px-8 py-3.5 bg-slate-900/60 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-        <div>
-          <span className="text-slate-400">Simulating scenario: </span>
-          <strong className="text-slate-200">{PRESETS[activePresetIndex].name}</strong>
-          <span className="text-slate-500 ml-2">({PRESETS[activePresetIndex].failureMode})</span>
+      {/* ── 2. Active Scenario Context Ribbon ───────────────── */}
+      <div className="px-5 sm:px-8 py-3 bg-amber-50/60 border-b border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div className="flex items-center gap-2 text-amber-950">
+          <span className="font-mono font-bold uppercase text-[10px] px-1.5 py-0.5 bg-amber-200/60 rounded text-amber-900">
+            Active Failure
+          </span>
+          <strong className="font-bold">{PRESETS[activePresetIndex].name}</strong>
+          <span className="text-amber-800/80 hidden md:inline">({PRESETS[activePresetIndex].failureMode})</span>
         </div>
         <button
           onClick={() => {
@@ -242,33 +260,34 @@ export const RiskCalculatorWidget: React.FC = () => {
             setDetection(PRESETS[activePresetIndex].d);
             setShowAiOptimized(false);
           }}
-          className="text-slate-400 hover:text-slate-200 flex items-center gap-1 font-mono text-[11px] self-end sm:self-center"
+          className="text-amber-800 hover:text-amber-950 flex items-center gap-1 font-mono text-[11px] self-end sm:self-center font-medium"
         >
           <RotateCcw className="w-3 h-3" />
           <span>Reset Preset</span>
         </button>
       </div>
 
-      {/* ── Main Interactive Grid ───────────────────────── */}
+      {/* ── 3. Main Interactive Layout ──────────────────────── */}
       <div className="p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: 3 Precision Sliders (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Slider 1: Severity */}
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors">
             <div className="flex items-baseline justify-between mb-2">
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-400">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
                   Step 5.1 · Severity (S)
                 </span>
-                <h4 className="text-sm font-bold text-slate-100">
-                  Impact on System, Regulatory & End User
+                <h4 className="text-sm font-bold text-slate-900 mt-0.5">
+                  Customer & Vehicle Safety Impact
                 </h4>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-black font-mono text-rose-400 tabular-nums">
+                <span className="text-2xl font-black font-mono text-rose-600 tabular-nums">
                   {severity}
                 </span>
-                <span className="text-slate-500 text-xs font-mono">/10</span>
+                <span className="text-slate-400 text-xs font-mono">/10</span>
               </div>
             </div>
 
@@ -282,38 +301,39 @@ export const RiskCalculatorWidget: React.FC = () => {
                 setSeverity(Number(e.target.value));
                 setShowAiOptimized(false);
               }}
-              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
               aria-label="Severity rating slider"
             />
 
-            <div className="mt-2 flex items-start justify-between text-xs text-slate-400">
-              <span className="text-slate-200 font-medium">
+            <div className="mt-2.5 flex items-start justify-between text-xs text-slate-600">
+              <span className="text-slate-900 font-bold">
                 {SEVERITY_DESCRIPTIONS[severity].title}
               </span>
-              <span className="text-[11px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
+              <span className="text-[11.5px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
                 {SEVERITY_DESCRIPTIONS[severity].desc}
               </span>
             </div>
           </div>
 
           {/* Slider 2: Occurrence */}
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors">
             <div className="flex items-baseline justify-between mb-2">
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
                   Step 5.2 · Occurrence (O)
                 </span>
-                <h4 className="text-sm font-bold text-slate-100">
+                <h4 className="text-sm font-bold text-slate-900 mt-0.5">
                   Likelihood of Cause & Prevention Controls
                 </h4>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-black font-mono text-amber-400 tabular-nums">
-                  {showAiOptimized ? optO : occurrence}
+                <span className="text-2xl font-black font-mono text-amber-600 tabular-nums">
+                  {activeO}
                 </span>
-                <span className="text-slate-500 text-xs font-mono">/10</span>
+                <span className="text-slate-400 text-xs font-mono">/10</span>
                 {showAiOptimized && (
-                  <span className="text-xs text-emerald-400 font-mono block">
+                  <span className="text-xs text-emerald-600 font-mono font-bold block">
                     ↓ from {occurrence}
                   </span>
                 )}
@@ -325,43 +345,44 @@ export const RiskCalculatorWidget: React.FC = () => {
               min={1}
               max={10}
               step={1}
-              value={showAiOptimized ? optO : occurrence}
+              value={activeO}
               onChange={(e) => {
                 setOccurrence(Number(e.target.value));
                 setShowAiOptimized(false);
               }}
-              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
               aria-label="Occurrence rating slider"
             />
 
-            <div className="mt-2 flex items-start justify-between text-xs text-slate-400">
-              <span className="text-slate-200 font-medium">
-                {OCCURRENCE_DESCRIPTIONS[showAiOptimized ? optO : occurrence].title}
+            <div className="mt-2.5 flex items-start justify-between text-xs text-slate-600">
+              <span className="text-slate-900 font-bold">
+                {OCCURRENCE_DESCRIPTIONS[activeO].title}
               </span>
-              <span className="text-[11px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
-                {OCCURRENCE_DESCRIPTIONS[showAiOptimized ? optO : occurrence].desc}
+              <span className="text-[11.5px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
+                {OCCURRENCE_DESCRIPTIONS[activeO].desc}
               </span>
             </div>
           </div>
 
           {/* Slider 3: Detection */}
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors">
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors">
             <div className="flex items-baseline justify-between mb-2">
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
                   Step 5.3 · Detection (D)
                 </span>
-                <h4 className="text-sm font-bold text-slate-100">
+                <h4 className="text-sm font-bold text-slate-900 mt-0.5">
                   Ability of Controls to Catch Cause or Mode
                 </h4>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-black font-mono text-cyan-400 tabular-nums">
-                  {showAiOptimized ? optD : detection}
+                <span className="text-2xl font-black font-mono text-blue-600 tabular-nums">
+                  {activeD}
                 </span>
-                <span className="text-slate-500 text-xs font-mono">/10</span>
+                <span className="text-slate-400 text-xs font-mono">/10</span>
                 {showAiOptimized && (
-                  <span className="text-xs text-emerald-400 font-mono block">
+                  <span className="text-xs text-emerald-600 font-mono font-bold block">
                     ↓ from {detection}
                   </span>
                 )}
@@ -373,123 +394,148 @@ export const RiskCalculatorWidget: React.FC = () => {
               min={1}
               max={10}
               step={1}
-              value={showAiOptimized ? optD : detection}
+              value={activeD}
               onChange={(e) => {
                 setDetection(Number(e.target.value));
                 setShowAiOptimized(false);
               }}
-              className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               aria-label="Detection rating slider"
             />
 
-            <div className="mt-2 flex items-start justify-between text-xs text-slate-400">
-              <span className="text-slate-200 font-medium">
-                {DETECTION_DESCRIPTIONS[showAiOptimized ? optD : detection].title}
+            <div className="mt-2.5 flex items-start justify-between text-xs text-slate-600">
+              <span className="text-slate-900 font-bold">
+                {DETECTION_DESCRIPTIONS[activeD].title}
               </span>
-              <span className="text-[11px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
-                {DETECTION_DESCRIPTIONS[showAiOptimized ? optD : detection].desc}
+              <span className="text-[11.5px] text-slate-500 hidden sm:inline text-right max-w-[280px]">
+                {DETECTION_DESCRIPTIONS[activeD].desc}
               </span>
             </div>
           </div>
 
-          {/* AI Optimization Toggle Card */}
-          <div className="p-4 rounded-xl bg-cyan-950/40 border border-cyan-800/60 flex items-start justify-between gap-4">
+          {/* AI Optimization Simulation Card */}
+          <div className="p-4 sm:p-5 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <span className="text-xs font-mono font-bold uppercase text-cyan-300">
-                  AI Closed-Loop Quality Optimization
+                <Sparkles className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FF5500]">
+                  AI Closed-Loop Optimization
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-slate-300 leading-relaxed max-w-[420px]">
                 {PRESETS[activePresetIndex].aiSuggestedFix}
               </p>
             </div>
 
             <button
               onClick={() => setShowAiOptimized(!showAiOptimized)}
-              className={`shrink-0 px-3.5 py-2 rounded-lg font-bold text-xs transition-all ${
+              className={`shrink-0 px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
                 showAiOptimized
-                  ? 'bg-cyan-500 text-slate-950 shadow-md'
-                  : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-700/50'
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md'
+                  : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xs'
               }`}
             >
-              {showAiOptimized ? '✓ Applied Optimization' : 'Simulate AI Fix'}
+              <span>{showAiOptimized ? '✓ Fix Applied (Low Risk)' : 'Simulate Engineering Fix'}</span>
             </button>
           </div>
         </div>
 
-        {/* Right Column: AP Decision & RPN Comparison Matrix (5 cols) */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* Action Priority Decision Result Box */}
-          <div className={`p-6 rounded-2xl border-2 ${apMeta.border} ${apMeta.bg} shadow-lg space-y-4`}>
+        {/* Right Column: Comparative Split (Excel RPN vs FMEApex AP) (5 cols) */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Card 1: FMEApex AIAG-VDA AP Decision */}
+          <div className={`p-5 sm:p-6 rounded-2xl border-2 ${apMeta.border} ${apMeta.bg} space-y-4 shadow-sm`}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-                AIAG-VDA 2019 Rating
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                {apMeta.icon}
+                <span>AIAG-VDA 2019 Decision</span>
               </span>
-              <span className={`px-3 py-1 rounded-full text-xs font-mono font-black ${apMeta.badge}`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-mono font-black ${apMeta.badgeBg}`}>
                 {apMeta.label}
               </span>
             </div>
 
             <div>
-              <div className={`text-2xl font-extrabold ${apMeta.text}`}>
+              <div className={`text-xl sm:text-2xl font-extrabold ${apMeta.text}`}>
                 {apMeta.mandate}
               </div>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                 {apMeta.actionText}
               </p>
             </div>
 
             {/* Score Pill Breakdown */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-700/60 text-center font-mono">
-              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                <div className="text-[10px] text-slate-400 uppercase">Severity</div>
-                <div className="text-lg font-bold text-rose-400">{severity}</div>
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/80 text-center font-mono">
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Severity</div>
+                <div className="text-lg font-black text-rose-600">{severity}</div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                <div className="text-[10px] text-slate-400 uppercase">Occurrence</div>
-                <div className="text-lg font-bold text-amber-400">
-                  {showAiOptimized ? optO : occurrence}
-                </div>
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Occurrence</div>
+                <div className="text-lg font-black text-amber-600">{activeO}</div>
               </div>
-              <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                <div className="text-[10px] text-slate-400 uppercase">Detection</div>
-                <div className="text-lg font-bold text-cyan-400">
-                  {showAiOptimized ? optD : detection}
-                </div>
+              <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                <div className="text-[10px] text-slate-500 uppercase font-bold">Detection</div>
+                <div className="text-lg font-black text-blue-600">{activeD}</div>
               </div>
             </div>
           </div>
 
-          {/* Why AIAG-VDA AP Replaced Legacy RPN */}
-          <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+          {/* Card 2: The Flawed Legacy Excel RPN Math */}
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
-              <h5 className="text-xs font-bold font-mono uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Action Priority (AP) vs Legacy RPN</span>
-              </h5>
-              <span className="text-xs font-mono text-slate-400">
-                Legacy RPN: <strong className="text-slate-100">{currentRpn}</strong> / 1000
+              <span className="text-xs font-bold font-mono uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-[#107c41]" />
+                <span>Legacy Excel RPN Math</span>
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                RPN: {currentRpn} / 1000
               </span>
             </div>
 
-            <p className="text-[11.5px] text-slate-400 leading-relaxed">
-              In traditional FMEA, teams used an arbitrary threshold (e.g. RPN &gt; 100). A lethal hazard (S=10, O=2, D=2) yielded RPN 40 and was ignored. Conversely, a minor cosmetic defect (S=2, O=8, D=8) yielded RPN 128 and triggered unnecessary engineering rework.
-            </p>
-
-            <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono text-cyan-300">
-              ✓ AIAG-VDA 2019 prioritizes Severity first, then Occurrence, then Detection — guaranteeing critical hazards receive mandatory High AP attention.
+            <div className="font-mono text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+              Formula: <span className="text-slate-900 font-bold">= {severity} × {activeO} × {activeD} = {currentRpn}</span>
             </div>
+
+            {/* Dynamic Comparison Callout */}
+            {isExcelBlindspot && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-950 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1 text-rose-700 text-[11px] uppercase font-mono">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Excel Critical Blindspot (Audit Risk)</span>
+                </div>
+                <p className="text-[11.5px] leading-relaxed">
+                  In Excel, using an arbitrary threshold (e.g. RPN &gt; 100), this catastrophic <strong>Severity {severity}</strong> hazard scores <strong>RPN {currentRpn}</strong> and is skipped as &quot;Low Risk&quot;! AIAG-VDA 2019 AP immediately flags it as <strong>HIGH AP</strong>.
+                </p>
+              </div>
+            )}
+
+            {isExcelFalsePanic && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1 text-amber-700 text-[11px] uppercase font-mono">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Excel False Panic (Wasted Rework)</span>
+                </div>
+                <p className="text-[11.5px] leading-relaxed">
+                  A minor cosmetic blemish scores <strong>RPN {currentRpn}</strong> due to high frequency, triggering unnecessary engineering redesign. FMEApex correctly categorizes it as <strong>LOW AP</strong>.
+                </p>
+              </div>
+            )}
+
+            {!isExcelBlindspot && !isExcelFalsePanic && (
+              <div className="text-[11.5px] text-slate-500 leading-relaxed">
+                AIAG-VDA 2019 prioritizes Severity first, then Occurrence, then Detection — ensuring high-consequence failure modes always receive attention regardless of RPN arithmetic.
+              </div>
+            )}
           </div>
 
-          {/* Launch CTA */}
+          {/* Launch Action Button */}
           <button
             onClick={handleLaunch}
             disabled={launching}
-            className="w-full py-3 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-[0_4px_20px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2"
+            className="w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 group"
           >
-            <span>{launching ? 'Launching Sandbox...' : 'Launch Guest Sandbox to Run Full PFMEA →'}</span>
+            <span>{launching ? 'Opening Workspace...' : 'Launch Guest Sandbox to Run Full PFMEA'}</span>
+            <ArrowRight className="w-4 h-4 text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </div>

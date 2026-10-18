@@ -5,6 +5,7 @@ import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
 import { VentrilocDashboard } from '../../components/site/VentrilocDashboard';
 import { RiskCalculatorWidget } from './RiskCalculatorWidget';
+import { ExcelRetirementShowcase } from './ExcelRetirementShowcase';
 import { useAuth } from '../auth/AuthContext';
 import { useBackendReady } from '../../hooks/useBackendWarmup';
 import { API_BASE_URL } from '../../config';
@@ -557,6 +558,11 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
 
+          {/* Visual Interactive Excel vs FMEApex Showcase */}
+          <div className="mb-14">
+            <ExcelRetirementShowcase />
+          </div>
+
           {/* Comparison Table */}
           <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
             <div className="grid grid-cols-12 bg-slate-900 text-white p-4 sm:p-5 text-xs font-mono font-bold uppercase tracking-wider">
@@ -600,13 +606,13 @@ export const LandingPage: React.FC = () => {
           <div className="max-w-[720px] mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
               <Cpu className="w-3.5 h-3.5 text-[#FF5500]" />
-              <span>Interactive Simulator</span>
+              <span>Interactive Risk Simulator</span>
             </div>
             <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              Simulate Action Priority in Real-Time.
+              Ditch Flawed Excel RPN. Test AIAG-VDA Action Priority.
             </h2>
             <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              Test how AIAG-VDA 2019 prioritizes Severity (S), Occurrence (O), and Detection (D) into High, Medium, or Low Action Priority. See firsthand why OEM auditors banned arbitrary RPN cutoffs.
+              Test how AIAG-VDA 2019 replaces dangerous legacy Excel multiplication (S × O × D) with deterministic decision matrices. See firsthand why OEM auditors banned arbitrary RPN cutoffs that hid catastrophic single-point failures.
             </p>
           </div>
 
