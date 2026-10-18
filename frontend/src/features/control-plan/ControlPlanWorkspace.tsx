@@ -431,9 +431,9 @@ export const ControlPlanWorkspace: React.FC = () => {
       )}
 
       {/* Main Grid Wrapper */}
-      <Grid container spacing={3} sx={{ mt: 1 }}>
+      <Grid container spacing={2.5} sx={{ mt: 1 }}>
         {showSplitScreen && (
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
             <Paper sx={{ p: 2, border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, boxShadow: 'none', bgcolor: 'background.paper' }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 PFMEA Risk Controls Reference
@@ -505,7 +505,7 @@ export const ControlPlanWorkspace: React.FC = () => {
             </Paper>
           </Grid>
         )}
-        <Grid size={{ xs: 12, md: showSplitScreen ? 7 : 12 }}>
+        <Grid size={{ xs: 12, md: showSplitScreen ? 8 : 12, lg: showSplitScreen ? 8.5 : 12 }}>
           <>
           <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
         <Table aria-label="Control Plan grid" size="small">
@@ -515,7 +515,7 @@ export const ControlPlanWorkspace: React.FC = () => {
               <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Process Step</TableCell>
               <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Characteristic</TableCell>
               <TableCell sx={{ minWidth: 120, fontWeight: 'bold' }}>Class</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Specification / Tolerance</TableCell>
+              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Specification / Tolerance</TableCell>
               <TableCell sx={{ minWidth: 160, fontWeight: 'bold' }}>Measurement Method</TableCell>
               <TableCell sx={{ minWidth: 100, fontWeight: 'bold' }}>Sample Size</TableCell>
               <TableCell sx={{ minWidth: 110, fontWeight: 'bold' }}>Frequency</TableCell>
@@ -596,13 +596,17 @@ export const ControlPlanWorkspace: React.FC = () => {
                   </TableCell>
 
                   {/* Spec / Tolerance */}
-                  <TableCell>
+                  <TableCell sx={{ minWidth: 180 }}>
                     <Input
                       value={row.specTolerance || ''}
                       onChange={(e) => handleFieldChange(row.id, 'specTolerance', e.target.value)}
                       size="small"
                       disableUnderline
                       fullWidth
+                      multiline
+                      minRows={1}
+                      maxRows={4}
+                      sx={{ fontSize: '0.8125rem' }}
                     />
                   </TableCell>
 

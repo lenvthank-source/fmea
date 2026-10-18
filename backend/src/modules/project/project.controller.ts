@@ -20,14 +20,17 @@ export class ProjectController {
     @Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit?: number,
     @Query('search') search?: string,
   ) {
-    const userId = req.user.isGuest ? req.user.sub : undefined;
-    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId, search);
+    const isGuest = !!req.user.isGuest;
+    const isAdmin = req.user.roles?.includes('Admin') || false;
+    const userId = req.user.sub;
+    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId, search, isGuest, isAdmin);
   }
 
   @Post()
   @Permissions('project.create')
   async create(@Request() req: RequestWithUser, @Body() dto: CreateProjectDto) {
-    return this.projectService.create(req.user.tenantId, req.user.sub, dto);
+    const isGuest = !!req.user.isGuest;
+    return this.projectService.create(req.user.tenantId, req.user.sub, dto, isGuest);
   }
 
   @Post(':id/replicate')
@@ -98,7 +101,8 @@ export class ProjectController {
   @Get(':id')
   @Permissions('project.view')
   async findOne(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.projectService.findOne(req.user.tenantId, id, true);
+    const isAdmin = req.user.roles?.includes('Admin') || false;
+    return this.projectService.findOne(req.user.tenantId, id, true, isAdmin);
   }
 
   @Patch(':id')
@@ -114,7 +118,8 @@ export class ProjectController {
   @Delete(':id')
   @Permissions('project.delete')
   async remove(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.projectService.remove(req.user.tenantId, id);
+    const isAdmin = req.user.roles?.includes('Admin') || false;
+    return this.projectService.remove(req.user.tenantId, id, isAdmin);
   }
 
   @Get(':id/documents')

@@ -966,7 +966,7 @@ export const PfdWorkspace: React.FC = () => {
             <TableHead>
               <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
                 <TableCell style={{ width: 40 }} /> {/* Drag Handle */}
-                <TableCell sx={{ width: 110, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Step #</TableCell>
+                <TableCell sx={{ minWidth: 120, width: 120, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Step #</TableCell>
                 <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Description</TableCell>
                 <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Incoming Source of Variation</TableCell>
                 <TableCell sx={{ minWidth: 100, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Spec. Class</TableCell>
@@ -1027,37 +1027,26 @@ export const PfdWorkspace: React.FC = () => {
                       </TableCell>
 
                       {/* Step Number */}
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <PfdCellWrapper
-                          textToCopy={step.stepNumber}
-                          onEdit={() => {
-                            if (isCollapsed) handleToggleExpand(step.id);
-                            setTimeout(() => {
-                              const el = document.getElementById(`stepNumber-input-${step.id}`);
-                              if (el) el.focus();
-                            }, 100);
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <IconButton size="small" onClick={() => handleToggleExpand(step.id)} sx={{ p: 0.25 }}>
-                              {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-                            </IconButton>
-                            {isCollapsed ? (
-                              <Typography sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
-                                {step.stepNumber}
-                              </Typography>
-                            ) : (
-                              <Input
-                                id={`stepNumber-input-${step.id}`}
-                                value={step.stepNumber}
-                                onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
-                                disableUnderline
-                                fullWidth
-                                sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
-                              />
-                            )}
-                          </Box>
-                        </PfdCellWrapper>
+                      <TableCell sx={{ minWidth: 120, width: 120, px: 1 }} onClick={(e) => e.stopPropagation()}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, width: '100%' }}>
+                          <IconButton size="small" onClick={() => handleToggleExpand(step.id)} sx={{ p: 0.25, flexShrink: 0 }}>
+                            {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                          </IconButton>
+                          {isCollapsed ? (
+                            <Typography sx={{ fontSize: '0.85rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              {step.stepNumber}
+                            </Typography>
+                          ) : (
+                            <Input
+                              id={`stepNumber-input-${step.id}`}
+                              value={step.stepNumber}
+                              onChange={(e) => handleFieldChange(step.id, 'stepNumber', e.target.value)}
+                              disableUnderline
+                              fullWidth
+                              sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
 
                       {/* Process Description */}

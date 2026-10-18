@@ -136,4 +136,7 @@ export class CreateProjectDto {
   @IsArray()
   @IsOptional()
   importTypes?: string[];
+
+  @IsOptional()
+  uiSettings?: any;
 }

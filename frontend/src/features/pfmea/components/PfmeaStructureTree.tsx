@@ -272,8 +272,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
   return (
     <Grid container spacing={2.5} sx={{ alignItems: 'flex-start' }}>
       
-      {/* LEFT COLUMN (80% Width): Interactive Tree Canvas Starting Right At The Top */}
-      <Grid size={{ xs: 12, md: 9.6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {/* LEFT COLUMN (75-80% Width): Interactive Tree Canvas Starting Right At The Top */}
+      <Grid size={{ xs: 12, md: 8.8, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
 
         {/* Tree Structure Canvas */}
         <Paper
@@ -821,8 +821,8 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
       </Paper>
     </Grid>
 
-    {/* RIGHT COLUMN (20% Width): Sticky Control Sidebar Panel */}
-    <Grid size={{ xs: 12, md: 2.4 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
+    {/* RIGHT COLUMN: Sticky Control Sidebar Panel */}
+    <Grid size={{ xs: 12, md: 3.2, lg: 3 }} sx={{ position: 'sticky', top: 24, zIndex: 5 }}>
       <Paper
         sx={{
           p: 2.5,
@@ -897,10 +897,10 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 fullWidth
                 size="small"
                 variant="contained"
-                startIcon={<AddIcon />}
+                startIcon={<AddIcon fontSize="small" />}
                 onClick={onAddStep}
                 disabled={!isAddStepEnabled}
-                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                sx={{ fontWeight: 700, fontSize: '0.75rem', px: 1, whiteSpace: 'nowrap' }}
               >
                 + Step
               </Button>
@@ -912,9 +912,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 variant="outlined"
                 disabled={!isAddWorkElementEnabled}
                 onClick={() => nodeInfo && nodeInfo.stepId && onAddWorkElement(nodeInfo.stepId)}
-                sx={{ fontWeight: 700, fontSize: '0.74rem' }}
+                sx={{ fontWeight: 700, fontSize: '0.75rem', px: 0.5, whiteSpace: 'nowrap' }}
               >
-                Work Element
+                + Work Elem
               </Button>
             </Grid>
             <Grid size={6}>
@@ -924,9 +924,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 variant="outlined"
                 disabled={!isAddFunctionEnabled}
                 onClick={handleAddFunctionClick}
-                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                sx={{ fontWeight: 700, fontSize: '0.75rem', px: 1, whiteSpace: 'nowrap' }}
               >
-                Function
+                + Function
               </Button>
             </Grid>
             <Grid size={6}>
@@ -936,9 +936,9 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                 variant="outlined"
                 disabled={!isAddFailureEnabled}
                 onClick={handleAddFailureClick}
-                sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                sx={{ fontWeight: 700, fontSize: '0.75rem', px: 1, whiteSpace: 'nowrap' }}
               >
-                Failure
+                + Failure
               </Button>
             </Grid>
           </Grid>

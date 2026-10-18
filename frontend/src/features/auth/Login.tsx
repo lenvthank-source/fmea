@@ -120,27 +120,47 @@ export const Login: React.FC = () => {
                 <span className="text-[#FF5500]">⚡</span>
                 <span>Launch Free Guest Sandbox</span>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-slate-200 font-mono uppercase tracking-wider">
-                  No Card Required
+                  24h Session
                 </span>
               </>
             )}
           </button>
 
+          {/* 24-Hour Guest Lifespan Notice */}
+          <div className="mt-2.5 px-3 py-2 rounded-lg bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 flex items-start gap-2">
+            <span className="text-amber-600 font-bold shrink-0 mt-0.5">⏱</span>
+            <span className="leading-snug">
+              <strong>24-Hour Ephemeral Sandbox:</strong> You will access a fully pre-filled reference project and can create <strong>1 custom project</strong>. Custom projects and browser sessions automatically expire after 24 hours and are archived for admin review.
+            </span>
+          </div>
+
           {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
+          <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-slate-200" />
             <span className="text-[10.5px] font-semibold font-mono uppercase tracking-wider text-slate-400">
-              or sign in with corporate account
+              or sign in to registered account
             </span>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
 
           {/* Email / Password Form */}
-          <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-3.5">
             <div>
-              <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
-                Corporate Email
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold">
+                  Corporate / Admin Email
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('lenvthank@gmail.com');
+                    setPassword('Admin123!');
+                  }}
+                  className="text-[10.5px] text-[#FF5500] hover:underline font-mono"
+                >
+                  Fill Admin Credentials
+                </button>
+              </div>
               <input
                 type="email"
                 required

@@ -16,6 +16,15 @@ export class AuditLogController {
     return this.auditLogService.getEntriesForRevision(req.user.tenantId, revisionId);
   }
 
+  @Get('audit-logs/recent')
+  async getRecentActivity(
+    @Request() req: RequestWithUser,
+    @Query('limit') limit?: string,
+  ) {
+    const numLimit = limit ? parseInt(limit, 10) : 8;
+    return this.auditLogService.getRecentActivity(req.user.tenantId, numLimit);
+  }
+
   @Get('audit-logs')
   async getAuditLogs(
     @Request() req: RequestWithUser,

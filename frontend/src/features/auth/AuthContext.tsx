@@ -49,8 +49,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserSession | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
 
+  const getActiveToken = () => sessionStorage.getItem('guest_token') || localStorage.getItem('token');
+  const getActiveRefreshToken = () => sessionStorage.getItem('guest_refresh_token') || localStorage.getItem('refresh_token');
+
   const refreshAccessToken = async (): Promise<boolean> => {
-    const savedRefreshToken = localStorage.getItem('refresh_token');
+    const isGuestSession = !!sessionStorage.getItem('guest_token');
+    const savedRefreshToken = getActiveRefreshToken();
     if (!savedRefreshToken) {
       logout();
       return false;
@@ -66,8 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (response.ok) {
           const data = await response.json();
           const accessToken = data.access_token;
-          localStorage.setItem('token', accessToken);
-          localStorage.setItem('refresh_token', data.refresh_token);
+          if (isGuestSession) {
+            sessionStorage.setItem('guest_token', accessToken);
+            sessionStorage.setItem('guest_refresh_token', data.refresh_token);
+          } else {
+            localStorage.setItem('token', accessToken);
+            localStorage.setItem('refresh_token', data.refresh_token);
+          }
           setToken(accessToken);
           
           // Fetch fresh user data with permissions from server
@@ -87,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               tenantId: claims.tenant_id || claims.tenantId,
               roles: claims.roles || [],
               permissions: claims.permissions || [],
-              isGuest: false,
+              isGuest: isGuestSession || false,
             });
           }
           return true;
@@ -120,10 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   };
 
-  // Hydrate session from localStorage on mount — survives reload until 72h inactivity or cookies cleared
+  // Hydrate session: browser-only sessionStorage for guests; localStorage for persistent corporate/admin
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedRefresh = localStorage.getItem('refresh_token');
+    const isGuest = !!sessionStorage.getItem('guest_token');
+    const savedToken = getActiveToken();
+    const savedRefresh = getActiveRefreshToken();
     if (!savedToken && !savedRefresh) {
       setIsHydrating(false);
       return;
@@ -146,13 +156,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 tenantId: claims.tenant_id || claims.tenantId,
                 roles: claims.roles || [],
                 permissions: claims.permissions || [],
-                isGuest: !!claims.isGuest,
+                isGuest: isGuest || !!claims.isGuest,
               });
             }
             setIsHydrating(false);
           })
           .catch(() => {
-            // Fallback to refresh if /me failed
             if (savedRefresh) {
               refreshAccessToken().finally(() => setIsHydrating(false));
             } else setIsHydrating(false);
@@ -298,8 +307,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const data = await response.json();
     const accessToken = data.access_token;
 
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('refresh_token', data.refresh_token);
+    // Store guest session exclusively in browser sessionStorage
+    sessionStorage.setItem('guest_token', accessToken);
+    sessionStorage.setItem('guest_refresh_token', data.refresh_token);
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     
     setToken(accessToken);
     
@@ -324,9 +336,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-
-
   const logout = () => {
+    sessionStorage.removeItem('guest_token');
+    sessionStorage.removeItem('guest_refresh_token');
     localStorage.removeItem('token');
     localStorage.removeItem('refresh_token');
     setToken(null);

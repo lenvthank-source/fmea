@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box, Typography, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Alert, FormControlLabel, Chip, IconButton, Menu, MenuItem, ListItemIcon, ListItemText,
@@ -12,7 +12,8 @@ import {
   CheckCircle as CheckCircleIcon, Security as ShieldCheckIcon, TrendingUp as TrendingUpIcon,
   Search as SearchIcon, Bolt as BoltIcon, HistoryEdu as AuditIcon,
   Layers as LayersIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  HelpOutlined as GuideIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,7 @@ import { DashboardSkeleton } from '../../components/Layout/DashboardSkeleton';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
 import { unwrapPaginated } from '../../lib/pagination';
+import { FmeaTutorialGuide } from './components/FmeaTutorialGuide';
 
 interface Project {
   id: string;
@@ -31,6 +33,8 @@ interface Project {
   modelYear?: string;
   status: string;
   createdAt: string;
+  uiSettings?: any;
+  creator?: { id: string; name: string; email: string; isGuest?: boolean };
   documentTypes?: string[];
   organisationName?: string;
   organisationCode?: string;
@@ -562,49 +566,147 @@ export const ProjectList: React.FC = () => {
 
   // Phase filter for fast filtering
   const [phaseFilter, setPhaseFilter] = useState<string>('All');
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
-  // Simulated recent quality activities for the Shadcn Recent Activity widget
-  const recentActivities = [
-    { id: '1', initials: 'JD', color: '#09090b', title: 'Rev C Revision Locked & Signed', sub: 'Drive Unit Housing · 21 CFR Part 11', time: '2h ago' },
-    { id: '2', initials: 'MK', color: '#ef4444', title: 'High-AP Action ACT-102 Verified', sub: 'Bearing Seat Press-Fit · Evidence in R2', time: '5h ago' },
-    { id: '3', initials: 'SL', color: '#10b981', title: 'PFD ↔ PFMEA Synchronized', sub: 'Transducer Torque Station · 0 Orphans', time: '1d ago' },
-    { id: '4', initials: 'AK', color: '#816729', title: 'Control Plan Rev B Generated', sub: 'Laser Weld Bracket Assembly', time: '2d ago' },
-    { id: '5', initials: 'TC', color: '#6366f1', title: 'Safe Launch Checklist Completed', sub: 'EOL Vision Inspection Gate', time: '3d ago' },
-  ];
+  // Auto-open tutorial on first visit for guests
+  useEffect(() => {
+    if (user?.isGuest && sessionStorage.getItem('fmea_tutorial_dismissed') !== 'true') {
+      setTutorialOpen(true);
+    }
+  }, [user]);
+
+  // Fetch genuine audit events from backend /api/v1/audit-logs/recent
+  const fetchRecentActivities = useCallback(async () => {
+    if (!token) return;
+    try {
+      setActivitiesLoading(true);
+      const res = await fetch(`${API_BASE_URL}/audit-logs/recent?limit=6`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecentActivities(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recent audit activity:', err);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchRecentActivities();
+  }, [fetchRecentActivities]);
+
+  const formatRelativeTime = (timeStr?: string) => {
+    if (!timeStr) return '';
+    try {
+      const date = new Date(timeStr);
+      if (isNaN(date.getTime())) return timeStr;
+      const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffSec < 60) return 'Just now';
+      if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+      return `${Math.floor(diffSec / 86400)}d ago`;
+    } catch {
+      return timeStr;
+    }
+  };
+
+  const guestCustomProjects = projects.filter(
+    (p) => !p.uiSettings?.isDemo && p.id !== 'c439cfbe-548a-4e25-a37c-0194652b8526' && p.status !== 'archived'
+  );
+  const isGuestLimitReached = !!user?.isGuest && guestCustomProjects.length >= 1;
 
   return (
-    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1.5, sm: 2.5 } }}>
-      {/* ── Shadcn Top Dashboard Header ───────────────────────── */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+    <Box sx={{ maxWidth: '1440px', mx: 'auto', px: { xs: 1, sm: 2, md: 3 }, py: { xs: 1, sm: 1.5 } }}>
+      {/* ── Guest 24-Hour Notice Banner ───────────────────────── */}
+      {user?.isGuest && (
+        <Box sx={{ mb: 1.5, p: 1, px: 2, borderRadius: '8px', bgcolor: '#fffbeb', border: '1px solid #fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Chip label="24h Sandbox" size="small" sx={{ bgcolor: '#d97706', color: '#ffffff', fontWeight: 700, fontSize: '0.675rem', height: 20 }} />
+            <Typography variant="body2" sx={{ color: '#92400e', fontSize: '0.8rem', fontWeight: 500 }}>
+              Browser session active • Exploring reference demo project. Guest accounts can create <strong>1 custom project</strong> (24h lifespan).
+            </Typography>
+          </Box>
+          <Button size="small" onClick={() => setTutorialOpen(true)} sx={{ color: '#b45309', fontWeight: 700, fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
+            Open 7-Step Guide →
+          </Button>
+        </Box>
+      )}
+
+      {/* ── Admin Management Mode Banner ──────────────────────── */}
+      {user?.roles?.includes('Admin') && (
+        <Box sx={{ mb: 1.5, p: 1, px: 2, borderRadius: '8px', bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+            <Chip label="Admin Control" size="small" sx={{ bgcolor: '#16a34a', color: '#ffffff', fontWeight: 700, fontSize: '0.675rem', height: 20 }} />
+            <Typography variant="body2" sx={{ color: '#166534', fontSize: '0.8rem', fontWeight: 500 }}>
+              Viewing all projects platform-wide. Unilateral project deletion & guest archive inspection active.
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {/* ── Compact Top Dashboard Header ───────────────────────── */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, mb: 1.5 }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
-            Dashboard
+          <Typography variant="h5" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.025em', color: '#09090b', fontSize: { xs: '1.25rem', sm: '1.45rem' } }}>
+            Quality Workspace Dashboard
           </Typography>
-          <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
-            Manage manufacturing quality programs, AIAG-VDA risk matrices, and 21 CFR Part 11 control plans.
+          <Typography variant="caption" sx={{ color: '#71717a', fontWeight: 500, display: 'block' }}>
+            AIAG-VDA 2019 risk matrices, 21 CFR Part 11 control plans, and real-time audit trails.
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon fontSize="small" />} 
-            onClick={handleOpen}
-            sx={{ 
-              borderRadius: '8px', 
-              height: 38, 
-              px: 2.5, 
-              fontWeight: 600, 
-              textTransform: 'none', 
-              fontSize: '0.825rem',
-              bgcolor: '#09090b',
-              color: '#ffffff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<GuideIcon fontSize="small" sx={{ color: '#0284c7' }} />}
+            onClick={() => setTutorialOpen(true)}
+            sx={{
+              borderRadius: '7px',
+              height: 34,
+              px: 1.75,
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '0.8rem',
+              borderColor: '#e2e8f0',
+              color: '#0f172a',
+              bgcolor: '#ffffff',
+              '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
             }}
           >
-            Create Project
+            7-Step Guide
           </Button>
+
+          <Tooltip title={isGuestLimitReached ? 'Guest sandbox is limited to 1 custom project (24h lifespan). Delete your project to create another.' : ''}>
+            <span>
+              <Button 
+                variant="contained" 
+                size="small"
+                disabled={isGuestLimitReached}
+                startIcon={<AddIcon fontSize="small" />} 
+                onClick={handleOpen}
+                sx={{ 
+                  borderRadius: '7px', 
+                  height: 34, 
+                  px: 2, 
+                  fontWeight: 600, 
+                  textTransform: 'none', 
+                  fontSize: '0.8rem',
+                  bgcolor: '#09090b',
+                  color: '#ffffff',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                  '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
+                }}
+              >
+                Create Project
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
       </Box>
 
@@ -657,20 +759,20 @@ export const ProjectList: React.FC = () => {
         const safeLaunchCount = projects.filter(p => p.documentTypes?.includes('Safe Launch')).length;
 
         return (
-          <Grid container spacing={2} sx={{ mb: 3.5 }}>
+          <Grid container spacing={1.5} sx={{ mb: 2 }}>
             {/* KPI 1: Active Programs */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper sx={{ p: 2.5, borderRadius: '12px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { borderColor: '#d4d4d8' } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.75rem' }}>
+              <Paper sx={{ p: 1.5, borderRadius: '9px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.725rem' }}>
                     Active Programs
                   </Typography>
-                  <LayersIcon sx={{ fontSize: 18, color: '#71717a' }} />
+                  <LayersIcon sx={{ fontSize: 16, color: '#71717a' }} />
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.25, fontSize: '1.25rem' }}>
                   {projects.length}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.75rem' }}>
+                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.7rem' }}>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>↑ +2</span> this quarter · 100% tenant-isolated
                 </Typography>
               </Paper>
@@ -678,17 +780,17 @@ export const ProjectList: React.FC = () => {
 
             {/* KPI 2: Production Phase */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper sx={{ p: 2.5, borderRadius: '12px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { borderColor: '#d4d4d8' } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.75rem' }}>
+              <Paper sx={{ p: 1.5, borderRadius: '9px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.725rem' }}>
                     Production Phase
                   </Typography>
-                  <ShieldCheckIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                  <ShieldCheckIcon sx={{ fontSize: 16, color: '#10b981' }} />
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.25, fontSize: '1.25rem' }}>
                   {productionCount}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.75rem' }}>
+                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.7rem' }}>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>● Active</span> Serialized production lines
                 </Typography>
               </Paper>
@@ -696,17 +798,17 @@ export const ProjectList: React.FC = () => {
 
             {/* KPI 3: Pre-Production & Prototypes */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper sx={{ p: 2.5, borderRadius: '12px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { borderColor: '#d4d4d8' } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.75rem' }}>
+              <Paper sx={{ p: 1.5, borderRadius: '9px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.725rem' }}>
                     Prototypes & Launches
                   </Typography>
-                  <TrendingUpIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+                  <TrendingUpIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.25, fontSize: '1.25rem' }}>
                   {prototypeCount + preLaunchCount + safeLaunchCount}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.75rem' }}>
+                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.7rem' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚡ Gated</span> Safe Launch verification active
                 </Typography>
               </Paper>
@@ -714,17 +816,17 @@ export const ProjectList: React.FC = () => {
 
             {/* KPI 4: Audit Readiness */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper sx={{ p: 2.5, borderRadius: '12px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s', '&:hover': { borderColor: '#d4d4d8' } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.75rem' }}>
+              <Paper sx={{ p: 1.5, borderRadius: '9px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#71717a', fontSize: '0.725rem' }}>
                     Audit Readiness
                   </Typography>
-                  <CheckCircleIcon sx={{ fontSize: 18, color: '#0284c7' }} />
+                  <CheckCircleIcon sx={{ fontSize: 16, color: '#0284c7' }} />
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', letterSpacing: '-0.02em', my: 0.25, fontSize: '1.25rem' }}>
                   99.8%
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.75rem' }}>
+                <Typography variant="caption" sx={{ color: '#71717a', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.7rem' }}>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Compliant</span> 21 CFR Part 11 signatures
                 </Typography>
               </Paper>
@@ -880,40 +982,75 @@ export const ProjectList: React.FC = () => {
                         docBorder = '#bfdbfe';
                       }
 
+                      const isDemoProj = project.uiSettings?.isDemo || project.id === 'c439cfbe-548a-4e25-a37c-0194652b8526';
+                      const isGuestProj = project.uiSettings?.isGuestProject;
+
                       return (
-                        <Grid size={{ xs: 12, sm: 6 }} key={project.id}>
+                        <Grid size={activeTab === 'archived' ? { xs: 12, sm: 6, md: 4, xl: 3 } : { xs: 12, sm: 6, xl: 4 }} key={project.id}>
                           <Card 
                             sx={{ 
                               height: '100%', 
                               display: 'flex', 
                               flexDirection: 'column', 
-                              borderRadius: '12px', 
-                              border: '1px solid #e4e4e7',
+                              borderRadius: '10px', 
+                              border: isDemoProj ? '1.5px solid #0284c7' : '1px solid #e4e4e7',
                               boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                               transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                               bgcolor: '#ffffff',
                               '&:hover': {
                                 transform: 'translateY(-2px)',
-                                boxShadow: '0 8px 24px -8px rgba(0,0,0,0.12)',
-                                borderColor: '#a1a1aa',
+                                boxShadow: '0 6px 18px -4px rgba(0,0,0,0.1)',
+                                borderColor: isDemoProj ? '#0284c7' : '#a1a1aa',
                               }
                             }}
                           >
-                            <CardContent sx={{ p: 2.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                                <span 
-                                  style={{ 
-                                    padding: '2px 8px', 
-                                    borderRadius: '9999px', 
-                                    fontSize: '0.7rem', 
-                                    fontWeight: 700, 
-                                    backgroundColor: docBadgeBg, 
-                                    color: docBadgeColor,
-                                    border: `1px solid ${docBorder}`
-                                  }}
-                                >
-                                  {docType}
-                                </span>
+                            <CardContent sx={{ p: 1.75, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25, flexWrap: 'wrap', gap: 0.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                  <span 
+                                    style={{ 
+                                      padding: '2px 7px', 
+                                      borderRadius: '9999px', 
+                                      fontSize: '0.675rem', 
+                                      fontWeight: 700, 
+                                      backgroundColor: docBadgeBg, 
+                                      color: docBadgeColor,
+                                      border: `1px solid ${docBorder}`
+                                    }}
+                                  >
+                                    {docType}
+                                  </span>
+
+                                  {isDemoProj && (
+                                    <Chip
+                                      label="REFERENCE DEMO"
+                                      size="small"
+                                      sx={{
+                                        height: 18,
+                                        fontSize: '0.625rem',
+                                        fontWeight: 800,
+                                        bgcolor: '#e0f2fe',
+                                        color: '#0369a1',
+                                        border: '1px solid #bae6fd',
+                                      }}
+                                    />
+                                  )}
+
+                                  {isGuestProj && (
+                                    <Chip
+                                      label="24h SANDBOX"
+                                      size="small"
+                                      sx={{
+                                        height: 18,
+                                        fontSize: '0.625rem',
+                                        fontWeight: 800,
+                                        bgcolor: '#fef3c7',
+                                        color: '#b45309',
+                                        border: '1px solid #fde68a',
+                                      }}
+                                    />
+                                  )}
+                                </Box>
                                 <IconButton 
                                   size="small" 
                                   onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuProjectId(project.id); }}
@@ -1109,46 +1246,63 @@ export const ProjectList: React.FC = () => {
           {/* Right Column: Recent Activity & Quick Actions (Only in Overview) */}
           {activeTab !== 'archived' && (
             <Grid size={{ xs: 12, lg: 4 }}>
-              <Stack spacing={3}>
-                {/* Recent Quality Activity Card (Shadcn Recent Sales pattern) */}
-                <Paper sx={{ p: 3, borderRadius: '14px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                  <Box sx={{ mb: 2.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 750, color: '#09090b', letterSpacing: '-0.01em' }}>
-                      Recent Activity & Audits
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#71717a' }}>
-                      Latest locks, digital sign-offs, and corrective actions.
-                    </Typography>
+              <Stack spacing={2}>
+                {/* Recent Quality Activity Card (Live Real-Time Audit Feed) */}
+                <Paper sx={{ p: 2, borderRadius: '10px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                  <Box sx={{ mb: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 750, color: '#09090b', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                        Recent Activity & Audits
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#71717a', fontSize: '0.725rem' }}>
+                        Live electronic signatures, locks, and actions.
+                      </Typography>
+                    </Box>
+                    <Chip label="Live" size="small" sx={{ height: 18, fontSize: '0.625rem', bgcolor: '#ecfdf5', color: '#047857', fontWeight: 700 }} />
                   </Box>
 
-                  <Stack spacing={2.5}>
-                    {recentActivities.map((act) => (
-                      <Box key={act.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                        <Avatar sx={{ width: 34, height: 34, fontSize: '0.75rem', fontWeight: 700, bgcolor: act.color, color: '#ffffff' }}>
-                          {act.initials}
-                        </Avatar>
-                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 650, fontSize: '0.825rem', color: '#09090b', lineHeight: 1.3 }}>
-                            {act.title}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#71717a', display: 'block', fontSize: '0.75rem', mt: 0.25 }}>
-                            {act.sub}
+                  {activitiesLoading && recentActivities.length === 0 ? (
+                    <Box sx={{ py: 3, textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ color: '#71717a' }}>
+                        Streaming audit events...
+                      </Typography>
+                    </Box>
+                  ) : recentActivities.length === 0 ? (
+                    <Box sx={{ py: 2, textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ color: '#a1a1aa' }}>
+                        No recent audit log entries recorded.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Stack spacing={1.5}>
+                      {recentActivities.map((act) => (
+                        <Box key={act.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+                          <Avatar sx={{ width: 28, height: 28, fontSize: '0.7rem', fontWeight: 700, bgcolor: act.color || '#09090b', color: '#ffffff' }}>
+                            {act.initials || 'QA'}
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 650, fontSize: '0.8rem', color: '#09090b', lineHeight: 1.25 }}>
+                              {act.title}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#71717a', display: 'block', fontSize: '0.725rem', mt: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {act.sub}
+                            </Typography>
+                          </Box>
+                          <Typography variant="caption" sx={{ color: '#a1a1aa', fontSize: '0.675rem', whiteSpace: 'nowrap', pt: 0.25 }}>
+                            {formatRelativeTime(act.time)}
                           </Typography>
                         </Box>
-                        <Typography variant="caption" sx={{ color: '#a1a1aa', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-                          {act.time}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
+                      ))}
+                    </Stack>
+                  )}
                 </Paper>
 
                 {/* Quick Quality Actions */}
-                <Paper sx={{ p: 3, borderRadius: '14px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 750, color: '#09090b', mb: 0.5 }}>
+                <Paper sx={{ p: 2, borderRadius: '10px', border: '1px solid #e4e4e7', bgcolor: '#ffffff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 750, color: '#09090b', mb: 0.25 }}>
                     Quick Shortcuts
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#71717a', display: 'block', mb: 2 }}>
+                  <Typography variant="caption" sx={{ color: '#71717a', display: 'block', mb: 1.5, fontSize: '0.725rem' }}>
                     Fast actions for quality engineering CFT leads.
                   </Typography>
 
@@ -2197,6 +2351,16 @@ export const ProjectList: React.FC = () => {
           )}
         </DialogActions>
       </Dialog>
+
+      {/* ── 7-Step Interactive Guided Tutorial Walkthrough ──────── */}
+      <FmeaTutorialGuide
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        onSkipAll={() => {
+          sessionStorage.setItem('fmea_tutorial_dismissed', 'true');
+          setTutorialOpen(false);
+        }}
+      />
     </Box>
   );
 };

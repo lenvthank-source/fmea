@@ -1625,8 +1625,8 @@ export const PfmeaWorkspace: React.FC = () => {
           <Table aria-label="PFMEA rows grid" size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
-                <TableCell sx={{ minWidth: 45, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 3, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>#</TableCell>
-                <TableCell sx={{ minWidth: 180, fontWeight: 700, position: 'sticky', left: 45, bgcolor: '#fafafa', zIndex: 3, borderRight: '2px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Structure / Item</TableCell>
+                <TableCell sx={{ minWidth: 50, width: 50, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 4, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>#</TableCell>
+                <TableCell sx={{ minWidth: 200, width: 200, fontWeight: 700, position: 'sticky', left: 50, bgcolor: '#fafafa', zIndex: 4, borderRight: '2px solid #cbd5e1', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a', boxShadow: '4px 0 8px -2px rgba(0,0,0,0.08)' }}>Structure / Item</TableCell>
                 {/* Work Element (4M) removed to match Excel export */}
                 <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Function / Focus Element</TableCell>
                 <TableCell sx={{ minWidth: 180, fontWeight: 700, bgcolor: '#fafafa', borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Failure Mode</TableCell>
@@ -1708,14 +1708,14 @@ export const PfmeaWorkspace: React.FC = () => {
                           <>
                             <TableCell
                               rowSpan={subRowCount}
-                              sx={{ fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#ffffff', zIndex: 1, borderRight: '1px solid #e4e4e7', fontSize: '0.8rem', color: '#09090b', verticalAlign: 'top', pt: 1.5 }}
+                              sx={{ minWidth: 50, width: 50, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#ffffff', zIndex: 2, borderRight: '1px solid #e4e4e7', fontSize: '0.8rem', color: '#09090b', verticalAlign: 'top', pt: 1.5 }}
                             >
                               {row.rowNumber}
                             </TableCell>
 
                             <TableCell
                               rowSpan={subRowCount}
-                              sx={{ position: 'sticky', left: 45, bgcolor: '#ffffff', zIndex: 1, borderRight: '2px solid #e4e4e7', verticalAlign: 'top', pt: 1.5 }}
+                              sx={{ minWidth: 200, width: 200, position: 'sticky', left: 50, bgcolor: '#ffffff', zIndex: 2, borderRight: '2px solid #cbd5e1', boxShadow: '4px 0 8px -2px rgba(0,0,0,0.08)', verticalAlign: 'top', pt: 1.5 }}
                             >
                               <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#09090b' }}>
                                 {row.processStep?.stepNumber ? `${row.processStep.stepNumber}: ` : (step?.stepNumber ? `${step.stepNumber}: ` : '')}
@@ -1961,50 +1961,33 @@ export const PfmeaWorkspace: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page-1}
-          onPageChange={(_,newPage)=> setPage(newPage+1)}
-          rowsPerPage={limit}
-          onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
-          rowsPerPageOptions={[10,25,50]}
-        />
-
-        {/* Floating Sleek Horizontal Scroll Controller */}
-        {(canScrollLeft || canScrollRight) && (
-          <Box
-            sx={{
-              position: 'sticky',
-              bottom: 16,
-              zIndex: 20,
-              display: 'flex',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-              mt: -6,
-              mb: 1,
-            }}
-          >
-            <Paper
-              elevation={4}
+        {/* Docked Footer Toolbar: Pan Grid Controller + Table Pagination */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            mt: 1.5,
+            mb: 1,
+            p: 1,
+            bgcolor: '#ffffff',
+            borderRadius: '10px',
+            border: '1px solid #e4e4e7',
+          }}
+        >
+          {(canScrollLeft || canScrollRight) ? (
+            <Box
               sx={{
-                pointerEvents: 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1.5,
-                px: 2,
-                py: 0.75,
-                borderRadius: '9999px',
-                background: 'rgba(255, 255, 255, 0.88)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(203, 213, 225, 0.85)',
-                boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  background: 'rgba(255, 255, 255, 0.96)',
-                  boxShadow: '0 15px 30px -5px rgba(15, 23, 42, 0.2)',
-                },
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '8px',
+                bgcolor: '#f8fafc',
+                border: '1px solid #e2e8f0',
               }}
             >
               <Tooltip title="Scroll Left">
@@ -2014,8 +1997,10 @@ export const PfmeaWorkspace: React.FC = () => {
                     onClick={() => handleScrollBy(-350)}
                     disabled={!canScrollLeft}
                     sx={{
-                      bgcolor: canScrollLeft ? '#F1F5F9' : 'transparent',
-                      '&:hover': { bgcolor: '#E2E8F0' },
+                      bgcolor: canScrollLeft ? '#ffffff' : 'transparent',
+                      border: '1px solid #e2e8f0',
+                      p: 0.5,
+                      '&:hover': { bgcolor: '#f1f5f9' },
                     }}
                   >
                     <LeftIcon fontSize="small" />
@@ -2023,7 +2008,7 @@ export const PfmeaWorkspace: React.FC = () => {
                 </span>
               </Tooltip>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 180 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 160 }}>
                 <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
                   Pan Grid
                 </Typography>
@@ -2039,7 +2024,6 @@ export const PfmeaWorkspace: React.FC = () => {
                       width: 12,
                       height: 12,
                       transition: '0.2s',
-                      '&:before': { boxShadow: '0 2px 8px rgba(0,0,0,0.16)' },
                     },
                   }}
                 />
@@ -2055,8 +2039,10 @@ export const PfmeaWorkspace: React.FC = () => {
                     onClick={() => handleScrollBy(350)}
                     disabled={!canScrollRight}
                     sx={{
-                      bgcolor: canScrollRight ? '#F1F5F9' : 'transparent',
-                      '&:hover': { bgcolor: '#E2E8F0' },
+                      bgcolor: canScrollRight ? '#ffffff' : 'transparent',
+                      border: '1px solid #e2e8f0',
+                      p: 0.5,
+                      '&:hover': { bgcolor: '#f1f5f9' },
                     }}
                   >
                     <RightIcon fontSize="small" />
@@ -2065,29 +2051,40 @@ export const PfmeaWorkspace: React.FC = () => {
               </Tooltip>
 
               {/* Quick Jump Anchors */}
-              <Stack direction="row" spacing={0.5} sx={{ borderLeft: '1px solid #E2E8F0', pl: 1 }}>
+              <Stack direction="row" spacing={0.5} sx={{ borderLeft: '1px solid #cbd5e1', pl: 1 }}>
                 <Chip
                   label="Steps"
                   size="small"
                   onClick={() => handleScrollToPercent(0)}
-                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress < 25 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress < 25 ? '#1D4ED8' : '#64748B' }}
+                  sx={{ height: 20, fontSize: '0.675rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress < 25 ? '#eff6ff' : '#ffffff', color: scrollProgress < 25 ? '#1d4ed8' : '#64748b', border: '1px solid #e2e8f0' }}
                 />
                 <Chip
                   label="SOD Risk"
                   size="small"
                   onClick={() => handleScrollToPercent(35)}
-                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 25 && scrollProgress < 65 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress >= 25 && scrollProgress < 65 ? '#1D4ED8' : '#64748B' }}
+                  sx={{ height: 20, fontSize: '0.675rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 25 && scrollProgress < 65 ? '#eff6ff' : '#ffffff', color: scrollProgress >= 25 && scrollProgress < 65 ? '#1d4ed8' : '#64748b', border: '1px solid #e2e8f0' }}
                 />
                 <Chip
                   label="Actions"
                   size="small"
                   onClick={() => handleScrollToPercent(80)}
-                  sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 65 ? '#EFF6FF' : '#F8FAFC', color: scrollProgress >= 65 ? '#1D4ED8' : '#64748B' }}
+                  sx={{ height: 20, fontSize: '0.675rem', fontWeight: 600, cursor: 'pointer', bgcolor: scrollProgress >= 65 ? '#eff6ff' : '#ffffff', color: scrollProgress >= 65 ? '#1d4ed8' : '#64748b', border: '1px solid #e2e8f0' }}
                 />
               </Stack>
-            </Paper>
-          </Box>
-        )}
+            </Box>
+          ) : <Box />}
+
+          <TablePagination
+            component="div"
+            count={total}
+            page={page-1}
+            onPageChange={(_,newPage)=> setPage(newPage+1)}
+            rowsPerPage={limit}
+            onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
+            rowsPerPageOptions={[10,25,50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
         </>
       ) : (
         /* Func/Fail Chains View */

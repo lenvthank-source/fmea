@@ -158,98 +158,100 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
     }}>
       {/* Header bar always visible */}
       <Box sx={{
-        px: 3,
-        py: 1.5,
+        px: 2.5,
+        py: 1,
         bgcolor: '#f8fafc',
         borderBottom: '1px solid #e2e8f0',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant={docType === 'PFD' ? "h6" : "subtitle1"} sx={{ fontWeight: 700, color: 'primary.main', fontSize: docType === 'PFD' ? '1.25rem' : '1.05rem' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.95rem' }}>
             {getDocTypeName()}
           </Typography>
-          <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto', bgcolor: 'divider' }} />
-          <Typography sx={{ fontWeight: 600, fontSize: docType === 'PFD' ? '0.95rem' : '0.88rem', color: 'text.secondary' }}>
+          <Divider orientation="vertical" flexItem sx={{ height: 14, my: 'auto', bgcolor: 'divider' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.8125rem', color: 'text.secondary' }}>
             Part: {project.partName || '—'}
           </Typography>
-          <Typography sx={{ fontSize: docType === 'PFD' ? '0.95rem' : '0.88rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
             • Rev: {project.revisionNumber || '1.0'}
           </Typography>
-          <Typography sx={{ fontSize: docType === 'PFD' ? '0.95rem' : '0.88rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
             • Cust: {project.customer || '—'}
           </Typography>
-          <Typography sx={{ fontSize: docType === 'PFD' ? '0.95rem' : '0.88rem', color: 'text.secondary' }}>
+          <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
             • Part No: {project.orgPartNumber || '—'}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box 
+          onClick={() => setExpanded(!expanded)}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', userSelect: 'none' }}
+        >
           <Chip
             label={statusProps.label}
             size="small"
             sx={statusProps.sx}
           />
-          <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto', bgcolor: '#e4e4e7' }} />
-          <Typography sx={{ fontWeight: 600, fontSize: '0.825rem', color: '#71717a' }}>
+          <Divider orientation="vertical" flexItem sx={{ height: 14, my: 'auto', bgcolor: '#e4e4e7' }} />
+          <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', color: '#71717a' }}>
             {expanded ? 'Hide Details' : 'View Full Header'}
           </Typography>
           <IconButton 
-            onClick={() => setExpanded(!expanded)} 
             size="small"
-            sx={{ border: '1px solid #e4e4e7', borderRadius: '6px', p: 0.5 }}
+            sx={{ border: '1px solid #e4e4e7', borderRadius: '6px', p: 0.25 }}
           >
-            {expanded ? <ExpandLessIcon sx={{ fontSize: '1rem' }} /> : <ExpandMoreIcon sx={{ fontSize: '1rem' }} />}
+            {expanded ? <ExpandLessIcon sx={{ fontSize: '0.9rem' }} /> : <ExpandMoreIcon sx={{ fontSize: '0.9rem' }} />}
           </IconButton>
         </Box>
       </Box>
 
       {/* Expanded Grid */}
       <Collapse in={expanded}>
-        <CardContent sx={{ px: 3, py: 2.5 }}>
-          <Grid container spacing={3} sx={{ fontSize: '0.85rem' }}>
+        <CardContent sx={{ px: 2.5, py: 1.5 }}>
+          <Grid container spacing={1.5} sx={{ fontSize: '0.8125rem' }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Organisation Name</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.organisationName || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Organisation Name</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.organisationName || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Manufacturing Location</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.organisationPlant || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Manufacturing Location</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.organisationPlant || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Customer Name</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.customer || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Customer Name</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.customer || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Assy. Line No.</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.assemblyLineNumber || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Assy. Line No.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.assemblyLineNumber || '—'}</Typography>
             </Grid>
 
             {/* Row 2 */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Subject (Part Name)</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.partName || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Subject (Part Name)</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.partName || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Document Number</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{getDerivedDocNumber()}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Document Number</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{getDerivedDocNumber()}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Dwg No.</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.dwgNumber || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Dwg No.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.dwgNumber || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Dwg Rev No / Date.</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.dwgRevNoAndDate || (project.drawingRevDate ? formatDate(project.drawingRevDate) : '—')}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Dwg Rev No / Date.</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.dwgRevNoAndDate || (project.drawingRevDate ? formatDate(project.drawingRevDate) : '—')}</Typography>
             </Grid>
 
             {/* Col 3 */}
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Concerned Key Contact</Typography>
-              <Typography sx={{ fontWeight: 600, mt: 0.5, fontSize: '0.98rem' }}>{project.keyContact || '—'}</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Concerned Key Contact</Typography>
+              <Typography sx={{ fontWeight: 600, mt: 0.25, fontSize: '0.85rem' }}>{project.keyContact || '—'}</Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Status</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Status</Typography>
               <Chip
                 label={statusProps.label}
                 size="small"
@@ -257,12 +259,12 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 12, md: 4 }}>
-              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.90rem' }}>Cross-Functional Team (CFT)</Typography>
+              <Typography color="text.secondary" sx={{ display: 'block', fontWeight: 600, fontSize: '0.75rem' }}>Cross-Functional Team (CFT)</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                 {project.cftMembers && project.cftMembers.map((member: string) => (
-                  <Chip key={member} label={member} size="small" sx={{ height: 22, fontSize: '0.80rem' }} />
+                  <Chip key={member} label={member} size="small" sx={{ height: 20, fontSize: '0.75rem' }} />
                 ))}
-                {(!project.cftMembers || project.cftMembers.length === 0) && <Typography sx={{ fontStyle: 'italic', color: 'text.secondary', fontSize: '0.95rem' }}>None assigned</Typography>}
+                {(!project.cftMembers || project.cftMembers.length === 0) && <Typography sx={{ fontStyle: 'italic', color: 'text.secondary', fontSize: '0.85rem' }}>None assigned</Typography>}
               </Box>
             </Grid>
           </Grid>

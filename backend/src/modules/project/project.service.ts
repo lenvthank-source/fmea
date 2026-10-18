@@ -19,35 +19,123 @@ export class ProjectService {
     private auditLogService: AuditLogService,
   ) {}
 
-  async findAll(tenantId: string, status?: string, page?: number, limit?: number, userId?: string, search?: string) {
+  private async autoArchiveExpiredGuestProjects(tenantId: string) {
+    try {
+      const cutOff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const expiredProjects = await this.prisma.project.findMany({
+        where: {
+          tenantId,
+          status: { not: 'archived' },
+          createdAt: { lt: cutOff },
+          creator: { isGuest: true },
+        },
+        include: { creator: true },
+      });
+
+      for (const p of expiredProjects) {
+        const creatorName = p.creator?.name || 'Guest';
+        const formattedDate = p.createdAt.toISOString().replace('T', ' ').substring(0, 16);
+        const archivedName = `[Guest Archive - ${creatorName}] ${p.name || p.partName || 'Project'} (${formattedDate})`;
+        const currentUi = (p.uiSettings as Record<string, any>) || {};
+
+        await this.prisma.project.update({
+          where: { id: p.id },
+          data: {
+            name: archivedName,
+            status: 'archived',
+            uiSettings: {
+              ...currentUi,
+              isGuestArchive: true,
+              archivedAt: new Date().toISOString(),
+              originalName: p.name || p.partName,
+            },
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Failed to auto-archive expired guest projects:', err);
+    }
+  }
+
+  async findAll(
+    tenantId: string,
+    status?: string,
+    page?: number,
+    limit?: number,
+    userId?: string,
+    search?: string,
+    isGuest = false,
+    isAdmin = false,
+  ) {
+    // 1. Auto-archive any guest projects older than 24 hours
+    await this.autoArchiveExpiredGuestProjects(tenantId);
+
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit;
-    const where: any = {
-      tenantId,
-      status: status || { not: 'archived' },
-    };
-    
-    // If userId is provided (for guest users), filter by createdById
-    if (userId) {
-      where.createdById = userId;
+    let where: any = {};
+
+    if (isAdmin) {
+      // Admin sees ALL projects in system or tenant, including archived guest projects
+      where = {
+        tenantId,
+        ...(status && status !== 'all' ? { status } : {}),
+      };
+    } else if (isGuest) {
+      // Guests can ONLY see:
+      // (a) The pre-filled reference demo project
+      // (b) At most 1 active project created by this guest within 24h
+      const cutOff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      where = {
+        tenantId,
+        OR: [
+          { id: 'c439cfbe-548a-4e25-a37c-0194652b8526' }, // Reference demo project
+          {
+            createdById: userId,
+            status: { not: 'archived' },
+            createdAt: { gte: cutOff },
+          },
+        ],
+      };
+    } else {
+      // Normal Quality Engineer
+      where = {
+        tenantId,
+        status: status || { not: 'archived' },
+      };
+      if (userId) {
+        where.createdById = userId;
+      }
     }
 
     if (search && search.trim()) {
       const s = search.trim();
-      where.OR = [
-        { partName: { contains: s, mode: 'insensitive' } },
-        { orgPartNumber: { contains: s, mode: 'insensitive' } },
-        { customer: { contains: s, mode: 'insensitive' } },
-        { name: { contains: s, mode: 'insensitive' } },
-      ];
+      const searchCondition = {
+        OR: [
+          { partName: { contains: s, mode: 'insensitive' } },
+          { orgPartNumber: { contains: s, mode: 'insensitive' } },
+          { customer: { contains: s, mode: 'insensitive' } },
+          { name: { contains: s, mode: 'insensitive' } },
+        ],
+      };
+      if (where.OR) {
+        where = {
+          AND: [where, searchCondition],
+        };
+      } else {
+        where.AND = [searchCondition];
+      }
     }
-    
+
     const [data, total] = await Promise.all([
       this.prisma.project.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
         take,
+        include: {
+          creator: { select: { id: true, name: true, email: true, isGuest: true } },
+          documents: { select: { id: true, type: true, status: true } },
+        },
       }),
       this.prisma.project.count({
         where,
@@ -56,38 +144,69 @@ export class ProjectService {
     return { data, total, page: page || 1, limit: limit || total };
   }
 
-  async findOne(tenantId: string, id: string, allowArchived = false) {
+  async findOne(tenantId: string, id: string, allowArchived = false, isAdmin = false) {
     if (!id || typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
       throw new NotFoundException('Project not found');
     }
 
     const project = await this.prisma.project.findUnique({
       where: { id },
+      include: {
+        creator: { select: { id: true, name: true, email: true, isGuest: true } },
+      },
     });
 
     if (!project) {
       throw new NotFoundException('Project not found');
     }
 
+    if (isAdmin) {
+      return project;
+    }
+
     if (project.status === 'archived' && !allowArchived) {
       throw new NotFoundException('Project not found');
     }
 
-    if (project.tenantId !== tenantId) {
+    // Allow viewing the reference demo project across tenants if needed
+    const isReferenceDemo = (project.uiSettings as any)?.isDemo || id === 'c439cfbe-548a-4e25-a37c-0194652b8526';
+    if (project.tenantId !== tenantId && !isReferenceDemo) {
       throw new ForbiddenException('You do not have access to this project');
     }
 
     return project;
   }
 
-  async create(tenantId: string, userId: string, dto: CreateProjectDto) {
+  async create(tenantId: string, userId: string, dto: CreateProjectDto, isGuest = false) {
     return this.prisma.$transaction(async (tx) => {
+      // If guest user, enforce 1 custom project limit
+      if (isGuest) {
+        const cutOff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const guestActiveCount = await tx.project.count({
+          where: {
+            createdById: userId,
+            status: { not: 'archived' },
+            createdAt: { gte: cutOff },
+          },
+        });
+        if (guestActiveCount >= 1) {
+          throw new BadRequestException(
+            'Guest accounts are limited to 1 custom project (24h lifespan). Please delete your project to create a new one.',
+          );
+        }
+      }
+
       // Preview cap: public-try limited to 10 projects (store requirement, Q5)
       const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
       if (tenant?.subdomain === 'public-try') {
         const cnt = await tx.project.count({ where: { tenantId } });
         if (cnt >= 10) throw new BadRequestException('Preview limited to 10 projects — contact sales for enterprise');
       }
+
+      const expiresAt = isGuest ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : null;
+      const initialUi = dto.uiSettings ? (typeof dto.uiSettings === 'string' ? JSON.parse(dto.uiSettings) : dto.uiSettings) : {};
+      const uiSettings = isGuest ? { ...initialUi, isGuestProject: true, expiresAt } : initialUi;
+
       // 1. Create the project
       const project = await tx.project.create({
         data: {
@@ -100,6 +219,7 @@ export class ProjectService {
           productFamilyId: dto.productFamilyId,
           modelYear: dto.modelYear,
           status: 'active',
+          uiSettings,
 
           organisationName: dto.organisationName,
           organisationCode: dto.organisationCode,
@@ -710,7 +830,15 @@ async replicate(
     });
   }
 
-  async remove(tenantId: string, id: string) {
+  async remove(tenantId: string, id: string, isAdmin = false) {
+    if (!isAdmin && (id === 'c439cfbe-548a-4e25-a37c-0194652b8526')) {
+      throw new ForbiddenException('The reference demo project cannot be deleted.');
+    }
+    if (isAdmin) {
+      return this.prisma.project.delete({
+        where: { id },
+      });
+    }
     // Verify ownership first (allow deleting archived projects)
     await this.findOne(tenantId, id, true);
 
