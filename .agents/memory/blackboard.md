@@ -21,6 +21,12 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-18T07:28Z — Backend Container Security Remediation & v0.8.0 Release — orchestrator — completed — priority:1
+- owns: backend/package.json, backend/package-lock.json, versions/**
+- artifacts: [versions/v0.8.0.md]
+- depends_on: []
+> orchestrator → all-agents: Patched all 12 vulnerabilities (4 moderate, 6 high, 2 critical) flagged during backend container build across proxy-addr, handlebars, multer, fast-uri, brace-expansion, browserslist, and qs. Configured js-yaml override in backend/package.json to eliminate sprintf-js/argparse DoS. Verified npm audit reports 'found 0 vulnerabilities'. Bumped semver to v0.8.0.
+
 ## 2026-10-18T07:10Z — MVP Public Launch: Ergonomics, Real Activity, Guest 24h & 7-Step Tutorial — orchestrator — completed — priority:1
 - owns: backend/src/modules/audit/**, backend/src/modules/project/**, frontend/src/features/projects/**, frontend/src/features/auth/**, frontend/src/components/**, frontend/src/features/pfd/**, frontend/src/features/pfmea/**, frontend/src/features/control-plan/**
 - artifacts: [C:\Users\Palak\.gemini\antigravity\brain\408b102d-b73a-4ff7-be95-a235a863ce80\fmea_mvp_ergonomics_and_access_plan.md]

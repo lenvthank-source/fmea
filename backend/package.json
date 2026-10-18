@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "",
   "author": "",
   "private": true,
@@ -86,5 +86,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "overrides": {
+    "js-yaml": "^4.1.0"
   }
 }
