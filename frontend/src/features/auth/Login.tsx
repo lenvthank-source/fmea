@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useBackendReady } from '../../hooks/useBackendWarmup';
 import { SEO } from '../../components/SEO/SEO';
-import { ArrowRight, AlertTriangle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login, token, guestLogin } = useAuth();
@@ -15,10 +15,30 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [signInLoading, setSignInLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
-    if (token) navigate('/app/projects', { replace: true });
-  }, [token, navigate]);
+    if (token) {
+      navigate('/app/projects', { replace: true });
+      return;
+    }
+
+    const hasLoggedOut = sessionStorage.getItem('logged_out') === 'true';
+    if (!hasLoggedOut) {
+      // Direct Entry: automatically initialize guest session and open workspace right away!
+      guestLogin()
+        .then(() => {
+          navigate('/app/projects', { replace: true });
+        })
+        .catch((err) => {
+          console.error('Direct guest entry failed:', err);
+          setCheckingAccess(false);
+        });
+    } else {
+      // User explicitly logged out from dashboard — display the Administrator Sign In window
+      setCheckingAccess(false);
+    }
+  }, [token, navigate, guestLogin]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +46,7 @@ export const Login: React.FC = () => {
     setSignInLoading(true);
     try {
       await login(email, password, 'guest-tenant');
+      sessionStorage.removeItem('logged_out');
       navigate('/app/projects');
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
@@ -34,10 +55,11 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleGuestAccess = async () => {
+  const handleReturnToGuest = async () => {
     setError('');
     setGuestLoading(true);
     try {
+      sessionStorage.removeItem('logged_out');
       await guestLogin();
       navigate('/app/projects');
     } catch (err: any) {
@@ -47,11 +69,27 @@ export const Login: React.FC = () => {
     }
   };
 
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-tech-dots bg-[#FBFBFC] text-slate-900 font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-mono text-lg font-bold shadow-xs animate-pulse">
+            <span className="text-[#FF5500]">F</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>Opening Quality Workspace...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-tech-dots bg-[#FBFBFC] text-slate-900 font-sans antialiased">
       <SEO
-        title="Sign In — FMEApex | Quality Intelligence Workspace"
-        description="Sign in to your FMEApex workspace or launch the instant guest sandbox."
+        title="Admin Sign In — FMEApex | Quality Intelligence Workspace"
+        description="Corporate & Administrator sign-in gate for FMEApex quality platform."
         canonical="/login"
       />
 
@@ -74,14 +112,17 @@ export const Login: React.FC = () => {
           </div>
         </Link>
 
-        {/* Main Authentication Card */}
+        {/* Administrator Authentication Card */}
         <div className="w-full bg-white rounded-2xl border border-slate-200 p-7 sm:p-9 shadow-sm">
           <div className="text-center mb-6">
-            <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
-              Sign In to Workspace
+            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-700">
+              <Lock className="w-5 h-5 text-slate-800" />
+            </div>
+            <h1 className="text-[20px] font-bold text-slate-900 tracking-tight">
+              Corporate & Administrator Sign In
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Enter your plant credentials or launch an instant sandbox session.
+              Sign in with plant or administrative credentials to manage platform-wide quality programs.
             </p>
 
             {/* Live Backend Readiness Pill */}
@@ -104,69 +145,19 @@ export const Login: React.FC = () => {
             </div>
           )}
 
-          {/* Instant Guest Sandbox Access */}
-          <button
-            onClick={handleGuestAccess}
-            disabled={guestLoading || signInLoading}
-            className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-xs group"
-          >
-            {guestLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                <span>{isBackendReady ? 'Initializing Session...' : 'Waking Up Sandbox...'}</span>
-              </span>
-            ) : (
-              <>
-                <span className="text-[#FF5500]">⚡</span>
-                <span>Launch Free Guest Sandbox</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-slate-200 font-mono uppercase tracking-wider">
-                  24h Session
-                </span>
-              </>
-            )}
-          </button>
-
-          {/* 24-Hour Guest Lifespan Notice */}
-          <div className="mt-2.5 px-3 py-2 rounded-lg bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 flex items-start gap-2">
-            <span className="text-amber-600 font-bold shrink-0 mt-0.5">⏱</span>
-            <span className="leading-snug">
-              <strong>24-Hour Ephemeral Sandbox:</strong> You will access a fully pre-filled reference project and can create <strong>1 custom project</strong>. Custom projects and browser sessions automatically expire after 24 hours and are archived for admin review.
-            </span>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[10.5px] font-semibold font-mono uppercase tracking-wider text-slate-400">
-              or sign in to registered account
-            </span>
-            <div className="flex-1 h-px bg-slate-200" />
-          </div>
-
-          {/* Email / Password Form */}
-          <form onSubmit={handleSignIn} className="space-y-3.5">
+          {/* Secure Email / Password Form (CIA Triad: Confidentiality - No hardcoded or prefilled credentials) */}
+          <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold">
-                  Corporate / Admin Email
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('lenvthank@gmail.com');
-                    setPassword('Admin123!');
-                  }}
-                  className="text-[10.5px] text-[#FF5500] hover:underline font-mono"
-                >
-                  Fill Admin Credentials
-                </button>
-              </div>
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
+                Corporate / Admin Email
+              </label>
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="engineer@plant-oem.com"
+                placeholder="admin@plant-oem.com"
                 className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-900 transition-all"
               />
             </div>
@@ -178,6 +169,7 @@ export const Login: React.FC = () => {
               <input
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
@@ -188,21 +180,54 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={signInLoading || guestLoading}
-              className="w-full h-11 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-50 text-white text-sm font-semibold transition-all shadow-xs flex items-center justify-center gap-2 mt-2"
+              className="w-full h-11 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-50 text-white text-sm font-semibold transition-all shadow-xs flex items-center justify-center gap-2 mt-1"
             >
               {signInLoading ? (
                 <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Sign In to Plant Workspace</span>
+                  <span>Sign In as Administrator</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-[10px] font-semibold font-mono uppercase tracking-wider text-slate-400">
+              or continue without credentials
+            </span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          {/* Instant Guest Sandbox Access */}
+          <button
+            type="button"
+            onClick={handleReturnToGuest}
+            disabled={guestLoading || signInLoading}
+            className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-slate-200"
+          >
+            {guestLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-slate-400 border-t-slate-800 rounded-full animate-spin" />
+                <span>Launching Sandbox...</span>
+              </span>
+            ) : (
+              <>
+                <span className="text-[#FF5500]">⚡</span>
+                <span>Launch Free Guest Sandbox Instead</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-mono uppercase tracking-wider">
+                  24h
+                </span>
+              </>
+            )}
+          </button>
+
           {/* Compliance Tag */}
           <div className="mt-6 pt-4 border-t border-slate-100 text-center text-[11px] font-mono text-slate-400 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>21 CFR Part 11 Compliant</span>
             <span>•</span>
             <span>PostgreSQL RLS Protected</span>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calculateAP } from '../pfmea/utils/apCalculator';
+import { useAuth } from '../auth/AuthContext';
 import {
   Sparkles,
   Info,
@@ -102,12 +103,31 @@ const PRESETS: PresetScenario[] = [
 
 export const RiskCalculatorWidget: React.FC = () => {
   const navigate = useNavigate();
+  const { token, guestLogin } = useAuth();
+  const [launching, setLaunching] = useState(false);
 
   const [severity, setSeverity] = useState<number>(9);
   const [occurrence, setOccurrence] = useState<number>(4);
   const [detection, setDetection] = useState<number>(4);
   const [activePresetIndex, setActivePresetIndex] = useState<number>(0);
   const [showAiOptimized, setShowAiOptimized] = useState<boolean>(false);
+
+  const handleLaunch = async () => {
+    if (token) {
+      navigate('/app/projects');
+      return;
+    }
+    setLaunching(true);
+    try {
+      sessionStorage.removeItem('logged_out');
+      await guestLogin();
+      navigate('/app/projects');
+    } catch {
+      navigate('/app/projects');
+    } finally {
+      setLaunching(false);
+    }
+  };
 
   const ap = calculateAP(severity, occurrence, detection) || 'L';
   const rpn = severity * occurrence * detection;
@@ -465,10 +485,11 @@ export const RiskCalculatorWidget: React.FC = () => {
 
           {/* Launch CTA */}
           <button
-            onClick={() => navigate('/login')}
-            className="w-full py-3 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-all shadow-[0_4px_20px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2"
+            onClick={handleLaunch}
+            disabled={launching}
+            className="w-full py-3 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-[0_4px_20px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2"
           >
-            <span>Launch Guest Sandbox to Run Full PFMEA →</span>
+            <span>{launching ? 'Launching Sandbox...' : 'Launch Guest Sandbox to Run Full PFMEA →'}</span>
           </button>
         </div>
       </div>

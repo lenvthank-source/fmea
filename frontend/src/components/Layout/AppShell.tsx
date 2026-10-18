@@ -308,12 +308,21 @@ export const AppShell: React.FC = () => {
                 <MenuItem onClick={() => { handleClose(); navigate('/app/projects'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
                   Quality Projects
                 </MenuItem>
-                <MenuItem onClick={() => { handleClose(); navigate('/app/admin'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
-                  Admin Settings
-                </MenuItem>
+                {user.roles?.includes('Admin') && (
+                  <MenuItem onClick={() => { handleClose(); navigate('/app/admin'); }} sx={{ fontSize: '0.825rem', py: 0.75 }}>
+                    Admin Settings
+                  </MenuItem>
+                )}
                 <Divider sx={{ my: 0.5, borderColor: '#f4f4f5' }} />
-                <MenuItem onClick={() => { handleClose(); logout(); navigate('/'); }} sx={{ py: 0.75, fontWeight: 600, color: '#ef4444', fontSize: '0.825rem' }}>
-                  Sign Out
+                <MenuItem
+                  onClick={() => {
+                    handleClose();
+                    logout();
+                    navigate('/login');
+                  }}
+                  sx={{ py: 0.75, fontWeight: 600, color: '#ef4444', fontSize: '0.825rem' }}
+                >
+                  Sign Out / Switch to Admin
                 </MenuItem>
               </Menu>
             </Box>

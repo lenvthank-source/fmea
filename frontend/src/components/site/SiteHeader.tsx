@@ -2,14 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Activity, Menu, X, ArrowUpRight, Cpu, ChevronDown } from 'lucide-react';
 import { useBackendReady } from '../../hooks/useBackendWarmup';
+import { useAuth } from '../../features/auth/AuthContext';
 
 export const SiteHeader: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isBackendReady } = useBackendReady();
+  const { token, guestLogin } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [solutionsOpen, setSolutionsOpen] = useState(false);
+  const [launching, setLaunching] = useState(false);
+
+  const handleLaunchSandbox = async () => {
+    if (token) {
+      navigate('/app/projects');
+      return;
+    }
+    setLaunching(true);
+    try {
+      sessionStorage.removeItem('logged_out');
+      await guestLogin();
+      navigate('/app/projects');
+    } catch {
+      navigate('/app/projects');
+    } finally {
+      setLaunching(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 15);
@@ -174,10 +194,11 @@ export const SiteHeader: React.FC = () => {
             </div>
 
             <button
-              onClick={() => navigate('/login')}
-              className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[13px] font-semibold transition-all shadow-xs flex items-center gap-1.5"
+              onClick={handleLaunchSandbox}
+              disabled={launching}
+              className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-[13px] font-semibold transition-all shadow-xs flex items-center gap-1.5"
             >
-              <span>Launch Sandbox</span>
+              <span>{launching ? 'Launching...' : 'Launch Sandbox'}</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-[#FF5500]" />
             </button>
           </div>
@@ -185,10 +206,11 @@ export const SiteHeader: React.FC = () => {
           {/* Mobile Menu Hamburger */}
           <div className="flex lg:hidden items-center gap-2">
             <button
-              onClick={() => navigate('/login')}
-              className="sm:hidden h-8 px-3 rounded-lg bg-slate-900 text-white text-xs font-semibold"
+              onClick={handleLaunchSandbox}
+              disabled={launching}
+              className="sm:hidden h-8 px-3 rounded-lg bg-slate-900 disabled:opacity-50 text-white text-xs font-semibold"
             >
-              Sandbox
+              {launching ? '...' : 'Sandbox'}
             </button>
 
             <button
@@ -253,11 +275,12 @@ export const SiteHeader: React.FC = () => {
               <button
                 onClick={() => {
                   setOpen(false);
-                  navigate('/login');
+                  handleLaunchSandbox();
                 }}
-                className="w-full h-11 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+                disabled={launching}
+                className="w-full h-11 rounded-xl bg-[#0F172A] hover:bg-slate-800 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm"
               >
-                <span>Launch Free Guest Sandbox</span>
+                <span>{launching ? 'Launching Sandbox...' : 'Launch Free Guest Sandbox'}</span>
                 <ArrowUpRight className="w-4 h-4 text-[#FF5500]" />
               </button>
 

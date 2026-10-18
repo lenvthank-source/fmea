@@ -29,13 +29,26 @@ const LinkageMap = lazy(() => import('../features/linkage/LinkageMap'));
 const RepositoryPage = lazy(() => import('../features/repository/RepositoryPage'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isHydrating } = useAuth() as any;
+  const { token, isHydrating, guestLogin } = useAuth() as any;
+  const [autoLoggingIn, setAutoLoggingIn] = React.useState(false);
 
-  if (isHydrating) {
+  React.useEffect(() => {
+    if (!isHydrating && !token) {
+      const hasLoggedOut = sessionStorage.getItem('logged_out') === 'true';
+      if (!hasLoggedOut) {
+        setAutoLoggingIn(true);
+        guestLogin()
+          .catch(() => {})
+          .finally(() => setAutoLoggingIn(false));
+      }
+    }
+  }, [isHydrating, token, guestLogin]);
+
+  if (isHydrating || autoLoggingIn) {
     return <InitializingWorkspace />;
   }
 
-  // After hydration, token null means no session (72h expired or cleared)
+  // After hydration, token null means user has explicitly logged out
   if (!token) {
     return <Navigate to="/login" replace />;
   }

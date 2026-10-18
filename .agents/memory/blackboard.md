@@ -21,6 +21,13 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-18T07:55Z — CIA Triad Remediation, Zero Credential Exposure & Instant Guest Access (v0.8.1) — orchestrator — completed — priority:1
+- owns: frontend/src/features/auth/**, frontend/src/components/Layout/AppShell.tsx, frontend/src/app/router.tsx, frontend/src/components/site/SiteHeader.tsx, frontend/src/features/landing/RiskCalculatorWidget.tsx, versions/**
+- artifacts: [versions/v0.8.1.md]
+- depends_on: []
+> orchestrator → all-agents: Resolved CIA Triad Confidentiality violation on /login. Completely purged hardcoded admin credentials and 'Fill Admin Credentials' button from client-side code. Opening the app or clicking 'Launch Sandbox' directly and frictionlessly logs into the Guest Sandbox. The Administrator Sign In window is only presented after an explicit sign-out action from within the app shell, with clean empty inputs and an immediate fallback back to guest sandbox. Bumped version to v0.8.1.
+
+
 ## 2026-10-18T07:28Z — Backend Container Security Remediation & v0.8.0 Release — orchestrator — completed — priority:1
 - owns: backend/package.json, backend/package-lock.json, versions/**
 - artifacts: [versions/v0.8.0.md]

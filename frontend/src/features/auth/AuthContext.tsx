@@ -268,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     localStorage.setItem('token', accessToken);
     localStorage.setItem('refresh_token', data.refresh_token);
+    sessionStorage.removeItem('logged_out');
     
     setToken(accessToken);
     
@@ -310,6 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Store guest session exclusively in browser sessionStorage
     sessionStorage.setItem('guest_token', accessToken);
     sessionStorage.setItem('guest_refresh_token', data.refresh_token);
+    sessionStorage.removeItem('logged_out');
     localStorage.removeItem('token');
     localStorage.removeItem('refresh_token');
     
@@ -339,6 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     sessionStorage.removeItem('guest_token');
     sessionStorage.removeItem('guest_refresh_token');
+    sessionStorage.setItem('logged_out', 'true');
     localStorage.removeItem('token');
     localStorage.removeItem('refresh_token');
     setToken(null);
