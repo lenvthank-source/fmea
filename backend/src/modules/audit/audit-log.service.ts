@@ -33,7 +33,11 @@ export class AuditLogService {
     });
   }
 
-  async getEntriesForEntity(tenantId: string, entityType: string, entityId: string) {
+  async getEntriesForEntity(
+    tenantId: string,
+    entityType: string,
+    entityId: string,
+  ) {
     return this.prisma.auditLog.findMany({
       where: { tenantId, entityType, entityId },
       orderBy: { timestamp: 'desc' },
@@ -51,227 +55,249 @@ export class AuditLogService {
     });
   }
 
-  async getRecentActivity(tenantId: string, limit = 8) {
-    // Exclude internal maintenance noise (user session deletes, auth tokens)
+  async getRecentActivity(
+    tenantId: string,
+    limit = 8,
+    viewer: { sub: string; isGuest?: boolean; roles?: string[] },
+  ) {
+    const take = Number.isFinite(limit)
+      ? Math.max(1, Math.min(20, Math.floor(limit)))
+      : 8;
+    // Match the project-list visibility rules, not the shared guest tenant alone.
+    const isAdmin = viewer.roles?.includes('Admin');
+    const projects = await this.prisma.project.findMany({
+      where: {
+        tenantId,
+        status: { not: 'archived' },
+        ...(!isAdmin
+          ? viewer.isGuest
+            ? {
+                OR: [
+                  { id: 'c439cfbe-548a-4e25-a37c-0194652b8526' },
+                  {
+                    createdById: viewer.sub,
+                    createdAt: {
+                      gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                    },
+                  },
+                ],
+              }
+            : { createdById: viewer.sub }
+          : {}),
+      },
+      select: { id: true, name: true, partName: true },
+    });
+    if (!projects.length) return [];
+    const projectIds = projects.map((p) => p.id);
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    const documents = await this.prisma.document.findMany({
+      where: { tenantId, projectId: { in: projectIds } },
+      select: { id: true, projectId: true, type: true },
+    });
+    const revisions = await this.prisma.documentRevision.findMany({
+      where: { document: { tenantId, projectId: { in: projectIds } } },
+      select: { id: true, documentId: true, revisionNumber: true },
+    });
+    const revisionIds = revisions.map((r) => r.id);
+    const revisionScope = {
+      revision: { document: { tenantId, projectId: { in: projectIds } } },
+    };
+    const [steps, rows, controls, actions, functions] = await Promise.all([
+      this.prisma.processStep.findMany({
+        where: revisionScope,
+        select: { id: true, revisionId: true },
+      }),
+      this.prisma.pfmeaRow.findMany({
+        where: revisionScope,
+        select: { id: true, revisionId: true },
+      }),
+      this.prisma.controlPlanRow.findMany({
+        where: revisionScope,
+        select: { id: true, revisionId: true },
+      }),
+      this.prisma.action.findMany({
+        where: { tenantId, projectId: { in: projectIds } },
+        select: { id: true, projectId: true },
+      }),
+      this.prisma.structureFunction.findMany({
+        where: { tenantId, projectId: { in: projectIds } },
+        select: { id: true, projectId: true },
+      }),
+    ]);
+    const docMap = new Map(documents.map((d) => [d.id, d]));
+    const revMap = new Map(revisions.map((r) => [r.id, r]));
+    const entityProjects = new Map<string, string>();
+    const add = (type: string, id: string, projectId?: string) => {
+      if (projectId && projectMap.has(projectId))
+        entityProjects.set(`${type}:${id}`, projectId);
+    };
+    projects.forEach((p) => add('project', p.id, p.id));
+    documents.forEach((d) => add('document', d.id, d.projectId));
+    revisions.forEach((r) =>
+      add('document_revision', r.id, docMap.get(r.documentId)?.projectId),
+    );
+    for (const [type, entities] of [
+      ['process_step', steps],
+      ['pfmea_row', rows],
+      ['control_plan_row', controls],
+    ] as const) {
+      entities.forEach((e) =>
+        add(
+          type,
+          e.id,
+          docMap.get(revMap.get(e.revisionId)?.documentId || '')?.projectId,
+        ),
+      );
+    }
+    actions.forEach((a) => add('action', a.id, a.projectId));
+    functions.forEach((f) => add('structure_function', f.id, f.projectId));
+    const functionScope = { tenantId, projectId: { in: projectIds } };
+    const [failures, links, linkActions] = await Promise.all([
+      this.prisma.structureFailure.findMany({
+        where: { function: functionScope },
+        select: { id: true, function: { select: { projectId: true } } },
+      }),
+      this.prisma.failureLink.findMany({
+        where: { failureMode: { function: functionScope } },
+        select: {
+          id: true,
+          failureMode: {
+            select: { function: { select: { projectId: true } } },
+          },
+        },
+      }),
+      this.prisma.linkAction.findMany({
+        where: { failureLink: { failureMode: { function: functionScope } } },
+        select: {
+          id: true,
+          failureLink: {
+            select: {
+              failureMode: {
+                select: { function: { select: { projectId: true } } },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+    failures.forEach((f) =>
+      add('structure_failure', f.id, f.function.projectId),
+    );
+    links.forEach((l) =>
+      add('failure_link', l.id, l.failureMode.function.projectId),
+    );
+    linkActions.forEach((a) =>
+      add('link_action', a.id, a.failureLink.failureMode.function.projectId),
+    );
+    const scopedEntities = [...entityProjects.keys()].map((key) => {
+      const [entityType, entityId] = key.split(':');
+      return { entityType, entityId };
+    });
+    // Deleted entities can still be attributed by their immutable audit snapshot.
+    const snapshotScopes = [
+      ...projectIds.map((id) => ({ path: ['projectId'], equals: id })),
+      ...revisionIds.map((id) => ({ path: ['revisionId'], equals: id })),
+    ];
     const logs = await this.prisma.auditLog.findMany({
       where: {
         tenantId,
-        entityType: { notIn: ['user', 'session', 'token', 'auth'] },
+        entityType: {
+          in: [
+            'project',
+            'document',
+            'document_revision',
+            'process_step',
+            'pfmea_row',
+            'control_plan_row',
+            'action',
+            'structure_function',
+            'structure_failure',
+            'failure_link',
+            'link_action',
+          ],
+        },
+        OR: [
+          ...scopedEntities,
+          ...snapshotScopes.flatMap((scope) => [
+            { newValue: scope },
+            { oldValue: scope },
+          ]),
+        ],
       },
-      orderBy: { timestamp: 'desc' },
-      take: limit,
+      orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+      take,
     });
-
-    const userIds = Array.from(new Set(logs.map((l) => l.userId).filter(Boolean)));
     const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true, email: true },
+      where: { tenantId, id: { in: [...new Set(logs.map((l) => l.userId))] } },
+      select: { id: true, name: true },
     });
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    // Preload revisions for document_revision logs to resolve project and document names
-    const revIds = logs
-      .filter((l) => l.entityType === 'document_revision')
-      .map((l) => l.entityId);
-
-    const revisions =
-      revIds.length > 0
-        ? await this.prisma.documentRevision.findMany({
-            where: { id: { in: revIds } },
-            include: {
-              document: {
-                include: { project: true },
-              },
-            },
-          })
-        : [];
-    const revMap = new Map(revisions.map((r) => [r.id, r]));
-
-    const formatted: any[] = [];
-
-    for (const l of logs) {
-      const u = userMap.get(l.userId);
-      const name = u?.name || 'Quality Engineer';
-      const initials =
-        name
-          .split(' ')
-          .map((p) => p[0])
-          .join('')
-          .substring(0, 2)
-          .toUpperCase() || 'QE';
-
-      let title = `${l.action.toUpperCase()} on ${l.entityType.replace(/_/g, ' ')}`;
-      let sub = 'Audit Trail Verified • 21 CFR Part 11 Compliant';
-      let color = '#2563eb';
-
-      if (l.entityType === 'document_revision') {
-        const rev = revMap.get(l.entityId);
-        const rawType = rev?.document?.type || 'PFMEA';
-        const docType = rawType === 'CONTROL_PLAN' ? 'Control Plan' : rawType;
-        const projName =
-          rev?.document?.project?.partName || rev?.document?.project?.name || 'E vacuum pump';
-        const revVer = rev?.revisionNumber ? `v${rev.revisionNumber}` : 'v1.0';
-
-        if (l.action === 'create') {
-          title = `${docType} Revision ${revVer} Created`;
-          color = '#10b981';
-        } else if (l.action === 'approve') {
-          title = `${docType} Revision ${revVer} Approved & Locked`;
-          color = '#8b5cf6';
-        } else {
-          title = `${docType} Revision ${revVer} Updated`;
-          color = '#f59e0b';
-        }
-
-        if (l.newValue && typeof l.newValue === 'object' && (l.newValue as any).syncedRowsCount) {
-          sub = `Program: ${projName} • ${(l.newValue as any).syncedRowsCount} operations synchronized`;
-        } else {
-          sub = `Program: ${projName} • AIAG-VDA 2019 AP Gated`;
-        }
-      } else if (l.entityType === 'control_plan_row') {
-        title = l.action === 'delete' ? 'Control Plan Operation Re-sequenced' : 'Control Plan Control Method Updated';
-        color = '#0284c7';
-        sub = 'Program: E vacuum pump • Inspection frequency verified';
-      } else if (l.entityType === 'pfmea_row') {
-        title = 'PFMEA Risk Matrix Updated';
-        color = '#d97706';
-        sub = 'Program: E vacuum pump • AIAG-VDA Action Priority evaluated';
-      } else if (l.entityType === 'process_step') {
-        title = 'PFD Process Operation Updated';
-        color = '#0284c7';
-        sub = 'Program: E vacuum pump • Fixture controls aligned';
-      } else if (l.entityType === 'project') {
-        title = l.action === 'create' ? 'Quality Program Initialized' : 'Quality Program Configured';
-        color = '#0284c7';
-        sub = `Document Scope & 5Ts Framework Established`;
-      } else if (l.action === 'create') {
-        title = `New ${l.entityType.replace(/_/g, ' ')} Created`;
-        color = '#10b981';
-      } else if (l.action === 'approve') {
-        title = `Revision Approved & Locked`;
-        color = '#8b5cf6';
-      } else if (l.action === 'update') {
-        title = `${l.entityType.replace(/_/g, ' ')} Updated`;
-        color = '#f59e0b';
-      }
-
-      if (l.newValue && typeof l.newValue === 'object') {
-        const anyVal = l.newValue as any;
-        if (anyVal.name) sub = String(anyVal.name);
-        else if (anyVal.title) sub = String(anyVal.title);
-        else if (anyVal.partName) sub = String(anyVal.partName);
-      }
-
-      formatted.push({
-        id: l.id,
-        initials,
-        color,
-        title,
-        sub,
-        time: l.timestamp.toISOString(),
-        action: l.action,
-        entityType: l.entityType,
-      });
-    }
-
-    // If fewer than limit, enrich with actual active database projects, steps, and revisions
-    if (formatted.length < limit) {
-      // 1. Enrich with actual document revisions
-      const activeRevs = await this.prisma.documentRevision.findMany({
-        where: {
-          document: { project: { tenantId } },
-          id: { notIn: formatted.map((f) => f.id) },
-        },
-        include: {
-          document: { include: { project: true } },
-          creator: true,
-        },
-        orderBy: { createdAt: 'desc' },
-        take: limit - formatted.length,
-      });
-
-      for (const rev of activeRevs) {
-        if (formatted.length >= limit) break;
-        const pName = rev.document?.project?.partName || rev.document?.project?.name || 'E vacuum pump';
-        const docType = rev.document?.type || 'PFMEA';
-        formatted.push({
-          id: `rev-${rev.id}`,
-          initials: (rev.creator?.name || 'QE')
-            .split(' ')
-            .map((s) => s[0])
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
+    const labels: Record<string, string> = {
+      project: 'Project',
+      document: 'Document',
+      document_revision: 'Revision',
+      process_step: 'Process step',
+      pfmea_row: 'FMEA row',
+      control_plan_row: 'Control plan row',
+      action: 'Action',
+      structure_function: 'Function',
+      structure_failure: 'Failure',
+      failure_link: 'Failure relationship',
+      link_action: 'Mitigation action',
+    };
+    const verbs: Record<string, string> = {
+      create: 'created',
+      update: 'updated',
+      delete: 'deleted',
+      approve: 'approved',
+      reject: 'rejected',
+      submit: 'submitted for review',
+      activate: 'activated',
+    };
+    return logs.flatMap((log) => {
+      const snapshot = (
+        log.newValue && typeof log.newValue === 'object'
+          ? log.newValue
+          : log.oldValue
+      ) as Record<string, unknown> | null;
+      const revision =
+        revMap.get(log.entityId) ||
+        revMap.get(String(snapshot?.revisionId || ''));
+      const document =
+        docMap.get(revision?.documentId || '') || docMap.get(log.entityId);
+      const projectId =
+        entityProjects.get(`${log.entityType}:${log.entityId}`) ||
+        document?.projectId ||
+        String(snapshot?.projectId || '');
+      const project = projectMap.get(projectId);
+      if (!project) return [];
+      const actor = userMap.get(log.userId) || 'Team member';
+      const type =
+        document?.type === 'CONTROL_PLAN' ? 'Control plan' : document?.type;
+      const label =
+        log.entityType === 'document_revision' && type
+          ? `${type} revision ${revision?.revisionNumber || ''}`.trim()
+          : labels[log.entityType];
+      return [
+        {
+          id: log.id,
+          initials: actor
+            .split(/\s+/)
+            .map((p) => p[0])
             .join('')
-            .substring(0, 2)
+            .slice(0, 2)
             .toUpperCase(),
-          color: docType === 'PFMEA' ? '#059669' : docType === 'PFD' ? '#0284c7' : '#7c3aed',
-          title: `${docType} Document Revision Active`,
-          sub: `Program: ${pName} • 21 CFR Part 11 Audit Trail Active`,
-          time: rev.createdAt.toISOString(),
-          action: 'revision_active',
-          entityType: 'document_revision',
-        });
-      }
-
-      // 2. Enrich with actual process steps
-      if (formatted.length < limit) {
-        const activeSteps = await this.prisma.processStep.findMany({
-          where: {
-            revision: { document: { project: { tenantId } } },
-          },
-          include: {
-            revision: { include: { document: { include: { project: true } } } },
-          },
-          orderBy: { updatedAt: 'desc' },
-          take: limit - formatted.length,
-        });
-
-        for (const step of activeSteps) {
-          if (formatted.length >= limit) break;
-          const pName = step.revision?.document?.project?.partName || 'E vacuum pump';
-          formatted.push({
-            id: `step-${step.id}`,
-            initials: 'OP',
-            color: '#0284c7',
-            title: `Step ${step.stepNumber}: ${step.name}`,
-            sub: `Program: ${pName} • Incoming variation & fixture controls defined`,
-            time: step.updatedAt.toISOString(),
-            action: 'step_updated',
-            entityType: 'process_step',
-          });
-        }
-      }
-
-      // 3. Enrich with actual projects
-      if (formatted.length < limit) {
-        const projects = await this.prisma.project.findMany({
-          where: { tenantId },
-          orderBy: { updatedAt: 'desc' },
-          take: limit - formatted.length,
-          include: { creator: true, documents: true },
-        });
-
-        for (const p of projects) {
-          if (formatted.length >= limit) break;
-          const pName = p.partName || p.name || 'Quality Program';
-          const docTypes = p.documents.map((d) => d.type).join(', ') || 'PFMEA, PFD, CP';
-          formatted.push({
-            id: `proj-${p.id}`,
-            initials: (p.creator?.name || 'QE')
-              .split(' ')
-              .map((s) => s[0])
-              .join('')
-              .substring(0, 2)
-              .toUpperCase(),
-            color: '#09090b',
-            title: `Quality Program: ${pName}`,
-            sub: `${docTypes} · AIAG-VDA 2019 Standard Compliant`,
-            time: p.updatedAt.toISOString(),
-            action: 'project_active',
-            entityType: 'project',
-          });
-        }
-      }
-    }
-
-    return formatted;
+          actor,
+          projectId,
+          entityId: log.entityId,
+          entityType: log.entityType,
+          color: log.action === 'delete' ? '#ad4823' : '#45664c',
+          title: `${label} ${verbs[log.action] || log.action}`,
+          sub: `${project.partName || project.name} · ${actor}`,
+          time: log.timestamp.toISOString(),
+          action: log.action,
+        },
+      ];
+    });
   }
 }

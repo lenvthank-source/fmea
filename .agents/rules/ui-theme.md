@@ -1,15 +1,12 @@
 # Rule: UI Theme & Design System Specification
 
 ## 1. Core Design Philosophy
-FMEApex unifies two design philosophies across its interface:
-1. **Public Marketing & Educational Experience (`/*`, `/learn/*`, `/product`, `/pricing`, `/about`)**:
-   - Inspired by **Ventriloc** luxury editorial design.
-   - Warm ivory canvas (`#FAF9F6`), Plus Jakarta Sans headings, high-contrast dark graphite (`#18181B`), electric orange primary accents (`#FF682C`), and laiton brass standard tokens (`#816729`).
-   - Floating translucent fluid glass capsule header with live animated gradient orbs and slap-cap `FREE` badges.
-2. **Authenticated Quality Engineering Workspace (`/app/*`)**:
-   - Inspired by **Shadcn Admin** space-optimized density.
-   - Pure white card surfaces (`#FFFFFF`), dark graphite primary action buttons (`#09090b`), muted labels (`#71717a`), light zinc borders (`#e4e4e7`), and segmented pill tab bars (`#f4f4f5`).
-   - Strict spacing optimization: zero margin clumping, no wasted vertical padding, clear visual hierarchy, and readable typography at density.
+FMEApex uses a connected quality engineering identity across the homepage, sign-in, and application dashboard.
+- Ivory canvas (`#faf9f6`), white surfaces, graphite ink (`#242621`), orange brand accents (`#ff682c`), and contextual green (`#45664c`, soft `#eff2e8`). Risk colors retain their semantic meaning.
+- Plus Jakarta Sans headings and Inter body text. Public pages use storytelling scale; workspace screens use compact, readable controls.
+- `frontend/src/theme/theme.ts:4` exports the canonical MUI color tokens and theme. `ColorModeContext.tsx` consumes that theme instead of creating a competing copy.
+- `frontend/src/theme/quality-theme.css:1` scopes native auth, app chrome, dashboard, and guide styling. Public storytelling styles remain scoped in `landing-story.css`.
+- Prefer restrained borders and motion that responds to user actions. Honor reduced motion and visible keyboard focus.
 
 ---
 
@@ -18,13 +15,13 @@ FMEApex unifies two design philosophies across its interface:
 | Token Role | Hex Code | Usage Context |
 |---|---|---|
 | **Public Canvas** | `#FAF9F6` | Main background for landing, product, pricing, learn pages. |
-| **Workspace Canvas** | `#FFFFFF` / `#FAFAFA` | Internal dashboard background and cards. |
-| **Heading / Primary Text** | `#18181B` (Public) / `#09090b` (App) | Titles, h1-h4 headings, table headers. |
+| **Workspace Canvas** | `#FAF9F6` / `#FFFFFF` | Internal dashboard canvas and cards. |
+| **Heading / Primary Text** | `#242621` (Public) / `#242621` (App) | Titles, h1-h4 headings, table headers. |
 | **Body Text** | `#52525B` (Public) / `#27272a` (App) | Paragraphs, descriptions, table body text. |
-| **Muted Text / Hints** | `#71717A` / `#A1A1AA` | Subtitles, labels, keyboard shortcut badges. |
-| **Subtle Borders** | `#E5E0D8` (Public) / `#E4E4E7` (App) | Card borders, table dividers, input borders. |
-| **Segmented Tab Pill** | `#F4F4F5` | Background container for segmented tab bars. |
-| **Primary Accent (Orange)** | `#FF682C` | CTAs, high-AP action alerts, simulator toggles. |
+| **Muted Text / Hints** | `#65685f` / `#A1A1AA` | Subtitles, labels, keyboard shortcut badges. |
+| **Subtle Borders** | `#E5E0D8` (Public) / `#e3e4db` (App) | Card borders, table dividers, input borders. |
+| **Segmented Tab Pill** | `#eff2e8` | Background container for segmented tab bars. |
+| **Primary Accent (Orange)** | `#FF682C` | Brand details, selection accents, simulator toggles; semantic red remains for High AP. |
 | **Standard Accent (Gold)** | `#816729` | AIAG-VDA standard badges, compliance chips. |
 | **High AP / Error** | `#EF4444` (`#FEF2F2` bg) | High Action Priority, destructive actions, error banners. |
 | **Medium AP / Warning** | `#F59E0B` (`#FFFBEB` bg) | Medium Action Priority, review-required flags. |
@@ -42,7 +39,7 @@ FMEApex unifies two design philosophies across its interface:
 - **FORBIDDEN**: Never use `margin="normal"` on MUI `TextField` inside Grid layouts. It introduces uncontrollable vertical offsets and clumps.
 - **MANDATORY**: Always use `size="small"` on inputs in internal `/app/*` screens.
 - **MANDATORY**: Use uniform Grid spacing: `spacing={2.5}` for dialogs and standard forms.
-- **Input Styling**: All inputs must feature `borderRadius: '8px'`, border `#e4e4e7`, hover `#d4d4d8`, and focused `#09090b`.
+- **Input Styling**: All inputs must feature `borderRadius: '8px'`, border `#e3e4db`, hover `#d4d4d8`, and focused `#242621`.
 
 ---
 
@@ -53,10 +50,10 @@ Every workspace page must start with a clean 2-column header layout:
 ```tsx
 <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
   <Box>
-    <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
+    <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#242621', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
       [Page Title]
     </Typography>
-    <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
+    <Typography variant="body2" sx={{ color: '#65685f', fontWeight: 500, mt: 0.5 }}>
       [Single-sentence clear description of purpose and workflow step]
     </Typography>
   </Box>
@@ -73,7 +70,7 @@ Every workspace page must start with a clean 2-column header layout:
         fontWeight: 600,
         textTransform: 'none',
         fontSize: '0.825rem',
-        bgcolor: '#09090b',
+        bgcolor: '#242621',
         color: '#ffffff',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         '&:hover': { bgcolor: '#27272a', boxShadow: 'none' }
@@ -94,8 +91,8 @@ Do NOT use default MUI underline tabs. Use Shadcn-style segmented pills:
       display: 'inline-flex',
       p: 0.5,
       borderRadius: '8px',
-      bgcolor: '#f4f4f5',
-      border: '1px solid #e4e4e7',
+      bgcolor: '#eff2e8',
+      border: '1px solid #e3e4db',
       boxShadow: 'none',
     }}
   >
@@ -113,11 +110,11 @@ Do NOT use default MUI underline tabs. Use Shadcn-style segmented pills:
           fontSize: '0.8rem',
           fontWeight: 600,
           textTransform: 'none',
-          color: '#71717a',
+          color: '#65685f',
           transition: 'all 0.15s',
           '&.Mui-selected': {
             bgcolor: '#ffffff',
-            color: '#09090b',
+            color: '#242621',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           },
         },
@@ -137,7 +134,7 @@ All data tables must feature compact `#fafafa` headers, uppercase tracked labels
   component={Paper}
   sx={{
     borderRadius: '10px',
-    border: '1px solid #e4e4e7',
+    border: '1px solid #e3e4db',
     boxShadow: 'none',
     overflow: 'hidden',
   }}
@@ -145,13 +142,13 @@ All data tables must feature compact `#fafafa` headers, uppercase tracked labels
   <Table size="small">
     <TableHead sx={{ bgcolor: '#fafafa' }}>
       <TableRow>
-        <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>
+        <TableCell sx={{ fontWeight: 700, color: '#65685f', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>
           Item Name
         </TableCell>
-        <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <TableCell sx={{ fontWeight: 700, color: '#65685f', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           Category
         </TableCell>
-        <TableCell align="right" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <TableCell align="right" sx={{ fontWeight: 700, color: '#65685f', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           Actions
         </TableCell>
       </TableRow>
@@ -159,10 +156,10 @@ All data tables must feature compact `#fafafa` headers, uppercase tracked labels
     <TableBody>
       {items.map((row) => (
         <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-          <TableCell sx={{ fontWeight: 600, color: '#09090b', fontSize: '0.825rem' }}>{row.name}</TableCell>
+          <TableCell sx={{ fontWeight: 600, color: '#242621', fontSize: '0.825rem' }}>{row.name}</TableCell>
           <TableCell sx={{ color: '#52525b', fontSize: '0.825rem' }}>{row.category}</TableCell>
           <TableCell align="right">
-            <IconButton size="small" sx={{ color: '#71717a', '&:hover': { color: '#09090b' } }}>
+            <IconButton size="small" sx={{ color: '#65685f', '&:hover': { color: '#242621' } }}>
               <MoreVertIcon fontSize="small" />
             </IconButton>
           </TableCell>
@@ -185,7 +182,7 @@ Modals must NEVER use unstyled sprawling `80vw` containers. Use structured cards
     paper: {
       sx: {
         borderRadius: '16px',
-        border: '1px solid #e4e4e7',
+        border: '1px solid #e3e4db',
         boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.2)',
         bgcolor: '#ffffff',
         overflow: 'hidden',
@@ -195,16 +192,16 @@ Modals must NEVER use unstyled sprawling `80vw` containers. Use structured cards
   }}
 >
   {/* Header */}
-  <Box sx={{ px: 3.5, pt: 3, pb: 2.25, borderBottom: '1px solid #f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+  <Box sx={{ px: 3.5, pt: 3, pb: 2.25, borderBottom: '1px solid #eff2e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 800, color: '#09090b', fontSize: '1.15rem' }}>
+      <Typography variant="h6" sx={{ fontWeight: 800, color: '#242621', fontSize: '1.15rem' }}>
         Dialog Title
       </Typography>
-      <Typography variant="caption" sx={{ color: '#71717a', display: 'block', mt: 0.25 }}>
+      <Typography variant="caption" sx={{ color: '#65685f', display: 'block', mt: 0.25 }}>
         Short helpful description of the action.
       </Typography>
     </Box>
-    <IconButton onClick={handleClose} size="small" sx={{ color: '#71717a', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+    <IconButton onClick={handleClose} size="small" sx={{ color: '#65685f', borderRadius: '8px', border: '1px solid #e3e4db' }}>
       <CloseIcon sx={{ fontSize: '1.1rem' }} />
     </IconButton>
   </Box>
@@ -222,11 +219,11 @@ Modals must NEVER use unstyled sprawling `80vw` containers. Use structured cards
   </DialogContent>
 
   {/* Footer */}
-  <DialogActions sx={{ p: 2.5, px: 3.5, borderTop: '1px solid #f4f4f5' }}>
-    <Button onClick={handleClose} sx={{ borderRadius: '8px', textTransform: 'none', color: '#71717a' }}>
+  <DialogActions sx={{ p: 2.5, px: 3.5, borderTop: '1px solid #eff2e8' }}>
+    <Button onClick={handleClose} sx={{ borderRadius: '8px', textTransform: 'none', color: '#65685f' }}>
       Cancel
     </Button>
-    <Button variant="contained" sx={{ borderRadius: '8px', textTransform: 'none', bgcolor: '#09090b', color: '#ffffff' }}>
+    <Button variant="contained" sx={{ borderRadius: '8px', textTransform: 'none', bgcolor: '#242621', color: '#ffffff' }}>
       Save Changes
     </Button>
   </DialogActions>
@@ -258,10 +255,21 @@ Maintain standard high-visibility color conventions:
 
 ## 5. Migration Checklist for Existing & New Pages
 When creating or modernizing a page, verify:
-- [ ] Header uses `variant="h4"` with `fontWeight: 800`, `letterSpacing: '-0.03em'`, and color `#09090b`.
-- [ ] Tab bars use segmented pill container with `#f4f4f5` background and white active card.
+- [ ] Header uses `variant="h4"` with `fontWeight: 800`, `letterSpacing: '-0.03em'`, and color `#242621`.
+- [ ] Tab bars use segmented pill container with `#eff2e8` background and white active card.
 - [ ] No `margin="normal"` on any form fields. All fields use `size="small"` and `borderRadius: '8px'`.
-- [ ] Tables use `#fafafa` headers, uppercase tracked headers, and `#e4e4e7` container border.
-- [ ] Dialogs use `slotProps={{ paper: { sx: { borderRadius: '16px', border: '1px solid #e4e4e7' } } }}`.
-- [ ] Primary buttons use `#09090b` with white text and `borderRadius: '8px'`.
+- [ ] Tables use `#fafafa` headers, uppercase tracked headers, and `#e3e4db` container border.
+- [ ] Dialogs use `slotProps={{ paper: { sx: { borderRadius: '16px', border: '1px solid #e3e4db' } } }}`.
+- [ ] Primary buttons use `#242621` with white text and `borderRadius: '8px'`.
 - [ ] Zero duplicate icon characters in button text (`+ +` bug eliminated).
+
+
+## 6. Contextual FMEA Walkthrough and Dashboard Density
+
+- `frontend/src/features/projects/components/FmeaTutorialGuide.tsx:1` renders a bounded, anchored coachmark with Popper collision handling and visible target outlines. It does not reserve a side rail or duplicate the entry point.
+- Dashboard: one 7-Step Guide button. Project workflow screens: one sidebar entry; global workflow screens may use the header. Creating a new project offers contextual help unless dismissed.
+- Prompts follow real wizard fields, validation, Next Step, and successful Create Program. Field tips cannot continue through empty required values. Cancelling does not save data; closing/finishing ends only the tour.
+- Continue into PFD structure, PFMEA functions/failures/risk, actions/evidence, and control-plan documentation. Guide progression does not satisfy any FMEA entry/exit gate.
+- Use a compact summary strip, smaller headers and card padding, and a wider program column. On phones show the total and put phase filters on a horizontal scroller; prevent app-header overflow.
+- Trial UI says Trial workspace (Trial on narrow screens), hides archive navigation/actions, and suppresses redundant current-page account-menu navigation.
+- Activity must come from viewer-scoped recorded audits. Refresh periodically, on focus, after mutations, and manually. Display loading, empty, error, and updated-at states honestly; never label polling as streaming.

@@ -310,7 +310,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Add Project Function">
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(null, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #cbd5e1', '&:hover': { bgcolor: '#f1f5f9' } }}>
+                  <IconButton data-tour="pfmea-add-function" aria-label="Add function" size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(null, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #cbd5e1', '&:hover': { bgcolor: '#f1f5f9' } }}>
                     <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
                   </IconButton>
                 </Tooltip>
@@ -356,7 +356,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                         <Typography sx={TREE_TYPOGRAPHY.function}>{fn}</Typography>
                         <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                           <Tooltip title="Add Failure (Effect)">
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                            <IconButton data-tour="pfmea-add-failure" aria-label="Add failure" size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(null, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                               <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                             </IconButton>
                           </Tooltip>
@@ -497,7 +497,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Add Step Function">
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
+                          <IconButton data-tour="pfmea-add-function" aria-label="Add function" size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, null); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #fef08a', '&:hover': { bgcolor: '#fef9c3' } }}>
                             <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
                           </IconButton>
                         </Tooltip>
@@ -551,7 +551,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                   <Typography sx={TREE_TYPOGRAPHY.function}>{fn}</Typography>
                                   <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                     <Tooltip title="Add Failure (Mode)">
-                                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                      <IconButton data-tour="pfmea-add-failure" aria-label="Add failure" size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                                         <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                       </IconButton>
                                     </Tooltip>
@@ -661,7 +661,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                 <Typography sx={TREE_TYPOGRAPHY.workElem}>{we}</Typography>
                                 <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                   <Tooltip title="Add Work Element Function">
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>
+                                    <IconButton data-tour="pfmea-add-function" aria-label="Add function" size="small" onClick={(e) => { e.stopPropagation(); onAddFunction(step.id, we); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bfdbfe', '&:hover': { bgcolor: '#dbeafe' } }}>
                                       <TreeIconBadge type="function" iconSrc={TREE_ASSETS.function} />
                                     </IconButton>
                                   </Tooltip>
@@ -717,7 +717,7 @@ export const PfmeaStructureTree: React.FC<PfmeaStructureTreeProps> = ({
                                             <Typography sx={TREE_TYPOGRAPHY.function}>{fn}</Typography>
                                             <Box className="inline-actions" sx={{ ml: 2, display: 'flex', gap: 0.5 }}>
                                               <Tooltip title="Add Failure (Cause)">
-                                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
+                                                <IconButton data-tour="pfmea-add-failure" aria-label="Add failure" size="small" onClick={(e) => { e.stopPropagation(); onAddFailure(step.id, { workElementName: we, functionName: fn }); }} sx={{ p: 0.25, bgcolor: '#fff', border: '1px solid #bbf7d0', '&:hover': { bgcolor: '#e8f5e9' } }}>
                                                   <AddIcon sx={{ fontSize: '0.9rem', color: '#7f1d1d' }} />
                                                 </IconButton>
                                               </Tooltip>

@@ -40,3 +40,7 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 - Clone-on-activate (append-only rollback prevention; currently pointer swap `project.service:1381`)
 - Multi-approver quorum config + `changes_requested` state + `approval.digitalSignatureHash`
 - `ControlPlanRow` `stepIdMap` remap completeness (`project.service:948`)
+
+
+## Latest release: v0.9.0 (2026-10-19)
+User-confirmed minor release for connected product storytelling, cohesive auth/dashboard, contextual workflow guidance, viewer-scoped audit activity, and portable agent/Graphify continuity. Ledger: `versions/v0.9.0.md`. Database sync verified already aligned; no schema migration or data change.

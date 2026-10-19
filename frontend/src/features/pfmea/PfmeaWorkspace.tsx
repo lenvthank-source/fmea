@@ -1622,7 +1622,7 @@ export const PfmeaWorkspace: React.FC = () => {
           elevation={0}
           sx={{ border: '1px solid #e4e4e7', borderRadius: '10px', bgcolor: '#ffffff', overflowX: 'auto', boxShadow: 'none', position: 'relative' }}
         >
-          <Table aria-label="PFMEA rows grid" size="small">
+          <Table data-tour="risk-grid" aria-label="PFMEA rows grid" size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
                 <TableCell sx={{ minWidth: 50, width: 50, fontWeight: 700, position: 'sticky', left: 0, bgcolor: '#fafafa', zIndex: 4, borderRight: '1px solid #e4e4e7', borderBottom: '1px solid #e4e4e7', fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>#</TableCell>

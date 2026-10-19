@@ -410,7 +410,7 @@ export const ControlPlanWorkspace: React.FC = () => {
           >
             Export Document
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
+          <Button data-tour="control-plan-workflow" variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
             Add Control Row
           </Button>
         </Stack>

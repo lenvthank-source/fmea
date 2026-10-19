@@ -144,3 +144,7 @@ Do NOT update for routine bugfixes. After every version bump: edit minimal file 
 ## Graphify
 
 Graphify is not currently configured for this repository. If installed in the future, use it for dependency discovery and cross-reference findings against source code before documenting.
+
+
+## Latest continuity entry
+Before implementation, read [ACTIVE_STATE.md](ACTIVE_STATE.md), especially the latest dated handoff; older guide layouts are superseded. The always-on post-change AST refresh is defined in [rules/graphify.md](rules/graphify.md). Current dashboard/onboarding and activity contracts live in [rules/ui-theme.md](rules/ui-theme.md) and [context/api-contracts.md](context/api-contracts.md).

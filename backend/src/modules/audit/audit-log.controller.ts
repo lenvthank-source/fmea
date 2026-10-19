@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuditLogService } from './audit-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
@@ -13,7 +20,10 @@ export class AuditLogController {
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
   ) {
-    return this.auditLogService.getEntriesForRevision(req.user.tenantId, revisionId);
+    return this.auditLogService.getEntriesForRevision(
+      req.user.tenantId,
+      revisionId,
+    );
   }
 
   @Get('audit-logs/recent')
@@ -22,7 +32,11 @@ export class AuditLogController {
     @Query('limit') limit?: string,
   ) {
     const numLimit = limit ? parseInt(limit, 10) : 8;
-    return this.auditLogService.getRecentActivity(req.user.tenantId, numLimit);
+    return this.auditLogService.getRecentActivity(
+      req.user.tenantId,
+      numLimit,
+      req.user,
+    );
   }
 
   @Get('audit-logs')
@@ -31,6 +45,10 @@ export class AuditLogController {
     @Query('entityType') entityType: string,
     @Query('entityId') entityId: string,
   ) {
-    return this.auditLogService.getEntriesForEntity(req.user.tenantId, entityType, entityId);
+    return this.auditLogService.getEntriesForEntity(
+      req.user.tenantId,
+      entityType,
+      entityId,
+    );
   }
 }

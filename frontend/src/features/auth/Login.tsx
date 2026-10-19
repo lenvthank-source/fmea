@@ -1,249 +1,255 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from './AuthContext';
-import { useBackendReady } from '../../hooks/useBackendWarmup';
-import { SEO } from '../../components/SEO/SEO';
-import { ArrowRight, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  AlertCircle,
+  Check,
+  Eye,
+  EyeOff,
+  GitBranch,
+  Layers3,
+  Link2,
+  Network,
+  ShieldCheck,
+} from "lucide-react";
+import { useAuth } from "./AuthContext";
+import { useBackendReady } from "../../hooks/useBackendWarmup";
+import { SEO } from "../../components/SEO/SEO";
+import "../../theme/quality-theme.css";
 
 export const Login: React.FC = () => {
-  const { login, token, guestLogin } = useAuth();
+  const { login, token } = useAuth();
   const { isBackendReady } = useBackendReady();
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   const [signInLoading, setSignInLoading] = useState(false);
-  const [guestLoading, setGuestLoading] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
     if (token) {
-      navigate('/app/projects', { replace: true });
+      navigate("/app/projects", { replace: true });
       return;
     }
+    setCheckingAccess(false);
+  }, [token, navigate]);
 
-    const hasLoggedOut = sessionStorage.getItem('logged_out') === 'true';
-    if (!hasLoggedOut) {
-      // Direct Entry: automatically initialize guest session and open workspace right away!
-      guestLogin()
-        .then(() => {
-          navigate('/app/projects', { replace: true });
-        })
-        .catch((err) => {
-          console.error('Direct guest entry failed:', err);
-          setCheckingAccess(false);
-        });
-    } else {
-      // User explicitly logged out from dashboard — display the Administrator Sign In window
-      setCheckingAccess(false);
-    }
-  }, [token, navigate, guestLogin]);
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleSignIn = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (signInLoading) return;
+    setError("");
     setSignInLoading(true);
     try {
-      await login(email, password, 'guest-tenant');
-      sessionStorage.removeItem('logged_out');
-      navigate('/app/projects');
-    } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      await login(email, password, "guest-tenant");
+      sessionStorage.removeItem("logged_out");
+      navigate("/app/projects");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Sign-in failed. Check your email and password and try again.",
+      );
     } finally {
       setSignInLoading(false);
     }
   };
-
-  const handleReturnToGuest = async () => {
-    setError('');
-    setGuestLoading(true);
-    try {
-      sessionStorage.removeItem('logged_out');
-      await guestLogin();
-      navigate('/app/projects');
-    } catch (err: any) {
-      setError(err.message || 'Guest access initialization failed');
-    } finally {
-      setGuestLoading(false);
-    }
+  const handleTryIt = () => {
+    sessionStorage.removeItem("logged_out");
+    navigate("/app/initializing");
   };
 
-  if (checkingAccess) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-tech-dots bg-[#FBFBFC] text-slate-900 font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-mono text-lg font-bold shadow-xs animate-pulse">
-            <span className="text-[#FF5500]">F</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>Opening Quality Workspace...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-tech-dots bg-[#FBFBFC] text-slate-900 font-sans antialiased">
+    <div className="quality-login">
       <SEO
-        title="Admin Sign In — FMEApex | Quality Intelligence Workspace"
-        description="Corporate & Administrator sign-in gate for FMEApex quality platform."
+        title="Sign in — FMEApex"
+        description="Return to your connected FMEA workspace, or try FMEApex with a pre-filled engineering project."
         canonical="/login"
       />
-
-      <div className="w-full max-w-[440px] flex flex-col items-center">
-        {/* Brand Logo Header */}
-        <Link to="/" className="flex items-center gap-2.5 mb-8 group">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white font-mono text-base font-bold shadow-xs transition-transform group-hover:scale-105">
-            <span className="text-[#FF5500]">F</span>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 leading-none">
-              <span className="font-extrabold text-[22px] tracking-tight text-slate-900">
-                fmeapex
-              </span>
-              <span className="w-1.5 h-4 bg-[#FF5500] rounded-xs" />
-            </div>
-            <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase mt-0.5">
-              AIAG-VDA 2019 Quality Platform
-            </span>
-          </div>
+      <header className="quality-login-header">
+        <Link to="/" className="quality-brand" aria-label="FMEApex home">
+          <span>
+            <GitBranch size={21} aria-hidden="true" />
+          </span>
+          fmeapex
         </Link>
-
-        {/* Administrator Authentication Card */}
-        <div className="w-full bg-white rounded-2xl border border-slate-200 p-7 sm:p-9 shadow-sm">
-          <div className="text-center mb-6">
-            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-700">
-              <Lock className="w-5 h-5 text-slate-800" />
-            </div>
-            <h1 className="text-[20px] font-bold text-slate-900 tracking-tight">
-              Corporate & Administrator Sign In
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Sign in with plant or administrative credentials to manage platform-wide quality programs.
-            </p>
-
-            {/* Live Backend Readiness Pill */}
-            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono border">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isBackendReady ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-ping'
-                }`}
-              />
-              <span className={isBackendReady ? 'text-emerald-700' : 'text-amber-700'}>
-                {isBackendReady ? 'API Live • RLS Active' : 'Backend Waking Up...'}
-              </span>
-            </div>
+        <Link to="/" className="quality-back">
+          <ArrowLeft size={15} aria-hidden="true" />
+          Back to home
+        </Link>
+      </header>
+      <main className="quality-login-main">
+        <section
+          className="quality-login-story"
+          aria-label="Connected quality engineering"
+        >
+          <div className="quality-eyebrow">
+            <span />
+            Keep the whole picture.
           </div>
-
-          {error && (
-            <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2 font-medium">
-              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Secure Email / Password Form (CIA Triad: Confidentiality - No hardcoded or prefilled credentials) */}
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
-                Corporate / Admin Email
-              </label>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@plant-oem.com"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-900 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-600 font-bold mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-900 transition-all"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={signInLoading || guestLoading}
-              className="w-full h-11 rounded-xl bg-[#FF5500] hover:bg-[#E04B00] disabled:opacity-50 text-white text-sm font-semibold transition-all shadow-xs flex items-center justify-center gap-2 mt-1"
-            >
-              {signInLoading ? (
-                <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>Sign In as Administrator</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[10px] font-semibold font-mono uppercase tracking-wider text-slate-400">
-              or continue without credentials
-            </span>
-            <div className="flex-1 h-px bg-slate-200" />
-          </div>
-
-          {/* Instant Guest Sandbox Access */}
-          <button
-            type="button"
-            onClick={handleReturnToGuest}
-            disabled={guestLoading || signInLoading}
-            className="w-full h-11 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-slate-200"
-          >
-            {guestLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 border-2 border-slate-400 border-t-slate-800 rounded-full animate-spin" />
-                <span>Launching Sandbox...</span>
-              </span>
-            ) : (
-              <>
-                <span className="text-[#FF5500]">⚡</span>
-                <span>Launch Free Guest Sandbox Instead</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-mono uppercase tracking-wider">
-                  24h
+          <h2>
+            Connected thinking.
+            <br />
+            Better quality.
+          </h2>
+          <p>
+            Your structures, risks, controls, and decisions.
+            <br />
+            Together, from the first question to the final review.
+          </p>
+          <div className="quality-login-thread">
+            {[
+              {
+                icon: Layers3,
+                title: "Start with design intent",
+                text: "Structures, functions & requirements",
+              },
+              {
+                icon: Network,
+                title: "Understand the relationships",
+                text: "Causes, failure modes & effects",
+              },
+              {
+                icon: Link2,
+                title: "Connect the controls",
+                text: "Process flow, PFMEA & control plans",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Follow through on risk",
+                text: "Owned actions & verified evidence",
+              },
+            ].map(({ icon: Icon, title, text }, index) => (
+              <div key={title}>
+                <span
+                  className={`quality-thread-icon ${index === 2 ? "is-highlighted" : ""}`}
+                >
+                  <Icon size={21} aria-hidden="true" />
                 </span>
-              </>
-            )}
-          </button>
-
-          {/* Compliance Tag */}
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-[11px] font-mono text-slate-400 flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>21 CFR Part 11 Compliant</span>
-            <span>•</span>
-            <span>PostgreSQL RLS Protected</span>
+                <div>
+                  <strong>{title}</strong>
+                  <small>{text}</small>
+                </div>
+                <Check size={14} aria-hidden="true" />
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* Back Link */}
-        <div className="mt-6 text-center">
-          <Link
-            to="/"
-            className="text-xs text-slate-500 hover:text-slate-900 font-medium transition-colors inline-flex items-center gap-1"
-          >
-            <span>← Return to FMEApex Home</span>
-          </Link>
-        </div>
-      </div>
+          <div className="quality-login-story-foot">
+            <span className="quality-line" />
+            From design intent to verified action.
+          </div>
+        </section>
+        <section
+          className="quality-login-panel"
+          aria-labelledby="quality-sign-in-title"
+        >
+          {checkingAccess ? (
+            <div className="quality-access-loading" role="status">
+              <span className="quality-brand-icon">
+                <GitBranch size={26} aria-hidden="true" />
+              </span>
+              <h2>Opening your workspace.</h2>
+              <p>
+                {isBackendReady
+                  ? "Preparing your connected project…"
+                  : "Connecting to FMEApex. This may take a moment…"}
+              </p>
+              <span className="quality-loading-line" />
+            </div>
+          ) : (
+            <>
+              <div className="quality-login-panel-heading">
+                <span className="quality-section-tag">
+                  Your engineering workspace
+                </span>
+                <h1 id="quality-sign-in-title">Welcome back.</h1>
+                <p>Sign in to pick up where your team left off.</p>
+              </div>
+              <form onSubmit={handleSignIn} className="quality-sign-in-form">
+                {error && (
+                  <div className="quality-login-error" role="alert">
+                    <AlertCircle size={17} aria-hidden="true" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <label htmlFor="sign-in-email">Work email</label>
+                <input
+                  id="sign-in-email"
+                  name="email"
+                  type="email"
+                  autoComplete="username"
+                  spellCheck={false}
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@company.com"
+                />
+                <label htmlFor="sign-in-password">Password</label>
+                <div className="quality-password-field">
+                  <input
+                    id="sign-in-password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <button
+                  className="quality-primary-button"
+                  type="submit"
+                  disabled={signInLoading}
+                >
+                  {signInLoading ? "Signing in…" : "Sign in to your workspace"}
+                  <ArrowUpRight size={17} aria-hidden="true" />
+                </button>
+              </form>
+              <div className="quality-login-divider">
+                <span />
+                New to FMEApex?
+                <span />
+              </div>
+              <button
+                className="quality-try-button"
+                onClick={handleTryIt}
+                disabled={signInLoading}
+              >
+                <span>Try it out</span>
+                <ArrowUpRight size={17} aria-hidden="true" />
+              </button>
+              <p className="quality-login-try-note">
+                No sign-up. A pre-filled project, ready to explore.
+              </p>
+              <div className="quality-connection-status" role="status">
+                <span className={isBackendReady ? "is-ready" : ""} />
+                {isBackendReady
+                  ? "Ready to connect"
+                  : "Connecting to the workspace…"}
+              </div>
+            </>
+          )}
+        </section>
+      </main>
+      <footer className="quality-login-footer">
+        <span>© {new Date().getFullYear()} FMEApex</span>
+        <span>Connected thinking. Better quality.</span>
+        <Link to="/learn">
+          Explore the methodology <ArrowUpRight size={13} aria-hidden="true" />
+        </Link>
+      </footer>
     </div>
   );
 };

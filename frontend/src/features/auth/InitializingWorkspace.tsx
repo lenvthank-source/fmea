@@ -1,106 +1,96 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, LinearProgress, Container } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowLeft, ArrowUpRight, GitBranch } from "lucide-react";
+import { useAuth } from "./AuthContext";
+import { useBackendReady } from "../../hooks/useBackendWarmup";
+import "../../theme/quality-theme.css";
 
-const LOADER_STEPS = [
-  'Initializing secure workspace...',
-  'Syncing active FMEA revisions...',
-  'Loading AIAG-VDA 7-step criteria...',
-  'Optimizing hierarchy trees...',
-];
-
-export const InitializingWorkspace: React.FC = () => {
+/** The explicit Try route initializes a guest; protected-route loading only waits. */
+export const InitializingWorkspace: React.FC<{ initializeGuest?: boolean }> = ({
+  initializeGuest = false,
+}) => {
+  const { token, isHydrating, guestLogin } = useAuth();
+  const { isBackendReady } = useBackendReady();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-
+  const started = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+  const [error, setError] = useState("");
   useEffect(() => {
-    // Increment step every 500ms
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => {
-        if (prev < LOADER_STEPS.length - 1) {
-          return prev + 1;
-        }
-        return prev;
-      });
-    }, 500);
-
-    // Smoothly progress to 100% over 2000ms (100 ticks of 20ms)
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 20);
-
-    // Redirect after 2.1 seconds
-    const timeout = setTimeout(() => {
-      navigate('/app/projects', { replace: true });
-    }, 2100);
-
-    return () => {
-      clearInterval(stepInterval);
-      clearInterval(progressInterval);
-      clearTimeout(timeout);
-    };
-  }, [navigate]);
-
+    if (!initializeGuest || isHydrating) return;
+    if (token) {
+      navigate("/app/projects", { replace: true });
+      return;
+    }
+    if (started.current) return;
+    started.current = true;
+    guestLogin().catch(() =>
+      setError(
+        "We could not connect to your workspace. Please try again in a moment.",
+      ),
+    );
+  }, [initializeGuest, isHydrating, token, guestLogin, navigate, attempt]);
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+    <main
+      className="quality-login"
+      style={{ alignItems: "center", justifyContent: "center", padding: 24 }}
     >
-      <Container maxWidth="xs" sx={{ textAlign: 'center' }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #0D9488, #2563eb)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 1.5,
+      <section
+        className="quality-login-panel quality-access-loading"
+        style={{ width: "100%", maxWidth: 440 }}
+        aria-labelledby="workspace-loading-title"
+      >
+        <span className="quality-brand-icon">
+          <GitBranch size={26} aria-hidden="true" />
+        </span>
+        <h1
+          id="workspace-loading-title"
+          style={{
+            fontFamily: "var(--ff-heading)",
+            fontSize: 25,
+            fontWeight: 550,
+            letterSpacing: "-0.04em",
+            marginTop: 25,
           }}
         >
-          FMEApex
-        </Typography>
-
-        <Box sx={{ width: '100%', mb: 3 }}>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              bgcolor: 'rgba(13, 148, 136, 0.1)',
-              '& .MuiLinearProgress-bar': {
-                bgcolor: '#0D9488',
-                borderRadius: 3,
-                background: 'linear-gradient(90deg, #0D9488 0%, #2563eb 100%)',
-              },
-            }}
-          />
-        </Box>
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            fontWeight: 500,
-            minHeight: 20,
-            transition: 'opacity 0.25s ease',
-          }}
-        >
-          {LOADER_STEPS[currentStep]}
-        </Typography>
-      </Container>
-    </Box>
+          {error ? "Let’s try that again." : "Opening your workspace."}
+        </h1>
+        {error ? (
+          <>
+            <div
+              className="quality-login-error"
+              role="alert"
+              style={{ marginTop: 24 }}
+            >
+              <AlertCircle size={18} aria-hidden="true" />
+              {error}
+            </div>
+            <button
+              className="quality-primary-button"
+              onClick={() => {
+                started.current = false;
+                setError("");
+                setAttempt((value) => value + 1);
+              }}
+            >
+              Try again
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <div role="status">
+            <p>
+              {isBackendReady
+                ? "Preparing your connected engineering project…"
+                : "Connecting to FMEApex. This may take a moment…"}
+            </p>
+            <span className="quality-loading-line" />
+          </div>
+        )}
+        <Link to="/" className="quality-back" style={{ marginTop: 28 }}>
+          <ArrowLeft size={14} aria-hidden="true" />
+          Back to home
+        </Link>
+      </section>
+    </main>
   );
 };

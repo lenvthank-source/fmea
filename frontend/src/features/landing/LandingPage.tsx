@@ -1,805 +1,758 @@
-import React, { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SEO } from '../../components/SEO/SEO';
-import { SiteHeader } from '../../components/site/SiteHeader';
-import { SiteFooter } from '../../components/site/SiteFooter';
-import { VentrilocDashboard } from '../../components/site/VentrilocDashboard';
-import { RiskCalculatorWidget } from './RiskCalculatorWidget';
-import { ExcelRetirementShowcase } from './ExcelRetirementShowcase';
-import { useAuth } from '../auth/AuthContext';
-import { useBackendReady } from '../../hooks/useBackendWarmup';
-import { API_BASE_URL } from '../../config';
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  CheckCircle2,
-  AlertTriangle,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+} from "framer-motion";
+import {
+  ArrowDown,
   ArrowRight,
-  ShieldCheck,
-  Cpu,
-  Layers,
-  GitBranch,
-  FileSpreadsheet,
-  Lock,
-  Server,
-  ChevronRight,
+  ArrowUpRight,
   Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleDot,
+  FileSpreadsheet,
+  GitBranch,
+  Layers3,
+  Link2,
+  LockKeyhole,
+  Menu,
+  Network,
+  ShieldCheck,
+  Sparkles,
+  Target,
   X,
-  Workflow
-} from 'lucide-react';
+} from "lucide-react";
+import { SEO } from "../../components/SEO/SEO";
+import { useAuth } from "../auth/AuthContext";
+import { useBackendReady } from "../../hooks/useBackendWarmup";
+import { API_BASE_URL } from "../../config";
+import { ConnectedProduct } from "./ConnectedProduct";
+import "./landing-story.css";
 
-const SEVEN_STEPS = [
+const RiskCalculator = lazy(() =>
+  import("./RiskCalculatorWidget").then((module) => ({
+    default: module.RiskCalculatorWidget,
+  })),
+);
+const chapters = [
   {
-    step: 1,
-    name: 'Planning & Preparation',
-    tag: '5Ts Initiation',
-    desc: 'Define scope, project boundaries, cross-functional team (CFT), and schedule using the 5Ts framework.',
-    input: 'Customer requirements, engineering scope, project milestones',
-    output: 'FMEA Project Charter, 5Ts matrix, Team member assignments',
-    gating: 'Scope definition and CFT sign-off required before structure decomposition.',
+    title: "Start with the structure.",
+    description:
+      "See the system, its assemblies, and every component in context. Give each function and requirement a home before you start assessing failure.",
+    tag: "DFMEA · Structure & functions",
+    icon: Layers3,
+    detail: "System → subsystem → component",
+    proof: "Every failure connects to the function it affects.",
   },
   {
-    step: 2,
-    name: 'Structure Analysis',
-    tag: '4M Tree Allocation',
-    desc: 'Map the complete manufacturing sequence from PFD down to Station Work Elements across 4M: Machine, Man, Material, Method.',
-    input: 'Process Flow Diagram (PFD) or Bill of Materials (DFMEA)',
-    output: 'Structural hierarchy tree with zero orphan operation steps',
-    gating: 'Every process step must link to at least one 4M work element.',
+    title: "Connect the failure story.",
+    description:
+      "Follow causes, failure modes, and effects across your analysis. Bring design characteristics into process planning, with linked PFD and PFMEA coverage.",
+    tag: "PFMEA · Failure relationships",
+    icon: Network,
+    detail: "Cause → failure mode → effect",
+    proof: "Find gaps before they become disconnected documents.",
   },
   {
-    step: 3,
-    name: 'Function Analysis',
-    tag: 'Requirements & Specs',
-    desc: 'Establish functions and engineering specifications for each structure level: Item Function → Step Function → Element Function.',
-    input: 'Product specifications, drawing tolerances, process parameters',
-    output: 'Functional network linking process parameters to product characteristics',
-    gating: 'Functions must have quantifiable engineering tolerances or acceptance criteria.',
+    title: "Bring controls into alignment.",
+    description:
+      "Keep process controls and the control plan connected. A linked control or tolerance change carries through the workflow, so your team works from shared information.",
+    tag: "Control plan · Shared controls",
+    icon: Link2,
+    detail: "Process flow ↔ PFMEA ↔ control plan",
+    proof: "Less copying. More confidence in what is current.",
   },
   {
-    step: 4,
-    name: 'Failure Analysis',
-    tag: 'Cause → Mode → Effect',
-    desc: 'Construct deterministic failure chains: Failure Cause (at Work Element) → Failure Mode (at Station) → Failure Effect (Customer / Plant).',
-    input: 'Historical warranty data, scrap logs, process risk brainstorming',
-    output: 'Validated failure chains with inherited severity from worst-case effect',
-    gating: 'Completeness rule: Each failure mode must link to ≥1 effect and ≥1 cause.',
-  },
-  {
-    step: 5,
-    name: 'Risk Analysis',
-    tag: 'S / O / D & Action Priority',
-    desc: 'Evaluate Severity (S), Occurrence (O), and Detection (D) ratings [1-10]. Action Priority (High, Medium, Low) is looked up deterministically.',
-    input: 'AIAG-VDA 2019 rating tables and prevention/detection control methods',
-    output: 'Read-only Action Priority (AP) calculation; legacy RPN comparison',
-    gating: 'Ratings strictly restricted to integer range [1, 10]; AP cannot be manually edited.',
-  },
-  {
-    step: 6,
-    name: 'Optimization',
-    tag: 'High-AP Corrective Actions',
-    desc: 'Mandatory corrective action tracking for all High-AP risks. Actions require assigned owners, target dates, and verified evidence files.',
-    input: 'Engineering redesign, automated Poka-Yoke, upgraded inspection sensors',
-    output: 'Post-action S/O/D ratings, recalculated AP, Cloudflare R2 evidence',
-    gating: 'Action closure blocked until evidence uploaded and post-action ratings verified.',
-  },
-  {
-    step: 7,
-    name: 'Documentation',
-    tag: '21 CFR Part 11 Lock',
-    desc: 'Formal CFT review, reviewer segregation verification, cryptographic SHA-256 digital signature, and revision locking.',
-    input: 'Completed CFT reviews and verified corrective action closures',
-    output: 'Locked immutable revision, Control Plan auto-flow, audit ledger entry',
-    gating: 'Locked revisions reject all future writes; audit trail rejects UPDATE and DELETE.',
+    title: "Close the loop on risk.",
+    description:
+      "Give priority risks an owner and a next step. Track evidence, review before-and-after ratings, and verify the work before closing an action.",
+    tag: "Optimization · Verified actions",
+    icon: ShieldCheck,
+    detail: "Priority → owner → evidence → verification",
+    proof: "A completed task becomes a traceable engineering decision.",
   },
 ];
-
-const COMPARISON_ROWS = [
-  {
-    feature: 'Action Priority (AP) Calculation',
-    excel: 'Manual nested IF formulas that easily break or get altered across users',
-    fmeapex: 'Deterministic AIAG-VDA 2019 matrix lookup engine locked at database level',
-  },
-  {
-    feature: 'PFD ↔ PFMEA Synchronization',
-    excel: 'Disconnected sheets; steps added to PFD are forgotten in PFMEA',
-    fmeapex: 'Bidirectional sync with automatic orphan operation detection & coverage alerts',
-  },
-  {
-    feature: 'Control Plan (CP) Flow-Down',
-    excel: 'Manual copy-paste of controls into separate Word or Excel templates',
-    fmeapex: 'Dynamic automated compilation; tolerance edits propagate bidirectionally in serializable transactions',
-  },
-  {
-    feature: 'High-Risk Action Mandates',
-    excel: 'RPN thresholds (e.g. >100) ignore high-severity hazards (e.g. S=10, O=2, D=2 = RPN 40)',
-    fmeapex: 'Mandatory action workflows automatically triggered for all High-AP ratings',
-  },
-  {
-    feature: 'Audit Trail & Immutability',
-    excel: 'File modification timestamps easily manipulated; no change history',
-    fmeapex: '21 CFR Part 11 compliant SHA-256 signatures; PostgreSQL immutable audit partition',
-  },
-  {
-    feature: 'AI Quality Knowledge Retrieval',
-    excel: 'Engineers recreate failure modes from scratch for every new project',
-    fmeapex: 'Tenant-isolated pgvector RAG retrieves proven controls from approved revisions',
-  },
+const steps = [
+  ["Planning", "Agree on the scope, team, timing, and objectives."],
+  ["Structure", "Build the product hierarchy or map the process flow."],
+  ["Functions", "Connect functions to measurable requirements."],
+  ["Failures", "Link effects, failure modes, and their causes."],
+  ["Risk", "Assess S/O/D and calculate Action Priority."],
+  ["Optimization", "Assign actions and verify their effectiveness."],
+  ["Documentation", "Review, approve, and preserve the revision."],
 ];
-
-const TECHNICAL_SPECS: [string, string, string][] = [
-  ['AIAG-VDA 2019 (1st Ed)', 'Methodology', 'Strict 7-Step gating, deterministic AP tables, 4M structure allocation'],
-  ['21 CFR Part 11 & Annex 11', 'Regulatory', 'Cryptographic SHA-256 digital signatures, reviewer segregation, immutable log partition'],
-  ['PostgreSQL 15 Serverless', 'Database', 'Row-Level Security (RLS) with session tenant variables on all queries'],
-  ['Tenant-Isolated Vector RAG', 'AI Engine', 'OpenAI Embeddings + Neon pgvector HNSW indexing (M=16, ef_construction=64)'],
-  ['Cloudflare R2 Storage', 'Evidence', '50MB max file size with pre-signed upload URLs for corrective action validation'],
-  ['On-Premises Deployment', 'Infrastructure', 'Single-command Docker Compose deployment ready for air-gapped corporate firewalls'],
-];
-
-const INQUIRY_TYPES = ['Demo Request', 'Enterprise On-Premises License', 'Excel Data Migration', 'Architecture & Security Review'];
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { token, guestLogin } = useAuth();
+  const { token } = useAuth();
   const { isBackendReady } = useBackendReady();
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [chapter, setChapter] = useState(0);
+  const [step, setStep] = useState(0);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [contactStatus, setContactStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+  const chapterRefs = useRef<(HTMLElement | null)[]>([]);
 
-  const [guestLoading, setGuestLoading] = useState(false);
-  const [activeStepTab, setActiveStepTab] = useState(1);
-  const [contactForm, setContactForm] = useState({ name: '', email: '', company: '', type: 'Demo Request', message: '' });
-  const [contactSubmitting, setContactSubmitting] = useState(false);
-  const [contactSuccess, setContactSuccess] = useState(false);
-  const [contactError, setContactError] = useState('');
-
-  // Handle smooth scroll target if provided in query string or hash
-  React.useEffect(() => {
-    const handleScrollTarget = () => {
-      const params = new URLSearchParams(window.location.search);
-      const target = params.get('scroll') || (window.location.hash ? window.location.hash.substring(1) : null);
-      if (target) {
-        setTimeout(() => {
-          const el = document.getElementById(target);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 150);
-      }
-    };
-    handleScrollTarget();
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible)
+          setChapter(Number((visible.target as HTMLElement).dataset.chapter));
+      },
+      { rootMargin: "-22% 0px -30% 0px", threshold: [0, 0.3, 0.6] },
+    );
+    chapterRefs.current.forEach((element) => {
+      if (element) observer.observe(element);
+    });
+    return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    const target =
+      new URLSearchParams(window.location.search).get("scroll") ||
+      window.location.hash.slice(1);
+    if (!target) return;
+    if (target === "simulator") setShowSimulator(true);
+    const timer = window.setTimeout(
+      () =>
+        document
+          .getElementById(target)
+          ?.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth" }),
+      100,
+    );
+    return () => window.clearTimeout(timer);
+  }, [reduceMotion]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [menuOpen]);
 
-  const handleContactSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) return;
-    setContactSubmitting(true);
-    setContactError('');
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contactForm),
-      });
-      if (!res.ok) throw new Error('Submission failed');
-      setContactSuccess(true);
-      setContactForm({ name: '', email: '', company: '', type: 'Demo Request', message: '' });
-    } catch {
-      setContactError('Could not deliver your inquiry. Please email quality@fmeapex.online directly.');
-    } finally {
-      setContactSubmitting(false);
-    }
-  }, [contactForm]);
-
-  const handlePrimaryCTA = async () => {
+  const launch = () => {
     if (token) {
-      navigate('/app/projects');
+      navigate("/app/projects");
       return;
     }
-    setGuestLoading(true);
+    sessionStorage.removeItem("logged_out");
+    navigate("/app/initializing");
+  };
+  const submitContact = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    setContactStatus("sending");
     try {
-      await guestLogin();
-      navigate('/app/projects');
-    } catch (err) {
-      console.error('Guest login failed:', err);
-      navigate('/login');
-    } finally {
-      setGuestLoading(false);
+      const response = await fetch(`${API_BASE_URL}/auth/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.get("name"),
+          email: values.get("email"),
+          company: values.get("company"),
+          type: values.get("type"),
+          message: values.get("message"),
+        }),
+      });
+      if (!response.ok) throw new Error("Contact submission failed");
+      setContactStatus("success");
+      form.reset();
+    } catch {
+      setContactStatus("error");
     }
   };
-
-  const selectedStep = SEVEN_STEPS.find((s) => s.step === activeStepTab) || SEVEN_STEPS[0];
+  const ctaLabel = token ? "Open workspace" : "Try it out";
 
   return (
-    <div className="min-h-screen bg-[#FBFBFC] text-slate-900 font-sans antialiased selection:bg-[#FF5500]/20 selection:text-slate-900">
-      <SEO
-        title="FMEApex — Deterministic AIAG-VDA 2019 Quality Intelligence Platform"
-        description="Replace fragile Excel sheets with deterministic AIAG-VDA 2019 FMEA intelligence. PFD-PFMEA linking, Control Plan auto-flow, and 21 CFR Part 11 compliance."
-        canonical="/"
-      />
-
-      {/* ── 1. Handcrafted Precision Navigation ────────────── */}
-      <SiteHeader />
-
-      {/* ── 2. Hero Section (Industrial Canvas) ────────────── */}
-      <section className="relative pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-tech-dots border-b border-slate-200/70">
-        <div className="max-w-[1320px] mx-auto">
-          {/* Hero Core Content */}
-          <div className="max-w-[960px] mx-auto text-center mb-12 sm:mb-16">
-            {/* Standards Compliance Capsule */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-mono font-bold text-slate-700 shadow-xs mb-6">
-              <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
-              <span>AIAG-VDA 2019 (1st Ed.)</span>
-              <span className="text-slate-300">•</span>
-              <span>IATF 16949 §8.3.5</span>
-              <span className="text-slate-300">•</span>
-              <span>21 CFR Part 11</span>
-            </div>
-
-            {/* Authoritative Engineering Headline */}
-            <h1 className="text-[38px] sm:text-[56px] lg:text-[68px] font-extrabold leading-[1.05] tracking-[-0.035em] text-slate-900 mb-6 ff-heading">
-              The Deterministic FMEA Platform.<br />
-              <span className="text-[#FF5500]">Engineered for Zero-Defect Manufacturing.</span>
-            </h1>
-
-            {/* Subtitle addressing actual engineering pain points */}
-            <p className="text-[17px] sm:text-[20px] leading-[1.6] text-slate-600 max-w-[760px] mx-auto mb-10 font-normal">
-              Eliminate spreadsheet chaos and OEM audit anxiety. FMEApex unifies Process Flow Diagrams (PFD), PFMEAs, and Control Plans in a single cryptographic system of record with strict AIAG-VDA 7-step gating.
-            </p>
-
-            {/* Action Row */}
-            <div className="flex flex-wrap items-center justify-center gap-3.5 mb-12">
-              <button
-                onClick={handlePrimaryCTA}
-                disabled={guestLoading}
-                className="h-12 px-7 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white text-[14.5px] font-semibold transition-all shadow-md flex items-center gap-2 group"
-              >
-                {guestLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    <span>{isBackendReady ? 'Entering Sandbox...' : 'Warming Services...'}</span>
+    <MotionConfig reducedMotion="user">
+      <div className="fmea-story">
+        <SEO
+          title="FMEApex — Connected FMEA, from design to control"
+          description="Move beyond disconnected spreadsheets. Connect DFMEA structures, PFMEA, control plans, and verified risk mitigation in one digital FMEA workspace."
+          canonical="/"
+        />
+        <a className="story-skip" href="#main-content">
+          Skip to content
+        </a>
+        <motion.div
+          className="story-progress"
+          style={{ scaleX: reduceMotion ? scrollYProgress : progress }}
+          aria-hidden="true"
+        />
+        <header className="story-header">
+          <Link to="/" className="story-brand" aria-label="FMEApex home">
+            <span className="story-brand-mark">
+              <GitBranch size={21} aria-hidden="true" />
+            </span>
+            fmeapex
+          </Link>
+          <nav className="story-desktop-nav" aria-label="Main navigation">
+            <a href="#story">The connected story</a>
+            <a href="#workflow">How it works</a>
+            <Link to="/learn">Resources</Link>
+            <Link to="/pricing">Pricing</Link>
+          </nav>
+          <div className="story-header-actions">
+            <Link to="/login" className="story-login">
+              Log in
+            </Link>
+            <button
+              className="story-button story-button-small"
+              onClick={launch}
+            >
+              {token ? "Workspace" : "Try FMEApex"}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </button>
+            <button
+              className="story-menu-button"
+              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-expanded={menuOpen}
+              aria-controls="story-mobile-nav"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+          {menuOpen && (
+            <nav
+              id="story-mobile-nav"
+              className="story-mobile-nav"
+              aria-label="Mobile navigation"
+              onClick={() => setMenuOpen(false)}
+            >
+              <a href="#story">The connected story</a>
+              <a href="#workflow">How it works</a>
+              <Link to="/learn">Resources</Link>
+              <Link to="/pricing">Pricing</Link>
+              <Link to="/login">Log in</Link>
+            </nav>
+          )}
+        </header>
+        <main id="main-content">
+          <section className="story-hero story-container">
+            <motion.div
+              className="story-hero-copy"
+              initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              <div className="story-intro">
+                <span /> Quality engineering, connected.
+              </div>
+              <h1>
+                Your FMEA deserves
+                <br />a life beyond
+                <br />
+                <span className="story-headline-last">
+                  the spreadsheet.
+                  <svg viewBox="0 0 600 20" aria-hidden="true">
+                    <path d="M4 12 Q230 -2 595 10" />
+                  </svg>
+                </span>
+              </h1>
+              <p>
+                Turn isolated rows into a connected engineering story.
+                <br className="story-desktop-break" /> From design intent to
+                process controls and verified action,
+                <br className="story-desktop-break" /> bring your entire FMEA
+                into focus.
+              </p>
+              <div className="story-hero-actions">
+                <button className="story-button" onClick={launch}>
+                  {ctaLabel}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </button>
+                <a className="story-text-link" href="#story">
+                  <span className="story-play">
+                    <ArrowDown size={16} aria-hidden="true" />
                   </span>
-                ) : (
-                  <>
-                    <span>Launch Free Guest Sandbox</span>
-                    <ArrowRight className="w-4 h-4 text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  const el = document.getElementById('simulator');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="h-12 px-6 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-[14.5px] font-semibold transition-all shadow-xs"
-              >
-                Simulate Action Priority (AP)
-              </button>
-
-              <button
-                onClick={() => {
-                  const el = document.getElementById('workflow');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="h-12 px-5 rounded-xl text-slate-600 hover:text-slate-900 text-[14px] font-medium transition-colors flex items-center gap-1"
-              >
-                <span>7-Step Method</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                  See how it connects
+                </a>
+              </div>
+              <div className="story-hero-note">
+                <Check size={14} aria-hidden="true" /> No sign-up to explore{" "}
+                <span /> Pre-filled engineering project
+              </div>
+            </motion.div>
+            <motion.div
+              className="story-hero-product"
+              initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.15 }}
+            >
+              <ConnectedProduct />
+            </motion.div>
+            <div className="story-hero-bottom">
+              <span>Built for the way quality actually works.</span>
+              <a href="#story">
+                Follow the thread <ArrowDown size={14} aria-hidden="true" />
+              </a>
             </div>
-
-            {/* Four Concrete Verification Badges */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[920px] mx-auto text-left">
-              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
-                <div className="flex items-center gap-2 text-xs font-mono text-[#FF5500] font-bold">
-                  <Cpu className="w-4 h-4" />
-                  <span>STEP 5 RISK</span>
-                </div>
-                <div className="text-[17px] font-extrabold text-slate-900 mt-1">Deterministic AP</div>
-                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
-                  High, Medium, Low lookup table. Replaces flawed legacy RPN.
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
-                <div className="flex items-center gap-2 text-xs font-mono text-emerald-600 font-bold">
-                  <Workflow className="w-4 h-4" />
-                  <span>7-STEP GATING</span>
-                </div>
-                <div className="text-[17px] font-extrabold text-slate-900 mt-1">Zero Skipped Phases</div>
-                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
-                  Prerequisites strictly enforced before revision progression.
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
-                <div className="flex items-center gap-2 text-xs font-mono text-blue-600 font-bold">
-                  <GitBranch className="w-4 h-4" />
-                  <span>TRI-DIRECTIONAL</span>
-                </div>
-                <div className="text-[17px] font-extrabold text-slate-900 mt-1">PFD ↔ PFMEA ↔ CP</div>
-                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
-                  Serializable bidirectional sync prevents orphan operations.
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs">
-                <div className="flex items-center gap-2 text-xs font-mono text-slate-700 font-bold">
-                  <Lock className="w-4 h-4" />
-                  <span>PART 11 COMPLIANT</span>
-                </div>
-                <div className="text-[17px] font-extrabold text-slate-900 mt-1">SHA-256 Signatures</div>
-                <div className="text-[12px] text-slate-500 mt-0.5 leading-tight">
-                  Immutable audit log partition rejects UPDATE and DELETE queries.
-                </div>
-              </div>
+          </section>
+          <div className="story-discipline-strip">
+            <div className="story-container">
+              <span>One shared engineering context</span>
+              <strong>Design FMEA</strong>
+              <span className="story-strip-plus">+</span>
+              <strong>Process FMEA</strong>
+              <span className="story-strip-plus">+</span>
+              <strong>Control plans</strong>
+              <span className="story-strip-plus">+</span>
+              <strong>Corrective actions</strong>
             </div>
           </div>
-
-          {/* ── 3. The Studio Canvas (Interactive Workbench Proof) ── */}
-          <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] overflow-hidden bg-white">
-            <VentrilocDashboard />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. The 7-Step AIAG-VDA Interactive Methodology ── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200" id="workflow">
-        <div className="max-w-[1320px] mx-auto">
-          {/* Section Header */}
-          <div className="max-w-[720px] mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-100 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
-              <Layers className="w-3.5 h-3.5 text-[#FF5500]" />
-              <span>AIAG-VDA 2019 Core Standard</span>
+          <section className="story-problem story-container" id="story">
+            <div className="story-section-label">
+              <span className="story-line" /> The problem was never the rows.
             </div>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              The 7-Step Quality Analysis Methodology.
-            </h2>
-            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              AIAG-VDA 2019 eliminated guesswork by replacing informal brainstorming with a phased, gated quality architecture. Every step produces verifiable outputs required by the next.
-            </p>
-          </div>
-
-          {/* Interactive Step Navigation Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-8">
-            {SEVEN_STEPS.map((s) => (
-              <button
-                key={s.step}
-                onClick={() => setActiveStepTab(s.step)}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  activeStepTab === s.step
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                    : 'bg-[#FBFBFC] hover:bg-slate-100 text-slate-700 border-slate-200'
-                }`}
-              >
-                <div className={`text-[11px] font-mono font-bold ${activeStepTab === s.step ? 'text-[#FF5500]' : 'text-slate-400'}`}>
-                  STEP 0{s.step}
-                </div>
-                <div className="text-[13px] font-bold mt-1 line-clamp-1">
-                  {s.name}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Step Detail Inspection Card */}
-          <div className="rounded-2xl border border-slate-200 bg-[#FBFBFC] p-6 sm:p-10 shadow-xs">
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-              {/* Left Column: Concept & Description */}
-              <div className="lg:col-span-6 space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200/80 text-xs font-mono font-bold text-slate-800">
-                  <span>Step 0{selectedStep.step}</span>
-                  <span>•</span>
-                  <span>{selectedStep.tag}</span>
-                </div>
-                <h3 className="text-[26px] sm:text-[32px] font-extrabold text-slate-900 ff-heading">
-                  {selectedStep.name}
-                </h3>
-                <p className="text-[15.5px] leading-relaxed text-slate-600">
-                  {selectedStep.desc}
+            <div className="story-problem-grid">
+              <h2>
+                It’s everything
+                <br />
+                between them.
+              </h2>
+              <div>
+                <p>
+                  A design changes. Someone updates the FMEA. Someone else
+                  copies a control into another file. An action gets lost in an
+                  email.
                 </p>
-
-                <div className="pt-2 flex items-center gap-3">
+                <p className="story-problem-emphasis">
+                  Your engineering is connected.
+                  <br />
+                  Your quality tools should be, too.
+                </p>
+              </div>
+            </div>
+            <div
+              className="story-file-trail"
+              aria-label="Disconnected spreadsheet workflow"
+            >
+              <span>
+                <FileSpreadsheet /> DFMEA_final.xlsx
+              </span>
+              <i />
+              <span>
+                <FileSpreadsheet /> PFMEA_v12.xlsx
+              </span>
+              <i />
+              <span>
+                <FileSpreadsheet /> Control_plan_NEW.xlsx
+              </span>
+              <span className="story-file-question">
+                Which version has the full picture?
+              </span>
+            </div>
+          </section>
+          <section
+            className="story-journey story-container"
+            id="sync"
+            aria-label="The connected FMEA journey"
+          >
+            <div className="story-journey-visual">
+              <div className="story-section-label">
+                <span className="story-line" /> The golden thread
+              </div>
+              <JourneyVisual chapter={chapter} />
+              <div
+                className="story-journey-dots"
+                aria-label="Jump to a chapter"
+              >
+                {chapters.map((item, index) => (
                   <button
-                    onClick={() => navigate('/learn/aiag-vda-7-step-fmea')}
-                    className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#FF5500] hover:text-slate-900 transition-colors"
+                    key={item.title}
+                    aria-label={item.title}
+                    aria-current={chapter === index ? "step" : undefined}
+                    onClick={() =>
+                      chapterRefs.current[index]?.scrollIntoView({
+                        behavior: reduceMotion ? "instant" : "smooth",
+                        block: "center",
+                      })
+                    }
                   >
-                    <span>Read in-depth AIAG-VDA 7-Step handbook</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span />
+                    {String(index + 1).padStart(2, "0")}
                   </button>
-                </div>
-              </div>
-
-              {/* Right Column: Gating Rule & Data I/O */}
-              <div className="lg:col-span-6 space-y-3 font-mono text-xs">
-                {/* Input Artifact */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                  <div className="text-slate-400 font-bold uppercase text-[10.5px]">Required Entry Input</div>
-                  <div className="text-slate-800 font-medium text-[13px] mt-1 font-sans">
-                    {selectedStep.input}
-                  </div>
-                </div>
-
-                {/* Output Artifact */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                  <div className="text-emerald-600 font-bold uppercase text-[10.5px] flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Mandated Output Artifact</span>
-                  </div>
-                  <div className="text-slate-800 font-medium text-[13px] mt-1 font-sans">
-                    {selectedStep.output}
-                  </div>
-                </div>
-
-                {/* Platform Gating Rule */}
-                <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900">
-                  <div className="font-bold uppercase text-[10.5px] flex items-center gap-1.5 text-amber-700">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>Prerequisite Gating Constraint</span>
-                  </div>
-                  <div className="font-sans text-[12.5px] mt-1 text-amber-800">
-                    {selectedStep.gating}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. The Golden Thread (PFD ↔ PFMEA ↔ Control Plan Sync) ── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC] border-b border-slate-200" id="sync">
-        <div className="max-w-[1320px] mx-auto">
-          <div className="max-w-[720px] mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200/70 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
-              <GitBranch className="w-3.5 h-3.5 text-[#FF5500]" />
-              <span>Bidirectional Data Synchronization</span>
-            </div>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              The Golden Thread: Never Out of Sync.
-            </h2>
-            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              When a manufacturing engineer modifies a process parameter or tolerance in the Control Plan, traditional teams rely on manual memory to update the PFMEA. FMEApex links them in a serializable, bidirectional transaction.
-            </p>
-          </div>
-
-          {/* Tri-Directional Sync Visualizer */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Box 1: PFD */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-7 shadow-xs">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-4 font-mono font-bold text-sm">
-                01
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
-                Process Flow Diagram (PFD)
-              </h3>
-              <p className="text-xs text-slate-500 font-mono mb-4">
-                Shop Floor Operations Sequence
-              </p>
-              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center text-slate-800 font-bold">
-                  <span>Op 20: Stator Fastener Torque</span>
-                  <span className="text-emerald-600 text-[10px]">SYNCED</span>
-                </div>
-                <div className="text-[11px] text-slate-500">Work Element: Multi-Spindle Tooling</div>
-                <div className="text-[11px] text-slate-500">4M Category: Machine (M-04)</div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Orphan operations flagged automatically</span>
-              </div>
-            </div>
-
-            {/* Box 2: PFMEA */}
-            <div className="rounded-2xl bg-white border-2 border-slate-900 p-6 sm:p-7 shadow-md relative">
-              <div className="absolute -top-3 right-6 px-2.5 py-0.5 rounded-md bg-[#FF5500] text-white text-[10.5px] font-mono font-bold uppercase tracking-wider">
-                Active Core
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center mb-4 font-mono font-bold text-sm">
-                02
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
-                AIAG-VDA PFMEA Matrix
-              </h3>
-              <p className="text-xs text-slate-500 font-mono mb-4">
-                Failure Chain & Risk Analysis
-              </p>
-              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center text-slate-800 font-bold">
-                  <span>Row 20.1: Under-torque</span>
-                  <span className="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">HIGH AP</span>
-                </div>
-                <div className="text-[11px] text-slate-500">S=9 · O=4 · D=4 (Worst-case inherited)</div>
-                <div className="text-[11px] text-slate-500">Action: Dynamic angle-torque window</div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Inherits severity from worst-case customer effect</span>
-              </div>
-            </div>
-
-            {/* Box 3: Control Plan */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-7 shadow-xs">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-4 font-mono font-bold text-sm">
-                03
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
-                Control Plan (CP)
-              </h3>
-              <p className="text-xs text-slate-500 font-mono mb-4">
-                Quality Inspection Specifications
-              </p>
-              <div className="space-y-2 text-xs font-mono text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                <div className="flex justify-between items-center text-slate-800 font-bold">
-                  <span>Fastener Clamp Torque</span>
-                  <span className="text-blue-600 text-[10px]">AUTO-FLOW</span>
-                </div>
-                <div className="text-[11px] text-slate-500">Spec: 48.0 ± 2.5 N·m</div>
-                <div className="text-[11px] text-slate-500">Evaluation: 100% per fastener transducer</div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Editing CP tolerance synchronizes back to PFMEA</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. Excel Spreadsheets vs. FMEApex Engine ────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200">
-        <div className="max-w-[1320px] mx-auto">
-          <div className="max-w-[720px] mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-rose-50 text-xs font-mono font-bold text-rose-700 uppercase tracking-wider mb-3">
-              <FileSpreadsheet className="w-3.5 h-3.5 text-rose-600" />
-              <span>Spreadsheet Risk Elimination</span>
-            </div>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              Why Tier 1 Manufacturers are Retiring Excel.
-            </h2>
-            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              Excel is a blank calculator, not a quality engineering database. Disconnected files, broken cell formulas, and unverified change histories lead to audit failure findings and costly recall liabilities.
-            </p>
-          </div>
-
-          {/* Visual Interactive Excel vs FMEApex Showcase */}
-          <div className="mb-14">
-            <ExcelRetirementShowcase />
-          </div>
-
-          {/* Comparison Table */}
-          <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div className="grid grid-cols-12 bg-slate-900 text-white p-4 sm:p-5 text-xs font-mono font-bold uppercase tracking-wider">
-              <div className="col-span-12 sm:col-span-4">Engineering Requirement</div>
-              <div className="col-span-6 sm:col-span-4 text-slate-400 mt-2 sm:mt-0 flex items-center gap-1.5">
-                <X className="w-4 h-4 text-rose-400" />
-                <span>Legacy Excel Spreadsheets</span>
-              </div>
-              <div className="col-span-6 sm:col-span-4 text-emerald-400 mt-2 sm:mt-0 flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>FMEApex Quality OS</span>
-              </div>
-            </div>
-
-            <div className="divide-y divide-slate-200 bg-[#FBFBFC]">
-              {COMPARISON_ROWS.map((row) => (
-                <div key={row.feature} className="grid grid-cols-12 p-4 sm:p-5 text-sm items-start hover:bg-white transition-colors">
-                  <div className="col-span-12 sm:col-span-4 font-bold text-slate-900 mb-2 sm:mb-0">
-                    {row.feature}
+            <div className="story-chapters">
+              {chapters.map((item, index) => (
+                <article
+                  key={item.title}
+                  data-chapter={index}
+                  ref={(element) => {
+                    chapterRefs.current[index] = element;
+                  }}
+                  className={`story-chapter ${chapter === index ? "is-current" : ""}`}
+                >
+                  <span className="story-chapter-number">
+                    0{index + 1} / 04
+                  </span>
+                  <h2>{item.title}</h2>
+                  <p>{item.description}</p>
+                  <div className="story-chapter-proof">
+                    <CheckCircle2 size={18} aria-hidden="true" />
+                    {item.proof}
                   </div>
-                  <div className="col-span-12 sm:col-span-4 text-slate-600 text-xs sm:text-sm pr-4 mb-2 sm:mb-0">
-                    <span className="sm:hidden font-mono text-[10px] uppercase text-rose-500 font-bold block mb-0.5">Legacy Excel:</span>
-                    {row.excel}
-                  </div>
-                  <div className="col-span-12 sm:col-span-4 text-slate-900 font-medium text-xs sm:text-sm pl-0 sm:pl-2">
-                    <span className="sm:hidden font-mono text-[10px] uppercase text-emerald-600 font-bold block mb-0.5">FMEApex:</span>
-                    <span className="text-emerald-950 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-200/60 inline-block">
-                      {row.fmeapex}
-                    </span>
-                  </div>
-                </div>
+                </article>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 7. Interactive Action Priority Simulator Tile ──── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC] border-b border-slate-200" id="simulator">
-        <div className="max-w-[1320px] mx-auto">
-          <div className="max-w-[720px] mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
-              <Cpu className="w-3.5 h-3.5 text-[#FF5500]" />
-              <span>Interactive Risk Simulator</span>
-            </div>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              Ditch Flawed Excel RPN. Test AIAG-VDA Action Priority.
-            </h2>
-            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              Test how AIAG-VDA 2019 replaces dangerous legacy Excel multiplication (S × O × D) with deterministic decision matrices. See firsthand why OEM auditors banned arbitrary RPN cutoffs that hid catastrophic single-point failures.
-            </p>
-          </div>
-
-          <div className="max-w-[1100px] mx-auto">
-            <RiskCalculatorWidget />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 8. Technical Specifications Architecture ────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white border-b border-slate-200" id="specs">
-        <div className="max-w-[1320px] mx-auto">
-          <div className="max-w-[720px] mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-100 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3">
-              <Server className="w-3.5 h-3.5 text-[#FF5500]" />
-              <span>Enterprise Infrastructure</span>
-            </div>
-            <h2 className="text-[32px] sm:text-[44px] font-extrabold tracking-tight text-slate-900 leading-[1.08] ff-heading">
-              Engineered for Enterprise Manufacturing Scale.
-            </h2>
-            <p className="mt-3 text-[16px] text-slate-600 leading-relaxed">
-              Row-level PostgreSQL data isolation, cryptographic SHA-256 digital signature chains, pre-signed Cloudflare R2 evidence storage, and one-command Docker on-premises deployment.
-            </p>
-          </div>
-
-          {/* Technical Spec List */}
-          <div className="rounded-2xl border border-slate-200 divide-y divide-slate-200 overflow-hidden bg-[#FBFBFC]">
-            {TECHNICAL_SPECS.map(([name, cat, detail]) => (
-              <div key={name} className="grid grid-cols-1 sm:grid-cols-12 p-4 sm:p-5 text-sm items-center hover:bg-white transition-colors">
-                <div className="sm:col-span-4 font-mono font-bold text-slate-900 text-[13px]">
-                  {name}
+          </section>
+          <section className="story-workflow" id="workflow">
+            <div className="story-container">
+              <div className="story-workflow-heading">
+                <div>
+                  <div className="story-section-label">
+                    <span className="story-line" /> A method behind every
+                    decision
+                  </div>
+                  <h2>
+                    Seven steps.
+                    <br />
+                    One continuous workflow.
+                  </h2>
                 </div>
-                <div className="sm:col-span-2 text-xs font-mono text-[#FF5500] font-bold uppercase mt-1 sm:mt-0">
-                  {cat}
-                </div>
-                <div className="sm:col-span-6 text-slate-600 text-xs sm:text-sm mt-1 sm:mt-0">
-                  {detail}
-                </div>
+                <p>
+                  Follow the AIAG-VDA 2019 methodology with structure, context,
+                  and clear handoffs at every stage.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 9. Direct Engineering Contact & Demo ──────────── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-[#FBFBFC]" id="contact">
-        <div className="max-w-[1320px] mx-auto">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
-            {/* Left Column: Direct Outreach Info */}
-            <div className="lg:col-span-5 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-200 text-xs font-mono font-bold text-slate-700 uppercase tracking-wider">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#FF5500]" />
-                <span>Talk to a Quality Architect</span>
-              </div>
-              <h2 className="text-[32px] sm:text-[42px] font-extrabold tracking-tight text-slate-900 leading-tight ff-heading">
-                Ready to Upgrade Your Quality Infrastructure?
-              </h2>
-              <p className="text-[16px] leading-relaxed text-slate-600">
-                Whether you need an on-premises air-gapped Docker deployment, migration from legacy Excel or APIS IQ databases, or an interactive demonstration for your CFT engineering team, our quality architects are ready.
-              </p>
-
-              <div className="space-y-3 font-mono text-xs text-slate-600 pt-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>SLA Response Window: <strong className="text-slate-900">Within 4 business hours</strong></span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#FF5500]" />
-                  <span>Engineering Desk: <a href="mailto:quality@fmeapex.online" className="text-[#FF5500] font-bold hover:underline">quality@fmeapex.online</a></span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span>Deployment Targets: Cloudflare Edge, Render Cloud, or Docker On-Prem</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Inquiry Submission Form */}
-            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 sm:p-9 shadow-sm">
-              {contactSuccess ? (
-                <div className="p-8 text-center bg-emerald-50 rounded-xl border border-emerald-200">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">Inquiry Dispatched</h3>
-                  <p className="text-sm text-slate-600">
-                    Thank you. An FMEA Quality Systems Architect will review your manufacturing details and respond within 4 business hours.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  {contactError && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl">
-                      {contactError}
-                    </div>
-                  )}
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                        Your Full Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                        placeholder="Dr. Markus Weber"
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                        Corporate Email
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                        placeholder="m.weber@powertrain-oem.com"
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                        Manufacturing Facility / Plant
-                      </label>
-                      <input
-                        type="text"
-                        value={contactForm.company}
-                        onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
-                        placeholder="Tier 1 Propulsion Assembly"
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                        Inquiry Scope
-                      </label>
-                      <select
-                        value={contactForm.type}
-                        onChange={(e) => setContactForm({ ...contactForm, type: e.target.value })}
-                        className="w-full h-11 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
-                      >
-                        {INQUIRY_TYPES.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-1.5">
-                      Process Operations & Scope Details
-                    </label>
-                    <textarea
-                      rows={3}
-                      required
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                      placeholder="Describe your current FMEA tooling (Excel, APIS IQ), number of assembly lines, or on-premises requirements..."
-                      className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:border-slate-900 focus:bg-white"
-                    />
-                  </div>
-
+              <div
+                className="story-step-buttons"
+                role="group"
+                aria-label="Explore the seven FMEA steps"
+              >
+                {steps.map(([name], index) => (
                   <button
-                    type="submit"
-                    disabled={contactSubmitting}
-                    className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-all shadow-sm flex items-center justify-center gap-2"
+                    key={name}
+                    aria-pressed={step === index}
+                    onClick={() => setStep(index)}
                   >
-                    {contactSubmitting ? 'Transmitting Details...' : 'Send Inquiry to Quality Team →'}
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    {name}
+                    <ChevronRight size={15} aria-hidden="true" />
                   </button>
-                </form>
+                ))}
+              </div>
+              <div className="story-step-detail" aria-live="polite">
+                <span>Step {step + 1}</span>
+                <h3>{steps[step][0]}</h3>
+                <p>{steps[step][1]}</p>
+                <Link to="/learn">
+                  Explore the methodology{" "}
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </section>
+          <section className="story-assurance story-container">
+            <div className="story-assurance-heading">
+              <h2>
+                Engineering judgment.
+                <br />A stronger foundation.
+              </h2>
+              <p>
+                Give your team useful intelligence, clear priorities, and a
+                history they can follow.
+              </p>
+            </div>
+            <div className="story-assurance-grid">
+              <article>
+                <Target />
+                <h3>Risk that leads to action.</h3>
+                <p>
+                  Assess severity, occurrence, and detection with calculated
+                  Action Priority. Keep the focus on what needs attention next.
+                </p>
+                <a href="#simulator" onClick={() => setShowSimulator(true)}>
+                  Try the risk calculator{" "}
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </a>
+              </article>
+              <article>
+                <Sparkles />
+                <h3>AI supports. You decide.</h3>
+                <p>
+                  Review suggested failure modes and controls in context. Your
+                  engineers choose what to accept, change, or reject.
+                </p>
+                <Link to="/product">
+                  Explore the platform{" "}
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </Link>
+              </article>
+              <article>
+                <LockKeyhole />
+                <h3>A history worth keeping.</h3>
+                <p>
+                  Bring review, approval, locked revisions, and evidence into
+                  the same workflow. Keep decisions traceable as your analysis
+                  evolves.
+                </p>
+                <Link to="/product">
+                  See the full workflow{" "}
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                </Link>
+              </article>
+            </div>
+            <div id="simulator" className="story-simulator">
+              <button
+                className="story-simulator-toggle"
+                aria-expanded={showSimulator}
+                aria-controls="story-calculator"
+                onClick={() => setShowSimulator(!showSimulator)}
+              >
+                <span>
+                  <CircleDot size={19} aria-hidden="true" />
+                  Explore Action Priority with your own ratings
+                </span>
+                <span>
+                  {showSimulator ? "Close calculator" : "Open calculator"}{" "}
+                  {showSimulator ? <X size={17} /> : <ArrowRight size={17} />}
+                </span>
+              </button>
+              {showSimulator && (
+                <div id="story-calculator" className="story-calculator">
+                  <Suspense
+                    fallback={<p role="status">Loading risk calculator…</p>}
+                  >
+                    <RiskCalculator />
+                  </Suspense>
+                </div>
               )}
             </div>
+          </section>
+          <section className="story-contact" id="contact">
+            <div className="story-container story-contact-grid">
+              <div>
+                <div className="story-section-label">
+                  <span className="story-line" /> Your next chapter
+                </div>
+                <h2>
+                  Less chasing files.
+                  <br />
+                  More engineering
+                  <br />
+                  confidence.
+                </h2>
+                <p>
+                  Explore a connected project for yourself, or tell us how your
+                  team works today.
+                </p>
+                <button
+                  className="story-button story-button-light"
+                  onClick={launch}
+                >
+                  {ctaLabel}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </button>
+                <span className="story-contact-note" role="status">
+                  {isBackendReady
+                    ? "Workspace ready to explore"
+                    : "Your workspace may take a moment to wake up."}
+                </span>
+              </div>
+              <div className="story-contact-form">
+                <h3>Let’s connect your workflow.</h3>
+                <p>Talk to us about your FMEA process.</p>
+                {contactStatus === "success" ? (
+                  <div className="story-contact-success" role="status">
+                    <CheckCircle2 />
+                    <h4>Thanks for starting the conversation.</h4>
+                    <p>Your inquiry has been sent to the quality team.</p>
+                    <button onClick={() => setContactStatus("idle")}>
+                      Send another inquiry
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={submitContact}>
+                    <div className="story-form-row">
+                      <label>
+                        Your name
+                        <input
+                          required
+                          name="name"
+                          autoComplete="name"
+                          maxLength={150}
+                        />
+                      </label>
+                      <label>
+                        Work email
+                        <input
+                          required
+                          type="email"
+                          name="email"
+                          autoComplete="email"
+                          spellCheck={false}
+                          maxLength={254}
+                        />
+                      </label>
+                    </div>
+                    <div className="story-form-row">
+                      <label>
+                        Company
+                        <input
+                          name="company"
+                          autoComplete="organization"
+                          maxLength={200}
+                        />
+                      </label>
+                      <label>
+                        How can we help?
+                        <select name="type" defaultValue="Demo Request">
+                          <option>Demo Request</option>
+                          <option>Excel Data Migration</option>
+                          <option>Enterprise On-Premises License</option>
+                          <option>Architecture &amp; Security Review</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label>
+                      Tell us about your workflow
+                      <textarea
+                        name="message"
+                        required
+                        rows={3}
+                        maxLength={5000}
+                      />
+                    </label>
+                    {contactStatus === "error" && (
+                      <p className="story-form-error" role="alert">
+                        Your inquiry could not be sent. Try again or email{" "}
+                        <a href="mailto:quality@fmeapex.online">
+                          quality@fmeapex.online
+                        </a>
+                        .
+                      </p>
+                    )}
+                    <button
+                      className="story-button"
+                      type="submit"
+                      disabled={contactStatus === "sending"}
+                    >
+                      {contactStatus === "sending"
+                        ? "Sending inquiry…"
+                        : "Start the conversation"}
+                      <ArrowUpRight size={17} aria-hidden="true" />
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </section>
+        </main>
+        <footer className="story-footer story-container">
+          <div>
+            <Link to="/" className="story-brand">
+              <span className="story-brand-mark">
+                <GitBranch size={20} aria-hidden="true" />
+              </span>
+              fmeapex
+            </Link>
+            <p>Connected thinking. Better quality.</p>
           </div>
-        </div>
-      </section>
+          <nav aria-label="Footer navigation">
+            <Link to="/product">Platform</Link>
+            <Link to="/learn">Resources</Link>
+            <Link to="/blog">Journal</Link>
+            <Link to="/pricing">Pricing</Link>
+            <Link to="/about">About</Link>
+            <a href="#contact">Contact</a>
+          </nav>
+          <div className="story-footer-bottom">
+            <span>© {new Date().getFullYear()} FMEApex</span>
+            <span>From design intent to verified action.</span>
+            <Link to="/login">
+              Open workspace <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        </footer>
+      </div>
+    </MotionConfig>
+  );
+};
 
-      {/* ── 10. Handcrafted Technical Footer ─────────────────── */}
-      <SiteFooter />
+const JourneyVisual: React.FC<{ chapter: number }> = ({ chapter }) => {
+  const content = chapters[chapter];
+  const Icon = content.icon;
+  return (
+    <div className="story-thread-visual">
+      <div className="story-thread-top">
+        <span>
+          <span className="story-status-dot" /> Connected project
+        </span>
+        <span>Illustrative workflow</span>
+      </div>
+      <div className="story-thread-nodes">
+        {chapters.map((item, index) => {
+          const NodeIcon = item.icon;
+          return (
+            <div
+              key={item.tag}
+              className={`story-thread-node ${index <= chapter ? "is-linked" : ""} ${index === chapter ? "is-active" : ""}`}
+            >
+              <span className="story-thread-node-icon">
+                <NodeIcon size={21} aria-hidden="true" />
+              </span>
+              <div>
+                <small>
+                  {
+                    [
+                      "Design intent",
+                      "Process risk",
+                      "Shared controls",
+                      "Verified action",
+                    ][index]
+                  }
+                </small>
+                <strong>
+                  {
+                    [
+                      "DFMEA structure",
+                      "PFD & PFMEA",
+                      "Central control plan",
+                      "Risk mitigation",
+                    ][index]
+                  }
+                </strong>
+              </div>
+              {index < chapter ? (
+                <Check size={18} aria-hidden="true" />
+              ) : (
+                <span className="story-node-index">0{index + 1}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <motion.div
+        key={chapter}
+        className="story-thread-caption"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Icon size={18} aria-hidden="true" />
+        <div>
+          <strong>{content.tag}</strong>
+          <p>{content.detail}</p>
+        </div>
+      </motion.div>
     </div>
   );
 };

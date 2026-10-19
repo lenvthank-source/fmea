@@ -25,3 +25,12 @@ FMEApex is an interactive engineering workspace designed for quality risk manage
 Refer to the respective application folders for configuration and local development instructions:
 - [backend/README.md](file:///f:/proj-fmea/backend/README.md)
 - [frontend/README.md](file:///f:/proj-fmea/frontend/README.md)
+
+## v0.9.0 experience (2026-10-19)
+
+- The homepage, sign-in, and dashboard share the connected FMEA visual theme. Try FMEApex / Try it out enters an authenticated trial workspace without an email/password screen.
+- Programs take priority on the dashboard, with a compact summary row and an activity feed backed exclusively by recorded audit events for accessible projects.
+- One 7-Step Guide entry per screen starts contextual prompts beside real creation controls and follows the engineering workflow. Tour progress never completes FMEA prerequisites.
+- Trial sessions use the label **Trial workspace**, hide archive controls, and retain the existing guest limits and tenant permissions.
+- Start any agent handoff at [.agents/ACTIVE_STATE.md](.agents/ACTIVE_STATE.md), then follow [AGENTS.md](AGENTS.md) and [CODEX.md](CODEX.md). Run `graphify update .` after each logical code-change batch and before handoff; regenerate directory indexes with `python .agents/skills/readme_sync/scripts/sync_readmes.py`.
+- Release version: **0.9.0**. The configured database schema sync is verified. See [release notes](versions/v0.9.0.md); pushing main triggers the existing Cloudflare Pages and Render pipelines.

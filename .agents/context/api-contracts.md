@@ -69,3 +69,10 @@ Pagination: `{data:[T], total, page, limit}` → `frontend/src/lib/pagination.ts
 - `POST /repository/packages` guest contributions (pending→approved via `AdminPanel`)
 - `POST /auth/feedback` auto-extracted URL/title/browser context.
 - Health: `GET /health` returns `{status, uptime}`.
+
+
+## Workspace activity (2026-10-19)
+- `GET /api/v1/audit-logs/recent?limit=6`: authenticated; limit clamped 1–20 (default 8 on invalid input). Returns an array of actual audit events: `id, initials, actor, color, title, sub, time, action, projectId, entityId, entityType`.
+- Access follows active project-list visibility for the authenticated user. Every lookup is tenant-scoped, directly or through a tenant-scoped relation. Resolve event labels and projects from actual entities or attributable immutable snapshots. No filler activity, hard-coded project attribution, or invented compliance claims.
+- Source: `backend/src/modules/audit/audit-log.controller.ts:1`, `audit-log.service.ts:1`. Regression tests: `audit-log.service.spec.ts:1`, `backend/src/common/audit.interceptor.spec.ts:1`.
+- UI polls every 30 seconds while visible and refreshes on focus, mutations, and manual action; errors clear stale items and show a retryable state. No schema or migration changes.

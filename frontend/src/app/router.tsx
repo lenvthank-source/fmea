@@ -63,7 +63,7 @@ export const AppRouter: React.FC = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
-      <Route path="/app/initializing" element={<InitializingWorkspace />} />
+      <Route path="/app/initializing" element={<InitializingWorkspace initializeGuest />} />
 
       {/* Experience Store */}
       <Route path="/product" element={<ProductPage />} />

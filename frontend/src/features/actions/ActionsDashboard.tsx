@@ -480,7 +480,7 @@ export const ActionsDashboard: React.FC = () => {
       {/* Header Section — Shadcn Admin Layout */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
+          <Typography data-tour="actions-workflow" variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
             Actions & Optimization
           </Typography>
           <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>

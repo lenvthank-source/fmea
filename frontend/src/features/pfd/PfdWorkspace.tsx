@@ -853,6 +853,7 @@ export const PfdWorkspace: React.FC = () => {
           <Button
             variant="contained"
             size="small"
+            data-tour="pfd-add-step"
             onClick={handleOpenAddDrawer}
             startIcon={<AddIcon fontSize="small" />}
             sx={{
@@ -990,7 +991,8 @@ export const PfdWorkspace: React.FC = () => {
                     </Typography>
                     <Button
                       variant="contained"
-                      onClick={handleOpenAddDrawer}
+                      data-tour="pfd-add-step"
+            onClick={handleOpenAddDrawer}
                       startIcon={<AddIcon />}
                       sx={{ textTransform: 'none', fontWeight: 'bold' }}
                     >
@@ -1364,7 +1366,8 @@ export const PfdWorkspace: React.FC = () => {
             <Fab
               color="primary"
               variant="extended"
-              onClick={handleOpenAddDrawer}
+              data-tour="pfd-add-step"
+            onClick={handleOpenAddDrawer}
               sx={{
                 textTransform: 'none',
                 fontWeight: 'bold',
@@ -1767,7 +1770,7 @@ export const PfdWorkspace: React.FC = () => {
             <Button variant="outlined" onClick={() => setAddOpen(false)}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleCreateStep} color="primary">
+            <Button data-tour="pfd-step-save" variant="contained" onClick={handleCreateStep} color="primary">
               Create Step
             </Button>
           </Stack>

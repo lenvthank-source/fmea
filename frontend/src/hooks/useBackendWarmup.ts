@@ -1,11 +1,13 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { API_BASE_URL } from '../config';
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { API_BASE_URL } from "../config";
 
 interface BackendWarmupContextType {
   isBackendReady: boolean;
 }
 
-const BackendWarmupContext = createContext<BackendWarmupContextType>({ isBackendReady: false });
+const BackendWarmupContext = createContext<BackendWarmupContextType>({
+  isBackendReady: false,
+});
 
 export const useBackendWarmup = () => {
   const [isBackendReady, setIsBackendReady] = useState(false);
@@ -16,8 +18,10 @@ export const useBackendWarmup = () => {
 
     const ping = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/health`, { method: 'GET' });
-        if (res.ok && !cancelled) {
+        const healthUrl = `${API_BASE_URL.replace(/\/api\/v1\/?$/, "")}/health`;
+        const res = await fetch(healthUrl, { method: "GET" });
+        const health = res.ok ? await res.json() : null;
+        if (health?.status === "ok" && !cancelled) {
           setIsBackendReady(true);
           if (retryInterval) clearInterval(retryInterval);
           return true;
@@ -53,7 +57,13 @@ export const useBackendWarmup = () => {
 export const BackendWarmupProvider = BackendWarmupContext.Provider;
 export const useBackendReady = () => useContext(BackendWarmupContext);
 
-export const BackendWarmupContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const BackendWarmupContainer: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
   const { isBackendReady } = useBackendWarmup();
-  return React.createElement(BackendWarmupContext.Provider, { value: { isBackendReady } }, children);
+  return React.createElement(
+    BackendWarmupContext.Provider,
+    { value: { isBackendReady } },
+    children,
+  );
 };

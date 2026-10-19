@@ -42,6 +42,16 @@ Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.ser
 - Read-only access to Work Element Repository (no edit/delete)
 - Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.service.ts)
 
+### Guest Entry UI
+- Homepage Try FMEApex / Try it out and the login trial action route to `/app/initializing`. `frontend/src/features/auth/InitializingWorkspace.tsx:1` waits for auth hydration, reuses an existing token or invokes the existing guest login endpoint, and enters `/app/projects` only on success.
+- Guest initialization failures show a retryable error on that screen; they do not fall back to the email/password form. `/login` remains an explicit sign-in screen and redirects an already authenticated session to projects.
+- Existing backend JWT, guest permissions, tenant checks, protected-route guards, and guest sessionStorage policy remain authoritative. The UI does not bypass authentication.
+
+### Viewer-scoped workspace activity
+- `GET /api/v1/audit-logs/recent` receives the authenticated viewer as well as tenant context. Project, document, revision, row, structure, and actor lookups retain tenant constraints and project-list visibility rules (guest reference + own unexpired program, owner scope for regular users, tenant scope for Admin).
+- Only recorded audit rows are returned. Unattributable or inaccessible rows are omitted; no synthetic fallback records. Collection POST audit writes obtain the entity ID from the successful response when the URL has no ID.
+- Presentation label Trial workspace does not change `isGuest`, JWT claims, session storage, guest limits, or permissions. Guest archive controls are hidden.
+
 ## Secrets Management
 
 - Environment variables loaded via `@nestjs/config` (`ConfigModule.forRoot({ isGlobal: true })`)

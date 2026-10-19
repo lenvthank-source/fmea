@@ -148,7 +148,7 @@ Do **NOT** update for routine bugfixes that don't touch the above.
 5. Commit `.agents/` with version bump (respect `.gitignore` allow-list — force-add via `git add -f .agents/...` if ignored).
 
 ### 6.4 Hygiene
-- Do **not** invent `CLAUDE.md/GEMINI.md/.cursor` — only `.agents/` is tracked.
+- **Single Source of Truth**: `.agents/` is the single source of domain knowledge and rules. Dedicated entry adapters (`CODEX.md`, `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`, `GEMINI.md`) are authorized strictly as canonical lightweight pointers directing any external harness directly to `.agents/AGENTS.md` and `.agents/ACTIVE_STATE.md`. They must never define separate, duplicate, or conflicting rules.
 - Keep SEO skills (`ai-seo`, `seo-*`, `programmatic-seo`) separate from core FMEA skills; do not let SEO bloat obscure domain contracts.
 - `versions/` index (`versions/README.md`) is linked from `context/versioning.md` — update entry on every release.
 - Review `.agents/` freshness at least once per minor version; stale docs count as a bug.
@@ -165,3 +165,43 @@ Do **NOT** update for routine bugfixes that don't touch the above.
 - **Legacy JSON**: `F:\proj-fmea\.agents\agents\{fmea-authoring,pfd-pfmea-linking,...}/agent.json:1` (hidden `customAgent`) kept for back-compat but deprecated — dispatch reads `AGENT.md` only.
 - **Opencode vs Gemini parity**: Opencode `Task(subagent_type=agent.name)` ≡ Antigravity `invoke_subagent{TypeName}` ≡ Gemini `invoke_agent{agent_name}`/`@name`. No exclusive param — see `context/routing.md:Tri-compat Mapping`.
 
+---
+
+## 7. Multi-Harness Cross-Session Synchronization Protocol (Antigravity + OpenAI Codex)
+
+### 7.1 The Living State Hub (`.agents/ACTIVE_STATE.md`)
+- `.agents/ACTIVE_STATE.md` is the universal, cross-session continuity ledger shared across Google Antigravity, OpenAI Codex, Claude Code, and Cursor.
+- It captures: (1) Project North Star & Final Goal, (2) Current System State & Health, (3) Where We Left Off (Last Session Summary), (4) Active In-Flight Task, (5) What Is Left (Prioritized Backlog), and (6) Inter-Harness Handoff Protocol.
+
+### 7.2 Two-Way Inter-Harness Contract
+- **Session Start**: Any harness (Antigravity or Codex) MUST read `.agents/ACTIVE_STATE.md` as its first action to restore context in `< 2,000` tokens without re-scanning the codebase.
+- **Session End**: Before closing a session or turn, the active harness MUST update `.agents/ACTIVE_STATE.md` (or run `python .agents/scripts/handoff.py --update "..." --next "..."`) to document completed work, touched files, verified builds, and the next priority task.
+- **CLI Helper**: Run `python .agents/scripts/handoff.py --status` for an instant executive dashboard in any terminal. Run `python .agents/scripts/handoff.py --check` to verify semver and cross-file consistency.
+
+---
+
+## 8. Graphify Knowledge Graph Architecture
+
+### 8.1 Pre-Planning Mandatory Graph Inspection
+- **Before Building Any Implementation Plan (`/plan`) or Modifying Code**: Any agent or harness (Antigravity, OpenAI Codex, Claude Code) MUST first inspect the active knowledge graph at `graphify-out/`:
+  - Run `graphify query "<feature_or_symbol>"` to discover the exact subgraph, upstream callers, downstream database models, and community hubs without expensive whole-codebase scans.
+  - Run `graphify path "<SymbolA>" "<SymbolB>"` to check dependency chains and prevent breaking bidirectional contracts.
+  - Inspect `graphify-out/GRAPH_REPORT.md` (or open `graphify-out/GRAPH_TREE.html`) to verify high-level architecture community hubs (`router.tsx`, `PfmeaRowService`, `ControlPlanRowService`, `ActionService`, `PrismaService`).
+
+### 8.2 Post-Change Graph Synchronization
+- **Mandatory Rebuild After Changes**: Whenever modifications are made in Google Antigravity, OpenAI Codex, or any harness:
+  - Run `graphify update .` to incrementally re-extract the AST and keep `graph.json`, `graph.html`, and `GRAPH_REPORT.md` in sync.
+  - Alternatively, run `python .agents/scripts/handoff.py --update "..." --next "..." --graph` which automatically executes `graphify update .` during session handoff.
+
+
+
+
+
+### 8.3 Always-on incremental handoff rule (2026-10-19)
+After each logical code-change batch, run `graphify update .`; repeat if later edits change code. Do not report work complete with a stale graph. Sync directory READMEs and write the latest validation, pending work, local preview processes, and release state into `.agents/ACTIVE_STATE.md` before handoff. Root `CODEX.md` and `AGENTS.md` remain lightweight pointers to this canonical rule.
+
+### 8.4 Dashboard onboarding and activity invariants (2026-10-19)
+- One guide entry per screen; contextual coachmarks follow actual form controls and route transitions. Guide navigation must never save engineering data or mark enforced FMEA stages complete.
+- Prioritize programs over summary tiles. No permanent guide rail on the dashboard. Trial users do not receive archive navigation, and internal guest identifiers are presented as Trial workspace.
+- Recent activity is recorded audit data only, scoped to the viewer’s accessible projects and tenant. Do not manufacture compliance, verification, re-sequencing, project names, or fallback activity.
+- Sources: `frontend/src/features/projects/ProjectList.tsx:1`, `frontend/src/features/projects/components/FmeaTutorialGuide.tsx:1`, `backend/src/modules/audit/audit-log.service.ts:1`.

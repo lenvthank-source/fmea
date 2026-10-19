@@ -1,118 +1,114 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
+/** Shared with the homepage's ivory, graphite, orange, and contextual green palette. */
+export const qualityColors = {
+  canvas: "#faf9f6",
+  surface: "#ffffff",
+  ink: "#242621",
+  muted: "#65685f",
+  border: "#e3e4db",
+  orange: "#ff682c",
+  orangeText: "#ad4823",
+  green: "#45664c",
+  softGreen: "#eff2e8",
+};
+const heading = {
+  fontFamily: '"Plus Jakarta Sans", Inter, sans-serif',
+  fontWeight: 600,
+  letterSpacing: "-0.04em",
+  color: qualityColors.ink,
+};
 export const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     primary: {
-      main: '#0F172A',      // Slate 900 primary
-      light: '#334155',     // Slate 700
-      dark: '#020617',      // Slate 950
-      contrastText: '#ffffff',
+      main: qualityColors.ink,
+      light: "#42453b",
+      dark: "#161914",
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: '#0D9488',      // Teal 600 secondary accent
-      light: '#2DD4BF',     // Teal 400
-      dark: '#0F766E',      // Teal 700
-      contrastText: '#ffffff',
+      main: qualityColors.orangeText,
+      light: "#ff8c5e",
+      dark: "#8d3617",
+      contrastText: "#ffffff",
     },
-    background: {
-      default: '#F8FAFC',   // Slate 50 (very soft on the eyes)
-      paper: '#ffffff',
-    },
+    background: { default: qualityColors.canvas, paper: qualityColors.surface },
     text: {
-      primary: '#0F172A',   // Slate 900
-      secondary: '#475569', // Slate 600
-      disabled: '#94A3B8',  // Slate 400
+      primary: qualityColors.ink,
+      secondary: qualityColors.muted,
+      disabled: "#858a7b",
     },
-    error: {
-      main: '#EF4444',      // Soft Red 500
-    },
-    warning: {
-      main: '#F59E0B',      // Soft Amber 500
-    },
-    success: {
-      main: '#10B981',      // Soft Emerald 500
-    },
-    divider: 'rgba(15, 23, 42, 0.08)', // Alpha-blended slate border
+    divider: qualityColors.border,
+    error: { main: "#dc2626" },
+    warning: { main: "#b45309" },
+    success: { main: "#15803d" },
   },
+  shape: { borderRadius: 10 },
   typography: {
-    fontFamily: [
-      'Inter',
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
-    h5: {
-      fontWeight: 700,
-      letterSpacing: '-0.3px',
-      color: '#0F172A',
-    },
-    h6: {
-      fontWeight: 700,
-      letterSpacing: '-0.1px',
-      color: '#0F172A',
-    },
+    fontFamily:
+      'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    h1: heading,
+    h2: heading,
+    h3: heading,
+    h4: heading,
+    h5: heading,
+    h6: heading,
     button: {
-      textTransform: 'none',
+      textTransform: "none",
       fontWeight: 600,
-      borderRadius: 8,
+      letterSpacing: "-0.01em",
     },
   },
   components: {
-    // Force inputs and form controls to default to small size globally to ensure compact 40px height
-    MuiTextField: {
-      defaultProps: {
-        size: 'small',
+    MuiCssBaseline: {
+      styleOverrides: {
+        ":focus-visible": { outline: "3px solid #ad4823", outlineOffset: 3 },
+        "@media (prefers-reduced-motion: reduce)": {
+          "*, *::before, *::after": {
+            scrollBehavior: "auto !important",
+            transitionDuration: "0s !important",
+            animationDuration: "0s !important",
+          },
+        },
       },
     },
-    MuiFormControl: {
-      defaultProps: {
-        size: 'small',
-      },
-    },
+    MuiTextField: { defaultProps: { size: "small" } },
+    MuiFormControl: { defaultProps: { size: "small" } },
     MuiButton: {
-      defaultProps: {
-        size: 'small',
-      },
+      defaultProps: { size: "small", disableElevation: true },
       styleOverrides: {
         root: {
           borderRadius: 8,
-          padding: '8px 16px',
-          height: 36,
-          fontSize: '0.875rem',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
-            transform: 'scale(1.02) translateY(-1px)',
-          },
-          '&:active': {
-            transform: 'scale(0.97) translateY(0)',
-            boxShadow: 'none',
-          },
+          padding: "8px 16px",
+          minHeight: 36,
+          fontSize: "0.8rem",
+          boxShadow: "none",
+          transition: "background-color .2s, border-color .2s",
+          "&:hover": { boxShadow: "none" },
         },
         outlined: {
-          borderWidth: '1.5px',
-          '&:hover': {
-            borderWidth: '1.5px',
-          },
+          borderColor: qualityColors.border,
+          "&:hover": { borderColor: "#a9b19a", backgroundColor: "#f1f3eb" },
         },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: { backgroundImage: "none" },
+        outlined: { borderColor: qualityColors.border },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06)',
-          border: '1px solid rgba(15, 23, 42, 0.08)',
-          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            boxShadow: '0 6px 12px rgba(15, 23, 42, 0.08), 0 16px 32px rgba(15, 23, 42, 0.12)',
-            transform: 'translateY(-3px)',
+          border: `1px solid ${qualityColors.border}`,
+          boxShadow: "0 2px 6px #24262104",
+          transition: "border-color .2s, box-shadow .2s",
+          "&:hover": {
+            borderColor: "#b9c5aa",
+            boxShadow: "0 8px 25px #414e2d0a",
           },
         },
       },
@@ -121,49 +117,53 @@ export const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRadius: 16,
-          boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
-          overflow: 'hidden',
+          border: `1px solid ${qualityColors.border}`,
+          boxShadow: "0 25px 60px #24262126",
         },
       },
     },
     MuiOutlinedInput: {
-      defaultProps: {
-        size: 'small',
-      },
       styleOverrides: {
         root: {
           borderRadius: 8,
-          // height is removed to allow layout engines to scale padding correctly
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: '#0D9488', // Teal accent border on focus
-            borderWidth: '2px',
+          backgroundColor: "#fff",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: qualityColors.border,
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#a9b19a",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: qualityColors.ink,
           },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
-        root: {
-          borderRadius: 6,
-          fontWeight: 600,
-        },
+        root: { borderRadius: 6, fontWeight: 600, fontSize: "0.7rem" },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          padding: '6px 12px',
-          borderColor: 'rgba(15, 23, 42, 0.06)',
+          padding: "8px 12px",
+          borderColor: qualityColors.border,
+          fontSize: "0.8rem",
         },
         head: {
           fontWeight: 600,
-          backgroundColor: '#F1F5F9', // Slate 100
-          color: '#0F172A',
-          fontSize: '0.85rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          padding: '8px 12px',
+          backgroundColor: "#f3f4ed",
+          color: qualityColors.muted,
+          fontSize: "0.72rem",
+          letterSpacing: "0.03em",
         },
+      },
+    },
+    MuiTab: { styleOverrides: { root: { textTransform: "none" } } },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: { backgroundColor: qualityColors.ink, borderRadius: 6 },
       },
     },
   },

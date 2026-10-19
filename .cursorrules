@@ -1,0 +1,6 @@
+# Cursor Rules: FMEApex Quality Platform
+
+Follow .agents/AGENTS.md for all architectural constraints, data models, and non-blocking git rules.
+Always inspect .agents/ACTIVE_STATE.md at the start of any conversation to understand where we left off, what is in progress, what is left, and the final goal.
+Always update .agents/ACTIVE_STATE.md (or run `python .agents/scripts/handoff.py --update "..." --next "..."`) before completing a session so the next harness has complete context.
+Verify builds with `cd backend && npx tsc --noEmit` and `cd frontend && npm run build`.

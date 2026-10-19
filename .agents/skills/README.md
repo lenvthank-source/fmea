@@ -35,3 +35,9 @@ This directory contains executable execution contracts, step-by-step procedures,
 Dedicated SEO skills for search engine indexing and LLM citations:
 `ai-seo`, `programmatic-seo`, `seo-audit`, `seo-authority-builder`, `seo-cannibalization-detector`, `seo-content-auditor`, `seo-content-planner`, `seo-content-refresher`, `seo-content-writer`, `seo-keyword-strategist`, `seo-meta-optimizer`, `seo-snippet-hunter`, `seo-structure-architect`.
 *(Note: Keep SEO skills separated from core FMEA domain contracts to prevent context bloat).*
+
+## Public Product Design
+
+- [frontend-design](./frontend-design/SKILL.md): Anthropic's visual direction and frontend design guidance.
+- [web-design-guidelines](./web-design-guidelines/SKILL.md): Vercel's web interface accessibility and interaction review.
+- [fmeapex-product-story](./fmeapex-product-story/SKILL.md): FMEApex-specific connected engineering narrative, preview integrity, and homepage validation.

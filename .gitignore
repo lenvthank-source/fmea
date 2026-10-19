@@ -40,6 +40,7 @@ __pycache__/
 .agents/*
 !.agents/AGENTS.md
 !.agents/README.md
+!.agents/ACTIVE_STATE.md
 !.agents/agents/
 !.agents/context/
 !.agents/memory/
@@ -49,6 +50,16 @@ __pycache__/
 !.agents/scripts/
 !.agents/prompts/
 !.agents/checklists/
+
+# Multi-Harness Adapters & Knowledge Graph
+!AGENTS.md
+!CODEX.md
+!CLAUDE.md
+!.cursorrules
+!.github/copilot-instructions.md
+!GEMINI.md
+graphify-out/cache/
+graphify-out/.graphify_*
 
 # Root configurations and deployment templates (track required infra)
 /package.json

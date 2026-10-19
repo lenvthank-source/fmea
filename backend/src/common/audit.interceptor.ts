@@ -82,7 +82,8 @@ export class AuditInterceptor implements NestInterceptor {
 
     try {
       // Extract entity info from route
-      const { entityType, entityId, action } = this.extractEntityInfo(request);
+      const { entityType, entityId: routeEntityId, action } = this.extractEntityInfo(request);
+      const entityId = routeEntityId || (request.method === 'POST' && typeof responseData?.id === 'string' ? responseData.id : null);
 
       if (!entityType || !entityId) return;
 

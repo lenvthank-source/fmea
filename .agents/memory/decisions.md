@@ -132,3 +132,10 @@ Source: [r2.service.ts](file:///f:/proj-fmea/backend/src/modules/action/r2.servi
 - **Consequence**: Seamless visual harmony across the entire landing page; eliminates jarring void containers; establishes high-craft, high-density industrial quality aesthetics with zero layout clipping.
 - **Source**: [`frontend/src/features/landing/ExcelRetirementShowcase.tsx:1-512`](file:///f:/proj-fmea/frontend/src/features/landing/ExcelRetirementShowcase.tsx), [`versions/v0.8.4.md:1`](file:///f:/proj-fmea/versions/v0.8.4.md)
 
+
+
+### 2026-10-19 — Contextual workflow guidance and truthful activity (local, unreleased)
+- Context: A guide rail duplicated the entry button, displaced programs, and did not follow creation actions. Activity formatting included filler events and hard-coded demo descriptions beyond a trial viewer’s project scope.
+- Decision: Replace the rail with collision-aware coachmarks anchored to real controls and actual wizard/route state. Compact the dashboard, hide trial archives, and use a clear Trial workspace identity. Return only viewer-scoped recorded audit events, with real project attribution, refresh states, and collection-POST audit IDs.
+- Validation: focused backend regression tests cover audit-only behavior, guest/owner/admin scope, inaccessible events, actual attribution, bounds, and creation IDs; browser checks cover validation, contextual prompts, all workflow chapters, and responsive layout.
+- Sources: `frontend/src/features/projects/components/FmeaTutorialGuide.tsx:1`, `frontend/src/features/projects/ProjectList.tsx:1`, `backend/src/modules/audit/audit-log.service.ts:1`, `backend/src/common/audit.interceptor.ts:1`. Release ledger remains pending a user-confirmed version under [versions/README.md](../../versions/README.md); no release file or existing version entry changed.
