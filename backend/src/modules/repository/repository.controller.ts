@@ -31,7 +31,10 @@ export class RepositoryController {
    */
   @Post('packages')
   @Permissions('pfmea.create', 'pfmea.edit')
-  async submitPackage(@Body() dto: CreateWorkElementPackageDto, @Request() req: any) {
+  async submitPackage(
+    @Body() dto: CreateWorkElementPackageDto,
+    @Request() req: any,
+  ) {
     return this.repositoryService.submitPackage(dto, req.user);
   }
 
@@ -48,8 +51,8 @@ export class RepositoryController {
    */
   @Get('packages/pending')
   @Permissions('admin.config')
-  async listPending() {
-    return this.repositoryService.listPendingForAdmin();
+  async listPending(@Request() req: any) {
+    return this.repositoryService.listPendingForAdmin(req.user);
   }
 
   /**
@@ -58,15 +61,15 @@ export class RepositoryController {
   @Get('packages/my-submissions')
   async listMySubmissions(@Request() req: any) {
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
-    return this.repositoryService.listMySubmissions(userId);
+    return this.repositoryService.listMySubmissions(userId, req.user.tenantId);
   }
 
   /**
    * Get single package by ID
    */
   @Get('packages/:id')
-  async getById(@Param('id') id: string) {
-    return this.repositoryService.getPackageById(id);
+  async getById(@Param('id') id: string, @Request() req: any) {
+    return this.repositoryService.getPackageById(id, req.user);
   }
 
   /**
@@ -96,8 +99,12 @@ export class RepositoryController {
    */
   @Patch('packages/:id')
   @Permissions('admin.config')
-  async updatePackage(@Param('id') id: string, @Body() dto: UpdateWorkElementPackageDto) {
-    return this.repositoryService.updatePackage(id, dto);
+  async updatePackage(
+    @Param('id') id: string,
+    @Body() dto: UpdateWorkElementPackageDto,
+    @Request() req: any,
+  ) {
+    return this.repositoryService.updatePackage(id, dto, req.user);
   }
 
   /**
@@ -105,8 +112,8 @@ export class RepositoryController {
    */
   @Delete('packages/:id')
   @Permissions('admin.config')
-  async deletePackage(@Param('id') id: string) {
-    return this.repositoryService.deletePackage(id);
+  async deletePackage(@Param('id') id: string, @Request() req: any) {
+    return this.repositoryService.deletePackage(id, req.user);
   }
 
   /**

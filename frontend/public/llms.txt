@@ -1,56 +1,44 @@
-# FMEApex — Enterprise Quality Risk Platform
+# FMEApex
 
-> The modern operating system for manufacturing quality: AIAG-VDA 2019 7-Step FMEA, bidirectional PFD ↔ PFMEA linking, dynamic Control Plan sync, and 21 CFR Part 11 compliance.
+> Connected quality engineering: design structure, process risk, control plans, and verified actions.
 
-## Overview & Direct Answers
+FMEApex is a digital FMEA workspace. It connects engineering records instead of treating every document as an isolated spreadsheet.
+The product story follows structure and functions, failure relationships, linked process controls, and owned actions with evidence.
+Design-to-process characteristic flow is distinct from linked PFD, PFMEA, and control-plan relationships. Not every field synchronizes across every document.
 
-FMEApex is a multi-tenant cloud and on-premise quality engineering platform built for Automotive (IATF 16949), Aerospace (AS9100), Medical Devices (ISO 13485 / ISO 14971), and High-Tech Manufacturing. It replaces error-prone spreadsheets with deterministic risk matrices, automated Action Priority calculations, and cryptographic audit logs.
+## Trial and commercial offers
+Explore a reference project without signing up and create one custom project for 24 hours. Team and enterprise offers require a quote for an agreed scope.
+See https://fmeapex.online/pricing.md for pricing context.
 
-### Key Verification Metrics
-- **99.8%** First-Time Audit Pass Rate for IATF 16949 and 21 CFR Part 11 inspections.
-- **100%** Strict 7-Step Gating: prevents step-skipping and orphan data across failure chains.
-- **<120ms** Vector RAG Retrieval: tenant-isolated recommendations from historical FMEA data.
-- **Zero** Spreadsheet Loss: full multi-user concurrency with PostgreSQL row-level security.
+## Engineering boundaries
+Draft analysis is iterative. Completeness is assessed before review or release, while references, permissions, and revision protections remain enforced.
+A process flow describes routing; the PFMEA structure tree describes the analysis hierarchy.
+Action Priority is calculated from the configured integer S/O/D inputs. Do not interpret AP alone as risk acceptance or task completion as proof of reduced risk.
+Exact handbook numerical conformity requires verification against the applicable licensed reference.
+Examples on public pages are illustrative and do not change live engineering data.
+No certification, guaranteed compliance, audit-pass rate, customer-count, or performance metric is claimed.
 
-## Core Modules & Capabilities
+## Public pages
 
-### 1. AIAG-VDA 2019 7-Step FMEA Workflow
-Guided step-by-step analysis enforcing strict prerequisite gating:
-1. Planning (5Ts: InTent, Timing, Team, Tasks, Tools)
-2. Structure Analysis (Process Flow Diagram or BOM tree)
-3. Function Analysis (Function, Requirement, Parameter)
-4. Failure Analysis (Failure Chain: Cause → Failure Mode → Effect)
-5. Risk Analysis (Severity, Occurrence, Detection ratings from 1-10)
-6. Optimization (Corrective actions mandatory for High AP rows)
-7. Documentation (Signed, immutable locked revision)
-
-### 2. Deterministic Action Priority (AP)
-Action Priority (High, Medium, Low) is a lookup-based, read-only field derived strictly from AIAG-VDA 2019 standards:
-- **High AP**: Corrective action tracking is mandatory.
-- **Medium AP**: Review required; engineering discretion.
-- **Low AP**: Controls verified; acceptable risk.
-
-### 3. Bidirectional PFD ↔ PFMEA Synchronization
-Synchronizes every manufacturing operation between the Process Flow Diagram (PFD) and PFMEA grid in a serializable transaction. Automatically flags orphan steps and missing inspection gates.
-
-### 4. Dynamic Control Plan (CP) Generation
-Compiles control plans directly from PFMEA prevention and detection controls, special characteristics, and tolerances. Updates propagate bidirectionally.
-
-### 5. 21 CFR Part 11 Regulatory Compliance
-Cryptographic digital signatures, role-segregated reviews (creator cannot review or approve), locked immutable revisions, and audit log partitions where UPDATE and DELETE commands are rejected at the database level.
-
-### 6. AI Quality Copilot (Human-in-the-Loop)
-Tenant-isolated vector similarity search using OpenAI embeddings and Neon pgvector HNSW indexing. AI recommendations are proposed in a staging table and never modify live FMEA rows without explicit engineer acceptance.
-
-## Public Resources & Deep Dives
-
-- Landing Page: https://fmeapex.online/
-- Instant Guest Sandbox (Free): https://fmeapex.online/login
-- Solutions Deep Dive: https://fmeapex.online/product
-- Transparent Pricing Plans: https://fmeapex.online/pricing
-- AIAG-VDA 7-Step Guide: https://fmeapex.online/learn/aiag-vda-7-step-fmea
-- PFD ↔ PFMEA Linking Architecture: https://fmeapex.online/learn/pfd-pfmea-linking
-- Control Plan Sync Methodology: https://fmeapex.online/learn/control-plan-sync
-- 21 CFR Part 11 Specification: https://fmeapex.online/learn/21-cfr-part-11-fmea
-- Machine-Readable Pricing: https://fmeapex.online/pricing.md
-- Full LLM Context: https://fmeapex.online/llms-full.txt
+- [Platform](https://fmeapex.online/product)
+- [About](https://fmeapex.online/about)
+- [Pricing](https://fmeapex.online/pricing)
+- [Resources](https://fmeapex.online/learn)
+- [Journal](https://fmeapex.online/blog)
+- [Seven steps. One connected engineering analysis.](https://fmeapex.online/learn/aiag-vda-7-step-fmea)
+- [Keep the process route and its risk analysis connected.](https://fmeapex.online/learn/pfd-pfmea-linking)
+- [Turn the risk analysis into an actionable control plan.](https://fmeapex.online/learn/control-plan-sync)
+- [Electronic records need a defined control strategy.](https://fmeapex.online/learn/21-cfr-part-11-fmea)
+- [Follow automotive risk from design intent to the production control.](https://fmeapex.online/fmea/automotive-iatf-16949)
+- [Make aerospace process decisions traceable to their engineering context.](https://fmeapex.online/fmea/aerospace-as9100)
+- [Keep medical-device manufacturing analysis connected to the requirement.](https://fmeapex.online/fmea/medical-iso-13485)
+- [Connect semiconductor process conditions to failure mechanisms and controls.](https://fmeapex.online/fmea/semiconductor-jedec)
+- [From individual spreadsheet rows to connected engineering records.](https://fmeapex.online/vs/excel-fmea)
+- [Evaluate an FMEA workflow against the way your team works.](https://fmeapex.online/vs/iq-rm)
+- [Action Priority](https://fmeapex.online/glossary/action-priority)
+- [Process flow diagram](https://fmeapex.online/glossary/process-flow-diagram)
+- [Control plan](https://fmeapex.online/glossary/control-plan)
+- [21 CFR Part 11](https://fmeapex.online/glossary/21-cfr-part-11)
+- [Where AI belongs in a seven-step FMEA workflow.](https://fmeapex.online/blog/ai-fmea-7-step-deep-dive)
+- [A missing link is a question worth asking.](https://fmeapex.online/blog/pfd-pfmea-orphan-detection)
+- [A changed control should have an understandable path.](https://fmeapex.online/blog/control-plan-enterprise-sync)

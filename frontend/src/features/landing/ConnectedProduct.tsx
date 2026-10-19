@@ -245,12 +245,10 @@ export const ConnectedProduct: React.FC = () => {
                       </button>
                     </>
                   )}
-                  <div className="story-product-risk">
-                    <span>Action Priority</span>
-                    <strong>
-                      H <span>High</span>
-                    </strong>
-                    <span>Review & mitigate</span>
+                    <div className="story-product-risk">
+                      <span>Engineering review</span>
+                      <strong>Open</strong>
+                      <span>Illustrative analysis</span>
                   </div>
                 </div>
               </div>

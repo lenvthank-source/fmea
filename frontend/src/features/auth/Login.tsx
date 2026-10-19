@@ -43,7 +43,7 @@ export const Login: React.FC = () => {
     setError("");
     setSignInLoading(true);
     try {
-      await login(email, password, "guest-tenant");
+      await login(email.trim(), password, "guest-tenant");
       sessionStorage.removeItem("logged_out");
       navigate("/app/projects");
     } catch (err) {

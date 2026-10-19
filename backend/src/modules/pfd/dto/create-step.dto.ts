@@ -10,7 +10,7 @@ export class CreateStepDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'decision'])
+  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'repair', 'decision', 'combined', 'hold', 'scrap', 'return'])
   stepType: string;
 
   @IsString()

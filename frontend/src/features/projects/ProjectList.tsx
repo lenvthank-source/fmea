@@ -867,8 +867,7 @@ export const ProjectList: React.FC = () => {
 
         <Stack
           direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", width: { xs: "100%", sm: "auto" } }}
+          sx={{ alignItems: "center", flexWrap: "wrap", gap: 1, width: { xs: "100%", sm: "auto" }, "& > *": { flexShrink: 0 } }}
         >
           <Button
             variant="outlined"
@@ -1093,10 +1092,11 @@ export const ProjectList: React.FC = () => {
 
                   <Stack
                     direction="row"
-                    spacing={1.5}
                     sx={{
+                      gap: 1.5,
                       width: { xs: "100%", sm: "auto" },
                       alignItems: "center",
+                      "@media (max-width: 360px)": { flexWrap: "wrap", "& .MuiTextField-root": { flexBasis: "100%", flexShrink: 0 } },
                     }}
                   >
                     <TextField
@@ -1308,7 +1308,7 @@ export const ProjectList: React.FC = () => {
 
                         return (
                           <Box key={project.id} sx={{ minWidth: 0 }}>
-                            <Card
+                            <Card className="quality-program-card"
                               sx={{
                                 height: "100%",
                                 display: "flex",
@@ -1332,7 +1332,8 @@ export const ProjectList: React.FC = () => {
                             >
                               <CardContent
                                 sx={{
-                                  p: 1.75,
+                                  p: 1.5,
+                                  "&:last-child": { pb: 1.5 },
                                   flexGrow: 1,
                                   display: "flex",
                                   flexDirection: "column",
@@ -1343,8 +1344,8 @@ export const ProjectList: React.FC = () => {
                                     display: "flex",
                                     justifyContent: "space-between",
                                     alignItems: "center",
-                                    mb: 1.25,
-                                    flexWrap: "wrap",
+                                    mb: 0.5,
+                                    flexWrap: "nowrap",
                                     gap: 0.5,
                                   }}
                                 >
@@ -1352,7 +1353,9 @@ export const ProjectList: React.FC = () => {
                                     sx={{
                                       display: "flex",
                                       alignItems: "center",
-                                      gap: 0.75,
+                                      gap: 0.5,
+                                      flexWrap: "wrap",
+                                      minWidth: 0,
                                     }}
                                   >
                                     <span
@@ -1402,6 +1405,7 @@ export const ProjectList: React.FC = () => {
                                   </Box>
                                   <IconButton
                                     size="small"
+                                    aria-label={`Project actions for ${project.partName || "Untitled Program"}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setMenuAnchor(e.currentTarget);
@@ -1436,11 +1440,8 @@ export const ProjectList: React.FC = () => {
                                       color: "#242621",
                                       textDecoration: "underline",
                                     },
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
+                                    display: "block",
+                                    overflowWrap: "anywhere",
                                     minHeight: 0,
                                   }}
                                 >
@@ -1461,17 +1462,19 @@ export const ProjectList: React.FC = () => {
                                 </Typography>
 
                                 <Divider
-                                  sx={{ my: 1, borderColor: "#f0f2e9" }}
+                                  sx={{ my: 0.75, borderColor: "#f0f2e9" }}
                                 />
 
                                 <Stack
-                                  spacing={0.75}
-                                  sx={{ flexGrow: 1, mb: 1.5 }}
+                                  spacing={0.25}
+                                  sx={{ flexGrow: 1, mb: 0.25 }}
                                 >
                                   <Box
                                     sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
+                                      gap: 1.5,
+                                      minWidth: 0,
                                       fontSize: "0.75rem",
                                     }}
                                   >
@@ -1483,7 +1486,7 @@ export const ProjectList: React.FC = () => {
                                     </Typography>
                                     <Typography
                                       variant="caption"
-                                      sx={{ color: "#242621", fontWeight: 600 }}
+                                      sx={{ color: "#242621", fontWeight: 600, textAlign: "right", overflowWrap: "anywhere", minWidth: 0 }}
                                     >
                                       {project.customer || "—"}
                                     </Typography>
@@ -1492,6 +1495,8 @@ export const ProjectList: React.FC = () => {
                                     sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
+                                      gap: 1.5,
+                                      minWidth: 0,
                                       fontSize: "0.75rem",
                                     }}
                                   >
@@ -1503,7 +1508,7 @@ export const ProjectList: React.FC = () => {
                                     </Typography>
                                     <Typography
                                       variant="caption"
-                                      sx={{ color: "#242621", fontWeight: 600 }}
+                                      sx={{ color: "#242621", fontWeight: 600, textAlign: "right", overflowWrap: "anywhere", minWidth: 0 }}
                                     >
                                       v{project.revisionNumber || "1.0"}
                                     </Typography>
@@ -1512,6 +1517,8 @@ export const ProjectList: React.FC = () => {
                                     sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
+                                      gap: 1.5,
+                                      minWidth: 0,
                                       fontSize: "0.75rem",
                                     }}
                                   >
@@ -1523,7 +1530,7 @@ export const ProjectList: React.FC = () => {
                                     </Typography>
                                     <Typography
                                       variant="caption"
-                                      sx={{ color: "#242621", fontWeight: 600 }}
+                                      sx={{ color: "#242621", fontWeight: 600, textAlign: "right", overflowWrap: "anywhere", minWidth: 0 }}
                                     >
                                       {new Date(
                                         project.updatedAt,
@@ -1533,7 +1540,7 @@ export const ProjectList: React.FC = () => {
                                 </Stack>
 
                                 <Divider
-                                  sx={{ my: 1, borderColor: "#f0f2e9" }}
+                                  sx={{ my: 0.75, borderColor: "#f0f2e9" }}
                                 />
 
                                 <Stack
@@ -1639,18 +1646,18 @@ export const ProjectList: React.FC = () => {
                       sx={{
                         display: "flex",
                         justifyContent: "center",
-                        mt: 3,
+                        mt: 1.5,
                         alignItems: "center",
                         gap: 2,
                         flexWrap: "wrap",
                       }}
                     >
-                      <Pagination
+                      {total > limit && <Pagination
                         count={Math.max(1, Math.ceil(total / limit))}
                         page={page}
                         onChange={(_, v) => setPage(v)}
                         color="primary"
-                      />
+                      />}
                       <FormControl size="small" sx={{ minWidth: 110 }}>
                         <InputLabel>Per page</InputLabel>
                         <Select
@@ -1873,18 +1880,18 @@ export const ProjectList: React.FC = () => {
                       sx={{
                         display: "flex",
                         justifyContent: "center",
-                        mt: 3,
+                        mt: 1.5,
                         alignItems: "center",
                         gap: 2,
                         flexWrap: "wrap",
                       }}
                     >
-                      <Pagination
+                      {total > limit && <Pagination
                         count={Math.max(1, Math.ceil(total / limit))}
                         page={page}
                         onChange={(_, v) => setPage(v)}
                         color="primary"
-                      />
+                      />}
                       <FormControl size="small" sx={{ minWidth: 110 }}>
                         <InputLabel>Per page</InputLabel>
                         <Select

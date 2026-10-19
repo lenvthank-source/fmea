@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateWorkElementPackageDto {
   @IsString()

@@ -1,36 +1,19 @@
 ---
 name: "Corrective Actions Optimization & Tracking"
-description: "Governs corrective action lifecycles, evidence file storage in Cloudflare R2, and before/after risk scores recalculation."
+description: "Track action ownership, evidence and justified before/after ratings without confusing task status with verified effectiveness or overstating existing enforcement."
 ---
+# Corrective actions
 
-# Corrective Actions Optimization & Tracking Skill
+Inspect `backend/src/modules/action/action.service.ts:190` and controller before relying on lifecycle enforcement.
 
-This skill governs the execution, evidence verification, and risk-reduction auditing of corrective actions assigned to resolve FMEA risks.
+- Current APIs: `POST /api/v1/actions`, `PATCH /api/v1/actions/:actionId`, evidence POST under the action, and user/project list routes. A separate `/status` endpoint is not implemented.
+- Status values include open, in_progress, completed, verified, closed, cancelled. A fully enforced transition matrix and evidence prerequisite are not established by current updateAction.
+- Evidence upload endpoint validates PDF/image types and 50 MB maximum. Do not confuse upload validation with enforced closure prerequisites.
+- updateAction computes supplied after ratings and propagates them when sent with a verified/closed state. A status-only update does not guarantee prior stored ratings are propagated.
+- Evidence review, justified reassessment and protected source revisions are required product-quality policies; audit gaps explicitly rather than claiming implementation.
+- High AP needs team review/action-or-justification per applicable customer/company policy, not an invented universal command to create a new task.
+- Ratings remain finite integers 1–10, calculated AP read-only. Never automatically reduce severity due to better detection or assert that closing a task proves risk reduction.
+- Preserve tenant ownership and historical evidence; never silently mutate approved records.
 
-## 1. Lifecycle States
-1. **Open**: Action created and linked to High AP FMEA row. Tenant owner assigned.
-2. **InProgress**: Owner commences work.
-3. **Completed**: Owner logs completion notes and uploads verification evidence files.
-4. **Verified**: Quality Engineer reviews evidence and verifies effectiveness.
-5. **Closed**: QE re-rates post-action (After) S/O/D ratings, recalculating AP.
-6. **Cancelled**: Actions marked as no longer required.
-
-## 2. Integrity Rules
-- **Evidence Mandate**: Transition to `Completed` requires a file upload (S3-compatible R2 upload). Maximum file size is 50MB.
-- **Ratings Re-evaluation**: Post-action ratings (after Severity, after Occurrence, after Detection) must be provided upon closure. AP is automatically recalculated and varies.
-- **Sync Back**: The new ratings must be transactionally synced back to the source FMEA row to update the document state.
-- **Action Types**: Action must be classified as: `corrective`, `preventive`, or `improvement`.
-
-## 3. Key Database Tables
-- `action`: Stores the owner, status, action type, description, due date, and closed timestamp.
-- `action_evidence`: Stores the reference URL (Cloudflare R2) and upload metadata.
-- `action_fmea_link`: Junction table mapping actions to FMEA rows, capturing `before_severity`, `before_occurrence`, `before_detection`, `before_ap` alongside `after_*` ratings.
-
-## 4. API Endpoints
-- `POST /api/v1/revisions/:revisionId/actions` — Create a corrective/preventive action linked to a row.
-- `POST /api/v1/actions/:actionId/evidence` — Upload evidence file to Cloudflare R2.
-- `PATCH /api/v1/actions/:actionId/status` — Transition action status (Open → InProgress → Completed → Verified → Closed / Cancelled).
-
-## 5. Related Skills
-- `fmea-authoring`: High AP evaluations trigger action creation.
-- `revision-approval`: Restricts status; actions must be completed/closed before submitting revision.
+## Rule authority
+Read `.agents/context/engineering-rule-register.md` for source applicability and verification status. Separate official requirements, customer additions, product policy and implementation gaps. Do not invent compliance guarantees or rewrite approved records.

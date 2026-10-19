@@ -52,3 +52,41 @@ describe('AP Calculator', () => {
     expect(calculateAP(1, 1, 1)).toBe('L');
   });
 });
+
+// Compare executable frontend/backend implementations, not a copied test lookup.
+// Agreement does not establish conformance with a licensed rating table.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { Script } from 'node:vm';
+import { ModuleKind, transpileModule } from 'typescript';
+
+const clientSource = readFileSync(resolve(__dirname, '../../../../frontend/src/features/pfmea/utils/apCalculator.ts'), 'utf8');
+const clientModule: { calculateAP?: (...ratings: any[]) => string | null } = {};
+new Script(transpileModule(clientSource, { compilerOptions: { module: ModuleKind.CommonJS } }).outputText)
+  .runInNewContext({ exports: clientModule });
+const clientAP = clientModule.calculateAP!;
+
+describe('configured AP profile parity', () => {
+  it('matches all 1,000 integer combinations', () => {
+    let combinations = 0;
+    for (let s = 1; s <= 10; s++) for (let o = 1; o <= 10; o++) for (let d = 1; d <= 10; d++) {
+      expect(clientAP(s, o, d)).toBe(calculateAP(s, o, d));
+      combinations++;
+    }
+    expect(combinations).toBe(1000);
+  });
+  it('accepts integer form strings on the client', () => {
+    expect(clientAP('9', '5', '6')).toBe(calculateAP(9, 5, 6));
+  });
+  it('rejects fractional, nonfinite, and missing values in every position', () => {
+    for (const value of [1.5, 9.9, NaN, Infinity, -Infinity, null, undefined, 0, 11]) {
+      expect(calculateAP(value, 5, 6)).toBeNull();
+      expect(calculateAP(9, value, 6)).toBeNull();
+      expect(calculateAP(9, 5, value)).toBeNull();
+      expect(clientAP(value, 5, 6)).toBeNull();
+      expect(clientAP(9, value, 6)).toBeNull();
+      expect(clientAP(9, 5, value)).toBeNull();
+    }
+    for (const value of ['', ' ', '1.5', 'bad', '0x2']) expect(clientAP(value, 5, 6)).toBeNull();
+  });
+});

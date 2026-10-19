@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { pfdActivityFromSymbols } from '../utils/pfdGraph';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -29,7 +30,7 @@ import {
   Step,
   StepLabel,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Upload as UploadIcon,
   Download as DownloadIcon,
@@ -41,10 +42,15 @@ import {
   Add as AddIcon,
   Remove as RemoveIcon,
   Edit as EditIcon,
-} from '@mui/icons-material';
-import { API_BASE_URL } from '../../../config';
-import { getPfdIconMeta } from '../utils/pfdIconMap';
-import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
+} from "@mui/icons-material";
+import {
+  parseWorkbookTopology,
+  remapWorkbookTopology,
+  type WorkbookTopology,
+} from "../utils/pfdWorkbookImport";
+import { API_BASE_URL } from "../../../config";
+import { getPfdIconMeta } from "../utils/pfdIconMap";
+import { dialogSelectMenuProps } from "../../../theme/muiSelectConfig";
 
 interface ProcessStep {
   id: string;
@@ -59,27 +65,28 @@ interface ProcessStep {
   processCharacteristics?: string | string[];
 }
 
-type PfdFieldKey = 
-  | 'stepNumber'
-  | 'stepName'
-  | 'stepNumberName' 
-  | 'incomingVariation' 
-  | 'specialCharacteristics' 
-  | 'flowIcon:trans'
-  | 'flowIcon:recArea'
-  | 'flowIcon:store'
-  | 'flowIcon:wip'
-  | 'flowIcon:oper'
-  | 'flowIcon:insp'
-  | 'flowIcon:decs'
-  | 'flowIcon:rework'
-  | 'flowIcon:reject'
-  | 'machinesEquipmentDocs'
-  | 'desiredOutcome'
-  | 'processCharacteristics';
+type PfdFieldKey =
+  | "stepType"
+  | "stepNumber"
+  | "stepName"
+  | "stepNumberName"
+  | "incomingVariation"
+  | "specialCharacteristics"
+  | "flowIcon:trans"
+  | "flowIcon:recArea"
+  | "flowIcon:store"
+  | "flowIcon:wip"
+  | "flowIcon:oper"
+  | "flowIcon:insp"
+  | "flowIcon:decs"
+  | "flowIcon:rework"
+  | "flowIcon:reject"
+  | "machinesEquipmentDocs"
+  | "desiredOutcome"
+  | "processCharacteristics";
 
 interface ColumnMapping {
-  [excelHeader: string]: PfdFieldKey | 'ignore';
+  [excelHeader: string]: PfdFieldKey | "ignore";
 }
 
 interface ParsedRow {
@@ -87,133 +94,159 @@ interface ParsedRow {
 }
 
 interface DraftStep {
+  stepType: string;
   include: boolean;
   stepNumber: string;
   name: string;
-  incomingVariation: string;  // multiline string
+  incomingVariation: string; // multiline string
   specialCharacteristics: string;
   flowIcons: Record<string, boolean>;
-  machinesEquipmentDocs: string;  // multiline string
-  desiredOutcome: string;  // multiline string
-  processCharacteristics: string;  // multiline string
-  rawData: ParsedRow;  // original for reference
+  machinesEquipmentDocs: string; // multiline string
+  desiredOutcome: string; // multiline string
+  processCharacteristics: string; // multiline string
+  rawData: ParsedRow; // original for reference
 }
 
 interface DiffResult {
-  status: 'new' | 'update' | 'unchanged' | 'missing';
+  status: "new" | "update" | "unchanged" | "missing";
   draftStep?: DraftStep;
   existingStep?: ProcessStep;
   fieldDiffs?: { field: string; old: string; new: string }[];
 }
 
-const FIELD_OPTIONS: { value: PfdFieldKey | 'ignore'; label: string }[] = [
-  { value: 'stepNumberName', label: 'Step # & Name (combined split)' },
-  { value: 'stepNumber', label: 'Step # / OP #' },
-  { value: 'stepName', label: 'Process Description / Name' },
-  { value: 'incomingVariation', label: 'Incoming Source of Variation' },
-  { value: 'specialCharacteristics', label: 'Special Char. Class' },
-  { value: 'flowIcon:trans', label: 'Flow: TRANS. (⇨)' },
-  { value: 'flowIcon:recArea', label: 'Flow: STORE Rec. Area (▼)' },
-  { value: 'flowIcon:store', label: 'Flow: STORE Main (▼)' },
-  { value: 'flowIcon:wip', label: 'Flow: WIP @Line (▲)' },
-  { value: 'flowIcon:oper', label: 'Flow: OPER. (◯)' },
-  { value: 'flowIcon:insp', label: 'Flow: INSP. (□)' },
-  { value: 'flowIcon:decs', label: 'Flow: DECS. (◇)' },
-  { value: 'flowIcon:rework', label: 'Flow: REWORK (Ⓡ)' },
-  { value: 'flowIcon:reject', label: 'Flow: REJECT (✕)' },
-  { value: 'machinesEquipmentDocs', label: 'Machines / Equipment / Docs' },
-  { value: 'desiredOutcome', label: 'Desired Outcome / Product Chars' },
-  { value: 'processCharacteristics', label: 'Process Characteristics' },
-  { value: 'ignore', label: '— Ignore —' },
+const FIELD_OPTIONS: { value: PfdFieldKey | "ignore"; label: string }[] = [
+  { value: "stepType", label: "Activity type" },
+  { value: "stepNumberName", label: "Step # & Name (combined split)" },
+  { value: "stepNumber", label: "Step # / OP #" },
+  { value: "stepName", label: "Process Description / Name" },
+  { value: "incomingVariation", label: "Incoming Source of Variation" },
+  { value: "specialCharacteristics", label: "Special Char. Class" },
+  { value: "flowIcon:trans", label: "Flow: TRANS. (⇨)" },
+  { value: "flowIcon:recArea", label: "Flow: STORE Rec. Area (▼)" },
+  { value: "flowIcon:store", label: "Flow: STORE Main (▼)" },
+  { value: "flowIcon:wip", label: "Flow: WIP @Line (▲)" },
+  { value: "flowIcon:oper", label: "Flow: OPER. (◯)" },
+  { value: "flowIcon:insp", label: "Flow: INSP. (□)" },
+  { value: "flowIcon:decs", label: "Flow: DECS. (◇)" },
+  { value: "flowIcon:rework", label: "Flow: REWORK (Ⓡ)" },
+  { value: "flowIcon:reject", label: "Flow: REJECT (✕)" },
+  { value: "machinesEquipmentDocs", label: "Machines / Equipment / Docs" },
+  { value: "desiredOutcome", label: "Desired Outcome / Product Chars" },
+  { value: "processCharacteristics", label: "Process Characteristics" },
+  { value: "ignore", label: "— Ignore —" },
 ];
 
 const EXACT_HEADER_SYNONYMS: Record<PfdFieldKey, string[]> = {
+  stepType: ["activity type", "step type"],
   stepNumber: [
-    'step #', 'step no', 'step number', 'op #', 'op no', 'operation #', 'operation no', 'operation number', 'process #', 'process no', 'op'
+    "step #",
+    "step no",
+    "step number",
+    "op #",
+    "op no",
+    "operation #",
+    "operation no",
+    "operation number",
+    "process #",
+    "process no",
+    "op",
+    "operation",
   ],
   stepName: [
-    'process description', 'process name', 'operation description', 'operation name', 'step description', 'step name', 'process'
+    "process description",
+    "process name",
+    "operation description",
+    "operation name",
+    "step description",
+    "step name",
+    "process",
   ],
   stepNumberName: [
-    'process # & description',
-    'process # and description',
-    'process #&description',
-    'process no & description',
-    'process description / operation',
-    'op # & description',
-    'op # and description',
+    "process # & description",
+    "process # and description",
+    "process #&description",
+    "process no & description",
+    "process description / operation",
+    "op # & description",
+    "op # and description",
   ],
   incomingVariation: [
-    'incoming source of variation',
-    'incoming variation',
-    'incoming source of variation(s)',
+    "incoming source of variation",
+    "incoming variation",
+    "variation sources",
+    "incoming source of variation(s)",
   ],
   specialCharacteristics: [
-    'special char. class',
-    'special character class',
-    'special characteristics class',
-    'special char class',
+    "special char. class",
+    "special character class",
+    "special characteristics class",
+    "special char class",
+    "special characteristics",
   ],
-  'flowIcon:trans': ['trans.', 'trans', 'transport', 'transportation'],
-  'flowIcon:recArea': [
-    'store recieving area',
-    'store receiving area',
-    'recieving area',
-    'receiving area',
-    'rec. area',
+  "flowIcon:trans": ["trans.", "trans", "transport", "transportation"],
+  "flowIcon:recArea": [
+    "store recieving area",
+    "store receiving area",
+    "recieving area",
+    "receiving area",
+    "rec. area",
   ],
-  'flowIcon:store': [
-    'store main store',
-    'main store',
-    'store main',
-    'store',
-  ],
-  'flowIcon:wip': ['wip @line', 'wip @ line', 'wip'],
-  'flowIcon:oper': ['oper.', 'oper', 'operation'],
-  'flowIcon:insp': ['insp.', 'insp', 'inspection'],
-  'flowIcon:decs': ['decs.', 'decs', 'decision'],
-  'flowIcon:rework': ['rework'],
-  'flowIcon:reject': ['reject'],
+  "flowIcon:store": ["store main store", "main store", "store main", "store"],
+  "flowIcon:wip": ["wip @line", "wip @ line", "wip"],
+  "flowIcon:oper": ["oper.", "oper", "operation"],
+  "flowIcon:insp": ["insp.", "insp", "inspection"],
+  "flowIcon:decs": ["decs.", "decs", "decision"],
+  "flowIcon:rework": ["rework"],
+  "flowIcon:reject": ["reject"],
   machinesEquipmentDocs: [
-    'machine(s) / equipment(s) used/ documents',
-    'machines / equipment / docs',
-    'machines/equipment/docs',
-    'machine(s)/equipment(s)/documents',
-    'machines equipment docs',
+    "machine(s) / equipment(s) used/ documents",
+    "machines / equipment / docs",
+    "machines/equipment/docs",
+    "machine(s)/equipment(s)/documents",
+    "machines equipment docs",
+    "equipment / documents",
   ],
   desiredOutcome: [
-    'desired outcome / product characteristics',
-    'desired outcome/product characteristics',
-    'desired outcome',
-    'product description / desired outcome',
+    "desired outcome / product characteristics",
+    "desired outcome/product characteristics",
+    "desired outcome",
+    "product description / desired outcome",
   ],
-  processCharacteristics: ['process characteristics'],
+  processCharacteristics: ["process characteristics"],
 };
 
 function normalizeHeader(s: string): string {
   return s
     .toLowerCase()
-    .replace(/[\s\/]+/g, ' ')
-    .replace(/[^\w\s]/g, '')
+    .replace(/[\s\/]+/g, " ")
+    .replace(/[^\w\s]/g, "")
     .trim();
 }
 
-function autoMapHeader(header: string): { target: PfdFieldKey | 'ignore'; confidence: 'auto' | 'manual' } {
+function autoMapHeader(header: string): {
+  target: PfdFieldKey | "ignore";
+  confidence: "auto" | "manual";
+} {
   const norm = normalizeHeader(header);
   for (const [field, synonyms] of Object.entries(EXACT_HEADER_SYNONYMS)) {
     if (synonyms.some((s) => normalizeHeader(s) === norm)) {
-      return { target: field as PfdFieldKey, confidence: 'auto' };
+      return { target: field as PfdFieldKey, confidence: "auto" };
     }
   }
-  return { target: 'ignore' as const, confidence: 'manual' };
+  return { target: "ignore" as const, confidence: "manual" };
 }
 
-function parseStepNumberAndName(cell: string): { stepNumber: string; name: string } {
-  const trimmed = (cell || '').trim();
-  if (!trimmed) return { stepNumber: '', name: '' };
+function parseStepNumberAndName(cell: string): {
+  stepNumber: string;
+  name: string;
+} {
+  const trimmed = (cell || "").trim();
+  if (!trimmed) return { stepNumber: "", name: "" };
 
   // Case 1: "OP # 01 ...", "OP# 10A ...", "OP 20 ...", "Step 10: ...", "Process 05 ..."
-  const opMatch = trimmed.match(/^((?:OP|Step|Process|ST|Oper|Operation)\s*#?\s*\d+[A-Za-z]?)\s*[:\-–—.)]?\s*(.*)$/i);
+  const opMatch = trimmed.match(
+    /^((?:OP|Step|Process|ST|Oper|Operation)\s*#?\s*\d+[A-Za-z]?)\s*[:\-–—.)]?\s*(.*)$/i,
+  );
   if (opMatch) {
     return {
       stepNumber: opMatch[1].trim(),
@@ -222,7 +255,9 @@ function parseStepNumberAndName(cell: string): { stepNumber: string; name: strin
   }
 
   // Case 2: Numeric prefixes like "10 - ...", "10. ...", "10) ...", "01 ..."
-  const numMatch = trimmed.match(/^(\d+(?:\.\d+)?[A-Za-z]?)\s*[:\-–—.)]\s*(.+)$/);
+  const numMatch = trimmed.match(
+    /^(\d+(?:\.\d+)?[A-Za-z]?)\s*[:\-–—.)]\s*(.+)$/,
+  );
   if (numMatch) {
     return {
       stepNumber: numMatch[1].trim(),
@@ -239,69 +274,85 @@ function parseStepNumberAndName(cell: string): { stepNumber: string; name: strin
     };
   }
 
-  return { stepNumber: '', name: trimmed };
+  return { stepNumber: "", name: trimmed };
 }
 
 function joinMultiline(arr: string[]): string {
-  return arr.filter(Boolean).join('\n');
+  return arr.filter(Boolean).join("\n");
 }
 
 function splitMultiline(str: string): string[] {
-  return str.split('\n').map((s) => s.trim()).filter(Boolean);
+  return str
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function getFieldValue(step: DraftStep, field: PfdFieldKey): string {
   switch (field) {
-    case 'stepNumber':
+    case "stepType":
+      return step.stepType;
+    case "stepNumber":
       return step.stepNumber;
-    case 'stepName':
+    case "stepName":
       return step.name;
-    case 'stepNumberName':
+    case "stepNumberName":
       return `${step.stepNumber} ${step.name}`.trim();
-    case 'incomingVariation':
+    case "incomingVariation":
       return step.incomingVariation;
-    case 'specialCharacteristics':
+    case "specialCharacteristics":
       return step.specialCharacteristics;
-    case 'machinesEquipmentDocs':
+    case "machinesEquipmentDocs":
       return step.machinesEquipmentDocs;
-    case 'desiredOutcome':
+    case "desiredOutcome":
       return step.desiredOutcome;
-    case 'processCharacteristics':
+    case "processCharacteristics":
       return step.processCharacteristics;
     default:
-      if (field.startsWith('flowIcon:')) {
-        const key = field.split(':')[1];
-        return step.flowIcons[key] ? '✓' : '';
+      if (field.startsWith("flowIcon:")) {
+        const key = field.split(":")[1];
+        return step.flowIcons[key] ? "✓" : "";
       }
-      return '';
+      return "";
   }
 }
 
 function stepsEqual(a: DraftStep, b: ProcessStep, field: PfdFieldKey): boolean {
-  if (field.startsWith('flowIcon:')) {
-    const key = field.split(':')[1];
+  if (field.startsWith("flowIcon:")) {
+    const key = field.split(":")[1];
     return !!a.flowIcons[key] === !!b.flowIcons?.[key];
   }
   const aVal = getFieldValue(a, field).toLowerCase();
   let bVal: string;
   switch (field) {
-    case 'stepNumberName':
+    case "stepType":
+      bVal = (b.stepType || "").toLowerCase();
+      break;
+    case "stepNumberName":
       bVal = `${b.stepNumber} ${b.name}`.trim().toLowerCase();
       break;
-    case 'incomingVariation':
-      bVal = Array.isArray(b.incomingVariation) ? joinMultiline(b.incomingVariation).toLowerCase() : (b.incomingVariation || '').toLowerCase();
+    case "incomingVariation":
+      bVal = Array.isArray(b.incomingVariation)
+        ? joinMultiline(b.incomingVariation).toLowerCase()
+        : (b.incomingVariation || "").toLowerCase();
       break;
-    case 'specialCharacteristics':
-      bVal = (b.specialCharacteristics || '').toLowerCase();
+    case "specialCharacteristics":
+      bVal = (b.specialCharacteristics || "").toLowerCase();
       break;
-    case 'machinesEquipmentDocs':
-      bVal = Array.isArray(b.machinesEquipmentDocs) ? joinMultiline(b.machinesEquipmentDocs).toLowerCase() : (b.machinesEquipmentDocs || '').toLowerCase();
+    case "machinesEquipmentDocs":
+      bVal = Array.isArray(b.machinesEquipmentDocs)
+        ? joinMultiline(b.machinesEquipmentDocs).toLowerCase()
+        : (b.machinesEquipmentDocs || "").toLowerCase();
       break;
-    case 'desiredOutcome':
-      bVal = Array.isArray(b.desiredOutcome) ? joinMultiline(b.desiredOutcome).toLowerCase() : (b.desiredOutcome || '').toLowerCase();
+    case "desiredOutcome":
+      bVal = Array.isArray(b.desiredOutcome)
+        ? joinMultiline(b.desiredOutcome).toLowerCase()
+        : (b.desiredOutcome || "").toLowerCase();
       break;
-    case 'processCharacteristics':
-      bVal = Array.isArray(b.processCharacteristics) ? joinMultiline(b.processCharacteristics).toLowerCase() : (b.processCharacteristics || '').toLowerCase();
+    case "processCharacteristics":
+      bVal = Array.isArray(b.processCharacteristics)
+        ? joinMultiline(b.processCharacteristics).toLowerCase()
+        : (b.processCharacteristics || "").toLowerCase();
       break;
     default:
       return false;
@@ -328,27 +379,42 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 }) => {
   // const { token: authToken } = useAuth(); // unused, using props token
   const [activeStep, setActiveStep] = useState(0);
+  const [topology, setTopology] = useState<WorkbookTopology | null>(null);
+  const [restoreTopology, setRestoreTopology] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [report, setReport] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [parsedData, setParsedData] = useState<{ headers: string[]; rows: ParsedRow[] } | null>(null);
+  const [parsedData, setParsedData] = useState<{
+    headers: string[];
+    rows: ParsedRow[];
+  } | null>(null);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [draftSteps, setDraftSteps] = useState<DraftStep[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [mode, setMode] = useState<'build' | 'update'>('build');
+  const [mode, setMode] = useState<"build" | "update">("build");
   const [diffResults, setDiffResults] = useState<DiffResult[]>([]);
   const [importing, setImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState({ current: 0, total: 0, status: '' });
+  const [importProgress, setImportProgress] = useState({
+    current: 0,
+    total: 0,
+    status: "",
+  });
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const handleClose = () => {
+    setTopology(null);
+    setRestoreTopology(false);
+    setCompleted(false);
+    setReport("");
     setActiveStep(0);
     setFile(null);
     setParsedData(null);
     setColumnMapping({});
     setDraftSteps([]);
     setSelectedRows(new Set());
-    setMode('build');
+    setMode("build");
     setDiffResults([]);
     setError(null);
     setPage(0);
@@ -358,29 +424,57 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.name.endsWith('.xlsx') && !f.name.endsWith('.xls')) {
-      setError('Please select an Excel file (.xlsx or .xls)');
+    if (!f.name.endsWith(".xlsx") && !f.name.endsWith(".xls")) {
+      setError("Please select an Excel file (.xlsx or .xls)");
       return;
     }
     setError(null);
+    setTopology(null);
+    setRestoreTopology(false);
+    setCompleted(false);
+    setReport("");
     setFile(f);
     setActiveStep(1);
     try {
       const arrayBuffer = await f.arrayBuffer();
-      const XLSX = await import('xlsx');
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
+
       if (!wb.SheetNames || wb.SheetNames.length === 0) {
-        throw new Error('No worksheet found in Excel file');
+        throw new Error("No worksheet found in Excel file");
+      }
+
+      if (wb.Sheets["FMEApex graph"]) {
+        const native = parseWorkbookTopology(
+          XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets["FMEApex graph"], {
+            header: 1,
+            defval: "",
+          }),
+        );
+        setTopology(native);
       }
 
       // Find the first sheet that has content
       let ws: any = null;
       let rawGrid: any[][] = [];
-      for (const sheetName of wb.SheetNames) {
+      for (const sheetName of [
+        ...(wb.Sheets["Process table"] ? ["Process table"] : []),
+        ...wb.SheetNames.filter(
+          (name) =>
+            ![
+              "Process table",
+              "FMEApex graph",
+              "Connections",
+              "Diagram",
+            ].includes(name),
+        ),
+      ]) {
         const sheet = wb.Sheets[sheetName];
         if (sheet) {
-          const grid = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '' });
+          const grid = XLSX.utils.sheet_to_json<any[]>(sheet, {
+            header: 1,
+            defval: "",
+          });
           if (grid && grid.length > 0) {
             ws = sheet;
             rawGrid = grid;
@@ -390,7 +484,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       }
 
       if (!ws || rawGrid.length === 0) {
-        throw new Error('Worksheet is empty or has no readable rows');
+        throw new Error("Worksheet is empty or has no readable rows");
       }
 
       const headers: string[] = [];
@@ -405,7 +499,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         let score = 0;
         const rowHeaders: string[] = [];
         row.forEach((cellVal, colIdx) => {
-          const val = String(cellVal || '').trim();
+          const val = String(cellVal || "").trim();
           rowHeaders[colIdx] = val;
           if (val) {
             const norm = normalizeHeader(val);
@@ -427,8 +521,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         }
       }
 
-      if (headerRowIndex === -1 || headers.length === 0 || maxHeaderScore === 0) {
-        throw new Error('Could not detect header row');
+      if (
+        headerRowIndex === -1 ||
+        headers.length === 0 ||
+        maxHeaderScore === 0
+      ) {
+        throw new Error("Could not detect header row");
       }
 
       // Clean trailing empty headers
@@ -436,7 +534,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         headers.pop();
       }
 
-      const cleanHeaders = headers.map((h, i) => (h && h.trim() ? h.trim() : `Column ${i + 1}`));
+      const cleanHeaders = headers.map((h, i) =>
+        h && h.trim() ? h.trim() : `Column ${i + 1}`,
+      );
 
       // Parse data rows
       for (let r = headerRowIndex + 1; r < rawGrid.length; r++) {
@@ -445,7 +545,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         const rowData: ParsedRow = {};
         let hasData = false;
         cleanHeaders.forEach((header, colIdx) => {
-          const val = String(row[colIdx] ?? '').trim();
+          const val = String(row[colIdx] ?? "").trim();
           if (val) hasData = true;
           rowData[header] = val;
         });
@@ -453,7 +553,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       }
 
       if (rows.length === 0) {
-        throw new Error('No data rows found below the detected header row');
+        throw new Error("No data rows found below the detected header row");
       }
 
       setParsedData({ headers: cleanHeaders, rows });
@@ -465,13 +565,16 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       }
       setColumnMapping(autoMapping);
     } catch (err: any) {
-      console.error('PFD import error:', err);
-      setError(err.message || 'Failed to parse Excel file');
+      console.error("PFD import error:", err);
+      setError(err.message || "Failed to parse Excel file");
       setActiveStep(0);
     }
   };
 
-  const handleMappingChange = (header: string, value: PfdFieldKey | 'ignore') => {
+  const handleMappingChange = (
+    header: string,
+    value: PfdFieldKey | "ignore",
+  ) => {
     setColumnMapping((prev) => ({ ...prev, [header]: value }));
   };
 
@@ -479,12 +582,18 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     if (!parsedData) return;
     const { headers, rows } = parsedData;
     const steps: DraftStep[] = rows.map((row) => {
-      let stepNumber = '';
-      let name = '';
+      let stepNumber = "";
+      let name = "";
 
-      const stepNumberNameHeader = headers.find((h) => columnMapping[h] === 'stepNumberName');
-      const stepNumHeader = headers.find((h) => columnMapping[h] === 'stepNumber');
-      const stepNameHeader = headers.find((h) => columnMapping[h] === 'stepName');
+      const stepNumberNameHeader = headers.find(
+        (h) => columnMapping[h] === "stepNumberName",
+      );
+      const stepNumHeader = headers.find(
+        (h) => columnMapping[h] === "stepNumber",
+      );
+      const stepNameHeader = headers.find(
+        (h) => columnMapping[h] === "stepName",
+      );
 
       if (stepNumberNameHeader && row[stepNumberNameHeader]) {
         const parsed = parseStepNumberAndName(row[stepNumberNameHeader]);
@@ -500,52 +609,67 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 
       const step: DraftStep = {
         include: true,
+        stepType: "operation",
         stepNumber,
         name,
-        incomingVariation: '',
-        specialCharacteristics: '',
+        incomingVariation: "",
+        specialCharacteristics: "",
         flowIcons: {
-          trans: false, recArea: false, store: false, wip: false,
-          oper: false, insp: false, decs: false, rework: false, reject: false,
+          trans: false,
+          recArea: false,
+          store: false,
+          wip: false,
+          oper: false,
+          insp: false,
+          decs: false,
+          rework: false,
+          reject: false,
         },
-        machinesEquipmentDocs: '',
-        desiredOutcome: '',
-        processCharacteristics: '',
+        machinesEquipmentDocs: "",
+        desiredOutcome: "",
+        processCharacteristics: "",
         rawData: row,
       };
 
       for (const h of headers) {
         const target = columnMapping[h];
-        const val = row[h] || '';
+        const val = row[h] || "";
         if (!val) continue;
         switch (target) {
-          case 'stepNumber':
-          case 'stepName':
-          case 'stepNumberName':
+          case "stepType":
+            step.stepType = val.toLowerCase().trim();
+            break;
+          case "stepNumber":
+          case "stepName":
+          case "stepNumberName":
             // already handled
             break;
-          case 'incomingVariation':
+          case "incomingVariation":
             step.incomingVariation = val;
             break;
-          case 'specialCharacteristics':
+          case "specialCharacteristics":
             step.specialCharacteristics = val;
             break;
-          case 'machinesEquipmentDocs':
+          case "machinesEquipmentDocs":
             step.machinesEquipmentDocs = val;
             break;
-          case 'desiredOutcome':
+          case "desiredOutcome":
             step.desiredOutcome = val;
             break;
-          case 'processCharacteristics':
+          case "processCharacteristics":
             step.processCharacteristics = val;
             break;
           default:
-            if (target.startsWith('flowIcon:')) {
-              const key = target.split(':')[1] as keyof typeof step.flowIcons;
+            if (target.startsWith("flowIcon:")) {
+              const key = target.split(":")[1] as keyof typeof step.flowIcons;
               step.flowIcons[key] = true;
             }
             break;
         }
+      }
+      if (!headers.some(h => columnMapping[h] === "stepType" && row[h])) {
+        step.stepType = pfdActivityFromSymbols(step.flowIcons) || 'operation';
+        // Unclassified or mixed legacy marks remain drafts requiring explicit review.
       }
       return step;
     });
@@ -575,7 +699,12 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
   }, [parsedData, columnMapping, activeStep, buildDraftSteps]);
 
   useEffect(() => {
-    if (mode === 'update' && activeStep === 3 && draftSteps.length > 0 && revisionId) {
+    if (
+      mode === "update" &&
+      activeStep === 3 &&
+      draftSteps.length > 0 &&
+      revisionId
+    ) {
       computeDiff();
     }
   }, [mode, activeStep, draftSteps, revisionId]);
@@ -607,15 +736,27 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       }
 
       if (!match) {
-        results.push({ status: 'new', draftStep: draft });
+        results.push({ status: "new", draftStep: draft });
       } else {
         matchedExisting.add(match.id);
-        const fieldDiffs: DiffResult['fieldDiffs'] = [];
+        const fieldDiffs: DiffResult["fieldDiffs"] = [];
         const fields: PfdFieldKey[] = [
-          'stepNumberName', 'incomingVariation', 'specialCharacteristics',
-          'machinesEquipmentDocs', 'desiredOutcome', 'processCharacteristics',
-          'flowIcon:trans', 'flowIcon:recArea', 'flowIcon:store', 'flowIcon:wip',
-          'flowIcon:oper', 'flowIcon:insp', 'flowIcon:decs', 'flowIcon:rework', 'flowIcon:reject',
+          "stepNumberName",
+          "stepType",
+          "incomingVariation",
+          "specialCharacteristics",
+          "machinesEquipmentDocs",
+          "desiredOutcome",
+          "processCharacteristics",
+          "flowIcon:trans",
+          "flowIcon:recArea",
+          "flowIcon:store",
+          "flowIcon:wip",
+          "flowIcon:oper",
+          "flowIcon:insp",
+          "flowIcon:decs",
+          "flowIcon:rework",
+          "flowIcon:reject",
         ];
         for (const f of fields) {
           if (!stepsEqual(draft, match, f)) {
@@ -627,9 +768,18 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           }
         }
         if (fieldDiffs.length > 0) {
-          results.push({ status: 'update', draftStep: draft, existingStep: match, fieldDiffs });
+          results.push({
+            status: "update",
+            draftStep: draft,
+            existingStep: match,
+            fieldDiffs,
+          });
         } else {
-          results.push({ status: 'unchanged', draftStep: draft, existingStep: match });
+          results.push({
+            status: "unchanged",
+            draftStep: draft,
+            existingStep: match,
+          });
         }
       }
     }
@@ -637,40 +787,53 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     // Add missing (existing but not in Excel)
     for (const s of existingSteps) {
       if (!matchedExisting.has(s.id)) {
-        results.push({ status: 'missing', existingStep: s });
+        results.push({ status: "missing", existingStep: s });
       }
     }
 
     setDiffResults(results);
   };
 
-  function getExistingFieldValue(step: ProcessStep, field: PfdFieldKey): string {
+  function getExistingFieldValue(
+    step: ProcessStep,
+    field: PfdFieldKey,
+  ): string {
     switch (field) {
-      case 'stepNumberName':
+      case "stepType":
+        return step.stepType;
+      case "stepNumberName":
         return `${step.stepNumber} ${step.name}`.trim();
-      case 'incomingVariation':
-        return Array.isArray(step.incomingVariation) ? joinMultiline(step.incomingVariation) : (step.incomingVariation || '');
-      case 'specialCharacteristics':
-        return step.specialCharacteristics || '';
-      case 'machinesEquipmentDocs':
-        return Array.isArray(step.machinesEquipmentDocs) ? joinMultiline(step.machinesEquipmentDocs) : (step.machinesEquipmentDocs || '');
-      case 'desiredOutcome':
-        return Array.isArray(step.desiredOutcome) ? joinMultiline(step.desiredOutcome) : (step.desiredOutcome || '');
-      case 'processCharacteristics':
-        return Array.isArray(step.processCharacteristics) ? joinMultiline(step.processCharacteristics) : (step.processCharacteristics || '');
+      case "incomingVariation":
+        return Array.isArray(step.incomingVariation)
+          ? joinMultiline(step.incomingVariation)
+          : step.incomingVariation || "";
+      case "specialCharacteristics":
+        return step.specialCharacteristics || "";
+      case "machinesEquipmentDocs":
+        return Array.isArray(step.machinesEquipmentDocs)
+          ? joinMultiline(step.machinesEquipmentDocs)
+          : step.machinesEquipmentDocs || "";
+      case "desiredOutcome":
+        return Array.isArray(step.desiredOutcome)
+          ? joinMultiline(step.desiredOutcome)
+          : step.desiredOutcome || "";
+      case "processCharacteristics":
+        return Array.isArray(step.processCharacteristics)
+          ? joinMultiline(step.processCharacteristics)
+          : step.processCharacteristics || "";
       default:
-        if (field.startsWith('flowIcon:')) {
-          const key = field.split(':')[1];
-          return step.flowIcons?.[key] ? '✓' : '';
+        if (field.startsWith("flowIcon:")) {
+          const key = field.split(":")[1];
+          return step.flowIcons?.[key] ? "✓" : "";
         }
-        return '';
+        return "";
     }
   }
 
-  const handleModeChange = (m: 'build' | 'update') => {
+  const handleModeChange = (m: "build" | "update") => {
     setMode(m);
-    if (m === 'update' && !revisionId) {
-      setError('No PFD revision available for update mode');
+    if (m === "update" && !revisionId) {
+      setError("No PFD revision available for update mode");
     }
   };
 
@@ -684,11 +847,13 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
   };
 
   const toggleSelectAll = () => {
-    if (selectedRows.size === getVisibleSteps().length) {
-      setSelectedRows(new Set());
-    } else {
-      setSelectedRows(new Set(getVisibleSteps().map((_, i) => i)));
-    }
+    const visible = getVisibleSteps().map((_, i) => i + page * rowsPerPage);
+    setSelectedRows((previous) => {
+      const next = new Set(previous);
+      const all = visible.every((i) => next.has(i));
+      visible.forEach((i) => (all ? next.delete(i) : next.add(i)));
+      return next;
+    });
   };
 
   const getVisibleSteps = () => {
@@ -698,15 +863,76 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 
   const handleImport = async () => {
     if (!revisionId) return;
-    const toImport = getVisibleSteps().filter((_, i) => selectedRows.has(i + page * rowsPerPage));
+    const toImport = draftSteps.filter((_, i) => selectedRows.has(i));
     if (toImport.length === 0) return;
 
     setImporting(true);
-    setImportProgress({ current: 0, total: toImport.length, status: 'Preparing...' });
+    setImportProgress({
+      current: 0,
+      total: toImport.length,
+      status: "Preparing...",
+    });
     setError(null);
 
+    let writesCompleted = 0;
+    let graphInvalidations = 0;
     try {
-      if (mode === 'build') {
+      const allowedTypes = [
+        "operation",
+        "inspection",
+        "decision",
+        "storage",
+        "transport",
+        "delay",
+        "rework",
+        "repair",
+        "hold",
+        "scrap",
+        "return",
+        "combined",
+      ];
+      if (toImport.some((step) => !allowedTypes.includes(step.stepType)))
+        throw new Error(
+          "An activity type is unsupported. Correct the source workbook before importing.",
+        );
+      if (
+        new Set(toImport.map((step) => step.stepNumber)).size !==
+        toImport.length
+      )
+        throw new Error(
+          "Duplicate operation numbers in selected rows. Resolve them before importing.",
+        );
+      if (
+        mode === "build" &&
+        toImport.some((step) =>
+          existingSteps.some(
+            (existing) => existing.stepNumber === step.stepNumber,
+          ),
+        )
+      )
+        throw new Error(
+          "An operation number already exists. Choose Update Existing or change the number.",
+        );
+      let graphVersion: number | null = null;
+      if (topology && restoreTopology) {
+        remapWorkbookTopology(
+          topology,
+          existingSteps,
+          toImport.map((step) => step.stepNumber),
+        );
+        const response = await fetch(
+          `${API_BASE_URL}/revisions/${revisionId}/pfd-graph`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!response.ok)
+          throw new Error(
+            "Cannot read the destination topology. No operations were imported.",
+          );
+        graphVersion = (await response.json()).version;
+        if (!Number.isInteger(graphVersion))
+          throw new Error("Invalid destination graph version");
+      }
+      if (mode === "build") {
         // Batch create
         const batchDtos = toImport.map((s, i) => {
           const stepNum = s.stepNumber?.trim() || `OP${(i + 1) * 10}`;
@@ -714,98 +940,220 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           return {
             stepNumber: stepNum,
             name: stepName,
-            stepType: 'operation',
-            incomingVariation: s.incomingVariation ? splitMultiline(s.incomingVariation) : [],
+            stepType: s.stepType || "operation",
+            incomingVariation: s.incomingVariation
+              ? splitMultiline(s.incomingVariation)
+              : [],
             specialCharacteristics: s.specialCharacteristics || null,
             flowIcons: s.flowIcons,
-            machinesEquipmentDocs: s.machinesEquipmentDocs ? splitMultiline(s.machinesEquipmentDocs) : [],
+            machinesEquipmentDocs: s.machinesEquipmentDocs
+              ? splitMultiline(s.machinesEquipmentDocs)
+              : [],
             desiredOutcome: s.desiredOutcome || null,
             processCharacteristics: s.processCharacteristics || null,
           };
         });
 
-        setImportProgress({ current: 0, total: batchDtos.length, status: 'Creating steps...' });
-        const res = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps/batch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(batchDtos),
+        setImportProgress({
+          current: 0,
+          total: batchDtos.length,
+          status: "Creating steps...",
         });
+        const res = await fetch(
+          `${API_BASE_URL}/revisions/${revisionId}/pfd-steps/batch`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(batchDtos),
+          },
+        );
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.message || 'Batch create failed');
+          throw new Error(err.message || "Batch create failed");
         }
+        writesCompleted += batchDtos.length;
+        graphInvalidations++; // One atomic batch invalidates the target graph once.
       } else {
         // Update existing + create new
         const newSteps = diffResults.filter(
-          (d) => d.status === 'new' && d.draftStep && selectedRows.has(diffResults.indexOf(d))
+          (d) =>
+            d.status === "new" &&
+            d.draftStep &&
+            selectedRows.has(diffResults.indexOf(d)),
         );
         const updateSteps = diffResults.filter(
-          (d) => d.status === 'update' && d.draftStep && d.existingStep && selectedRows.has(diffResults.indexOf(d))
+          (d) =>
+            d.status === "update" &&
+            d.draftStep &&
+            d.existingStep &&
+            selectedRows.has(diffResults.indexOf(d)),
         );
 
-        setImportProgress({ current: 0, total: newSteps.length + updateSteps.length, status: 'Creating new steps...' });
+        setImportProgress({
+          current: 0,
+          total: newSteps.length + updateSteps.length,
+          status: "Creating new steps...",
+        });
         for (let i = 0; i < newSteps.length; i++) {
           const s = newSteps[i].draftStep!;
           const stepNum = s.stepNumber?.trim() || `OP${(i + 1) * 10}`;
           const stepName = s.name?.trim() || `Process Step ${stepNum}`;
-          setImportProgress({ current: i + 1, total: newSteps.length + updateSteps.length, status: `Creating step ${stepNum}...` });
+          setImportProgress({
+            current: i + 1,
+            total: newSteps.length + updateSteps.length,
+            status: `Creating step ${stepNum}...`,
+          });
           const dto = {
             stepNumber: stepNum,
             name: stepName,
-            stepType: 'operation',
-            incomingVariation: s.incomingVariation ? splitMultiline(s.incomingVariation) : [],
+            stepType: s.stepType || "operation",
+            incomingVariation: s.incomingVariation
+              ? splitMultiline(s.incomingVariation)
+              : [],
             specialCharacteristics: s.specialCharacteristics || null,
             flowIcons: s.flowIcons,
-            machinesEquipmentDocs: s.machinesEquipmentDocs ? splitMultiline(s.machinesEquipmentDocs) : [],
+            machinesEquipmentDocs: s.machinesEquipmentDocs
+              ? splitMultiline(s.machinesEquipmentDocs)
+              : [],
             desiredOutcome: s.desiredOutcome || null,
             processCharacteristics: s.processCharacteristics || null,
           };
-          const res = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(dto),
-          });
+          const res = await fetch(
+            `${API_BASE_URL}/revisions/${revisionId}/pfd-steps`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(dto),
+            },
+          );
           if (!res.ok) {
             const err = await res.json();
             throw new Error(`Failed to create ${stepNum}: ${err.message}`);
           }
+          writesCompleted++;
+          graphInvalidations++;
         }
 
         for (let i = 0; i < updateSteps.length; i++) {
           const s = updateSteps[i];
-          const stepNum = s.draftStep!.stepNumber?.trim() || s.existingStep?.stepNumber || `OP${(i + 1) * 10}`;
-          const stepName = s.draftStep!.name?.trim() || s.existingStep?.name || `Process Step ${stepNum}`;
-          setImportProgress({ current: newSteps.length + i + 1, total: newSteps.length + updateSteps.length, status: `Updating step ${stepNum}...` });
+          const stepNum =
+            s.draftStep!.stepNumber?.trim() ||
+            s.existingStep?.stepNumber ||
+            `OP${(i + 1) * 10}`;
+          const stepName =
+            s.draftStep!.name?.trim() ||
+            s.existingStep?.name ||
+            `Process Step ${stepNum}`;
+          setImportProgress({
+            current: newSteps.length + i + 1,
+            total: newSteps.length + updateSteps.length,
+            status: `Updating step ${stepNum}...`,
+          });
           const dto = {
             stepNumber: stepNum,
             name: stepName,
-            stepType: 'operation',
-            incomingVariation: s.draftStep!.incomingVariation ? splitMultiline(s.draftStep!.incomingVariation) : [],
+            stepType: s.draftStep!.stepType || "operation",
+            incomingVariation: s.draftStep!.incomingVariation
+              ? splitMultiline(s.draftStep!.incomingVariation)
+              : [],
             specialCharacteristics: s.draftStep!.specialCharacteristics || null,
             flowIcons: s.draftStep!.flowIcons,
-            machinesEquipmentDocs: s.draftStep!.machinesEquipmentDocs ? splitMultiline(s.draftStep!.machinesEquipmentDocs) : [],
+            machinesEquipmentDocs: s.draftStep!.machinesEquipmentDocs
+              ? splitMultiline(s.draftStep!.machinesEquipmentDocs)
+              : [],
             desiredOutcome: s.draftStep!.desiredOutcome || null,
             processCharacteristics: s.draftStep!.processCharacteristics || null,
           };
-          const res = await fetch(`${API_BASE_URL}/pfd-steps/${s.existingStep!.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(dto),
-          });
+          const res = await fetch(
+            `${API_BASE_URL}/pfd-steps/${s.existingStep!.id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(dto),
+            },
+          );
           if (!res.ok) {
             const err = await res.json();
             throw new Error(`Failed to update ${stepNum}: ${err.message}`);
           }
+          writesCompleted++;
+          graphInvalidations++;
         }
       }
 
-      setImportProgress((p) => ({ ...p, status: 'Done!' }));
-      setTimeout(() => {
-        onImportSuccess();
-        handleClose();
-      }, 1000);
+      let topologyReport = topology
+        ? "Existing routing was preserved; topology restore was not selected."
+        : "Table-only import: review the sequence-derived diagram before release.";
+      if (topology && restoreTopology) {
+        const destinationResponse = await fetch(
+          `${API_BASE_URL}/revisions/${revisionId}/pfd-steps`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!destinationResponse.ok)
+          throw new Error(
+            "Operations were imported, but destination IDs could not be loaded. Topology was not changed.",
+          );
+        const destination = await destinationResponse.json();
+        if (!Array.isArray(destination))
+          throw new Error(
+            "Invalid destination operation response. Topology was not changed.",
+          );
+        const mapped = remapWorkbookTopology(
+          topology,
+          destination,
+          toImport.map((step) => step.stepNumber),
+        );
+        const response = await fetch(
+          `${API_BASE_URL}/revisions/${revisionId}/pfd-graph`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              // Count only our successful mutation requests. Fetching a fresh
+              // version here would silently overwrite another editor's routing.
+              version: graphVersion! + graphInvalidations,
+              graph: mapped.graph,
+            }),
+          },
+        );
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(
+            `Operations were imported, but topology save failed: ${error.message || response.status}. Existing routing is preserved.`,
+          );
+        }
+        topologyReport = `Routing restored as a draft. ${mapped.omittedNodes} unselected/unmapped nodes and ${mapped.omittedConnections} related connections omitted, as shown in the selection preview.`;
+      }
+      setReport(
+        `${writesCompleted} operation changes saved. ${topologyReport}`,
+      );
+      setCompleted(true);
+      setImportProgress((p) => ({
+        ...p,
+        current: p.total,
+        status: "Import complete",
+      }));
+      onImportSuccess();
     } catch (err: any) {
-      setError(err.message || 'Import failed');
+      setError(
+        `${err.message || "Import failed"}${writesCompleted ? ` ${writesCompleted} operation changes were already saved; re-open the import in Update Existing mode to continue.` : ""}`,
+      );
+      if (writesCompleted) {
+        setCompleted(true);
+        onImportSuccess();
+      }
     } finally {
       setImporting(false);
     }
@@ -813,328 +1161,763 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
 
   const downloadTemplate = async () => {
     try {
-      const ExcelJS = await import('exceljs');
+      const ExcelJS = await import("exceljs");
       const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet('PFD Import Template');
+      const ws = wb.addWorksheet("PFD Import Template");
 
       const headers = [
-        'Process # & Description',
-        'Incoming source of variation',
-        'Special Char. Class',
-        'TRANS.',
-        'STORE Recieving Area',
-        'STORE Main Store',
-        'WIP @Line',
-        'OPER.',
-        'INSP.',
-        'DECS.',
-        'REWORK',
-        'REJECT',
-        'Machine(s) / Equipment(s) used/ Documents',
-        'Desired outcome / Product characteristics',
-        'Process characteristics',
+        "Process # & Description",
+        "Incoming source of variation",
+        "Special Char. Class",
+        "TRANS.",
+        "STORE Recieving Area",
+        "STORE Main Store",
+        "WIP @Line",
+        "OPER.",
+        "INSP.",
+        "DECS.",
+        "REWORK",
+        "REJECT",
+        "Machine(s) / Equipment(s) used/ Documents",
+        "Desired outcome / Product characteristics",
+        "Process characteristics",
       ];
 
       ws.addRow(headers);
       // Style header
       ws.getRow(1).font = { bold: true };
-      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+      ws.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9D9D9" },
+      };
       for (let c = 1; c <= headers.length; c++) {
-        ws.getCell(1, c).border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-        ws.getCell(1, c).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        ws.getCell(1, c).border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        ws.getCell(1, c).alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
       }
 
       // Add example row
       ws.addRow([
-        'OP10 Drill core hole',
-        'Raw material hardness variation\nFixture wear',
-        'SC',
-        '✓',
-        '',
-        '',
-        '',
-        '✓',
-        '✓',
-        '',
-        '',
-        '',
-        'CNC Drilling Machine D-01\nDrill Bit Ø10mm',
-        'Hole diameter Ø10.0 ± 0.1mm\nSurface finish Ra 3.2',
-        'Spindle speed 1200 RPM\nFeed rate 0.15 mm/rev',
+        "OP10 Drill core hole",
+        "Raw material hardness variation\nFixture wear",
+        "SC",
+        "✓",
+        "",
+        "",
+        "",
+        "✓",
+        "✓",
+        "",
+        "",
+        "",
+        "CNC Drilling Machine D-01\nDrill Bit Ø10mm",
+        "Hole diameter Ø10.0 ± 0.1mm\nSurface finish Ra 3.2",
+        "Spindle speed 1200 RPM\nFeed rate 0.15 mm/rev",
       ]);
 
       // Style data rows
       for (let r = 2; r <= 2; r++) {
         for (let c = 1; c <= headers.length; c++) {
-          ws.getCell(r, c).border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-          ws.getCell(r, c).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+          ws.getCell(r, c).border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          ws.getCell(r, c).alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
         }
       }
 
       ws.columns = headers.map(() => ({ width: 25 }));
 
       const buffer = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `PFD_Import_Template_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.download = `PFD_Import_Template_${new Date().toISOString().split("T")[0]}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Template download failed:', err);
-      setError('Failed to generate template');
+      console.error("Template download failed:", err);
+      setError("Failed to generate template");
     }
   };
 
   const stepLabels = [
-    'Upload File',
-    'Map Columns',
-    'Select Rows',
-    mode === 'build' ? 'Confirm Import' : 'Diff Preview',
-    'Import',
+    "Upload File",
+    "Map Columns",
+    "Select Rows",
+    mode === "build" ? "Confirm Import" : "Diff Preview",
+    "Import",
   ];
 
   const stepContents = [
     // Step 1: Upload
-    (
-      <Stack spacing={3} sx={{ mt: 2 }}>
-        <Alert severity="info" sx={{ mb: 1 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <InfoIcon fontSize="small" />
-            <Typography variant="body2">
-              Upload an Excel file (.xlsx) containing PFD data. 
-              The first row should contain headers matching the template.
-            </Typography>
-          </Stack>
-        </Alert>
-        <Box sx={{ border: '2px dashed #cbd5e1', borderRadius: 2, p: 4, textAlign: 'center', cursor: 'pointer' }}>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-            id="import-file-input"
-          />
-          <label htmlFor="import-file-input" style={{ cursor: 'pointer', display: 'block' }}>
-            <UploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Drag & drop or click to select .xlsx file
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Max 300 rows recommended. Larger files will be paginated.
-            </Typography>
-          </label>
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-          onClick={downloadTemplate}
-          disabled={!!(file || parsedData)}
-          sx={{ mt: 1 }}
-        >
-          Download Template
-        </Button>
-        {file && (
-          <Alert severity="success">
-            <Typography variant="body2">
-              <strong>{file.name}</strong> ({Math.round(file.size / 1024)} KB) — Ready to parse
-            </Typography>
-          </Alert>
-        )}
-      </Stack>
-    ),
-    // Step 2: Map Columns
-    (
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="body2" sx={{ color: '#475569', fontWeight: 500 }}>
-            Map Excel columns to PFD fields. Auto-mapped columns are verified.
+    <Stack spacing={3} sx={{ mt: 2 }}>
+      <Alert severity="info" sx={{ mb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <InfoIcon fontSize="small" />
+          <Typography variant="body2">
+            Upload an Excel file (.xlsx) containing PFD data. The first row
+            should contain headers matching the template.
           </Typography>
-        </Box>
-        {parsedData && (
-          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                  <TableCell sx={{ minWidth: 300, fontWeight: 700, bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Excel Column (Detected)</TableCell>
-                  <TableCell sx={{ minWidth: 250, fontWeight: 700, bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Map To</TableCell>
-                  <TableCell sx={{ width: 90, fontWeight: 700, bgcolor: '#F1F5F9', textAlign: 'center' }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {parsedData.headers.map((header) => {
-                  const { confidence } = autoMapHeader(header);
-                  return (
-                    <TableRow key={header} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A' }}>{header}</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>Sample: {parsedData!.rows[0]?.[header] || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <FormControl size="small" fullWidth sx={{ minWidth: 220 }}>
-                          <Select
-                            value={columnMapping[header] || 'ignore'}
-                            onChange={(e) => handleMappingChange(header, e.target.value as PfdFieldKey | 'ignore')}
-                            label="Map To"
-                            MenuProps={{ ...dialogSelectMenuProps, autoFocus: false, disableAutoFocusItem: true }}
-                          >
-                            {FIELD_OPTIONS.map((opt) => (
-                              <MenuItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                      <TableCell align="center" sx={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <Chip
-                          label={confidence === 'auto' ? 'Auto' : 'Manual'}
-                          size="small"
-                          color={confidence === 'auto' ? 'success' : 'default'}
-                          variant="outlined"
-                          icon={confidence === 'auto' ? <AutoMapIcon fontSize="small" /> : <EditIcon fontSize="small" />}
-                          sx={{ fontWeight: 700 }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
-    ),
-    // Step 3: Select Rows
-    (
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        {error && <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>{error}</Alert>}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-            <RadioGroup value={mode} onChange={(e) => handleModeChange(e.target.value as 'build' | 'update')} row>
-              <FCL value="build" control={<Radio size="small" />} label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Build New PFD</Typography>} />
-              <FCL value="update" control={<Radio size="small" />} label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Update Existing PFD (Diff)</Typography>} disabled={!revisionId} />
-            </RadioGroup>
-            <Chip label={`${selectedRows.size} of ${draftSteps.length} rows selected`} size="small" sx={{ fontWeight: 700, bgcolor: '#EFF6FF', color: '#1D4ED8' }} />
-          </Stack>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={toggleSelectAll}
-            startIcon={selectedRows.size === getVisibleSteps().length ? <RemoveIcon /> : <AddIcon />}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          >
-            {selectedRows.size === getVisibleSteps().length ? 'Deselect All' : 'Select All Visible'}
-          </Button>
-        </Box>
-        {mode === 'update' && !revisionId && (
-          <Alert severity="warning" sx={{ mb: 1, py: 0.5 }}>No PFD revision available. Switch to Build New mode.</Alert>
-        )}
-        {draftSteps.length > 0 && (
-          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>
-                    <Checkbox
-                      checked={getVisibleSteps().length > 0 && getVisibleSteps().every((_, idx) => selectedRows.has(idx + page * rowsPerPage))}
-                      indeterminate={selectedRows.size > 0 && selectedRows.size < getVisibleSteps().length}
-                      onChange={toggleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Step #</TableCell>
-                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Description</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Incoming Variation</TableCell>
-                  <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Spec. Class</TableCell>
-                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Flow Symbols</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Machines/Equipment/Docs</TableCell>
-                  <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Desired Outcome</TableCell>
-                  <TableCell sx={{ minWidth: 180, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Characteristics</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {getVisibleSteps().map((step, idx) => {
-                  const globalIdx = idx + page * rowsPerPage;
-                  const isSelected = selectedRows.has(globalIdx);
-                  const icons = step.flowIcons;
-                  const activeKeys = Object.keys(icons).filter((k) => icons[k]);
-                  const symbolsText = activeKeys.length > 0
-                    ? activeKeys.map((k) => {
-                        const m = getPfdIconMeta(k);
-                        return `${m.sym} ${m.short}`;
-                      }).join(', ')
-                    : '—';
-                  return (
-                    <TableRow
-                      key={globalIdx}
-                      hover
-                      selected={isSelected}
-                      onClick={() => toggleRowSelection(globalIdx)}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{step.stepNumber || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" sx={{ color: '#1E293B' }}>{step.name || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" color="text.secondary">{step.incomingVariation || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2">{step.specialCharacteristics || '—'}</Typography>
-                      </TableCell>
-                      <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{symbolsText}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" color="text.secondary">{step.machinesEquipmentDocs || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" color="text.secondary">{step.desiredOutcome || '—'}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" color="text.secondary">{step.processCharacteristics || '—'}</Typography>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-        <TablePagination
-          component="div"
-          count={draftSteps.length}
-          page={page}
-          onPageChange={(_: unknown, p: number) => setPage(p)}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          rowsPerPageOptions={[25, 50, 100]}
-          sx={{ borderTop: '1px solid #E2E8F0', minHeight: 40 }}
+        </Stack>
+      </Alert>
+      <Box
+        sx={{
+          border: "2px dashed #cbd5e1",
+          borderRadius: 2,
+          p: 4,
+          textAlign: "center",
+          cursor: "pointer",
+        }}
+      >
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFileUpload}
+          style={{ display: "none" }}
+          id="import-file-input"
         />
+        <label
+          htmlFor="import-file-input"
+          style={{ cursor: "pointer", display: "block" }}
+        >
+          <UploadIcon sx={{ fontSize: 48, color: "primary.main", mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Drag & drop or click to select .xlsx file
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Max 300 rows recommended. Larger files will be paginated.
+          </Typography>
+        </label>
       </Box>
-    ),
-    // Step 4: Diff Preview (update) or Confirm (build)
-    mode === 'build' ? (
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Chip label={`${draftSteps.filter((_, i) => selectedRows.has(i)).length} new steps will be created`} color="primary" sx={{ fontWeight: 700 }} />
-        </Box>
-        <TableContainer component={Paper} sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+      <Button
+        variant="outlined"
+        startIcon={<DownloadIcon />}
+        onClick={downloadTemplate}
+        disabled={!!(file || parsedData)}
+        sx={{ mt: 1 }}
+      >
+        Download Template
+      </Button>
+      {file && (
+        <Alert severity="success">
+          <Typography variant="body2">
+            <strong>{file.name}</strong> ({Math.round(file.size / 1024)} KB) —
+            Ready to parse
+          </Typography>
+        </Alert>
+      )}
+    </Stack>,
+    // Step 2: Map Columns
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 1,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: "#475569", fontWeight: 500 }}>
+          Map Excel columns to PFD fields. Auto-mapped columns are verified.
+        </Typography>
+      </Box>
+      {parsedData && (
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{
+            flex: 1,
+            maxHeight: "calc(92vh - 240px)",
+            overflow: "auto",
+            borderRadius: 2,
+            border: "1px solid #CBD5E1",
+          }}
+        >
           <Table size="small" stickyHeader>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                <TableCell sx={{ fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Step #</TableCell>
-                <TableCell sx={{ minWidth: 200, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Process Description</TableCell>
-                <TableCell sx={{ minWidth: 100, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', borderRight: '1px solid #CBD5E1' }}>Spec. Class</TableCell>
-                <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', bgcolor: '#F1F5F9', textAlign: 'center' }}>Flow Symbols</TableCell>
+              <TableRow sx={{ bgcolor: "#F1F5F9" }}>
+                <TableCell
+                  sx={{
+                    minWidth: 300,
+                    fontWeight: 700,
+                    bgcolor: "#F1F5F9",
+                    borderRight: "1px solid #CBD5E1",
+                  }}
+                >
+                  Excel Column (Detected)
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 250,
+                    fontWeight: 700,
+                    bgcolor: "#F1F5F9",
+                    borderRight: "1px solid #CBD5E1",
+                  }}
+                >
+                  Map To
+                </TableCell>
+                <TableCell
+                  sx={{
+                    width: 90,
+                    fontWeight: 700,
+                    bgcolor: "#F1F5F9",
+                    textAlign: "center",
+                  }}
+                >
+                  Status
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {parsedData.headers.map((header) => {
+                const { confidence } = autoMapHeader(header);
+                return (
+                  <TableRow
+                    key={header}
+                    hover
+                    sx={{ "&:last-child td": { borderBottom: 0 } }}
+                  >
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, color: "#0F172A" }}
+                      >
+                        {header}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mt: 0.25 }}
+                      >
+                        Sample: {parsedData!.rows[0]?.[header] || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <FormControl
+                        size="small"
+                        fullWidth
+                        sx={{ minWidth: 220 }}
+                      >
+                        <Select
+                          value={columnMapping[header] || "ignore"}
+                          onChange={(e) =>
+                            handleMappingChange(
+                              header,
+                              e.target.value as PfdFieldKey | "ignore",
+                            )
+                          }
+                          label="Map To"
+                          MenuProps={{
+                            ...dialogSelectMenuProps,
+                            autoFocus: false,
+                            disableAutoFocusItem: true,
+                          }}
+                        >
+                          {FIELD_OPTIONS.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ borderBottom: "1px solid #E2E8F0" }}
+                    >
+                      <Chip
+                        label={confidence === "auto" ? "Auto" : "Manual"}
+                        size="small"
+                        color={confidence === "auto" ? "success" : "default"}
+                        variant="outlined"
+                        icon={
+                          confidence === "auto" ? (
+                            <AutoMapIcon fontSize="small" />
+                          ) : (
+                            <EditIcon fontSize="small" />
+                          )
+                        }
+                        sx={{ fontWeight: 700 }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+    </Box>,
+    // Step 3: Select Rows
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        overflow: "hidden",
+      }}
+    >
+      {error && (
+        <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>
+          {error}
+        </Alert>
+      )}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 1,
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+          <RadioGroup
+            value={mode}
+            onChange={(e) =>
+              handleModeChange(e.target.value as "build" | "update")
+            }
+            row
+          >
+            <FCL
+              value="build"
+              control={<Radio size="small" />}
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Build New PFD
+                </Typography>
+              }
+            />
+            <FCL
+              value="update"
+              control={<Radio size="small" />}
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Update Existing PFD (Diff)
+                </Typography>
+              }
+              disabled={!revisionId}
+            />
+          </RadioGroup>
+          <Chip
+            label={`${selectedRows.size} of ${draftSteps.length} rows selected`}
+            size="small"
+            sx={{ fontWeight: 700, bgcolor: "#EFF6FF", color: "#1D4ED8" }}
+          />
+        </Stack>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={toggleSelectAll}
+          startIcon={
+            selectedRows.size === getVisibleSteps().length ? (
+              <RemoveIcon />
+            ) : (
+              <AddIcon />
+            )
+          }
+          sx={{ textTransform: "none", fontWeight: 600 }}
+        >
+          {selectedRows.size === getVisibleSteps().length
+            ? "Deselect All"
+            : "Select All Visible"}
+        </Button>
+      </Box>
+      {mode === "update" && !revisionId && (
+        <Alert severity="warning" sx={{ mb: 1, py: 0.5 }}>
+          No PFD revision available. Switch to Build New mode.
+        </Alert>
+      )}
+      {draftSteps.length > 0 && (
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{
+            flex: 1,
+            maxHeight: "calc(92vh - 240px)",
+            overflow: "auto",
+            borderRadius: 2,
+            border: "1px solid #CBD5E1",
+          }}
+        >
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "#F1F5F9" }}>
+                <TableCell
+                  sx={{
+                    width: 50,
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  <Checkbox
+                    checked={
+                      getVisibleSteps().length > 0 &&
+                      getVisibleSteps().every((_, idx) =>
+                        selectedRows.has(idx + page * rowsPerPage),
+                      )
+                    }
+                    indeterminate={
+                      selectedRows.size > 0 &&
+                      selectedRows.size < getVisibleSteps().length
+                    }
+                    onChange={toggleSelectAll}
+                  />
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Step #
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 200,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Process Description
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 180,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Incoming Variation
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 100,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Spec. Class
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 130,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    textAlign: "center",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Flow Symbols
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 180,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Machines/Equipment/Docs
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 200,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderRight: "1px solid #CBD5E1",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Desired Outcome
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 180,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    borderBottom: "2px solid #CBD5E1",
+                    bgcolor: "#F1F5F9",
+                  }}
+                >
+                  Process Characteristics
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {getVisibleSteps().map((step, idx) => {
+                const globalIdx = idx + page * rowsPerPage;
+                const isSelected = selectedRows.has(globalIdx);
+                const icons = step.flowIcons;
+                const activeKeys = Object.keys(icons).filter((k) => icons[k]);
+                const symbolsText =
+                  activeKeys.length > 0
+                    ? activeKeys
+                        .map((k) => {
+                          const m = getPfdIconMeta(k);
+                          return `${m.sym} ${m.short}`;
+                        })
+                        .join(", ")
+                    : "—";
+                return (
+                  <TableRow
+                    key={globalIdx}
+                    hover
+                    selected={isSelected}
+                    onClick={() => toggleRowSelection(globalIdx)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "#0F172A" }}
+                      >
+                        {step.stepNumber || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: "#1E293B" }}>
+                        {step.name || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {step.incomingVariation || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {step.specialCharacteristics || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontFamily: "monospace", fontWeight: 600 }}
+                      >
+                        {symbolsText}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {step.machinesEquipmentDocs || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {step.desiredOutcome || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: "1px solid #E2E8F0" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {step.processCharacteristics || "—"}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      <TablePagination
+        component="div"
+        count={draftSteps.length}
+        page={page}
+        onPageChange={(_: unknown, p: number) => setPage(p)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        rowsPerPageOptions={[25, 50, 100]}
+        sx={{ borderTop: "1px solid #E2E8F0", minHeight: 40 }}
+      />
+    </Box>,
+    // Step 4: Diff Preview (update) or Confirm (build)
+    mode === "build" ? (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1,
+          }}
+        >
+          <Chip
+            label={`${draftSteps.filter((_, i) => selectedRows.has(i)).length} new steps will be created`}
+            color="primary"
+            sx={{ fontWeight: 700 }}
+          />
+        </Box>
+        <TableContainer
+          component={Paper}
+          sx={{
+            flex: 1,
+            maxHeight: "calc(92vh - 240px)",
+            overflow: "auto",
+            borderRadius: 2,
+            border: "1px solid #CBD5E1",
+          }}
+        >
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "#F1F5F9" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    bgcolor: "#F1F5F9",
+                    borderRight: "1px solid #CBD5E1",
+                  }}
+                >
+                  Step #
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 200,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    bgcolor: "#F1F5F9",
+                    borderRight: "1px solid #CBD5E1",
+                  }}
+                >
+                  Process Description
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 100,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    bgcolor: "#F1F5F9",
+                    borderRight: "1px solid #CBD5E1",
+                  }}
+                >
+                  Spec. Class
+                </TableCell>
+                <TableCell
+                  sx={{
+                    minWidth: 130,
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    bgcolor: "#F1F5F9",
+                    textAlign: "center",
+                  }}
+                >
+                  Flow Symbols
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1142,14 +1925,58 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                 .filter((_, i) => selectedRows.has(i))
                 .map((step) => (
                   <TableRow key={step.stepNumber || step.name}>
-                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{step.stepNumber || 'Auto'}</Typography></TableCell>
-                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{step.name}</Typography></TableCell>
-                    <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{step.specialCharacteristics || '—'}</Typography></TableCell>
-                    <TableCell align="center" sx={{ borderBottom: '1px solid #E2E8F0' }}>
-                      {Object.entries(step.flowIcons).filter(([, v]) => v).map(([k]) => {
-                        const m = getPfdIconMeta(k);
-                        return <span key={k} style={{ marginRight: 4, fontFamily: 'monospace', fontWeight: 600 }}>{m.sym} {m.short}</span>;
-                      })}
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: "#0F172A" }}
+                      >
+                        {step.stepNumber || "Auto"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2">{step.name}</Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: "1px solid #E2E8F0",
+                        borderBottom: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {step.specialCharacteristics || "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{ borderBottom: "1px solid #E2E8F0" }}
+                    >
+                      {Object.entries(step.flowIcons)
+                        .filter(([, v]) => v)
+                        .map(([k]) => {
+                          const m = getPfdIconMeta(k);
+                          return (
+                            <span
+                              key={k}
+                              style={{
+                                marginRight: 4,
+                                fontFamily: "monospace",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {m.sym} {m.short}
+                            </span>
+                          );
+                        })}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1158,60 +1985,282 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         </TableContainer>
       </Box>
     ) : (
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-        {error && <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>{error}</Alert>}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>Diff Summary:</Typography>
-            <Chip label={`New: ${diffResults.filter((d) => d.status === 'new').length}`} color="success" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-            <Chip label={`Update: ${diffResults.filter((d) => d.status === 'update').length}`} color="warning" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-            <Chip label={`Unchanged: ${diffResults.filter((d) => d.status === 'unchanged').length}`} color="default" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-            <Chip label={`Missing: ${diffResults.filter((d) => d.status === 'missing').length}`} color="error" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          overflow: "hidden",
+        }}
+      >
+        {error && (
+          <Alert severity="error" sx={{ mb: 1, py: 0.5 }}>
+            {error}
+          </Alert>
+        )}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1,
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 700, color: "#0F172A" }}
+            >
+              Diff Summary:
+            </Typography>
+            <Chip
+              label={`New: ${diffResults.filter((d) => d.status === "new").length}`}
+              color="success"
+              size="small"
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+            <Chip
+              label={`Update: ${diffResults.filter((d) => d.status === "update").length}`}
+              color="warning"
+              size="small"
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+            <Chip
+              label={`Unchanged: ${diffResults.filter((d) => d.status === "unchanged").length}`}
+              color="default"
+              size="small"
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
+            <Chip
+              label={`Missing: ${diffResults.filter((d) => d.status === "missing").length}`}
+              color="error"
+              size="small"
+              variant="outlined"
+              sx={{ fontWeight: 700 }}
+            />
           </Stack>
           <Button
             variant="outlined"
             size="small"
             onClick={toggleSelectAll}
-            startIcon={selectedRows.size === diffResults.filter((d) => d.status !== 'missing').length ? <RemoveIcon /> : <AddIcon />}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
+            startIcon={
+              selectedRows.size ===
+              diffResults.filter((d) => d.status !== "missing").length ? (
+                <RemoveIcon />
+              ) : (
+                <AddIcon />
+              )
+            }
+            sx={{ textTransform: "none", fontWeight: 600 }}
           >
-            {selectedRows.size === diffResults.filter((d) => d.status !== 'missing').length ? 'Deselect All' : 'Select All'}
+            {selectedRows.size ===
+            diffResults.filter((d) => d.status !== "missing").length
+              ? "Deselect All"
+              : "Select All"}
           </Button>
         </Box>
         {diffResults.length > 0 && (
-          <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, maxHeight: 'calc(92vh - 240px)', overflow: 'auto', borderRadius: 2, border: '1px solid #CBD5E1' }}>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{
+              flex: 1,
+              maxHeight: "calc(92vh - 240px)",
+              overflow: "auto",
+              borderRadius: 2,
+              border: "1px solid #CBD5E1",
+            }}
+          >
             <Table size="small" stickyHeader>
               <TableHead>
-                <TableRow sx={{ bgcolor: '#F1F5F9' }}>
-                  <TableCell sx={{ width: 50, borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>
+                <TableRow sx={{ bgcolor: "#F1F5F9" }}>
+                  <TableCell
+                    sx={{
+                      width: 50,
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
                     <Checkbox
-                      checked={diffResults.length > 0 && diffResults.every((d, i) => d.status !== 'missing' && selectedRows.has(i))}
-                      indeterminate={selectedRows.size > 0 && selectedRows.size < diffResults.filter((d) => d.status !== 'missing').length}
+                      checked={
+                        diffResults.length > 0 &&
+                        diffResults.every(
+                          (d, i) =>
+                            d.status !== "missing" && selectedRows.has(i),
+                        )
+                      }
+                      indeterminate={
+                        selectedRows.size > 0 &&
+                        selectedRows.size <
+                          diffResults.filter((d) => d.status !== "missing")
+                            .length
+                      }
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Status</TableCell>
-                  <TableCell sx={{ minWidth: 80, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Step #</TableCell>
-                  <TableCell sx={{ minWidth: 220, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Process Description</TableCell>
-                  <TableCell sx={{ minWidth: 110, fontWeight: 700, color: '#0F172A', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Spec. Class</TableCell>
-                  <TableCell sx={{ minWidth: 130, fontWeight: 700, color: '#0F172A', textAlign: 'center', borderRight: '1px solid #CBD5E1', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Flow Symbols</TableCell>
-                  <TableCell sx={{ minWidth: 260, fontWeight: 700, color: '#0F172A', borderBottom: '2px solid #CBD5E1', bgcolor: '#F1F5F9' }}>Changes</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Status
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 80,
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Step #
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 220,
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Process Description
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 110,
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Spec. Class
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 130,
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      textAlign: "center",
+                      borderRight: "1px solid #CBD5E1",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Flow Symbols
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: 260,
+                      fontWeight: 700,
+                      color: "#0F172A",
+                      borderBottom: "2px solid #CBD5E1",
+                      bgcolor: "#F1F5F9",
+                    }}
+                  >
+                    Changes
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {diffResults.map((result, idx) => {
-                  if (result.status === 'missing') {
+                  if (result.status === "missing") {
                     return (
-                      <TableRow key={`missing-${idx}`} sx={{ opacity: 0.7, bgcolor: '#FEF2F2' }}>
-                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Checkbox disabled /></TableCell>
-                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                          <Chip label="Missing" color="error" size="small" variant="outlined" sx={{ fontWeight: 700 }} />
+                      <TableRow
+                        key={`missing-${idx}`}
+                        sx={{ opacity: 0.7, bgcolor: "#FEF2F2" }}
+                      >
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Checkbox disabled />
                         </TableCell>
-                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{result.existingStep?.stepNumber}</Typography></TableCell>
-                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="text.secondary">{result.existingStep?.name}</Typography></TableCell>
-                        <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2">{result.existingStep?.specialCharacteristics || '—'}</Typography></TableCell>
-                        <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="text.secondary">—</Typography></TableCell>
-                        <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" color="error.main" sx={{ fontWeight: 600 }}>Exists in PFD but missing from Excel file</Typography></TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Chip
+                            label="Missing"
+                            color="error"
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
+                          />
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Typography variant="body2">
+                            {result.existingStep?.stepNumber}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            {result.existingStep?.name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Typography variant="body2">
+                            {result.existingStep?.specialCharacteristics || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          sx={{
+                            borderRight: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E2E8F0",
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            —
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ borderBottom: "1px solid #E2E8F0" }}>
+                          <Typography
+                            variant="body2"
+                            color="error.main"
+                            sx={{ fontWeight: 600 }}
+                          >
+                            Exists in PFD but missing from Excel file
+                          </Typography>
+                        </TableCell>
                       </TableRow>
                     );
                   }
@@ -1219,37 +2268,108 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                   const isSelected = selectedRows.has(idx);
                   const icons = draft.flowIcons;
                   const activeKeys = Object.keys(icons).filter((k) => icons[k]);
-                  const symbolsText = activeKeys.length > 0
-                    ? activeKeys.map((k) => {
-                        const m = getPfdIconMeta(k);
-                        return `${m.sym} ${m.short}`;
-                      }).join(', ')
-                    : '—';
+                  const symbolsText =
+                    activeKeys.length > 0
+                      ? activeKeys
+                          .map((k) => {
+                            const m = getPfdIconMeta(k);
+                            return `${m.sym} ${m.short}`;
+                          })
+                          .join(", ")
+                      : "—";
                   return (
-                    <TableRow key={idx} hover selected={isSelected} onClick={() => toggleRowSelection(idx)} sx={{ cursor: 'pointer' }}>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Checkbox checked={isSelected} onClick={(e) => e.stopPropagation()} />
+                    <TableRow
+                      key={idx}
+                      hover
+                      selected={isSelected}
+                      onClick={() => toggleRowSelection(idx)}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+                      <TableCell
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
                         <Chip
-                          label={result.status === 'new' ? 'New' : result.status === 'update' ? 'Update' : 'Unchanged'}
-                          color={result.status === 'new' ? 'success' : result.status === 'update' ? 'warning' : 'default'}
+                          label={
+                            result.status === "new"
+                              ? "New"
+                              : result.status === "update"
+                                ? "Update"
+                                : "Unchanged"
+                          }
+                          color={
+                            result.status === "new"
+                              ? "success"
+                              : result.status === "update"
+                                ? "warning"
+                                : "default"
+                          }
                           size="small"
                           variant="outlined"
                           sx={{ fontWeight: 700 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>{draft.stepNumber || 'Auto'}</Typography>
+                      <TableCell
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 700, color: "#0F172A" }}
+                        >
+                          {draft.stepNumber || "Auto"}
+                        </Typography>
                       </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2">{draft.name || '—'}</Typography>
+                      <TableCell
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Typography variant="body2">
+                          {draft.name || "—"}
+                        </Typography>
                       </TableCell>
-                      <TableCell sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2">{draft.specialCharacteristics || '—'}</Typography>
+                      <TableCell
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Typography variant="body2">
+                          {draft.specialCharacteristics || "—"}
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}><Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{symbolsText}</Typography></TableCell>
-                      <TableCell sx={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          borderRight: "1px solid #E2E8F0",
+                          borderBottom: "1px solid #E2E8F0",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ fontFamily: "monospace", fontWeight: 600 }}
+                        >
+                          {symbolsText}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid #E2E8F0" }}>
                         {result.fieldDiffs && result.fieldDiffs.length > 0 && (
                           <Stack spacing={0.75}>
                             {result.fieldDiffs.map((fd) => (
@@ -1258,18 +2378,44 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                                 sx={{
                                   p: 0.75,
                                   borderRadius: 1.5,
-                                  bgcolor: '#FFFBEB',
-                                  border: '1px solid #FDE68A',
+                                  bgcolor: "#FFFBEB",
+                                  border: "1px solid #FDE68A",
                                 }}
                               >
-                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 800, color: '#92400E', mb: 0.25 }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.78rem",
+                                    fontWeight: 800,
+                                    color: "#92400E",
+                                    mb: 0.25,
+                                  }}
+                                >
                                   {fd.field}:
                                 </Typography>
-                                <Typography sx={{ fontSize: '0.78rem', color: '#1E293B', wordBreak: 'break-word', lineHeight: 1.3 }}>
-                                  <span style={{ textDecoration: 'line-through', color: '#DC2626', marginRight: 6 }}>
-                                    "{fd.old || '(empty)'}"
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.78rem",
+                                    color: "#1E293B",
+                                    wordBreak: "break-word",
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      textDecoration: "line-through",
+                                      color: "#DC2626",
+                                      marginRight: 6,
+                                    }}
+                                  >
+                                    "{fd.old || "(empty)"}"
                                   </span>
-                                  ➔ <span style={{ fontWeight: 700, color: '#0F766E' }}>
+                                  ➔{" "}
+                                  <span
+                                    style={{
+                                      fontWeight: 700,
+                                      color: "#0F766E",
+                                    }}
+                                  >
                                     "{fd.new}"
                                   </span>
                                 </Typography>
@@ -1277,8 +2423,15 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                             ))}
                           </Stack>
                         )}
-                        {(!result.fieldDiffs || result.fieldDiffs.length === 0) && (
-                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: '0.85rem' }}>No changes</Typography>
+                        {(!result.fieldDiffs ||
+                          result.fieldDiffs.length === 0) && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ fontStyle: "italic", fontSize: "0.85rem" }}
+                          >
+                            No changes
+                          </Typography>
                         )}
                       </TableCell>
                     </TableRow>
@@ -1294,111 +2447,280 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
           page={page}
           onPageChange={(_: unknown, p: number) => setPage(p)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
           rowsPerPageOptions={[25, 50, 100]}
-          sx={{ borderTop: '1px solid #E2E8F0', minHeight: 40 }}
+          sx={{ borderTop: "1px solid #E2E8F0", minHeight: 40 }}
         />
       </Box>
     ),
     // Step 5: Import
-    (
-      <Stack spacing={3} sx={{ mt: 4, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        {error && <Alert severity="error">{error}</Alert>}
-        <CircularProgress size={80} variant="determinate" value={importing ? (importProgress.current / importProgress.total) * 100 : 0} thickness={6} />
-        <Typography variant="h6" sx={{ mt: 2, textAlign: 'center', fontWeight: 700 }}>
-          {importing ? `Importing... ${importProgress.current} / ${importProgress.total}` : 'Ready to Import'}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-          {importing ? importProgress.status : `${getVisibleSteps().filter((_, i) => selectedRows.has(i + page * rowsPerPage)).length} steps selected for ${mode === 'build' ? 'creation' : 'import'}`}
-        </Typography>
-        {!importing && (
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-            <Button variant="outlined" onClick={handleClose} disabled={importing}>Cancel</Button>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<SaveIcon />}
-              onClick={handleImport}
-              disabled={selectedRows.size === 0 || importing}
-              sx={{ fontWeight: 700, px: 4 }}
-            >
-              {mode === 'build' ? 'Create Steps' : 'Apply Changes'}
-            </Button>
-          </Stack>
-        )}
-        {importing && <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{importProgress.status}</Typography>}
-      </Stack>
-    ),
-  ];
-
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth={false}
-      fullWidth
-      sx={{ '& .MuiDialog-paper': { width: '96vw', maxWidth: '1600px', height: '92vh', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' } }}
+    <Stack
+      spacing={3}
+      sx={{ mt: 4, alignItems: "center", justifyContent: "center", flex: 1 }}
     >
-      <DialogTitle sx={{ fontWeight: 'bold', px: 3, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <UploadIcon sx={{ color: 'primary.main', fontSize: '1.4rem' }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem' }}>
-            Import PFD from Excel
-          </Typography>
-        </Stack>
-        {activeStep >= 2 && (
-          <Chip label={mode === 'build' ? 'Build New' : 'Update Existing'} color="primary" size="small" variant="outlined" sx={{ fontWeight: 700, bgcolor: '#FFFFFF' }} />
-        )}
-      </DialogTitle>
-      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', bgcolor: '#F8FAFC' }}>
-        {error && <Alert severity="error" sx={{ m: 1.5, py: 0.5 }}>{error}</Alert>}
-        <Box sx={{ px: 3, pt: 1.5, pb: 1, borderBottom: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 0 }}>
-            {stepLabels.map((label, idx) => (
-              <Step key={idx} completed={idx < activeStep}>
-                <StepLabel sx={{ '& .MuiStepLabel-label': { fontSize: '0.8rem', mt: 0.25 } }}>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-        <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {stepContents[activeStep]}
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
-        {activeStep > 0 && (
-          <Button onClick={() => setActiveStep(activeStep - 1)} startIcon={<ArrowBackIcon />} disabled={importing}>
-            Back
+      {error && <Alert severity="error">{error}</Alert>}
+      <CircularProgress
+        size={80}
+        variant="determinate"
+        value={
+          importing ? (importProgress.current / importProgress.total) * 100 : 0
+        }
+        thickness={6}
+      />
+      <Typography
+        variant="h6"
+        sx={{ mt: 2, textAlign: "center", fontWeight: 700 }}
+      >
+        {importing
+          ? `Importing... ${importProgress.current} / ${importProgress.total}`
+          : "Ready to Import"}
+      </Typography>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ textAlign: "center" }}
+      >
+        {importing
+          ? importProgress.status
+          : `${draftSteps.filter((_, i) => selectedRows.has(i)).length} steps selected for ${mode === "build" ? "creation" : "import"}`}
+      </Typography>
+      {!importing && (
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Button variant="outlined" onClick={handleClose} disabled={importing}>
+            {completed ? "Done" : "Cancel"}
           </Button>
-        )}
-        <Box sx={{ flex: 1 }} />
-        {activeStep < stepLabels.length - 1 && !importing && (
-          <Button onClick={() => setActiveStep(activeStep + 1)} endIcon={<ArrowForwardIcon />} disabled={importing || !canProceed(activeStep)}>
-            Next
-          </Button>
-        )}
-        {activeStep === stepLabels.length - 1 && !importing && selectedRows.size > 0 && (
           <Button
             variant="contained"
             size="large"
             startIcon={<SaveIcon />}
             onClick={handleImport}
-            sx={{ fontWeight: 700 }}
+            disabled={selectedRows.size === 0 || importing || completed}
+            sx={{ fontWeight: 700, px: 4 }}
           >
-            {mode === 'build' ? 'Create Steps' : 'Apply Changes'}
+            {completed
+              ? "Changes saved"
+              : mode === "build"
+                ? "Create Steps"
+                : "Apply Changes"}
+          </Button>
+        </Stack>
+      )}
+      {importing && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {importProgress.status}
+        </Typography>
+      )}
+    </Stack>,
+  ];
+
+  return (
+    <Dialog
+      open={open}
+      onClose={importing ? undefined : handleClose}
+      maxWidth={false}
+      fullWidth
+      sx={{
+        "& .MuiDialog-paper": {
+          width: "96vw",
+          maxWidth: "1600px",
+          height: "92vh",
+          maxHeight: "92vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontWeight: "bold",
+          px: 3,
+          py: 1.5,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid #E2E8F0",
+          bgcolor: "#FFFFFF",
+        }}
+      >
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <UploadIcon sx={{ color: "primary.main", fontSize: "1.4rem" }} />
+          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: "1.2rem" }}>
+            Import PFD from Excel
+          </Typography>
+        </Stack>
+        {activeStep >= 2 && (
+          <Chip
+            label={mode === "build" ? "Build New" : "Update Existing"}
+            color="primary"
+            size="small"
+            variant="outlined"
+            sx={{ fontWeight: 700, bgcolor: "#FFFFFF" }}
+          />
+        )}
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          p: 0,
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          overflow: "hidden",
+          bgcolor: "#F8FAFC",
+        }}
+      >
+        {error && (
+          <Alert severity="error" sx={{ m: 1.5, py: 0.5 }}>
+            {error}
+          </Alert>
+        )}
+        {report && (
+          <Alert severity="success" sx={{ m: 1.5 }}>
+            {report}
+          </Alert>
+        )}
+        {!topology && activeStep >= 2 && <Alert severity="info" sx={{m:1.5}}>Table-only import has no saved routing. Activity classifications use explicit mapped types or marked symbol columns; review mixed and rejection/disposition rows in the draft diagram. No rework or rejection route is inferred.</Alert>}
+        {topology && (
+          <Alert severity="info" sx={{ m: 1.5 }}>
+            <b>Native routing found:</b> {topology.graph.nodes.length} nodes ·{" "}
+            {topology.graph.edges.length} connections. Restoring replaces the
+            current diagram and always marks it draft. Unselected operation
+            nodes and their connections will be omitted; no bypass routes are
+            invented.
+            <FCL
+              control={
+                <Checkbox
+                  checked={restoreTopology}
+                  disabled={importing || completed}
+                  onChange={(e) => setRestoreTopology(e.target.checked)}
+                />
+              }
+              label="Restore routing and layout from this workbook"
+            />
+            {activeStep >= 2 &&
+              (() => {
+                const selectedNumbers = draftSteps
+                  .filter((_, i) => selectedRows.has(i))
+                  .map((step) => step.stepNumber);
+                const preview = remapWorkbookTopology(
+                  topology,
+                  [...new Set(selectedNumbers)].map((stepNumber, i) => ({
+                    id: String(i),
+                    stepNumber,
+                  })),
+                  selectedNumbers,
+                );
+                return (
+                  <p>
+                    Selection preview: {preview.graph.nodes.length} nodes /{" "}
+                    {preview.graph.edges.length} connections retained;{" "}
+                    {preview.omittedNodes} nodes / {preview.omittedConnections}{" "}
+                    connections omitted.
+                  </p>
+                );
+              })()}
+          </Alert>
+        )}
+
+        <Box
+          sx={{
+            px: 3,
+            pt: 1.5,
+            pb: 1,
+            borderBottom: "1px solid #E2E8F0",
+            bgcolor: "#FFFFFF",
+          }}
+        >
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 0 }}>
+            {stepLabels.map((label, idx) => (
+              <Step key={idx} completed={idx < activeStep}>
+                <StepLabel
+                  sx={{
+                    "& .MuiStepLabel-label": { fontSize: "0.8rem", mt: 0.25 },
+                  }}
+                >
+                  {label}
+                </StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+        <Box
+          sx={{
+            p: 2,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          {stepContents[activeStep]}
+        </Box>
+      </DialogContent>
+      <DialogActions
+        sx={{
+          px: 3,
+          py: 1.5,
+          borderTop: "1px solid #E2E8F0",
+          bgcolor: "#FFFFFF",
+        }}
+      >
+        {activeStep > 0 && (
+          <Button
+            onClick={() => setActiveStep(activeStep - 1)}
+            startIcon={<ArrowBackIcon />}
+            disabled={importing || completed}
+          >
+            Back
           </Button>
         )}
+        <Box sx={{ flex: 1 }} />
+        {activeStep < stepLabels.length - 1 && !importing && (
+          <Button
+            onClick={() => setActiveStep(activeStep + 1)}
+            endIcon={<ArrowForwardIcon />}
+            disabled={importing || !canProceed(activeStep)}
+          >
+            Next
+          </Button>
+        )}
+        {activeStep === stepLabels.length - 1 &&
+          !importing &&
+          !completed &&
+          selectedRows.size > 0 && (
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<SaveIcon />}
+              onClick={handleImport}
+              sx={{ fontWeight: 700 }}
+            >
+              {completed
+                ? "Changes saved"
+                : mode === "build"
+                  ? "Create Steps"
+                  : "Apply Changes"}
+            </Button>
+          )}
       </DialogActions>
     </Dialog>
   );
 
   function canProceed(step: number): boolean {
     switch (step) {
-      case 0: return !!file;
-      case 1: return parsedData !== null;
-      case 2: return draftSteps.length > 0 && selectedRows.size > 0;
-      case 3: return selectedRows.size > 0;
-      default: return true;
+      case 0:
+        return !!file;
+      case 1:
+        return parsedData !== null;
+      case 2:
+        return draftSteps.length > 0 && selectedRows.size > 0;
+      case 3:
+        return selectedRows.size > 0;
+      default:
+        return true;
     }
   }
 };

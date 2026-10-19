@@ -12,44 +12,19 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-const SEVERITY_DESCRIPTIONS: Record<number, { title: string; desc: string }> = {
-  10: { title: 'Hazardous without warning', desc: 'Failure affects safe operation without warning; regulatory violation.' },
-  9: { title: 'Hazardous with warning', desc: 'Failure affects safe operation with warning; non-compliance with regulations.' },
-  8: { title: 'Loss of primary function', desc: 'Vehicle / assembly inoperable; primary function completely lost.' },
-  7: { title: 'Degradation of primary function', desc: 'Vehicle / assembly operable but at reduced performance level.' },
-  6: { title: 'Loss of secondary function', desc: 'Secondary function lost (e.g., HVAC, wipers, infotainment).' },
-  5: { title: 'Degradation of secondary function', desc: 'Secondary function operable but at reduced performance.' },
-  4: { title: 'Moderate cosmetic / fit finish', desc: 'Noticeable defect by >75% of customers; customer dissatisfaction.' },
-  3: { title: 'Minor cosmetic / fit finish', desc: 'Noticeable defect by 50% of customers; minor rework required.' },
-  2: { title: 'Very minor defect', desc: 'Noticeable only by discriminating customers; slight rework.' },
-  1: { title: 'No discernible effect', desc: 'No customer impact or manufacturing consequence.' },
-};
-
-const OCCURRENCE_DESCRIPTIONS: Record<number, { title: string; desc: string }> = {
-  10: { title: 'Extremely High (>100 / 1,000)', desc: 'New technology without historical prevention controls.' },
-  9: { title: 'Very High (~50 / 1,000)', desc: 'Similar process has high historical failure frequency.' },
-  8: { title: 'High (~20 / 1,000)', desc: 'Prevention controls are minimal or reliant on operator diligence.' },
-  7: { title: 'Moderately High (~10 / 1,000)', desc: 'Basic prevention controls exist but occasional failures occur.' },
-  6: { title: 'Moderate (~2 / 1,000)', desc: 'Standard industrial prevention controls in active use.' },
-  5: { title: 'Low (~0.5 / 1,000)', desc: 'Effective prevention controls proven in identical product lines.' },
-  4: { title: 'Very Low (~0.1 / 1,000)', desc: 'Automated error-proofing (Poka-Yoke) prevents root cause.' },
-  3: { title: 'Extremely Low (~0.01 / 1,000)', desc: 'Robust prevention controls; isolated failures in extreme conditions.' },
-  2: { title: 'Remote (<0.001 / 1,000)', desc: 'Failure nearly impossible due to preventative machine interlocking.' },
-  1: { title: 'Physically Eliminated', desc: 'Failure mechanism eliminated by structural design geometry.' },
-};
-
-const DETECTION_DESCRIPTIONS: Record<number, { title: string; desc: string }> = {
-  10: { title: 'Cannot Detect / No Control', desc: 'No detection controls exist; defect will flow down to end customer.' },
-  9: { title: 'Very Remote (Visual Downstream)', desc: 'Undocumented visual or sensory check far downstream in process.' },
-  8: { title: 'Remote (Visual at Station)', desc: 'Manual visual inspection by operator at workstation.' },
-  7: { title: 'Very Low (Double Manual Check)', desc: 'Manual attribute gauging or secondary visual audit.' },
-  6: { title: 'Low (Variable Gauging)', desc: 'Operator uses calibrated variable gauge (caliper/micrometer).' },
-  5: { title: 'Moderate (Statistical SPC)', desc: 'Periodic statistical sampling with control chart alert.' },
-  4: { title: 'Moderately High (Automated Sensor)', desc: 'Automated optical or proximity detection downstream.' },
-  3: { title: 'High (Automated In-Situ Reject)', desc: 'Machine sensor verifies feature at workstation with auto-reject.' },
-  2: { title: 'Very High (100% Poka-Yoke)', desc: 'Defective part cannot proceed to next station; line interlocked.' },
-  1: { title: 'Detection Not Applicable', desc: 'Defect cannot be produced; detection not required.' },
-};
+// Illustrative labels only. Actual ratings must use the applicable approved scale.
+const SEVERITY_DESCRIPTIONS = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, {
+  title: `Severity ${i + 1}`,
+  desc: 'Evaluate the most serious applicable effect using your approved severity scale.',
+}])) as Record<number, { title: string; desc: string }>;
+const OCCURRENCE_DESCRIPTIONS = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, {
+  title: `Occurrence ${i + 1}`,
+  desc: 'Assess the cause and evidence for prevention using your approved occurrence scale.',
+}])) as Record<number, { title: string; desc: string }>;
+const DETECTION_DESCRIPTIONS = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [i + 1, {
+  title: `Detection ${i + 1}`,
+  desc: 'Assess the actual detection control and its effectiveness using your approved detection scale.',
+}])) as Record<number, { title: string; desc: string }>;
 
 interface PresetScenario {
   name: string;
@@ -136,7 +111,7 @@ export const RiskCalculatorWidget: React.FC = () => {
   const ap = calculateAP(severity, occurrence, detection) || 'L';
   const rpn = severity * occurrence * detection;
 
-  // Optimized values when engineering controls are applied
+  // Hypothetical values for exploration only; no engineering records are changed.
   const optO = Math.max(1, Math.min(occurrence, occurrence > 3 ? occurrence - 2 : 1));
   const optD = Math.max(1, Math.min(detection, detection > 2 ? 2 : 1));
   const optAp = calculateAP(severity, optO, optD) || 'L';
@@ -166,8 +141,8 @@ export const RiskCalculatorWidget: React.FC = () => {
           text: 'text-rose-950',
           highlightText: 'text-rose-700',
           label: 'HIGH AP',
-          mandate: 'Mandatory Corrective Action Required',
-          actionText: 'Must reduce Occurrence or improve Detection controls before Start of Production (SOP).',
+          mandate: 'Priority for team review',
+          actionText: 'Document review and appropriate actions or justification under your applicable customer and company policy.',
           icon: <ShieldAlert className="w-5 h-5 text-rose-600" />
         };
       case 'M':
@@ -191,8 +166,8 @@ export const RiskCalculatorWidget: React.FC = () => {
           text: 'text-emerald-950',
           highlightText: 'text-emerald-700',
           label: 'LOW AP',
-          mandate: 'Controls Adequate · Discretionary Action',
-          actionText: 'Existing prevention and detection controls are sufficient. No mandatory rework required.',
+          mandate: 'Lower action priority',
+          actionText: 'A lower AP result does not establish safety, control effectiveness, or acceptance. Review the engineering evidence.',
           icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />
         };
     }
@@ -211,13 +186,14 @@ export const RiskCalculatorWidget: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20 text-[11px] font-mono font-bold uppercase tracking-wider">
-              AIAG-VDA 2019 Standard
+              Illustrative risk comparison
             </span>
             <span className="text-slate-300 hidden sm:inline">•</span>
             <span className="text-xs text-slate-500 hidden sm:inline font-mono">
-              Deterministic AP Decision Matrix vs. Legacy Excel RPN
+              Configured AP profile and RPN
             </span>
           </div>
+          <p className="text-xs text-slate-500 mt-2">Illustrative examples, not rating tables. Use your approved scales and verified evidence for actual analysis.</p>
           <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">
             Action Priority (AP) Engine & Risk Simulator
           </h3>
@@ -419,11 +395,11 @@ export const RiskCalculatorWidget: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#FF5500]" />
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FF5500]">
-                  AI Closed-Loop Optimization
+                  Hypothetical control scenario
                 </span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed max-w-[420px]">
-                {PRESETS[activePresetIndex].aiSuggestedFix}
+                {PRESETS[activePresetIndex].aiSuggestedFix.replace(/ \(.*\)$/, "")}. Ratings shown after the toggle are illustrative assumptions, not verified improvements.
               </p>
             </div>
 
@@ -435,7 +411,7 @@ export const RiskCalculatorWidget: React.FC = () => {
                   : 'bg-white text-slate-900 hover:bg-slate-100 shadow-xs'
               }`}
             >
-              <span>{showAiOptimized ? '✓ Fix Applied (Low Risk)' : 'Simulate Engineering Fix'}</span>
+              <span>{showAiOptimized ? 'Restore original scenario' : 'Explore assumed ratings'}</span>
             </button>
           </div>
         </div>
@@ -447,7 +423,7 @@ export const RiskCalculatorWidget: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                 {apMeta.icon}
-                <span>AIAG-VDA 2019 Decision</span>
+                <span>Configured AP result</span>
               </span>
               <span className={`px-3 py-1 rounded-full text-xs font-mono font-black ${apMeta.badgeBg}`}>
                 {apMeta.label}
@@ -501,10 +477,10 @@ export const RiskCalculatorWidget: React.FC = () => {
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-950 text-xs space-y-1">
                 <div className="font-bold flex items-center gap-1 text-rose-700 text-[11px] uppercase font-mono">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Excel Critical Blindspot (Audit Risk)</span>
+                  <span>Threshold-only prioritization</span>
                 </div>
                 <p className="text-[11.5px] leading-relaxed">
-                  In Excel, using an arbitrary threshold (e.g. RPN &gt; 100), this catastrophic <strong>Severity {severity}</strong> hazard scores <strong>RPN {currentRpn}</strong> and is skipped as &quot;Low Risk&quot;! AIAG-VDA 2019 AP immediately flags it as <strong>HIGH AP</strong>.
+                  A threshold of RPN &gt; 100 would exclude this example with <strong>Severity {severity}</strong> and <strong>RPN {currentRpn}</strong>. Review individual ratings and the configured AP result of <strong>{currentAp}</strong> alongside engineering evidence.
                 </p>
               </div>
             )}
@@ -513,17 +489,17 @@ export const RiskCalculatorWidget: React.FC = () => {
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1">
                 <div className="font-bold flex items-center gap-1 text-amber-700 text-[11px] uppercase font-mono">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Excel False Panic (Wasted Rework)</span>
+                  <span>Different prioritization outcomes</span>
                 </div>
                 <p className="text-[11.5px] leading-relaxed">
-                  A minor cosmetic blemish scores <strong>RPN {currentRpn}</strong> due to high frequency, triggering unnecessary engineering redesign. FMEApex correctly categorizes it as <strong>LOW AP</strong>.
+                  This example has <strong>RPN {currentRpn}</strong> and configured AP <strong>{currentAp}</strong>. Different prioritization methods can produce different outcomes; neither result alone determines the required action.
                 </p>
               </div>
             )}
 
             {!isExcelBlindspot && !isExcelFalsePanic && (
               <div className="text-[11.5px] text-slate-500 leading-relaxed">
-                AIAG-VDA 2019 prioritizes Severity first, then Occurrence, then Detection — ensuring high-consequence failure modes always receive attention regardless of RPN arithmetic.
+                Use S/O/D, the configured AP profile, and engineering judgment together. Numerical handbook conformity of this profile is pending independent verification.
               </div>
             )}
           </div>
@@ -534,7 +510,7 @@ export const RiskCalculatorWidget: React.FC = () => {
             disabled={launching}
             className="w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 group"
           >
-            <span>{launching ? 'Opening Workspace...' : 'Launch Guest Sandbox to Run Full PFMEA'}</span>
+            <span>{launching ? 'Opening Workspace...' : 'Try FMEApex'}</span>
             <ArrowRight className="w-4 h-4 text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>

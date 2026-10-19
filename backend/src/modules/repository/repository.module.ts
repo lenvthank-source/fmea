@@ -1,3 +1,4 @@
+import { RevisionGuard } from '../../common/revision-guard';
 import { Module } from '@nestjs/common';
 import { RepositoryService } from './repository.service';
 import { RepositoryController } from './repository.controller';
@@ -7,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [PrismaModule, AuthModule],
   controllers: [RepositoryController],
-  providers: [RepositoryService],
+  providers: [RepositoryService, RevisionGuard],
   exports: [RepositoryService],
 })
 export class RepositoryModule {}

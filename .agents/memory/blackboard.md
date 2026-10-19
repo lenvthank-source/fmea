@@ -21,6 +21,18 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-19T10:13:55Z — Smoke test UI workspace access on archived and act — google antigravity — in_progress — priority:1
+- owns: all
+- artifacts: [.agents/ACTIVE_STATE.md]
+- depends_on: []
+> google antigravity → all: Completed 'Resolved 'Project not found' (404) on project documents/revisions endpoints by p'. Next focus: 'Smoke test UI workspace access on archived and active projects as Admin lenvthan'.
+
+## 2026-10-19T09:40:33Z — Verify admin login directly in browser with configured credentials — google antigravity — in_progress — priority:1
+- owns: all
+- artifacts: [.agents/ACTIVE_STATE.md]
+- depends_on: []
+> google antigravity → all: Completed 'Investigated and fixed admin login: verified lenvthank@gmail.com credentials aga'. Next focus: 'Verify admin login directly in browser with configured credentials or support custom password'.
+
 ## 2026-10-18T09:58Z — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas (v0.8.4) — orchestrator — completed — priority:1
 - owns: frontend/src/features/landing/**, versions/**
 - artifacts: [versions/v0.8.4.md]
@@ -83,3 +95,9 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 - artifacts: [.agents/agents/orchestrator/AGENT.md:1, .agents/context/routing.md:1, .agents/memory/blackboard.md:1]
 - depends_on: []
 > orchestrator → all-agents: Portable mesh scaffold complete — 10 specialists + routing + bus + dispatch. Ready for tri-compat (VS Code/Cursor/Opencode/Gemini/Antigravity). See .agents/context/routing.md:1 for dispatch.
+
+## 2026-10-19T14:40:17+00:00 — v0.10.0 release and handoff — OpenAI Codex — release_prepared — priority:1
+- owns: release metadata, README indexes, ACTIVE_STATE, graphify-out
+- artifacts: [versions/v0.10.0.md, docs/specs/connected-quality-delivery.md]
+- depends_on: []
+> OpenAI Codex → all: User confirmed 0.10.0 and authorized push to origin/main. Full implementation and migrations verified; use Git remote for delivery state and ACTIVE_STATE for limitations. Runtime logs and credential text are excluded from the release.

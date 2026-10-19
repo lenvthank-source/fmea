@@ -4,6 +4,7 @@ export interface UserSession {
   id: string;
   email: string;
   name: string;
+  publicHandle?: string | null;
   tenantId: string;
   roles: string[];
   permissions: string[];
@@ -93,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               id: claims.sub,
               email: claims.email,
               name: claims.name || claims.email,
+              publicHandle: claims.publicHandle,
               tenantId: claims.tenant_id || claims.tenantId,
               roles: claims.roles || [],
               permissions: claims.permissions || [],
@@ -153,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: claims.sub,
                 email: claims.email,
                 name: claims.name || claims.email,
+              publicHandle: claims.publicHandle,
                 tenantId: claims.tenant_id || claims.tenantId,
                 roles: claims.roles || [],
                 permissions: claims.permissions || [],
@@ -285,6 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: claims.sub,
           email: claims.email,
           name: data.user?.name || claims.name || claims.email,
+          publicHandle: data.user?.publicHandle || claims.publicHandle,
           tenantId: claims.tenant_id || claims.tenantId,
           roles: claims.roles || [],
           permissions: claims.permissions || [],
@@ -329,6 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: claims.sub,
           email: claims.email,
           name: data.user?.name || claims.name || claims.email,
+          publicHandle: data.user?.publicHandle || claims.publicHandle,
           tenantId: claims.tenant_id || claims.tenantId,
           roles: claims.roles || [],
           permissions: claims.permissions || [],

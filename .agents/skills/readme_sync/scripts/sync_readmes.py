@@ -37,6 +37,13 @@ FILE_CATALOG = {
     
     # backend/src/modules/auth
     "auth.controller.ts": "Controller defining API endpoints for user authentication (login, signup, session).",
+    "public-handle.ts": "Transactional permanent noun-pair public handle allocation with secure random start and collision retry.",
+    "public-handle.spec.ts": "Handle collision, concurrent allocation, reservation retention and finite-pool tests.",
+    "auth-identity.spec.ts": "Stable handle refresh/profile, registered identity and tenant isolation tests.",
+    "pfd-graph.ts": "Revision-owned explicit physical routing schema, validation, legacy draft and ID remapping.",
+    "pfd-graph.spec.ts": "Manufacturing graph validation and identity-preserving remap checks.",
+    "PackageStructureGraph.tsx": "Visual package function/cause/control graph with selection and inspector.",
+    "packageStructure.ts": "Typed normalization of current and legacy package JSON without invented relationships.",
     "auth.service.ts": "Service managing password hashing, user registration, JWT generation, and tenant lookup.",
     "auth.module.ts": "NestJS module configuring authentication, passport strategies, and JWT parameters.",
     "jwt-auth.guard.ts": "Global or route-specific guard for validating JWT tokens.",
@@ -79,7 +86,7 @@ FILE_CATALOG = {
     "pfmea-row.controller.ts": "Controller defining API endpoints for PFMEA rows.",
     "pfmea-row.service.ts": "Core service logic managing PFMEA functions, requirements, failure modes, effects, causes, and action priority calculations.",
     "pfmea.module.ts": "NestJS module registering PFMEA controllers, services, and AP utilities.",
-    "ap-calculator.ts": "Utility file implementing logic to compute AIAG-VDA 2019 Action Priority (AP) based on Severity, Occurrence, and Detection.",
+    "ap-calculator.ts": "Configured Action Priority profile with strict integer validation; numerical handbook conformity pending independent verification.",
     "ap-calculator.spec.ts": "Unit tests for the Action Priority calculator.",
     
     # backend/src/modules/pfmea/dto

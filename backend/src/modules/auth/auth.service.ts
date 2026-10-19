@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
+import { reservePublicHandle } from './public-handle';
+import { randomUUID } from 'node:crypto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 // Default permissions definition
@@ -14,12 +16,12 @@ const PERMISSIONS = [
   { code: 'project.edit', description: 'Edit projects', module: 'project' },
   { code: 'project.view', description: 'View projects', module: 'project' },
   { code: 'project.delete', description: 'Delete projects', module: 'project' },
-  
+
   { code: 'pfmea.create', description: 'Create PFMEA rows', module: 'pfmea' },
   { code: 'pfmea.edit', description: 'Edit PFMEA rows', module: 'pfmea' },
   { code: 'pfmea.view', description: 'View PFMEA rows', module: 'pfmea' },
   { code: 'pfmea.delete', description: 'Delete PFMEA rows', module: 'pfmea' },
-  
+
   { code: 'dfmea.create', description: 'Create DFMEA rows', module: 'dfmea' },
   { code: 'dfmea.edit', description: 'Edit DFMEA rows', module: 'dfmea' },
   { code: 'dfmea.view', description: 'View DFMEA rows', module: 'dfmea' },
@@ -57,12 +59,10 @@ export class AuthService {
 
     if (tenant) {
       // Tenant exists, check if user already exists
-      const existingUser = await this.prisma.user.findUnique({
+      const existingUser = await this.prisma.user.findFirst({
         where: {
-          tenantId_email: {
-            tenantId: tenant.id,
-            email: dto.email.trim(),
-          },
+          tenantId: tenant.id,
+          email: { equals: dto.email.trim(), mode: 'insensitive' },
         },
       });
       if (existingUser) {
@@ -97,7 +97,7 @@ export class AuthService {
               isSystem: true,
             },
           });
-          
+
           await tx.rolePermission.createMany({
             data: dbPermissions.map((p) => ({
               roleId: adminRole!.id,
@@ -130,6 +130,7 @@ export class AuthService {
             id: user.id,
             email: user.email,
             name: user.name,
+            publicHandle: user.publicHandle,
           },
           tenant: {
             id: tenant.id,
@@ -298,6 +299,7 @@ export class AuthService {
           id: user.id,
           email: user.email,
           name: user.name,
+            publicHandle: user.publicHandle,
         },
         tenant: {
           id: tenant.id,
@@ -322,12 +324,10 @@ export class AuthService {
     }
 
     // 2. Resolve user by email inside this tenant
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
-        tenantId_email: {
-          tenantId: tenant.id,
-          email: dto.email.trim(),
-        },
+        tenantId: tenant.id,
+        email: { equals: dto.email.trim(), mode: 'insensitive' },
       },
       include: {
         userRoles: {
@@ -388,6 +388,7 @@ export class AuthService {
       roles,
       permissions,
       isGuest: user.isGuest || false,
+      publicHandle: user.publicHandle,
     });
 
     return {
@@ -395,6 +396,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+            publicHandle: user.publicHandle,
       },
       tenant: {
         id: tenant.id,
@@ -405,6 +407,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+            publicHandle: user.publicHandle,
         tenantId: tenant.id,
         roles,
         permissions,
@@ -495,6 +498,7 @@ export class AuthService {
         roles,
         permissions,
         isGuest: user.isGuest || false,
+      publicHandle: user.publicHandle,
       });
 
       return tokens;
@@ -539,18 +543,20 @@ export class AuthService {
       throw new NotFoundException('Guest tenant not configured');
     }
 
-    const shortId = Math.random().toString(36).substring(2, 8);
+    const shortId = randomUUID();
     const guestEmail = `guest-${shortId}@fmeapex.online`;
-    const guestName = `Guest-${shortId}`;
+
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 15);
 
     return this.prisma.$transaction(async (tx) => {
+      const publicHandle = await reservePublicHandle(tx);
       const user = await tx.user.create({
         data: {
           tenantId: tenant.id,
           email: guestEmail,
-          name: guestName,
+          name: publicHandle,
+          publicHandle,
           passwordHash: null,
           status: 'active',
           isGuest: true,
@@ -630,10 +636,11 @@ export class AuthService {
         roles: ['Quality Engineer'],
         permissions,
         isGuest: true,
+        publicHandle: user.publicHandle,
       });
 
       return {
-        user: { id: user.id, email: user.email, name: user.name },
+        user: { id: user.id, email: user.email, name: user.name, publicHandle: user.publicHandle },
         tenant: { id: tenant.id, name: tenant.name, subdomain: tenant.subdomain },
         isGuest: true,
         ...tokens,
@@ -665,7 +672,7 @@ export class AuthService {
     const roleWithPerms = await this.prisma.role.findUnique({ where: { id: adminRole.id }, include: { rolePermissions: { include: { permission: true } } } });
     const permissions = roleWithPerms?.rolePermissions.map(rp=>rp.permission.code) || (await this.prisma.permission.findMany()).map(p=>p.code);
     const tokens = await this.generateTokens({ sub: user.id, email: user.email, tenantId: tenant.id, roles: ['Admin'], permissions, isGuest: false });
-    return { user: { id: user.id, email: user.email, name: user.name }, tenant: { id: tenant.id, subdomain: tenant.subdomain }, ...tokens, isGuest: false };
+    return { user: { id: user.id, email: user.email, name: user.name, publicHandle: user.publicHandle }, tenant: { id: tenant.id, subdomain: tenant.subdomain }, ...tokens, isGuest: false };
   }
 
   async createContactInquiry(data: { name: string; email: string; company?: string; type: string; message: string }) {
@@ -751,6 +758,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+            publicHandle: user.publicHandle,
       tenantId: user.tenantId,
       roles,
       permissions,

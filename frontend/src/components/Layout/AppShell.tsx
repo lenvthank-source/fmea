@@ -17,7 +17,7 @@ import {
   Tooltip,
   Collapse,
   Divider,
-  Chip,
+  Button,
 } from "@mui/material";
 import {
   Folder as FolderIcon,
@@ -35,7 +35,7 @@ import {
   ExpandLess,
   ExpandMore,
   FiberManualRecord as BulletIcon,
-  NotificationsNone as BellIcon,
+
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { useAuth } from "../../features/auth/AuthContext";
@@ -409,57 +409,19 @@ export const AppShell: React.FC = () => {
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title="Notifications">
-                <IconButton
-                  size="small"
-                  sx={{
-                    display: { xs: "none", sm: "inline-flex" },
-                    color: "#65685f",
-                    "&:hover": { bgcolor: "#f0f2e9" },
-                  }}
-                >
-                  <BellIcon sx={{ fontSize: 19 }} />
-                </IconButton>
-              </Tooltip>
-
-              <ThemeToggle />
-
-              <IconButton
-                onClick={handleMenu}
-                aria-label="Open account menu"
-                aria-controls={anchorEl ? "menu-appbar" : undefined}
-                aria-expanded={Boolean(anchorEl)}
-                size="small"
-                sx={{ p: 0.5 }}
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: "#242621",
-                    color: "white",
-                    fontWeight: "bold",
-                    width: 28,
-                    height: 28,
-                    fontSize: "0.775rem",
-                  }}
-                >
-                  {user.isGuest ? "E" : user.name[0].toUpperCase()}
+              <Button className="quality-account-control" onClick={handleMenu}
+                aria-label={`Open account menu for ${user.publicHandle || user.name}`}
+                aria-haspopup="menu" aria-controls={anchorEl ? "menu-appbar" : undefined}
+                aria-expanded={Boolean(anchorEl)} size="small"
+                sx={{ color: "text.primary", textTransform: "none", gap: 0.75, minWidth: 0, px: 0.75 }}>
+                <Avatar sx={{ bgcolor: "#242621", width: 26, height: 26, fontSize: "0.7rem" }}>
+                  {(user.publicHandle || user.name || "U")[0].toUpperCase()}
                 </Avatar>
-              </IconButton>
-              {(user as any)?.isGuest && (
-                <Chip
-                  label={isSmallScreen ? "Trial" : "Trial workspace"}
-                  size="small"
-                  sx={{
-                    ml: 0.5,
-                    bgcolor: "#fef3c7",
-                    color: "#b45309",
-                    border: "1px solid #fde68a",
-                    fontWeight: 650,
-                    fontSize: "0.675rem",
-                    height: 20,
-                  }}
-                />
-              )}
+                <span style={{ overflowWrap: "anywhere", fontSize: "0.75rem", lineHeight: 1.25, textAlign: "left" }}>
+                  {user.publicHandle || (user.isGuest ? "Trial account" : user.name)}
+                </span>
+                <ExpandMore sx={{ fontSize: 16, flexShrink: 0 }} />
+              </Button>
               <Menu
                 id="menu-appbar"
                 anchorEl={anchorEl}
@@ -494,18 +456,21 @@ export const AppShell: React.FC = () => {
                         fontSize: "0.85rem",
                       }}
                     >
-                      {user.isGuest ? "Trial workspace" : user.name}
+                      {user.publicHandle || user.name}
                     </Typography>
                     <Typography
                       variant="caption"
                       sx={{ color: "#65685f", fontSize: "0.75rem" }}
                     >
                       {user.isGuest
-                        ? "Explore with a temporary session"
+                        ? "Trial workspace · Temporary session"
                         : user.email}
                     </Typography>
                   </Box>
                 </MenuItem>
+                <Box sx={{ px: 2, py: 0.5, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+                  <Typography variant="caption">Appearance</Typography><ThemeToggle />
+                </Box>
                 <Divider sx={{ my: 0.5, borderColor: "#f0f2e9" }} />
                 {location.pathname !== "/app/projects" && (
                   <MenuItem
@@ -720,7 +685,7 @@ export const AppShell: React.FC = () => {
                         timeout="auto"
                         unmountOnExit
                       >
-                        <List component="div" disablePadding>
+                        <List component="ul" disablePadding>
                           {renderListItem({
                             text: "Tree View",
                             icon: <BulletIcon sx={{ fontSize: 6 }} />,
@@ -807,7 +772,7 @@ export const AppShell: React.FC = () => {
                         timeout="auto"
                         unmountOnExit
                       >
-                        <List component="div" disablePadding>
+                        <List component="ul" disablePadding>
                           {renderListItem({
                             text: "Tree View",
                             icon: <BulletIcon sx={{ fontSize: 6 }} />,

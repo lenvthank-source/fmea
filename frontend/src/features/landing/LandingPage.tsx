@@ -16,11 +16,9 @@ import {
   ChevronRight,
   CircleDot,
   FileSpreadsheet,
-  GitBranch,
   Layers3,
   Link2,
   LockKeyhole,
-  Menu,
   Network,
   ShieldCheck,
   Sparkles,
@@ -33,6 +31,8 @@ import { useBackendReady } from "../../hooks/useBackendWarmup";
 import { API_BASE_URL } from "../../config";
 import { ConnectedProduct } from "./ConnectedProduct";
 import "./landing-story.css";
+import { SiteHeader } from "../../components/site/SiteHeader";
+import { SiteFooter } from "../../components/site/SiteFooter";
 
 const RiskCalculator = lazy(() =>
   import("./RiskCalculatorWidget").then((module) => ({
@@ -84,7 +84,7 @@ const steps = [
   ["Failures", "Link effects, failure modes, and their causes."],
   ["Risk", "Assess S/O/D and calculate Action Priority."],
   ["Optimization", "Assign actions and verify their effectiveness."],
-  ["Documentation", "Review, approve, and preserve the revision."],
+  ["Documentation", "Communicate scope, results, and unresolved risks."],
 ];
 
 export const LandingPage: React.FC = () => {
@@ -94,7 +94,6 @@ export const LandingPage: React.FC = () => {
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
-  const [menuOpen, setMenuOpen] = useState(false);
   const [chapter, setChapter] = useState(0);
   const [step, setStep] = useState(0);
   const [showSimulator, setShowSimulator] = useState(false);
@@ -134,14 +133,7 @@ export const LandingPage: React.FC = () => {
     );
     return () => window.clearTimeout(timer);
   }, [reduceMotion]);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [menuOpen]);
+
 
   const launch = () => {
     if (token) {
@@ -184,6 +176,7 @@ export const LandingPage: React.FC = () => {
           title="FMEApex — Connected FMEA, from design to control"
           description="Move beyond disconnected spreadsheets. Connect DFMEA structures, PFMEA, control plans, and verified risk mitigation in one digital FMEA workspace."
           canonical="/"
+          jsonLd={{'@context':'https://schema.org','@type':'WebSite',name:'FMEApex',url:'https://fmeapex.online/',inLanguage:'en',description:'Connected quality engineering, from design intent to verified action.'}}
         />
         <a className="story-skip" href="#main-content">
           Skip to content
@@ -193,55 +186,7 @@ export const LandingPage: React.FC = () => {
           style={{ scaleX: reduceMotion ? scrollYProgress : progress }}
           aria-hidden="true"
         />
-        <header className="story-header">
-          <Link to="/" className="story-brand" aria-label="FMEApex home">
-            <span className="story-brand-mark">
-              <GitBranch size={21} aria-hidden="true" />
-            </span>
-            fmeapex
-          </Link>
-          <nav className="story-desktop-nav" aria-label="Main navigation">
-            <a href="#story">The connected story</a>
-            <a href="#workflow">How it works</a>
-            <Link to="/learn">Resources</Link>
-            <Link to="/pricing">Pricing</Link>
-          </nav>
-          <div className="story-header-actions">
-            <Link to="/login" className="story-login">
-              Log in
-            </Link>
-            <button
-              className="story-button story-button-small"
-              onClick={launch}
-            >
-              {token ? "Workspace" : "Try FMEApex"}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </button>
-            <button
-              className="story-menu-button"
-              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-              aria-expanded={menuOpen}
-              aria-controls="story-mobile-nav"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-          {menuOpen && (
-            <nav
-              id="story-mobile-nav"
-              className="story-mobile-nav"
-              aria-label="Mobile navigation"
-              onClick={() => setMenuOpen(false)}
-            >
-              <a href="#story">The connected story</a>
-              <a href="#workflow">How it works</a>
-              <Link to="/learn">Resources</Link>
-              <Link to="/pricing">Pricing</Link>
-              <Link to="/login">Log in</Link>
-            </nav>
-          )}
-        </header>
+        <SiteHeader />
         <main id="main-content">
           <section className="story-hero story-container">
             <motion.div
@@ -626,6 +571,7 @@ export const LandingPage: React.FC = () => {
                       Tell us about your workflow
                       <textarea
                         name="message"
+                        defaultValue={new URLSearchParams(window.location.search).get("offer") ? `Please send a quote for ${new URLSearchParams(window.location.search).get("offer")}.` : ""}
                         required
                         rows={3}
                         maxLength={5000}
@@ -656,32 +602,7 @@ export const LandingPage: React.FC = () => {
             </div>
           </section>
         </main>
-        <footer className="story-footer story-container">
-          <div>
-            <Link to="/" className="story-brand">
-              <span className="story-brand-mark">
-                <GitBranch size={20} aria-hidden="true" />
-              </span>
-              fmeapex
-            </Link>
-            <p>Connected thinking. Better quality.</p>
-          </div>
-          <nav aria-label="Footer navigation">
-            <Link to="/product">Platform</Link>
-            <Link to="/learn">Resources</Link>
-            <Link to="/blog">Journal</Link>
-            <Link to="/pricing">Pricing</Link>
-            <Link to="/about">About</Link>
-            <a href="#contact">Contact</a>
-          </nav>
-          <div className="story-footer-bottom">
-            <span>© {new Date().getFullYear()} FMEApex</span>
-            <span>From design intent to verified action.</span>
-            <Link to="/login">
-              Open workspace <ArrowUpRight size={14} aria-hidden="true" />
-            </Link>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </MotionConfig>
   );

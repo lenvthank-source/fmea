@@ -127,3 +127,7 @@ Source: [router.tsx](file:///f:/proj-fmea/frontend/src/app/router.tsx)
 - **Models**: 41 total (see [schema.prisma](file:///f:/proj-fmea/backend/prisma/schema.prisma))
 - **Seeding**: Built into `PrismaService.seedDefaultData()` and `AuthService.registerTenant()`
 - **Connection**: Pooled via Neon with `sslmode=require`
+
+
+## 2026-10-19 correction authority
+The [engineering rule register](engineering-rule-register.md) supersedes historical strict draft sequencing, guessed route diagrams and unverified automatic reverse-sync claims. Revision-owned pfdGraph/pfdGraphVersion stores physical topology; PFMEA structure remains analytical hierarchy. Global immutable public-handle reservations intentionally have no tenant/user cascade. Public pages share their own scoped layout/style system; app styling is separate. Repository graphs are views derived from actual package JSON, not new failure relationships.

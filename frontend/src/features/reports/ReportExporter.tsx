@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   RadioGroup, FormControlLabel, Radio, TextField, Stack,
-  FormControl, FormLabel
+  FormControl, FormLabel, Alert
 } from '@mui/material';
 import {
   Download as DownloadIcon
@@ -10,11 +10,14 @@ import {
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { API_BASE_URL } from '../../config';
-import { getPfdIconMeta } from '../pfd/utils/pfdIconMap';
+import { openPfdPrint } from '../pfd/utils/pfdPrint';
+import type { PfdGraph } from '../pfd/utils/pfdGraph';
 import * as XLSX from 'xlsx';
 import { calculateAP } from '../pfmea/utils/apCalculator';
+import { derivePfdGraph, exportPfdWorkbook } from '../pfd/utils/pfdGraph';
 
 interface ReportExporterProps {
+  revisionId?: string | null;
   open: boolean;
   onClose: () => void;
   docType: 'PFD' | 'PFMEA' | 'DFMEA' | 'CONTROL_PLAN';
@@ -24,6 +27,7 @@ interface ReportExporterProps {
 }
 
 export const ReportExporter: React.FC<ReportExporterProps> = ({
+  revisionId,
   open,
   onClose,
   docType,
@@ -34,12 +38,15 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
   const { token } = useAuth();
   const { projectId } = useParams<{ projectId: string }>();
   const [project, setProject] = useState<any>(null);
+  const [exportError, setExportError] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const [watermarkOption, setWatermarkOption] = useState<'none' | 'draft' | 'confidential' | 'custom'>('none');
   const [customWatermark, setCustomWatermark] = useState('');
 
   // Fetch project details for document header
   useEffect(() => {
+    if (open) setExportError('');
     if (open && projectId && token) {
       fetch(`${API_BASE_URL}/projects/${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -49,7 +56,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
           throw new Error('Failed to load project details');
         })
         .then(data => setProject(data))
-        .catch(err => console.error('Error fetching project for exporter:', err));
+        .catch(err => setExportError(err.message || 'Unable to load document identity'));
     }
   }, [open, projectId, token]);
 
@@ -87,12 +94,25 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
 
   // Excel generation
   const handleExportExcel = async () => {
-    const wmText = getWatermarkText();
-    await generateExcel(wmText);
-    onClose();
+    setExporting(true); setExportError('');
+    try { await generateExcel(getWatermarkText()); onClose(); } catch(error) { setExportError(error instanceof Error ? error.message : 'Excel export failed'); } finally {setExporting(false);}
+  };
+
+  const loadPfdExport = async () => {
+    if (!revisionId) throw new Error('Open a document revision before exporting the PFD.');
+    const [graphResponse, stepsResponse] = await Promise.all([fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, {headers:{Authorization:`Bearer ${token}`}}),fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`,{headers:{Authorization:`Bearer ${token}`}})]);
+    if(!graphResponse.ok || !stepsResponse.ok) throw new Error('The complete persisted process flow could not be loaded. Export was cancelled.');
+    const saved = await graphResponse.json(); const fullSteps = await stepsResponse.json();
+    if(!Array.isArray(fullSteps)) throw new Error('Invalid process operation response');
+    return {graph:(saved.graph || derivePfdGraph(fullSteps)) as PfdGraph,steps:fullSteps};
   };
 
   const generateExcel = async (_watermark: string) => {
+    if (docType === 'PFD') {
+      const current = await loadPfdExport();
+      await exportPfdWorkbook(current.graph, current.steps, project || { partName: projectName });
+      return;
+    }
     const formatExcelList = (val: any): string => {
       if (!val) return '—';
       let arr: any[] = [];
@@ -174,7 +194,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         }
         i += stepCount;
       }
-    } else if (docType === 'CONTROL_PLAN' || docType === 'PFD') {
+    } else if (docType === 'CONTROL_PLAN') {
       let i = 0;
       while (i < data.length) {
         let stepCount = 1;
@@ -188,266 +208,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       }
     }
 
-    if (docType === 'PFD') {
-      // ============================================================
-      // ExcelJS-based PFD export with full professional formatting
-      // ============================================================
-      const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
-      wb.creator = 'PFD System';
-      wb.created = new Date();
-
-      // -- CONFIG --
-      const FONT = 'Calibri';
-      const BORDER_THIN: Partial<import('exceljs').Border> = { style: 'thin' as const, color: { argb: 'FF000000' } };
-      const BORDER_THICK: Partial<import('exceljs').Border> = { style: 'medium' as const, color: { argb: 'FF000000' } };
-      const HEADER_FILL: import('exceljs').FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-      const COL_WIDTHS = [9, 22, 26, 10, 20, 26, 30, 30];
-      const CENTERED_COLS = [0, 3]; // Step #, Spec Class
-      const firstRowIdx = 1;
-      const lastColIdx = 8;
-
-      const allBorders = (style: Partial<import('exceljs').Border> = BORDER_THIN): Partial<import('exceljs').Borders> => ({
-        top: style, left: style, bottom: style, right: style
-      });
-
-      const stripNum = (s: string) => s.replace(/^\d+[\.)\-]\s*/, '');
-      const arrToText = (arr: any): string => {
-        if (!arr) return '';
-        if (Array.isArray(arr)) {
-          const items = arr.map(x => typeof x === 'object' ? (x.name || '') : String(x));
-          return items.length > 0 ? items.map((x, i) => `${i + 1}. ${stripNum(x)}`).join('\n') : '';
-        }
-        if (typeof arr === 'string') {
-          try {
-            const parsed = JSON.parse(arr);
-            if (Array.isArray(parsed)) return arrToText(parsed);
-          } catch { /* not JSON */ }
-          return arr;
-        }
-        return String(arr);
-      };
-
-      const ws = wb.addWorksheet('PFD', {
-        pageSetup: {
-          orientation: 'landscape',
-          fitToPage: true,
-          fitToWidth: 1,
-          fitToHeight: 0,
-          margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 }
-        }
-      });
-      ws.columns = COL_WIDTHS.map(width => ({ width }));
-
-      // ---- TITLE BLOCK (Rows 1-3) ----
-      ws.mergeCells('A1:H1');
-      const titleCell = ws.getCell('A1');
-      titleCell.value = project?.organisationName?.toUpperCase() || 'PADMINI VNA MECHATRONICS PRIVATE LIMITED';
-      titleCell.font = { name: FONT, size: 14, bold: true };
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      titleCell.border = allBorders();
-      ws.getRow(1).height = 22;
-
-      ws.mergeCells('A2:H2');
-      const subtitleCell = ws.getCell('A2');
-      subtitleCell.value = 'Process Flow Diagram (PFD)';
-      subtitleCell.font = { name: FONT, size: 12, bold: true };
-      subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      subtitleCell.border = allBorders();
-      ws.getRow(2).height = 20;
-
-      ws.mergeCells('A3:H3');
-      const statusCell = ws.getCell('A3');
-      statusCell.value = `(${getStatusLabel() || 'Prototype'})`;
-      statusCell.font = { name: FONT, size: 11, italic: true };
-      statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      statusCell.border = allBorders();
-      ws.getRow(3).height = 20;
-
-      // ---- INFO GRID (Rows 4-9) ----
-      const infoRows: [string, string, string, string][] = [
-        ['Organisation Name:', project?.organisationName || '—', 'Customer Name:', project?.customer || '—'],
-        ['Manufacturing Plant:', project?.organisationPlant || '—', 'Document Number:', getDerivedDocNumber()],
-        ['Subject (Part Name):', project?.partName || '—', 'Part Number:', project?.orgPartNumber || '—'],
-        ['Revision:', `Rev ${project?.revisionNumber || '1.0'} (${getStatusLabel()})`, 'Origination Date:', project?.originationDate ? new Date(project.originationDate).toLocaleDateString() : '—'],
-        ['Dwg No.:', project?.dwgNumber || '—', 'Dwg Rev No / Date.:', project?.dwgRevNoAndDate || (project?.drawingRevDate ? new Date(project.drawingRevDate).toLocaleDateString() : '—')],
-        ['Assy. Line No.:', project?.assemblyLineNumber || '—', 'CFT Members:', Array.isArray(project?.cftMembers) ? project.cftMembers.join(', ') : (project?.cftMembers || '—')],
-      ];
-
-      let r = 4;
-      infoRows.forEach(([l1, v1, l2, v2]) => {
-        ws.mergeCells(`A${r}:B${r}`);
-        const labelCell1 = ws.getCell(`A${r}`);
-        labelCell1.value = l1;
-        labelCell1.font = { name: FONT, size: 11, bold: true };
-        labelCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-        labelCell1.border = allBorders();
-
-        ws.mergeCells(`C${r}:D${r}`);
-        const valCell1 = ws.getCell(`C${r}`);
-        valCell1.value = v1;
-        valCell1.font = { name: FONT, size: 11 };
-        valCell1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
-        valCell1.border = allBorders();
-
-        ws.mergeCells(`E${r}:F${r}`);
-        const labelCell2 = ws.getCell(`E${r}`);
-        labelCell2.value = l2;
-        labelCell2.font = { name: FONT, size: 11, bold: true };
-        labelCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-        labelCell2.border = allBorders();
-
-        ws.mergeCells(`G${r}:H${r}`);
-        const valCell2 = ws.getCell(`G${r}`);
-        valCell2.value = v2;
-        valCell2.font = { name: FONT, size: 11 };
-        valCell2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1, wrapText: true };
-        valCell2.border = allBorders();
-
-        ws.getRow(r).height = 20;
-        r++;
-      });
-
-      // ---- TABLE HEADER (Row 10) ----
-      const headerRowIdx = r;
-      const COLS = [
-        'Step #', 'Process Description', 'Incoming Source of Variation',
-        'Spec Class', 'Flow Symbols', 'Machines / Equipment / Docs',
-        'Desired Outcome', 'Process Characteristics'
-      ];
-      const headerRow = ws.getRow(headerRowIdx);
-      COLS.forEach((title, i) => {
-        const cell = headerRow.getCell(i + 1);
-        cell.value = title;
-        cell.font = { name: FONT, size: 11, bold: true };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cell.fill = HEADER_FILL;
-        cell.border = allBorders(BORDER_THICK);
-      });
-      headerRow.height = 30;
-
-      // Freeze panes below the header row
-      ws.views = [{ state: 'frozen' as const, ySplit: headerRowIdx }];
-      // AutoFilter on header row
-      ws.autoFilter = { from: { row: headerRowIdx, column: 1 }, to: { row: headerRowIdx, column: 8 } };
-
-      r = headerRowIdx + 1;
-
-      // ---- DATA ROWS ----
-      data.forEach((step) => {
-        const row = ws.getRow(r);
-        const icons = step.flowIcons || {};
-        const activeKeys = Object.keys(icons).filter(k => icons[k]);
-        const symbolsText = activeKeys.length > 0 ? activeKeys.map(k => { const m = getPfdIconMeta(k); return `${m.sym} ${m.short}`; }).join(', ') : '—';
-
-        const values = [
-          step.stepNumber || '',
-          step.name || '',
-          arrToText(step.incomingVariation),
-          step.specialCharacteristics || '',
-          symbolsText,
-          arrToText(step.machinesEquipmentDocs),
-          arrToText(step.desiredOutcome),
-          arrToText(step.processCharacteristics)
-        ];
-
-        values.forEach((val, i) => {
-          const cell = row.getCell(i + 1);
-          cell.value = val;
-          cell.font = { name: FONT, size: 11 };
-          cell.border = allBorders(BORDER_THIN);
-          cell.alignment = {
-            vertical: 'middle',
-            wrapText: true,
-            horizontal: CENTERED_COLS.includes(i) ? 'center' : 'left'
-          };
-        });
-
-        // Dynamic row height based on wrapped line count
-        const maxLines = Math.max(...values.map(v => String(v || '').split('\n').length));
-        row.height = Math.max(20, maxLines * 15);
-        r++;
-      });
-
-      // We'll apply the outer border after the signature row is written
-
-      // ---- LEGEND ROW ----
-      r += 1; // spacer row
-      ws.mergeCells(`A${r}:H${r}`);
-      const spacerCell = ws.getCell(`A${r}`);
-      spacerCell.border = allBorders(); // add border to spacer row
-
-      r += 1;
-      ws.mergeCells(`A${r}:H${r}`);
-      const legendCell = ws.getCell(`A${r}`);
-      legendCell.value =
-        'LEGEND:  Transportation: TRNS (⇨)  |  Storage: STR (▽)  |  Work-In Progress: WIP (☉)  |  ' +
-        'Operation: OPER (◯)  |  Inspection: INSP (□)  |  Decision: DEC (◇)  |  Rework: REW (Ⓡ)  |  Reject: REJ (✕)';
-      legendCell.font = { name: FONT, size: 10, italic: true };
-      legendCell.alignment = { horizontal: 'left', vertical: 'middle' };
-      legendCell.border = allBorders(); // add border to legend row
-      ws.getRow(r).height = 20;
-
-      // ---- SIGNATURE ROW (3 fields: Prepared By, Checked By, Approved By) ----
-      r += 1;
-      ws.mergeCells(`A${r}:B${r}`);
-      const prepCell = ws.getCell(`A${r}`);
-      prepCell.value = 'Prepared By:';
-      prepCell.font = { name: FONT, size: 11, bold: true };
-      prepCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-      prepCell.border = allBorders();
-
-      ws.mergeCells(`C${r}:E${r}`);
-      const checkCell = ws.getCell(`C${r}`);
-      checkCell.value = 'Checked By:';
-      checkCell.font = { name: FONT, size: 11, bold: true };
-      checkCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-      checkCell.border = allBorders();
-
-      ws.mergeCells(`F${r}:H${r}`);
-      const approveCell = ws.getCell(`F${r}`);
-      approveCell.value = 'Approved By:';
-      approveCell.font = { name: FONT, size: 11, bold: true };
-      approveCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-      approveCell.border = allBorders();
-
-      for (let c = 1; c <= 8; c++) {
-        ws.getRow(r).getCell(c).border = allBorders();
-      }
-
-      ws.getRow(r).height = 25;
-
-      // ---- APPLY OUTER THICK BORDER TO WHOLE USED RANGE (A1:H<r>) ----
-      for (let c = 1; c <= lastColIdx; c++) {
-        const topCell = ws.getRow(firstRowIdx).getCell(c);
-        topCell.border = { ...topCell.border, top: BORDER_THICK };
-        const bottomCell = ws.getRow(r).getCell(c);
-        bottomCell.border = { ...bottomCell.border, bottom: BORDER_THICK };
-      }
-      for (let rr = firstRowIdx; rr <= r; rr++) {
-        const leftCell = ws.getRow(rr).getCell(1);
-        leftCell.border = { ...leftCell.border, left: BORDER_THICK };
-        const rightCell = ws.getRow(rr).getCell(lastColIdx);
-        rightCell.border = { ...rightCell.border, right: BORDER_THICK };
-      }
-
-      // ---- PRINT SETUP ----
-      ws.pageSetup.printArea = `A1:H${r}`;
-      ws.pageSetup.printTitlesRow = `${headerRowIdx}:${headerRowIdx}`;
-
-      // ---- WRITE & DOWNLOAD ----
-      const buffer = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${projectName.replace(/\s+/g, '_')}_${docType}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      return;
-    } else if (docType === 'PFMEA') {
+    if (docType === 'PFMEA') {
       // ============================================================
       // ExcelJS-based PFMEA export with full professional formatting
       // (Same strategy as PFD export — Title → Info → Header → Data → Signature)
@@ -1017,44 +778,30 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
       if (document.body.contains(tempDiv)) {
         document.body.removeChild(tempDiv);
       }
-      console.error('Failed to export native .xlsx workbook:', err);
+      throw err;
     }
   };
 
   const handleExportPdf = async () => {
-    const wmText = getWatermarkText();
-    await generatePdf(wmText);
-    onClose();
+    let target: Window | null = null;
+    setExporting(true); setExportError('');
+    try {
+      if(docType === 'PFD') {
+        target=window.open('','_blank');
+        if(!target) throw new Error('Allow the print window to save the process flow as PDF.');
+        target.document.write('<p>Preparing complete process flow…</p>');
+        const current=await loadPfdExport();
+        openPfdPrint(current.graph,current.steps,{...(project || {partName:projectName}),watermark:getWatermarkText()},target);
+      } else await generatePdf(getWatermarkText());
+      onClose();
+    } catch(error) {target?.close();setExportError(error instanceof Error ? error.message : 'PDF export failed');} finally {setExporting(false);}
   };
 
   const generatePdf = async (watermark: string) => {
     let headers: string[] = [];
     let rowsData: string[][] = [];
 
-    if (docType === 'PFD') {
-      headers = ['Step #', 'Process Step / Operation Description', 'Flow Symbols', 'Machine, Device, Jig, Tools', 'Characteristics / Special Char'];
-      const rawSteps = steps && steps.length > 0 ? steps : data;
-      rowsData = (rawSteps || []).map((step: any, index: number) => {
-        let symbolsText = '—';
-        if (step.category) {
-          const meta = getPfdIconMeta(step.category);
-          symbolsText = `${meta.sym} (${meta.label})`;
-        }
-        let machinesText = '—';
-        if (Array.isArray(step.machinesEquipmentDocs) && step.machinesEquipmentDocs.length > 0) {
-          machinesText = step.machinesEquipmentDocs.map((m: any) => typeof m === 'string' ? m : (m.name || m.narration || '')).filter(Boolean).join('<br/>');
-        } else if (typeof step.machinesEquipmentDocs === 'string' && step.machinesEquipmentDocs.trim()) {
-          machinesText = step.machinesEquipmentDocs;
-        }
-        return [
-          step.stepNumber ? String(step.stepNumber) : String(index + 1),
-          step.name || step.description || '—',
-          symbolsText,
-          machinesText,
-          step.specialCharacteristics || '—',
-        ];
-      });
-    } else if (docType === 'PFMEA' || docType === 'DFMEA') {
+    if (docType === 'PFMEA' || docType === 'DFMEA') {
       headers = [
         'Process Step / Function',
         'Failure Mode',
@@ -1209,6 +956,7 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
     `;
 
     const printWindow = window.open('', '_blank');
+    if (!printWindow) throw new Error('Allow a print window to save this report as PDF.');
     if (printWindow) {
       printWindow.document.write(pdfHtml);
       printWindow.document.close();
@@ -1220,12 +968,13 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={exporting ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Export Document</DialogTitle>
       <DialogContent>
+        {exportError && <Alert severity="error" sx={{mb:2}}>{exportError}</Alert>}
         <Stack spacing={3} sx={{ mt: 1 }}>
           <FormControl>
-            <FormLabel sx={{ fontWeight: 'bold', mb: 1 }}>Watermark Options</FormLabel>
+            <FormLabel sx={{ fontWeight: 'bold', mb: 1 }}>PDF watermark options</FormLabel>
             <RadioGroup value={watermarkOption} onChange={(e) => setWatermarkOption(e.target.value as any)}>
               <FormControlLabel value="none" control={<Radio />} label="No Watermark" />
               <FormControlLabel value="draft" control={<Radio />} label="DRAFT Watermark" />
@@ -1252,14 +1001,16 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
         </Button>
         <Button
           onClick={handleExportPdf}
+          disabled={exporting}
           variant="contained"
           color="primary"
           startIcon={<DownloadIcon />}
         >
-          Download PDF (.pdf)
+          {exporting ? 'Preparing…' : 'Print / Save PDF'}
         </Button>
         <Button
           onClick={handleExportExcel}
+          disabled={exporting}
           variant="contained"
           color="success"
           startIcon={<DownloadIcon />}

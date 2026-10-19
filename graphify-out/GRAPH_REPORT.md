@@ -1,119 +1,120 @@
 # Graph Report - proj-fmea  (2026-10-19)
 
 ## Corpus Check
-- 371 files · ~285,610 words
+- 466 files · ~295,419 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 16 file(s) not represented in the graph (top: (none) 7, .css 4, .example 1)
+- Unclassified: 20 file(s) not represented in the graph (top: (none) 7, .css 7, .example 1)
 
 ## Summary
-- 3055 nodes · 5132 edges · 267 communities (229 shown, 38 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 313 edges (avg confidence: 0.91)
+- 3419 nodes · 5718 edges · 292 communities (271 shown, 21 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 327 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `455d02ce`
+- Built from commit: `aa1bb458`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- router.tsx
-- repository.controller.ts
-- class-validator
-- scaffold_architecture.py
-- ActionService
-- Decision: Local Filesystem Fallback for R2
-- backend/package.json
-- StructureLinkageService
-- PfdWorkspace.tsx
-- PfdService
+- DfmeaWorkspace.tsx
 - @nestjs/common
+- App.tsx
+- scaffold_architecture.py
+- modules/auth/README.md
+- AuthService
+- class-validator
+- backend/package.json
+- ToastProvider.tsx
+- ExcelImportWizard.tsx
+- PfdService
+- app.module.ts
 - devDependencies
 - Permissions
-- permissions.decorator.ts
-- FailureLinkageModal.tsx
-- PrismaService
-- ControlPlanRowController
-- AuthService
-- v0.2.3 — 2026-08-26
-- LandingPage.tsx
-- frontend/package.json
-- link-action.controller.ts
-- ProjectService
-- PermissionGuard
-- StructureLinkageService
-- UserService
-- compilerOptions
+- rating-config.controller.ts
+- DfmeaStructureTree.tsx
+- ControlPlanRowService
 - FailureLinkController
-- dependencies
-- main.ts
-- Architectural Decisions
-- QueuesModule
-- dependencies
-- PfmeaWorkspace.tsx
-- UpdateScaleDto
+- react
+- 1. General Architectural Rules
+- RepositoryPage.tsx
+- frontend/package.json
+- audit.interceptor.ts
+- ProjectService
+- ActionService
+- useBackendWarmup.ts
+- backend/README.md
 - compilerOptions
 - PfmeaRowController
+- dependencies
+- main.ts
+- v0.10.0 — 2026-10-19
+- QueuesModule
+- dependencies
+- FMEApex — Active Session State & Multi-Harness Continuity Hub
+- permissions.decorator.ts
 - compilerOptions
-- ControlPlanRowService
+- router.tsx
+- compilerOptions
+- StructureLinkageService
 - PfmeaExcelImportWizard.tsx
 - The 12 Programmatic SEO Playbooks
-- AuditLogController
+- prisma.service.ts
 - scripts
 - scripts
 - devDependencies
 - UserService
 - jest
-- @mui/material
+- migrations/README.md
 - PFD Excel Export — Formatting Implementation Spec
-- bundle.json
+- LandingPage.tsx
 - nest-cli.json
 - workflows/README.md
 - 8.2 REST API Endpoint Catalog
 - Project Rules: FMEA Quality Platform
 - .oxlintrc.json
-- ActionController
+- BACKEND/SRC/MODULES/ACTION Directory
 - AI-Powered FMEA Platform
 - scripts
 - tsconfig.build.json
-- FmeaTutorialGuide.tsx
+- parseApiError
 - frontend/tsconfig.json
-- FMEApex — Active Session State & Multi-Harness Continuity Hub
-- RequestIdMiddleware
-- Deployment & Ops
+- react-router-dom
+- Architecture Context
+- ActionsDashboard.tsx
 - Agentic Architecture Scaffold (`agentic-architecture-scaffold`)
 - Pull Request Checklist
-- Domain Context
+- Domain context
 - SEO Audit
-- .getMe
-- 9. Latest Codex Handoff — Contextual Tour, Real Activity, Trial UX (2026-10-19)
-- Core Entity Relations & Data Schemas (`data_schemas.md`)
+- v0.2.0 — 2026-08-26
+- BACKEND/SRC/MODULES/CONTROL-PLAN Directory
+- backfill-public-handles.cjs
 - 7.3 Complete DDL (Core Tables)
 - 9.4 AI Agents
-- Blackboard — Portable Orchestration Bus
+- BACKEND/SRC/MODULES/PFD Directory
 - Open Knowledge Format (OKF)
 - AI SEO
 - Capabilities
-- pfmea-row.service.ts
+- UpdatePfmeaRowDto
 - orchestrator/AGENT.md
 - Portable contract
 - Git Rules
 - AI Writing Detection
 - APEX FMEA Platform — First-Time User Guide
 - API Contracts — /api/v1 (global prefix `main.ts:33`)
-- Post
+- Public
 - .agents/ — AI Agent Context System
 - AI SEO by Content Type
 - AEO and GEO Content Patterns
-- PfdWorkspace.tsx
-- vite.config.ts
+- Control plan generation and traceability
+- BACKEND/SRC/MODULES/PFMEA Directory
 - 6. Module Architecture
 - FMEA Tree View – UI Redesign Specification
-- context/README.md
+- FmeaTutorialGuide.tsx
 - FRONTEND/SRC/FEATURES/PFMEA Directory
-- CreateCpRowDto
+- useBackendWarmup
 - seo-structure-architect/SKILL.md
 - FRONTEND/SRC/FEATURES/PROJECTS Directory
-- Domain Algorithms & Risk Evaluation Specification (`domain_algorithms.md`)
+- PermissionGuard
 - v0.5.2 — 2026-09-01
 - v0.5.6 — 2026-09-01
 - agents/README.md
@@ -128,19 +129,19 @@
 - seo-snippet-hunter/SKILL.md
 - ui-ux-designer/SKILL.md
 - 🛠️ Project Setup & Commands
-- 🛠️ Project Setup & Commands
+- frontend/README.md
 - v0.1.0 — 2026-08-26
-- v0.3.0 — 2026-08-27
+- Domain algorithms and configured risk profile
 - v0.3.1 — 2026-08-27
 - v0.3.2 — 2026-08-27
-- External Providers & Infrastructure Specifications (`external_providers.md`)
+- BACKEND/SRC/MODULES/PROJECT Directory
 - v0.5.3 — 2026-09-01
 - v0.5.5 — 2026-09-01
 - v0.5.7 — 2026-09-01
-- ColorModeContext.tsx
+- v0.2.1 — 2026-08-26
 - Project Context
-- Versioning & Ledger
-- Public
+- BACKEND/SRC/MODULES/RATING-CONFIG Directory
+- Blackboard — Portable Orchestration Bus
 - Architecture Rules
 - Security Rules
 - Rule: UI Theme & Design System Specification
@@ -154,66 +155,66 @@
 - 2. Step-by-Step Deployment
 - 11. Frontend Architecture
 - 5.2 Core Entity Definitions
-- Workflow: FMEA Authoring & The 7-Step Process
+- BACKEND/SRC/MODULES/STRUCTURE-LINKAGE Directory
 - Workflow: AI Vector Embedding Indexing & Querying Pipeline (RAG)
 - v0.0.0 — 2026-08-26
-- v0.7.0 — 2026-10-18
+- Decision: Local Filesystem Fallback for R2
 - v0.8.0 — 2026-10-18
 - v0.8.2 — 2026-10-18
 - v0.8.3 — 2026-10-18
 - v0.8.4 — 2026-10-18
 - v0.9.0 — 2026-10-19
-- Architecture Context
+- FRONTEND/SRC/FEATURES/DFMEA Directory
 - Answer Engine Optimization (AEO) Patterns
 - Optimization Strategy
 - AI Suggestion Review Lifecycle Skill
-- Control Plan Generation & Bidirectional Sync Skill
-- Corrective Actions Optimization & Tracking Skill
+- skills/README.md
+- Data Model — Prisma 5.22 (45 models)
 - PLM, ERP, and MES Data Integrations Skill
-- FMEA Authoring & 7-Step Quality Analysis Skill
-- PFD-PFMEA Bidirectional Linking & Gap Analysis Skill
-- Document Revision Submission, Review, and Approval Skill
+- v0.3.0 — 2026-08-27
+- External Providers & Infrastructure Specifications (`external_providers.md`)
+- JwtPayload
 - Content Quality Across Locales
 - URL Structure
 - Hreflang
 - Technical SEO Audit
 - SSO Authentication & Tenant Context Verification Skill
 - AI Vector Embedding Indexing & Querying Skill
-- Backend (NestJS/TypeScript)
+- rules/README.md
 - 16. Testing Strategy
 - Workflow: PLM / ERP / MES Integrations Data Sync
 - Workflow: SSO Authentication & Tenant Context Verification Flow
 - v0.2.2 — 2026-08-26
 - StructureFailureController
 - Action Agent — Corrective Actions & Lifecycle Specialist (portable)
-- Fixes
+- Core Entity Relations & Data Schemas (`data_schemas.md`)
 - Control Plan Agent — CP Sync Specialist (portable)
 - DFMEA Agent — Design FMEA Specialist (portable)
 - PFD Agent — Process Flow Diagram Specialist (portable)
 - PFMEA Agent — PFMEA Authoring & Risk Specialist (portable)
 - RAG Agent — Vector Embedding & Querying Specialist (portable)
 - Revision Agent — Review/Approval & 21 CFR Part 11 Specialist (portable)
-- Permissions & RBAC — Endpoint → Permission Matrix
+- frontend/src/README.md
 - v0.8.1 — 2026-10-18
-- rules/README.md
-- v0.5.4 — 2026-09-01
-- README.md
+- Permissions & RBAC — Endpoint → Permission Matrix
+- Connected quality delivery — approved implementation checklist
+- engineering-rule-register.md
 - Citations vs. Recommendations: The AI Visibility Ladder
 - Generative Engine Optimization (GEO) Patterns
 - International SEO & Localization
 - Common Issues by Site Type
-- App.tsx
-- queues.module.ts
 - 6. Agent Knowledge & Maintenance Rules — Keep `.agents/` Fresh
+- v0.5.4 — 2026-09-01
+- Fixes
 - 10. Workflow & State Machine Design
 - 13. Cross-Cutting Concerns
 - 14. Integration Architecture
 - 15. Implementation Roadmap
 - 2. Business Context & Objectives
 - Workflow: AI Suggestion Review Lifecycle (Human-in-the-Loop)
-- Workflow: Control Plan Generation & Bidirectional Sync
-- Workflow: Corrective Actions Optimization & Tracking Lifecycle
-- Workflow: PFD ↔ PFMEA Bidirectional Linking & Gap Analysis
+- Version & Change Ledger
+- jwt-auth.guard.ts
+- v0.5.1 — 2026-09-01
 - Action Agent — Corrective Actions & Lifecycle Specialist (portable)
 - Control Plan Agent — CP Sync Specialist (portable)
 - DFMEA Agent — Design FMEA Specialist (portable)
@@ -234,21 +235,21 @@
 - 12. Security Architecture
 - 17. Appendices
 - Workflow: Document Revision Submission, Review, and Approval
-- Pricing — FMEApex AI Quality Risk Platform
+- FMEApex pricing
 - AI Suggestion Agent — Human-in-the-Loop Review Specialist (portable)
 - Repository Agent — Package Library & Enterprise Integrations Specialist (portable)
-- OpenAI Codex Guide: FMEApex Platform
-- 4. Standard Component Patterns & Code Examples
+- Auth Agent — SSO, Tenant & RBAC Specialist (portable)
 - LoginDto
+- context/README.md
 - Fullstack Developer Agent (portable)
 - Code & Compliance Reviewer Agent (portable)
 - Ergonomics — Dense, Visible, Low-Friction
-- auth.service.ts
-- ErrorBoundary
+- 5. Styling Rules
+- FMEApex — active handoff
 - Orchestrator Prompt — Paste as system prompt in any model (VS Code/Cursor/Opencode/Gemini/Antigravity)
 - Templates for Agentic Architecture
 - Project Documentation Directory (`docs/`)
-- FMEApex — AI-Powered FMEA Quality Risk Platform
+- README.md
 - debugging.md
 - prompts/feature.md
 - review.md
@@ -256,145 +257,190 @@
 - copilot-instructions.md
 - v0.6.0 — 2026-10-17
 - FMEApex product story
-- SignupDto
-- AuditInterceptor
-- Web Interface Guidelines
-- 📋 5. What Is Left (Prioritized Backlog)
-- main.tsx
-- 🤝 6. Inter-Harness Handoff Protocol
-- useBackendWarmup
-- CreateStepDto
-- RatingConfigController
-- Auth Agent — SSO, Tenant & RBAC Specialist (portable)
 - 2. Process-Specific Customization Rules
-- 8.1 Pre-Planning Mandatory Graph Inspection
 - Glossary
+- Web Interface Guidelines
 - memory/README.md
-- FRONTEND/SRC/FEATURES/PFD Directory
+- useDocumentMeta.ts
+- 11. Companion Script: `pfd-excel-formatter.js`
+- 🛠️ Project Setup & Commands
+- ExcelRetirementShowcase.tsx
+- vite.config.ts
+- 8.1 Pre-Planning Mandatory Graph Inspection
+- auth.service.ts
+- BACKEND/PRISMA Directory
+- Auth Agent — SSO, Tenant & RBAC Specialist (portable)
 - 3. AI Copilot, Webhooks & Embedding Rules
+- features/pfd/README.md
+- BACKEND/PRISMA/MIGRATIONS/202610190002_PFD_GRAPH Directory
 - BACKEND/SRC/COMMON Directory
-- BACKEND/SRC/MODULES/AUDIT Directory
-- FRONTEND/SRC/COMPONENTS/LAYOUT Directory
+- modules/README.md
+- src/components/README.md
 - FRONTEND/SRC/FEATURES/ACTIONS Directory
 - FRONTEND/SRC/FEATURES/AUTH Directory
-- FRONTEND/SRC/FEATURES/CONTROL-PLAN Directory
-- ExcelRetirementShowcase.tsx
+- features/README.md
+- BACKEND/PRISMA/MIGRATIONS/20261019090000_PUBLIC_HANDLES Directory
 - FRONTEND/SRC/FEATURES/LANDING Directory
-- Changes
-- useDocumentMeta.ts
+- BACKEND/PRISMA/MIGRATIONS/20261019130000_REQUIRE_TRIAL_HANDLE Directory
+- BACKEND/PRISMA/MIGRATIONS Directory
+- BACKEND/SRC/MODULES/AUTH/INTERFACES Directory
+- BACKEND/SRC/MODULES/USER Directory
+- BACKEND/SRC/QUEUES Directory
+- BACKEND/SRC Directory
+- assets/README.md
+- FRONTEND/SRC/COMPONENTS Directory
+- FRONTEND/SRC/COMPONENTS/SEO Directory
+- FRONTEND/SRC/COMPONENTS/SITE Directory
+- FRONTEND/SRC/COMPONENTS/THEMETOGGLE Directory
+- FRONTEND/SRC/COMPONENTS/TOAST Directory
+- FRONTEND/SRC/FEATURES/ADMIN Directory
+- FRONTEND/SRC/FEATURES/BLOG Directory
+- FRONTEND/SRC/FEATURES/COMPANY Directory
+- FRONTEND/SRC/FEATURES/CONTENT Directory
+- FRONTEND/SRC/FEATURES/LEARN Directory
+- FRONTEND/SRC/FEATURES/LINKAGE Directory
+- FRONTEND/SRC/FEATURES/PRICING Directory
+- FRONTEND/SRC/FEATURES/PRODUCT Directory
+- FRONTEND/SRC/FEATURES/PROGRAMMATIC Directory
+- FRONTEND/SRC/FEATURES/REPORTS Directory
+- FRONTEND/SRC/FEATURES/REPOSITORY Directory
+- FRONTEND/SRC/FEATURES/SHARED Directory
+- hooks/README.md
+- theme/README.md
+- scripts/README.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `Permissions()` - 90 edges
-2. `RequestWithUser` - 85 edges
-3. `react` - 70 edges
-4. `@nestjs/common` - 56 edges
+1. `Permissions()` - 93 edges
+2. `RequestWithUser` - 88 edges
+3. `@nestjs/common` - 60 edges
+4. `react` - 60 edges
 5. `useAuth()` - 49 edges
-6. `@mui/material` - 41 edges
-7. `PrismaService` - 40 edges
+6. `PrismaService` - 40 edges
+7. `@mui/material` - 39 edges
 8. `parseApiError()` - 39 edges
-9. `Post` - 37 edges
-10. `useToast()` - 35 edges
+9. `react-router-dom` - 34 edges
+10. `AppRouter()` - 33 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Revisions (workflow 21 CFR Part 11)` --references--> `RevisionGuard`  [INFERRED]
   .agents/context/api-contracts.md → backend/src/common/revision-guard.ts
-- `Decision: Admin Role Bypasses Permission Checks` --references--> `PermissionGuard`  [INFERRED]
-  .agents/memory/decisions.md → backend/src/modules/auth/guards/permission.guard.ts
 - `RLS & isolation` --references--> `PrismaService`  [INFERRED]
   .agents/context/permissions.md → backend/src/prisma/prisma.service.ts
 - `Files Touched` --references--> `ProtectedRoute()`  [INFERRED]
   versions/v0.3.0.md → frontend/src/app/router.tsx
 - `Security & Fixes` --references--> `ProtectedRoute()`  [INFERRED]
   versions/v0.8.1.md → frontend/src/app/router.tsx
+- `4.3 Contextual Feedback & Error Boundary` --references--> `ErrorBoundary`  [INFERRED]
+  .agents/AGENTS.md → frontend/src/components/FeedbackWidget/ErrorFeedback.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (267 total, 38 thin omitted)
+## Communities (292 total, 21 thin omitted)
 
-### Community 0 - "router.tsx"
-Cohesion: 0.09
-Nodes (57): ActionsDashboard, AdminPanel, AppRouter(), ControlPlanWorkspace, DfmeaWorkspace, LinkageMap, PfdWorkspace, PfmeaWorkspace (+49 more)
+### Community 0 - "DfmeaWorkspace.tsx"
+Cohesion: 0.08
+Nodes (24): DashboardSkeleton(), DashboardSkeletonProps, LOADING_PHRASES, AdminPanel(), ContactInquiry, FEEDBACK_EMOJI, FeedbackItem, TabPanel() (+16 more)
 
-### Community 1 - "repository.controller.ts"
+### Community 1 - "@nestjs/common"
+Cohesion: 0.05
+Nodes (11): RevisionGuard, CreateActionDto, UpdateActionDto, calculateAP(), CreatePfmeaRowDto, ImportPfmeaPayloadDto, ImportPfmeaRowItemDto, PrismaService (+3 more)
+
+### Community 2 - "App.tsx"
 Cohesion: 0.10
-Nodes (6): RepositoryController, CreateWorkElementPackageDto, ImportWorkElementPackageDto, RejectWorkElementPackageDto, UpdateWorkElementPackageDto, RepositoryService
-
-### Community 2 - "class-validator"
-Cohesion: 0.15
-Nodes (4): UpdateStepDto, UpdateProjectDto, bcryptjs, class-validator
+Nodes (16): 2026-10-17 — ADR-031: Complete Frontend Overhaul to Industrial Quality Engineering Platform, Provider Hierarchy, App(), ErrorBoundary, AuthProvider(), BackendWarmupContainer(), ColorModeContext, ColorModeContextType (+8 more)
 
 ### Community 3 - "scaffold_architecture.py"
 Cohesion: 0.05
 Nodes (37): load_agent_md(), main(), match_agents(), parse_routing(), check_consistency(), generate_bridges(), get_git_info(), main() (+29 more)
 
-### Community 4 - "ActionService"
-Cohesion: 0.08
-Nodes (4): ActionService, CreateActionDto, UpdateActionDto, R2Service
+### Community 4 - "modules/auth/README.md"
+Cohesion: 0.12
+Nodes (13): BACKEND/SRC/MODULES/AUTH/DECORATORS Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/AUTH/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/AUTH/GUARDS Directory, Directory Metadata (+5 more)
 
-### Community 6 - "Decision: Local Filesystem Fallback for R2"
-Cohesion: 0.22
-Nodes (9): 2026-09-01 — ADR-028: Industrial Process Flow Diagram (PFD) Rebuild & Space-Optimized Shadcn Admin Theme, 2026-09-18 — ADR-030: Codebase Root Hygiene, Documentation Reorganization & Agentic Architecture Scaffolding, 2026-10-18 — ADR-033: Backend Container Security Remediation & Dependency Overrides, 2026-10-18 — ADR-034: CIA Triad Authentication Flow, Zero Credential Exposure & Instant Direct Guest Access, 2026-10-18 — ADR-035: PFD Default Collapsed State, Linked 7-Step Walkthrough Guide & Real Audit Feed, 2026-10-18 — ADR-036: Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator, 2026-10-18 — ADR-037: Full-Width Light Enterprise Architecture for Excel Retirement Showcase, 2026-10-19 — Contextual workflow guidance and truthful activity (local, unreleased) (+1 more)
+### Community 6 - "class-validator"
+Cohesion: 0.11
+Nodes (11): SavePfdGraphDto, UpdateStepDto, PfdEdge, PfdGraph, PfdNode, steps, validatePfdGraph(), fixture() (+3 more)
 
 ### Community 7 - "backend/package.json"
 Cohesion: 0.05
-Nodes (38): author, description, @types/node, typescript, license, name, overrides, js-yaml (+30 more)
+Nodes (39): author, description, @types/node, typescript, license, name, overrides, js-yaml (+31 more)
 
-### Community 9 - "PfdWorkspace.tsx"
+### Community 8 - "ToastProvider.tsx"
+Cohesion: 0.20
+Nodes (12): BreadcrumbItem, HierarchyBreadcrumbs(), HierarchyBreadcrumbsProps, LEVEL_CONFIG, ToastContext, ToastContextType, AddFailureDialogProps, FailureRow (+4 more)
+
+### Community 9 - "ExcelImportWizard.tsx"
+Cohesion: 0.06
+Nodes (53): clientModule, clientSource, autoMapHeader(), ColumnMapping, DiffResult, DraftStep, EXACT_HEADER_SYNONYMS, ExcelImportWizard() (+45 more)
+
+### Community 10 - "PfdService"
+Cohesion: 0.12
+Nodes (3): CreateStepDto, PfdController, PfdService
+
+### Community 11 - "app.module.ts"
 Cohesion: 0.13
-Nodes (18): autoMapHeader(), ColumnMapping, DiffResult, DraftStep, EXACT_HEADER_SYNONYMS, ExcelImportWizard(), getExistingFieldValue(), ExcelImportWizardProps (+10 more)
-
-### Community 11 - "@nestjs/common"
-Cohesion: 0.10
-Nodes (17): FMEA Types Supported, Dependency Direction, Module Boundary Map, AppModule, AuditLogModule, AuthModule, ControlPlanModule, PfdModule (+9 more)
+Nodes (12): Dependency Direction, Module Boundary Map, ActionModule, AuditLogModule, AuthModule, ControlPlanModule, PfdModule, ProjectModule (+4 more)
 
 ### Community 12 - "devDependencies"
 Cohesion: 0.07
 Nodes (28): devDependencies, eslint, eslint-config-prettier, @eslint/eslintrc, @eslint/js, eslint-plugin-prettier, globals, jest (+20 more)
 
-### Community 14 - "permissions.decorator.ts"
-Cohesion: 0.16
-Nodes (7): PERMISSIONS_KEY, IS_PUBLIC_KEY, RatingConfigModule, DEFAULT_DETECTION, DEFAULT_OCCURRENCE, DEFAULT_SEVERITY, RatingConfigService
-
-### Community 15 - "FailureLinkageModal.tsx"
-Cohesion: 0.11
-Nodes (18): DfmeaStructureTree(), DfmeaStructureTreeProps, PfmeaRow, ProcessStep, TreeIconBadge(), CandidateData, FailureItem, FailureLinkageModalProps (+10 more)
-
-### Community 16 - "PrismaService"
-Cohesion: 0.12
-Nodes (4): AppService, RevisionGuard, UpdateCpRowDto, PrismaService
-
-### Community 19 - "v0.2.3 — 2026-08-26"
-Cohesion: 0.22
-Nodes (6): Prisma workflow, Schema / migration linkage, Breaking / Notes, Schema/Migrations, Summary, v0.2.3 — 2026-08-26
-
-### Community 20 - "LandingPage.tsx"
+### Community 13 - "Permissions"
 Cohesion: 0.13
-Nodes (14): ConnectedProduct(), View, views, chapters, JourneyVisual(), RiskCalculator, steps, DETECTION_DESCRIPTIONS (+6 more)
+Nodes (4): ActionController, Permissions(), RequestWithUser, ProjectController
+
+### Community 14 - "rating-config.controller.ts"
+Cohesion: 0.05
+Nodes (24): Deployment & Ops, Env matrix (required), Known runtime noise, Local dev, Prisma workflow, Release pipeline, Build stamps, Decisions ↔ versions trace (+16 more)
+
+### Community 15 - "DfmeaStructureTree.tsx"
+Cohesion: 0.11
+Nodes (19): parseJwt(), DfmeaStructureTree(), DfmeaStructureTreeProps, PfmeaRow, ProcessStep, TreeIconBadge(), PfmeaRow, PfmeaStructureTree() (+11 more)
+
+### Community 16 - "ControlPlanRowService"
+Cohesion: 0.08
+Nodes (4): ControlPlanRowController, ControlPlanRowService, CreateCpRowDto, UpdateCpRowDto
+
+### Community 18 - "react"
+Cohesion: 0.09
+Nodes (32): ConfirmDialogProps, DocumentHeaderProps, Props, State, FEEDBACK_TYPES, FeedbackWidget(), AppShell(), RequirePermissionProps (+24 more)
+
+### Community 19 - "1. General Architectural Rules"
+Cohesion: 0.33
+Nodes (6): 1.1 Multi-Tenant Data Isolation, 1.2 Data Integrity & Validation, 1.3 Role-Based Access Control (RBAC), 1.4 Failure Chain Completeness, 1.5 Rule authority, 1. General Architectural Rules
+
+### Community 20 - "RepositoryPage.tsx"
+Cohesion: 0.20
+Nodes (12): ImportTargetDialogProps, kinds, PackagePreviewCard(), Props, label(), normalizePackage(), PackageNode, PackageRecord (+4 more)
 
 ### Community 21 - "frontend/package.json"
 Cohesion: 0.10
-Nodes (20): @types/node, typescript, name, private, type, version, @emotion/react, @emotion/styled (+12 more)
+Nodes (19): @types/node, typescript, name, private, type, version, @emotion/react, @emotion/styled (+11 more)
 
-### Community 22 - "link-action.controller.ts"
-Cohesion: 0.09
-Nodes (3): CreateLinkActionDto, UpdateLinkActionDto, LinkActionController
+### Community 22 - "audit.interceptor.ts"
+Cohesion: 0.22
+Nodes (3): AuditInterceptor, UserWithTenant, rxjs
 
 ### Community 23 - "ProjectService"
-Cohesion: 0.12
-Nodes (3): 2026-10-18 — ADR-032: High-Density Ergonomics, 24h Guest Sandbox Lifecycle, Real Audit Stream & 7-Step Tutorial, CreateProjectDto, ProjectService
+Cohesion: 0.09
+Nodes (4): CreateProjectDto, UpdateProjectDto, ProjectService, @prisma/client
 
-### Community 24 - "PermissionGuard"
-Cohesion: 0.13
-Nodes (9): API Prefix, Backend Architecture, Global Middleware Stack, Naming, Authentication, Authorization (RBAC), ActionModule, PermissionGuard (+1 more)
+### Community 25 - "useBackendWarmup.ts"
+Cohesion: 0.26
+Nodes (7): SEO(), SEOProps, Login(), BackendWarmupContext, BackendWarmupContextType, BackendWarmupProvider, useBackendReady()
 
-### Community 25 - "StructureLinkageService"
-Cohesion: 0.06
-Nodes (5): CreateStructureFailureDto, CreateStructureFunctionDto, UpdateStructureFailureDto, UpdateStructureFunctionDto, StructureLinkageService
+### Community 26 - "backend/README.md"
+Cohesion: 0.22
+Nodes (6): BACKEND/SRC/PRISMA Directory, Directory Metadata, File Map, BACKEND/TEST Directory, Directory Metadata, File Map
 
 ### Community 27 - "compilerOptions"
 Cohesion: 0.09
 Nodes (22): compilerOptions, allowSyntheticDefaultImports, baseUrl, declaration, emitDecoratorMetadata, esModuleInterop, experimentalDecorators, forceConsistentCasingInFileNames (+14 more)
+
+### Community 28 - "PfmeaRowController"
+Cohesion: 0.13
+Nodes (3): PfmeaRowController, parseFlexibleDate(), PfmeaRowService
 
 ### Community 29 - "dependencies"
 Cohesion: 0.10
@@ -402,31 +448,47 @@ Nodes (21): dependencies, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, bcr
 
 ### Community 30 - "main.ts"
 Cohesion: 0.14
-Nodes (7): GlobalExceptionFilter, bootstrap(), @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, helmet, @nestjs/core, @nestjs/platform-express
+Nodes (7): GlobalExceptionFilter, bootstrap(), @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, helmet, @nestjs/config, @nestjs/platform-express
 
-### Community 31 - "Architectural Decisions"
-Cohesion: 0.17
-Nodes (10): Architectural Decisions, Decision: Admin Role Bypasses Permission Checks, Decision: Auto-Deploy from main Branch, Decision: Global JWT + Permission Guards, Decision: Multi-Tenant via Prisma tenantId Filter, Decision: Schema Sync via prisma db push (No Migrations), File naming rule, File template (keep fields in order) (+2 more)
+### Community 31 - "v0.10.0 — 2026-10-19"
+Cohesion: 0.20
+Nodes (9): Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Schema/Migrations, Summary (+1 more)
+
+### Community 32 - "QueuesModule"
+Cohesion: 0.11
+Nodes (6): EmbeddingJobData, JobData, QueuesModule, ReplicationJobData, VirusScanJobData, bullmq
 
 ### Community 33 - "dependencies"
 Cohesion: 0.11
 Nodes (19): dependencies, @emotion/react, @emotion/styled, exceljs, framer-motion, @hookform/resolvers, lucide-react, @mui/icons-material (+11 more)
 
-### Community 34 - "PfmeaWorkspace.tsx"
-Cohesion: 0.09
-Nodes (56): Frontend enforcement, 2026-09-01 — ADR-029: Fragmented Failure Causes Columns Across PFMEA Export/Import/Grid & Modal Theme Overhaul, ConfirmDialog(), ConfirmDialogProps, DocumentHeader(), BreadcrumbItem, HierarchyBreadcrumbs(), HierarchyBreadcrumbsProps (+48 more)
+### Community 34 - "FMEApex — Active Session State & Multi-Harness Continuity Hub"
+Cohesion: 0.07
+Nodes (28): 10. Latest Release Handoff — v0.9.0 (2026-10-19), 🎯 1. Project North Star & Invariants, 2026-10-19 — Approved redesign implementation, integration in progress, 📍 2. Current System Health, 🕒 3. Where We Left Off (Last Session Summary), ⚡ 4. Active In-Flight Task, 📋 5. What Is Left (Prioritized Backlog), 🤝 6. Inter-Harness Handoff Protocol (+20 more)
+
+### Community 35 - "permissions.decorator.ts"
+Cohesion: 0.10
+Nodes (6): RepositoryController, CreateWorkElementPackageDto, ImportWorkElementPackageDto, RejectWorkElementPackageDto, UpdateWorkElementPackageDto, RepositoryService
 
 ### Community 36 - "compilerOptions"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection, moduleResolution (+10 more)
 
+### Community 37 - "router.tsx"
+Cohesion: 0.17
+Nodes (24): ActionsDashboard, AdminPanel, AppRouter(), ControlPlanWorkspace, DfmeaWorkspace, LinkageMap, PfdWorkspace, PfmeaWorkspace (+16 more)
+
 ### Community 38 - "compilerOptions"
 Cohesion: 0.12
 Nodes (16): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib, module, moduleDetection, noEmit, noFallthroughCasesInSwitch (+8 more)
 
+### Community 39 - "StructureLinkageService"
+Cohesion: 0.04
+Nodes (10): CreateLinkActionDto, CreateStructureFailureDto, CreateStructureFunctionDto, LinkFailuresDto, UpdateLinkActionDto, UpdateStructureFailureDto, UpdateStructureFunctionDto, LinkActionController (+2 more)
+
 ### Community 40 - "PfmeaExcelImportWizard.tsx"
-Cohesion: 0.10
-Nodes (24): sanitizeAp(), autoMapHeader(), ColumnMapping, DraftPfmeaRow, EXACT_HEADER_SYNONYMS, extractDateAndText(), FIELD_OPTIONS, formatDateIso() (+16 more)
+Cohesion: 0.16
+Nodes (15): autoMapHeader(), ColumnMapping, DraftPfmeaRow, EXACT_HEADER_SYNONYMS, extractDateAndText(), FIELD_OPTIONS, formatDateIso(), normalizeHeader() (+7 more)
 
 ### Community 41 - "The 12 Programmatic SEO Playbooks"
 Cohesion: 0.04
@@ -448,17 +510,17 @@ Nodes (11): devDependencies, oxlint, postcss, tailwindcss, @tailwindcss/postcss,
 Cohesion: 0.22
 Nodes (9): jest, collectCoverageFrom, coverageDirectory, moduleFileExtensions, rootDir, testEnvironment, testRegex, transform (+1 more)
 
-### Community 48 - "@mui/material"
-Cohesion: 0.06
-Nodes (46): DocumentHeaderProps, Props, State, FEEDBACK_TYPES, DashboardSkeleton(), DashboardSkeletonProps, LOADING_PHRASES, ThemeToggle() (+38 more)
+### Community 48 - "migrations/README.md"
+Cohesion: 0.22
+Nodes (6): BACKEND/PRISMA/MIGRATIONS/20261018000000_BASELINE Directory, Directory Metadata, File Map, BACKEND/PRISMA/MIGRATIONS/20261019133000_LEGACY_TRIAL_HANDLE_COMPATIBILITY Directory, Directory Metadata, File Map
 
 ### Community 49 - "PFD Excel Export — Formatting Implementation Spec"
-Cohesion: 0.07
-Nodes (27): 10. Notes for Adapting to Other Stacks, 11. Companion Script: `pfd-excel-formatter.js`, 1. Objective, 2. Problems in Current Export (`EXCEL_REPOT_260726.jpg`), 3. Target Structure (`target_pfd_format.jpg`), 4. Column Definitions, 5. Styling Rules, 6. Hierarchy Preservation Rules (+19 more)
+Cohesion: 0.13
+Nodes (15): 10. Notes for Adapting to Other Stacks, 1. Objective, 2. Problems in Current Export (`EXCEL_REPOT_260726.jpg`), 3. Target Structure (`target_pfd_format.jpg`), 4. Column Definitions, 6. Hierarchy Preservation Rules, 7. Workbook Behavior, 8. Reference Implementation (Node.js / ExcelJS) (+7 more)
 
-### Community 50 - "bundle.json"
-Cohesion: 0.22
-Nodes (8): knowledgeNodes, name, publisher, name, @type, url, $schema, version
+### Community 50 - "LandingPage.tsx"
+Cohesion: 0.14
+Nodes (21): capabilities, PlatformStory(), PublicLayout(), SiteFooter(), SiteHeader(), TrialButton(), ConnectedProduct(), View (+13 more)
 
 ### Community 51 - "nest-cli.json"
 Cohesion: 0.29
@@ -473,12 +535,16 @@ Cohesion: 0.11
 Nodes (18): 8.1 API Design Principles, 8.2.10 Admin, 8.2.11 Export & Reports, 8.2.12 Integrations, 8.2.1 Authentication (Public), 8.2.2 Projects, 8.2.3 Documents & Revisions, 8.2.4 PFMEA (+10 more)
 
 ### Community 54 - "Project Rules: FMEA Quality Platform"
-Cohesion: 0.15
-Nodes (12): 1.1 Multi-Tenant Data Isolation, 1.2 Data Integrity & Validation, 1.3 Role-Based Access Control (RBAC), 1.4 Failure Chain Completeness, 1.5 Step Gating Entry Criteria, 1. General Architectural Rules, 5.1 Non-Blocking Git Push Protocol (Windows / Agent Subshells), 5. Versioning & Release Rules (+4 more)
+Cohesion: 0.29
+Nodes (6): 5.1 Non-Blocking Git Push Protocol (Windows / Agent Subshells), 5. Versioning & Release Rules, 7.1 The Living State Hub (`.agents/ACTIVE_STATE.md`), 7.2 Two-Way Inter-Harness Contract, 7. Multi-Harness Cross-Session Synchronization Protocol (Antigravity + OpenAI Codex), Project Rules: FMEA Quality Platform
 
 ### Community 55 - ".oxlintrc.json"
 Cohesion: 0.33
 Nodes (5): plugins, rules, react/only-export-components, react/rules-of-hooks, $schema
+
+### Community 56 - "BACKEND/SRC/MODULES/ACTION Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/ACTION/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/ACTION Directory, Directory Metadata, File Map, Subdirectories
 
 ### Community 57 - "AI-Powered FMEA Platform"
 Cohesion: 0.12
@@ -492,21 +558,21 @@ Nodes (5): scripts, build, dev, lint, preview
 Cohesion: 0.50
 Nodes (3): exclude, extends, ./tsconfig.json
 
-### Community 60 - "FmeaTutorialGuide.tsx"
-Cohesion: 0.33
-Nodes (6): chapterFor(), chapters, FmeaTutorialGuide(), FmeaTutorialGuideProps, Hint, planning
-
-### Community 62 - "FMEApex — Active Session State & Multi-Harness Continuity Hub"
-Cohesion: 0.22
-Nodes (9): 10. Latest Release Handoff — v0.9.0 (2026-10-19), 🎯 1. Project North Star & Invariants, 📍 2. Current System Health, 🕒 3. Where We Left Off (Last Session Summary), ⚡ 4. Active In-Flight Task, 7. Prior Codex Handoff — Homepage Story Redesign (2026-10-18), 8. Latest Codex Handoff — Cohesive App Theme & Compact Guide (2026-10-19), FMEApex — Active Session State & Multi-Harness Continuity Hub (+1 more)
-
-### Community 63 - "RequestIdMiddleware"
+### Community 60 - "parseApiError"
 Cohesion: 0.17
-Nodes (10): RequestIdMiddleware, Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Schema/Migrations (+2 more)
+Nodes (40): Frontend enforcement, Index (leading entries), 2026-09-01 — ADR-029: Fragmented Failure Causes Columns Across PFMEA Export/Import/Grid & Modal Theme Overhaul, ConfirmDialog(), DocumentHeader(), WorkspaceSkeleton(), getToastSeverity(), ToastProvider() (+32 more)
 
-### Community 64 - "Deployment & Ops"
-Cohesion: 0.33
-Nodes (5): Deployment & Ops, Env matrix (required), Known runtime noise, Local dev, Release pipeline
+### Community 62 - "react-router-dom"
+Cohesion: 0.28
+Nodes (12): ContentSection, findResource(), PublicResource, references, ResourceCategory, resourcePath(), resources, sectionId() (+4 more)
+
+### Community 63 - "Architecture Context"
+Cohesion: 0.06
+Nodes (31): 2026-10-19 correction authority, API Route Summary, Architecture Context, Backend Module Dependency Graph, Data Flow: FMEA 7-Step Process, Database, Frontend Route Map, Key Data Relationships (+23 more)
+
+### Community 64 - "ActionsDashboard.tsx"
+Cohesion: 0.12
+Nodes (16): ActionItem, Evidence, FmeaLink, PfmeaRow, ProcessStep, Project, DETECTION_DESCRIPTIONS, OCCURRENCE_DESCRIPTIONS (+8 more)
 
 ### Community 65 - "Agentic Architecture Scaffold (`agentic-architecture-scaffold`)"
 Cohesion: 0.09
@@ -516,25 +582,25 @@ Nodes (21): 1. 🧠 The Document-Driven Paradigm vs. Blind Code Scanning, 2. �
 Cohesion: 0.13
 Nodes (11): Pre-Commit Checklist, Build & Test, Code Quality, FMEA Domain, Pull Request Checklist, Security, Checklists, Verification Checklists Catalog (`.agents/checklists/`) (+3 more)
 
-### Community 67 - "Domain Context"
-Cohesion: 0.13
-Nodes (15): 7-Step FMEA Methodology, Action Priority (AP), Bidirectional Sync Points, Corrective Action Lifecycle, DFMEA Structure, Document Revisions, Domain Context, Failure Chain (+7 more)
+### Community 67 - "Domain context"
+Cohesion: 0.25
+Nodes (7): Actions/PFD status, Actual synchronization and protection, Documents, Domain context, Risk, Seven activities and drafts, Work elements/packages
 
 ### Community 68 - "SEO Audit"
 Cohesion: 0.13
 Nodes (15): Audit Framework, Audit Report Structure, Content Depth, Content Quality Assessment, E-E-A-T Signals, Initial Assessment, Output Format, Priority Order (+7 more)
 
-### Community 69 - ".getMe"
-Cohesion: 0.20
-Nodes (10): Operational notes, Backend, Breaking / Notes, Files Touched, Frontend, Schema/Migrations, Security, Summary (+2 more)
+### Community 69 - "v0.2.0 — 2026-08-26"
+Cohesion: 0.22
+Nodes (8): Architecture, Breaking / Notes, Changes, Features, Fixes, Schema/Migrations, Summary, v0.2.0 — 2026-08-26
 
-### Community 70 - "9. Latest Codex Handoff — Contextual Tour, Real Activity, Trial UX (2026-10-19)"
-Cohesion: 0.33
-Nodes (6): 9. Latest Codex Handoff — Contextual Tour, Real Activity, Trial UX (2026-10-19), Activity correction, Completed user requests, Next agent, Source map, Validation and operational state
+### Community 70 - "BACKEND/SRC/MODULES/CONTROL-PLAN Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/CONTROL-PLAN/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/CONTROL-PLAN Directory, Directory Metadata, File Map, Subdirectories
 
-### Community 71 - "Core Entity Relations & Data Schemas (`data_schemas.md`)"
-Cohesion: 0.20
-Nodes (9): 1. Multi-Tenant Foundation, 2. Document & Revision Lifecycle (21 CFR Part 11), 3. 7-Step FMEA Structural Tree & Risk Model, 4. Control Plan (CP) Bidirectional Sync Contract, 5. Corrective Action Junction & Evidence Contract, Core Entity Relations & Data Schemas (`data_schemas.md`), User, Action (+1 more)
+### Community 71 - "backfill-public-handles.cjs"
+Cohesion: 0.40
+Nodes (3): prisma, { PrismaClient }, { reservePublicHandle }
 
 ### Community 72 - "7.3 Complete DDL (Core Tables)"
 Cohesion: 0.13
@@ -544,9 +610,9 @@ Nodes (15): 7.1 Technology, 7.2 Schema Overview, 7.3.1 Identity & Access, 7.3.2 
 Cohesion: 0.13
 Nodes (15): 9.1 Design Philosophy, 9.2 RAG Pipeline Architecture, 9.3 Embedding Strategy, 9.4 AI Agents, 9.5 AI Service Architecture, 9.6 LLM Provider Abstraction, 9.7 Data Isolation for AI, 9. AI Copilot Architecture (+7 more)
 
-### Community 74 - "Blackboard — Portable Orchestration Bus"
-Cohesion: 0.18
-Nodes (11): 2026-08-29T10:00Z — Mesh scaffold — orchestrator — completed — priority:0, 2026-10-18T07:10Z — MVP Public Launch: Ergonomics, Real Activity, Guest 24h & 7-Step Tutorial — orchestrator — completed — priority:1, 2026-10-18T07:28Z — Backend Container Security Remediation & v0.8.0 Release — orchestrator — completed — priority:1, 2026-10-18T07:55Z — CIA Triad Remediation, Zero Credential Exposure & Instant Guest Access (v0.8.1) — orchestrator — completed — priority:1, 2026-10-18T09:05Z — PFD Default Collapsed, Linked 7-Step Walkthrough Guide, Real Audit Feed & Actual App Screen Mockup (v0.8.2) — orchestrator — completed — priority:1, 2026-10-18T09:35Z — Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator (v0.8.3) — orchestrator — completed — priority:1, 2026-10-18T09:58Z — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas (v0.8.4) — orchestrator — completed — priority:1, Blackboard — Portable Orchestration Bus (+3 more)
+### Community 74 - "BACKEND/SRC/MODULES/PFD Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/PFD/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/PFD Directory, Directory Metadata, File Map, Subdirectories
 
 ### Community 75 - "Open Knowledge Format (OKF)"
 Cohesion: 0.14
@@ -560,9 +626,9 @@ Nodes (14): 1. Current AI Visibility, 2. Content & Domain, 3. Goals, 4. Competit
 Cohesion: 0.14
 Nodes (14): Accessibility & Inclusive Design, Advanced Design Techniques, Capabilities, Collaboration & Communication, Cross-Platform Design Excellence, Design Research & Validation, Design System Implementation, Design Systems Mastery (+6 more)
 
-### Community 78 - "pfmea-row.service.ts"
-Cohesion: 0.05
-Nodes (20): calculateAP(), CreatePfmeaRowDto, ImportPfmeaPayloadDto, ImportPfmeaRowItemDto, CharacteristicDto, ControlDto, UpdatePfmeaRowDto, parseFlexibleDate() (+12 more)
+### Community 78 - "UpdatePfmeaRowDto"
+Cohesion: 0.07
+Nodes (23): CharacteristicDto, ControlDto, UpdatePfmeaRowDto, sanitizeAp(), ToastSeverity, class-transformer, Breaking / Notes, Changes (+15 more)
 
 ### Community 79 - "orchestrator/AGENT.md"
 Cohesion: 0.15
@@ -573,7 +639,7 @@ Cohesion: 0.15
 Nodes (12): Antigravity compat, Dispatch Procedure, Failure Handling, Gemini CLI compat, Head Orchestrator Agent — Portable (VS Code / Cursor / Opencode / Gemini / Antigravity / any model), Invariants (must enforce every turn), Model/IDE Parity, Opencode compat (+4 more)
 
 ### Community 81 - "Git Rules"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (11): Branch Strategy, Commit Conventions, Deployment Trigger, Git Rules, Gitignored Files, Mandatory One-Time Configuration for the Repository, Never Commit, Non-Blocking Git Push Protocol (Windows / Agent Subshells) (+3 more)
 
 ### Community 82 - "AI Writing Detection"
@@ -585,8 +651,12 @@ Cohesion: 0.17
 Nodes (11): 1. Access & Authentication, 2. Setting Up Your First Project, 3. Creating a Process Flow Diagram (PFD), 4. Performing Risk Analysis (PFMEA), 5. Using the AI Copilot (RAG Suggestions), 6. Closing the Loop: The Control Plan, APEX FMEA Platform — First-Time User Guide, Step 1: Create the Project (+3 more)
 
 ### Community 84 - "API Contracts — /api/v1 (global prefix `main.ts:33`)"
-Cohesion: 0.07
-Nodes (28): Actions (Corrective), API Contracts — /api/v1 (global prefix `main.ts:33`), Auth (all @Public except /me), Control Plan, Other, PFD, PFMEA, Projects & documents (+20 more)
+Cohesion: 0.15
+Nodes (13): 2026-10-19 additive contracts, Actions (Corrective), API Contracts — /api/v1 (global prefix `main.ts:33`), Auth (all @Public except /me), Control Plan, Other, PFD, PFD/release integration contract (+5 more)
+
+### Community 85 - "Public"
+Cohesion: 0.22
+Nodes (3): AppController, AppService, Public()
 
 ### Community 86 - ".agents/ — AI Agent Context System"
 Cohesion: 0.18
@@ -600,13 +670,13 @@ Nodes (6): AI SEO by Content Type, Blog Content, Comparison / Alternative Pages,
 Cohesion: 0.18
 Nodes (11): AEO and GEO Content Patterns, Business/Marketing Content, Contents, Domain-Specific GEO Tactics, Financial Content, Health/Medical Content, Legal Content, Question Formats for Voice (+3 more)
 
-### Community 89 - "PfdWorkspace.tsx"
-Cohesion: 0.20
-Nodes (14): WorkspaceSkeleton(), detectEquipmentType(), PfdEngineeringCanvas(), PfdEngineeringCanvasProps, FLOW_ICON_COLUMNS, PfdCellWrapper(), PfdCellWrapperProps, PfdWorkspace() (+6 more)
-
-### Community 90 - "vite.config.ts"
+### Community 89 - "Control plan generation and traceability"
 Cohesion: 0.50
-Nodes (3): @tailwindcss/vite, vite, @vitejs/plugin-react
+Nodes (3): Control plan generation and traceability, Current interfaces, Rule authority
+
+### Community 90 - "BACKEND/SRC/MODULES/PFMEA Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/PFMEA/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/PFMEA Directory, Directory Metadata, File Map, Subdirectories
 
 ### Community 91 - "6. Module Architecture"
 Cohesion: 0.18
@@ -616,13 +686,17 @@ Nodes (11): 6.10 Module 10: Admin & Configuration, 6.1 Module 1: PFMEA (Process 
 Cohesion: 0.18
 Nodes (10): 1. Design Objective, 2. Color Palette, 3. Typography, 4. Icons and Shapes, 5. Tree Structure and Lines, 6. Interaction States, 7. Spacing and Layout, 8. Summary Style Rules for Antigravity Implementation (+2 more)
 
-### Community 93 - "context/README.md"
-Cohesion: 0.17
-Nodes (7): Context Documents, Project Context Catalog (`.agents/context/`), Agent Routing Table — Portable Mesh Dispatch, Dispatch, Orchestrator Behavior, Ownership vs Legacy JSON, Tri-compat Mapping
+### Community 93 - "FmeaTutorialGuide.tsx"
+Cohesion: 0.33
+Nodes (6): chapterFor(), chapters, FmeaTutorialGuide(), FmeaTutorialGuideProps, Hint, planning
 
 ### Community 94 - "FRONTEND/SRC/FEATURES/PFMEA Directory"
-Cohesion: 0.22
-Nodes (7): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFMEA/COMPONENTS Directory, Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFMEA Directory, Subdirectories
+Cohesion: 0.15
+Nodes (10): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFMEA/COMPONENTS Directory, Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFMEA Directory, Subdirectories, Directory Metadata (+2 more)
+
+### Community 95 - "useBackendWarmup"
+Cohesion: 0.25
+Nodes (8): 4.1 Cold-Start & Health Monitoring, 4.2 Guest Account Lifecycles, 4.3 Contextual Feedback & Error Boundary, 4. Landing Page, Guest Access & Feedback System Rules, Targets, 2. Cloudflare Pages (Frontend Hosting), useBackendWarmup(), Must Enforce
 
 ### Community 96 - "seo-structure-architect/SKILL.md"
 Cohesion: 0.20
@@ -632,13 +706,13 @@ Nodes (9): Approach, Do not use this skill when, Focus Areas, Header Tag Best Pr
 Cohesion: 0.22
 Nodes (7): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PROJECTS/COMPONENTS Directory, Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PROJECTS Directory, Subdirectories
 
-### Community 98 - "Domain Algorithms & Risk Evaluation Specification (`domain_algorithms.md`)"
-Cohesion: 0.25
-Nodes (7): 1. Risk Evaluation Dimensions (S / O / D), 2. Action Priority (AP) Computation Logic (AIAG-VDA 2019), 3. Severity Inheritance Rule, 4. Failure Chain Completeness Rules, 5. 7-Step Workflow Gating Matrix, AIAG-VDA 2019 AP Decision Hierarchy:, Domain Algorithms & Risk Evaluation Specification (`domain_algorithms.md`)
+### Community 98 - "PermissionGuard"
+Cohesion: 0.10
+Nodes (16): 2026-10-19 — Rule provenance, iterative drafts, permanent public identity (unreleased), Architectural Decisions, Decision: Admin Role Bypasses Permission Checks, Decision: Auto-Deploy from main Branch, Decision: Global JWT + Permission Guards, Decision: Multi-Tenant via Prisma tenantId Filter, Decision: Schema Sync via prisma db push (No Migrations), API Prefix (+8 more)
 
 ### Community 99 - "v0.5.2 — 2026-09-01"
-Cohesion: 0.20
-Nodes (9): Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Schema/Migrations, Summary (+1 more)
+Cohesion: 0.15
+Nodes (12): FmeaStudioPreview(), StudioView, VentrilocDashboard(), Breaking / Notes, Changes, Features, Files Touched, Fixes (+4 more)
 
 ### Community 100 - "v0.5.6 — 2026-09-01"
 Cohesion: 0.20
@@ -653,7 +727,7 @@ Cohesion: 0.22
 Nodes (8): 1.1 Problem Statement, 1.2 The Absolute Rule, 1. The Anti-Drift Protocol, 2.1 Problem Statement, 2.2 Rule & Enforcement, 2. Zero Concrete Entity Examples Rule (Strict Abstract Schema Mandate), 3. Context & Efficiency Hygiene, Zero Drift & Immediate Clarification Mandate
 
 ### Community 103 - "Testing Rules"
-Cohesion: 0.18
+Cohesion: 0.22
 Nodes (9): Backend Tests, Build Validation, Current Test Coverage, Frontend Tests, Test Commands, Test Configuration, Test Framework, Testing Guidelines (+1 more)
 
 ### Community 104 - "How Each AI Platform Picks Sources"
@@ -689,20 +763,20 @@ Cohesion: 0.22
 Nodes (8): Behavioral Traits, Do not use this skill when, Example Interactions, Instructions, Knowledge Base, Purpose, Response Approach, Use this skill when
 
 ### Community 112 - "🛠️ Project Setup & Commands"
-Cohesion: 0.22
+Cohesion: 0.25
 Nodes (8): 🗺️ Backend Directory Structure, Database Operations, FMEA Platform Backend, Install Dependencies, Prerequisites, 🛠️ Project Setup & Commands, Start Server, Testing
 
-### Community 113 - "🛠️ Project Setup & Commands"
-Cohesion: 0.10
-Nodes (17): Build for Production, Code Linting, FMEA Platform Frontend, 🗺️ Frontend Directory Structure, Install Dependencies, Prerequisites, 🛠️ Project Setup & Commands, Start Development Server (+9 more)
+### Community 113 - "frontend/README.md"
+Cohesion: 0.29
+Nodes (5): FMEA Platform Frontend, 🗺️ Frontend Directory Structure, Directory Metadata, File Map, FRONTEND/SRC/APP Directory
 
 ### Community 114 - "v0.1.0 — 2026-08-26"
 Cohesion: 0.22
 Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Fixes, Schema/Migrations, Summary, v0.1.0 — 2026-08-26
 
-### Community 115 - "v0.3.0 — 2026-08-27"
-Cohesion: 0.22
-Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Summary, v0.3.0 — 2026-08-27
+### Community 115 - "Domain algorithms and configured risk profile"
+Cohesion: 0.33
+Nodes (6): Domain algorithms and configured risk profile, Drafts/review, Known gaps, Physical routing, Ratings/AP, Severity/effectiveness
 
 ### Community 116 - "v0.3.1 — 2026-08-27"
 Cohesion: 0.22
@@ -712,9 +786,9 @@ Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Fixes, Schema/Mig
 Cohesion: 0.22
 Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Refactors, Schema/Migrations, Summary, v0.3.2 — 2026-08-27
 
-### Community 118 - "External Providers & Infrastructure Specifications (`external_providers.md`)"
-Cohesion: 0.25
-Nodes (8): 1.1 Connection & Cold-Start Policy, 1.2 pgvector HNSW Configuration, 1. Neon Serverless PostgreSQL & pgvector, 3. Cloudflare R2 (Action Evidence Storage), 4. Render (Backend Container Compute), 5. BullMQ & Redis (Asynchronous Queues), 6. OpenAI LLM & Embedding Integrations, External Providers & Infrastructure Specifications (`external_providers.md`)
+### Community 118 - "BACKEND/SRC/MODULES/PROJECT Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/PROJECT/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/PROJECT Directory, Directory Metadata, File Map, Subdirectories
 
 ### Community 119 - "v0.5.3 — 2026-09-01"
 Cohesion: 0.22
@@ -728,29 +802,33 @@ Nodes (8): Breaking / Notes, Changes, Files Touched, Fixes, Refactors, Schema/Mi
 Cohesion: 0.22
 Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Refactors, Schema/Migrations, Summary, v0.5.7 — 2026-09-01
 
-### Community 122 - "ColorModeContext.tsx"
-Cohesion: 0.25
-Nodes (6): ColorModeContext, ColorModeContextType, PaletteMode, heading, qualityColors, theme
+### Community 122 - "v0.2.1 — 2026-08-26"
+Cohesion: 0.24
+Nodes (8): apiFetch(), getAuthHeaders(), Breaking / Notes, Changes, Refactors, Schema/Migrations, Summary, v0.2.1 — 2026-08-26
 
 ### Community 123 - "Project Context"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): Deployment, Development Commands, Key Entry Points, Project Context, Project Structure, Technology Stack, What FMEApex Does
 
-### Community 124 - "Versioning & Ledger"
-Cohesion: 0.29
-Nodes (7): Build stamps, Decisions ↔ versions trace, Index (leading entries), Latest release: v0.9.0 (2026-10-19), Planned backlog (not yet versioned), Process (must confirm with user), Versioning & Ledger
+### Community 124 - "BACKEND/SRC/MODULES/RATING-CONFIG Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/RATING-CONFIG/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/RATING-CONFIG Directory, Directory Metadata, File Map, Subdirectories
+
+### Community 125 - "Blackboard — Portable Orchestration Bus"
+Cohesion: 0.14
+Nodes (14): 2026-08-29T10:00Z — Mesh scaffold — orchestrator — completed — priority:0, 2026-10-18T07:10Z — MVP Public Launch: Ergonomics, Real Activity, Guest 24h & 7-Step Tutorial — orchestrator — completed — priority:1, 2026-10-18T07:28Z — Backend Container Security Remediation & v0.8.0 Release — orchestrator — completed — priority:1, 2026-10-18T07:55Z — CIA Triad Remediation, Zero Credential Exposure & Instant Guest Access (v0.8.1) — orchestrator — completed — priority:1, 2026-10-18T09:05Z — PFD Default Collapsed, Linked 7-Step Walkthrough Guide, Real Audit Feed & Actual App Screen Mockup (v0.8.2) — orchestrator — completed — priority:1, 2026-10-18T09:35Z — Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator (v0.8.3) — orchestrator — completed — priority:1, 2026-10-18T09:58Z — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas (v0.8.4) — orchestrator — completed — priority:1, 2026-10-19T09:40:33Z — Verify admin login directly in browser with configured credentials — google antigravity — in_progress — priority:1 (+6 more)
 
 ### Community 126 - "Architecture Rules"
 Cohesion: 0.25
 Nodes (7): Architecture Rules, Feature-Based Organization, Forbidden Patterns, Frontend Architecture, State Management, Subagent Fencing — HARD (Portable Mesh), System Overview
 
 ### Community 127 - "Security Rules"
-Cohesion: 0.20
-Nodes (10): File Upload Security, Guest Accounts, Guest Entry UI, Input Validation, Multi-Tenant Data Isolation, Revision Immutability (21 CFR Part 11), Secrets Management, Security Rules (+2 more)
+Cohesion: 0.18
+Nodes (11): File Upload Security, Guest Accounts, Guest Entry UI, Input Validation, Multi-Tenant Data Isolation, Permanent public handles, Revision protection and approval records, Secrets Management (+3 more)
 
 ### Community 128 - "Rule: UI Theme & Design System Specification"
-Cohesion: 0.18
-Nodes (8): 1. Core Design Philosophy, 2. Global Color Tokens & CSS Variables, 3.1 CSS Layering & Specificity (Tailwind v4 + Emotion), 3.2 Form Spacing & Density, 3. Strict Architectural Rules for UI Migration, 5. Migration Checklist for Existing & New Pages, 6. Contextual FMEA Walkthrough and Dashboard Density, Rule: UI Theme & Design System Specification
+Cohesion: 0.13
+Nodes (15): 1. Core Design Philosophy, 2. Global Color Tokens & CSS Variables, 3.1 CSS Layering & Specificity (Tailwind v4 + Emotion), 3.2 Form Spacing & Density, 3. Strict Architectural Rules for UI Migration, 4.1 Page Header Pattern, 4.2 Segmented Pill Tab Bar Pattern, 4.3 Space-Optimized Table Pattern (+7 more)
 
 ### Community 129 - "Skills Catalog (`.agents/skills/`)"
 Cohesion: 0.40
@@ -788,9 +866,9 @@ Nodes (8): 11.1 Technology Stack, 11.2 Project Structure, 11.3 Key UI Screens, 1
 Cohesion: 0.25
 Nodes (8): 5.1 Entity Relationship Overview, 5.2.1 Organizational Entities, 5.2.2 Document Entities, 5.2.3 FMEA Entities, 5.2.4 Row Entities, 5.2 Core Entity Definitions, 5.3 Action Priority (AP) Calculation, 5. Domain Model & Core Entities
 
-### Community 139 - "Workflow: FMEA Authoring & The 7-Step Process"
-Cohesion: 0.25
-Nodes (7): 1.1 Step-Gating Entry Criteria Table, 1.2 DFMEA & PFMEA Structural Flows, 1. Sequence of Steps, 2. Technical Scope, 3. Validation Rules & Edge Cases, 4. Related Workflows, Workflow: FMEA Authoring & The 7-Step Process
+### Community 139 - "BACKEND/SRC/MODULES/STRUCTURE-LINKAGE Directory"
+Cohesion: 0.22
+Nodes (7): BACKEND/SRC/MODULES/STRUCTURE-LINKAGE/DTO Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES/STRUCTURE-LINKAGE Directory, Directory Metadata, File Map, Subdirectories
 
 ### Community 140 - "Workflow: AI Vector Embedding Indexing & Querying Pipeline (RAG)"
 Cohesion: 0.25
@@ -800,9 +878,9 @@ Nodes (7): 1.1 Indexing Pipeline (Async), 1.2 Query Pipeline (Real-Time), 1. Pip
 Cohesion: 0.25
 Nodes (7): Breaking / Notes, Changes, Files Touched, Refactors, Schema/Migrations, Summary, v0.0.0 — 2026-08-26
 
-### Community 142 - "v0.7.0 — 2026-10-18"
-Cohesion: 0.25
-Nodes (7): Breaking / Notes, Changes, Features, Fixes, Schema/Migrations, Summary, v0.7.0 — 2026-10-18
+### Community 142 - "Decision: Local Filesystem Fallback for R2"
+Cohesion: 0.20
+Nodes (10): 2026-09-01 — ADR-028: Industrial Process Flow Diagram (PFD) Rebuild & Space-Optimized Shadcn Admin Theme, 2026-09-18 — ADR-030: Codebase Root Hygiene, Documentation Reorganization & Agentic Architecture Scaffolding, 2026-10-18 — ADR-032: High-Density Ergonomics, 24h Guest Sandbox Lifecycle, Real Audit Stream & 7-Step Tutorial, 2026-10-18 — ADR-033: Backend Container Security Remediation & Dependency Overrides, 2026-10-18 — ADR-034: CIA Triad Authentication Flow, Zero Credential Exposure & Instant Direct Guest Access, 2026-10-18 — ADR-035: PFD Default Collapsed State, Linked 7-Step Walkthrough Guide & Real Audit Feed, 2026-10-18 — ADR-036: Visual Excel Retirement Animated Showcase & Light-Theme AP Dual Simulator, 2026-10-18 — ADR-037: Full-Width Light Enterprise Architecture for Excel Retirement Showcase (+2 more)
 
 ### Community 143 - "v0.8.0 — 2026-10-18"
 Cohesion: 0.25
@@ -821,12 +899,12 @@ Cohesion: 0.25
 Nodes (7): Breaking / Notes, Changes, Features & UX Ergonomics, Files Touched, Schema/Migrations, Summary, v0.8.4 — 2026-10-18
 
 ### Community 147 - "v0.9.0 — 2026-10-19"
-Cohesion: 0.22
+Cohesion: 0.20
 Nodes (9): Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Schema/Migrations, Summary (+1 more)
 
-### Community 148 - "Architecture Context"
-Cohesion: 0.25
-Nodes (8): API Route Summary, Architecture Context, Backend Module Dependency Graph, Data Flow: FMEA 7-Step Process, Database, Frontend Route Map, Key Data Relationships, System Architecture
+### Community 148 - "FRONTEND/SRC/FEATURES/DFMEA Directory"
+Cohesion: 0.22
+Nodes (7): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/DFMEA/COMPONENTS Directory, Directory Metadata, File Map, FRONTEND/SRC/FEATURES/DFMEA Directory, Subdirectories
 
 ### Community 149 - "Answer Engine Optimization (AEO) Patterns"
 Cohesion: 0.29
@@ -840,29 +918,29 @@ Nodes (7): Machine-Readable Files for AI Agents, Optimization Strategy, Pillar 1
 Cohesion: 0.29
 Nodes (6): 1. Suggestion Workflow, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, AI Suggestion Review Lifecycle Skill
 
-### Community 152 - "Control Plan Generation & Bidirectional Sync Skill"
-Cohesion: 0.29
-Nodes (6): 1. Sync Mechanics, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, Control Plan Generation & Bidirectional Sync Skill
+### Community 152 - "skills/README.md"
+Cohesion: 0.11
+Nodes (12): Corrective actions, Rule authority, FMEA authoring, Implemented interfaces, Rule authority, PFD and PFMEA linking, Rule authority, Context Optimization Rules (+4 more)
 
-### Community 153 - "Corrective Actions Optimization & Tracking Skill"
-Cohesion: 0.29
-Nodes (6): 1. Lifecycle States, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, Corrective Actions Optimization & Tracking Skill
+### Community 153 - "Data Model — Prisma 5.22 (45 models)"
+Cohesion: 0.18
+Nodes (11): Structure linkage (PFMEA tree ↔ grid), 2026-10-19 additive model changes, Core tenant & identity, Data Model — Prisma 5.22 (45 models), FMEA rows (7 junction tables), Operational notes, PFD / structure (7-step mapping), Projects & documents (+3 more)
 
 ### Community 154 - "PLM, ERP, and MES Data Integrations Skill"
 Cohesion: 0.29
 Nodes (6): 1. Integration Actions & Capability Matrix, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, PLM, ERP, and MES Data Integrations Skill
 
-### Community 155 - "FMEA Authoring & 7-Step Quality Analysis Skill"
-Cohesion: 0.29
-Nodes (6): 1. Process Overview & Steps, 2. Technical Implementation Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, FMEA Authoring & 7-Step Quality Analysis Skill
+### Community 155 - "v0.3.0 — 2026-08-27"
+Cohesion: 0.15
+Nodes (13): Backend, Files Touched, Frontend, Security, Versioning, Breaking / Notes, Changes, Features (+5 more)
 
-### Community 156 - "PFD-PFMEA Bidirectional Linking & Gap Analysis Skill"
-Cohesion: 0.29
-Nodes (6): 1. Workflow Mechanics, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, PFD-PFMEA Bidirectional Linking & Gap Analysis Skill
+### Community 156 - "External Providers & Infrastructure Specifications (`external_providers.md`)"
+Cohesion: 0.22
+Nodes (8): 1.1 Connection & Cold-Start Policy, 1.2 pgvector HNSW Configuration, 1. Neon Serverless PostgreSQL & pgvector, 3. Cloudflare R2 (Action Evidence Storage), 4. Render (Backend Container Compute), 5. BullMQ & Redis (Asynchronous Queues), 6. OpenAI LLM & Embedding Integrations, External Providers & Infrastructure Specifications (`external_providers.md`)
 
-### Community 157 - "Document Revision Submission, Review, and Approval Skill"
-Cohesion: 0.29
-Nodes (6): 1. Flow Details, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, Document Revision Submission, Review, and Approval Skill
+### Community 157 - "JwtPayload"
+Cohesion: 0.13
+Nodes (11): JwtPayload, JwtStrategy, passport-jwt, Breaking / Notes, Changes, Features, Files Touched, Fixes (+3 more)
 
 ### Community 158 - "Content Quality Across Locales"
 Cohesion: 0.29
@@ -888,9 +966,9 @@ Nodes (6): 1. Flow Stages, 2. Integrity Rules, 3. Key Database Tables, 4. API En
 Cohesion: 0.29
 Nodes (6): 1. Indexing & Querying Pipelines, 2. Integrity Rules, 3. Key Database Tables, 4. API Endpoints, 5. Related Skills, AI Vector Embedding Indexing & Querying Skill
 
-### Community 164 - "Backend (NestJS/TypeScript)"
-Cohesion: 0.14
-Nodes (12): Async Patterns, Backend (NestJS/TypeScript), Coding Style Rules, Component Patterns, Error Handling, File Organization, Forms, Frontend (React/TypeScript) (+4 more)
+### Community 164 - "rules/README.md"
+Cohesion: 0.20
+Nodes (3): Loading Hierarchy, Rules Catalog, System Rules Catalog (`.agents/rules/`)
 
 ### Community 165 - "16. Testing Strategy"
 Cohesion: 0.29
@@ -912,9 +990,9 @@ Nodes (6): Changes, Features, Files Touched, Schema/Migrations, Summary, v0.2.2 
 Cohesion: 0.33
 Nodes (5): Action Agent — Corrective Actions & Lifecycle Specialist (portable), Bus, Key Files, Must Enforce, Role
 
-### Community 171 - "Fixes"
-Cohesion: 0.17
-Nodes (10): CommonModule, apiFetch(), getAuthHeaders(), Breaking / Notes, Changes, Fixes, Refactors, Schema/Migrations (+2 more)
+### Community 171 - "Core Entity Relations & Data Schemas (`data_schemas.md`)"
+Cohesion: 0.20
+Nodes (9): 1. Multi-Tenant Foundation, 2. Document & Revision Lifecycle (21 CFR Part 11), 3. 7-Step FMEA Structural Tree & Risk Model, 4. Control Plan (CP) Bidirectional Sync Contract, 5. Corrective Action Junction & Evidence Contract, Core Entity Relations & Data Schemas (`data_schemas.md`), User, Action (+1 more)
 
 ### Community 172 - "Control Plan Agent — CP Sync Specialist (portable)"
 Cohesion: 0.33
@@ -940,21 +1018,25 @@ Nodes (5): Bus, Key Files, Must Enforce, RAG Agent — Vector Embedding & Queryi
 Cohesion: 0.33
 Nodes (5): Bus, Key Files, Must Enforce, Revision Agent — Review/Approval & 21 CFR Part 11 Specialist (portable), Role
 
-### Community 178 - "Permissions & RBAC — Endpoint → Permission Matrix"
-Cohesion: 0.33
-Nodes (5): Common mistakes to avoid, Endpoint → Required permission (key, see `api-contracts.md` for method+path), Permissions & RBAC — Endpoint → Permission Matrix, RLS & isolation, Roles (seeded per tenant `prisma.service:77` + `auth.service:178-276`)
+### Community 178 - "frontend/src/README.md"
+Cohesion: 0.22
+Nodes (7): Directory Metadata, File Map, FRONTEND/SRC/LIB Directory, Directory Metadata, File Map, FRONTEND/SRC Directory, Subdirectories
 
 ### Community 179 - "v0.8.1 — 2026-10-18"
 Cohesion: 0.25
 Nodes (7): Breaking / Notes, Changes, Files Touched, Schema/Migrations, Security & Fixes, Summary, v0.8.1 — 2026-10-18
 
-### Community 180 - "rules/README.md"
+### Community 180 - "Permissions & RBAC — Endpoint → Permission Matrix"
 Cohesion: 0.33
-Nodes (3): Loading Hierarchy, Rules Catalog, System Rules Catalog (`.agents/rules/`)
+Nodes (5): Common mistakes to avoid, Endpoint → Required permission (key, see `api-contracts.md` for method+path), Permissions & RBAC — Endpoint → Permission Matrix, RLS & isolation, Roles (seeded per tenant `prisma.service:77` + `auth.service:178-276`)
 
-### Community 181 - "v0.5.4 — 2026-09-01"
+### Community 181 - "Connected quality delivery — approved implementation checklist"
 Cohesion: 0.29
-Nodes (6): Breaking / Notes, Changes, Files Touched, Schema/Migrations, Summary, v0.5.4 — 2026-09-01
+Nodes (6): Connected quality delivery — approved implementation checklist, Constraints, Final integration verification — 19 October 2026, Public URL checklist, Public website verification — 19 October 2026, Workstreams
+
+### Community 182 - "engineering-rule-register.md"
+Cohesion: 0.13
+Nodes (8): Engineering rule register, Maintenance, Primary references, Rule / source / implementation / status, Workflow: explicit control-plan generation and traceability, Workflow: actions, evidence and effectiveness, Workflow: iterative FMEA authoring and review, Workflow: physical routing and analytical coverage
 
 ### Community 183 - "Citations vs. Recommendations: The AI Visibility Ladder"
 Cohesion: 0.33
@@ -972,17 +1054,17 @@ Nodes (6): Canonicalization for Multilingual Sites, Content Quality Across Local
 Cohesion: 0.33
 Nodes (6): Common Issues by Site Type, Content/Blog Sites, E-commerce, Local Business, Multilingual / Multi-Regional Sites, SaaS/Product Sites
 
-### Community 187 - "App.tsx"
-Cohesion: 0.31
-Nodes (7): Provider Hierarchy, App(), AuthProvider(), BackendWarmupContext, BackendWarmupContextType, BackendWarmupProvider, ColorModeProvider()
-
-### Community 188 - "queues.module.ts"
-Cohesion: 0.33
-Nodes (5): EmbeddingJobData, JobData, ReplicationJobData, VirusScanJobData, bullmq
-
-### Community 189 - "6. Agent Knowledge & Maintenance Rules — Keep `.agents/` Fresh"
+### Community 187 - "6. Agent Knowledge & Maintenance Rules — Keep `.agents/` Fresh"
 Cohesion: 0.33
 Nodes (6): 6.1 What lives in `.agents/` (single source; no CLAUDE/GEMINI/.cursor duplicates), 6.2 When to update `.agents/` (mandatory), 6.3 How to update, 6.4 Hygiene, 6.5 Multi-Agent Orchestration — Portable Mesh (VS Code / Cursor / Opencode / Gemini / Antigravity), 6. Agent Knowledge & Maintenance Rules — Keep `.agents/` Fresh
+
+### Community 188 - "v0.5.4 — 2026-09-01"
+Cohesion: 0.29
+Nodes (6): Breaking / Notes, Changes, Files Touched, Schema/Migrations, Summary, v0.5.4 — 2026-09-01
+
+### Community 189 - "Fixes"
+Cohesion: 0.29
+Nodes (3): AppModule, CommonModule, Fixes
 
 ### Community 190 - "10. Workflow & State Machine Design"
 Cohesion: 0.33
@@ -1008,17 +1090,17 @@ Nodes (6): 2.1 Problem Statement, 2.2 Vision Statement, 2.3 Key Differentiators,
 Cohesion: 0.33
 Nodes (5): 1. Suggestion Lifecycle States, 2. Technical Scope, 3. Validation Rules & Edge Cases, 4. Related Workflows, Workflow: AI Suggestion Review Lifecycle (Human-in-the-Loop)
 
-### Community 196 - "Workflow: Control Plan Generation & Bidirectional Sync"
+### Community 196 - "Version & Change Ledger"
 Cohesion: 0.33
-Nodes (5): 1. Sequence of Steps, 2. Technical Scope, 3. Bidirectional Sync Rules & Edge Cases, 4. Related Workflows, Workflow: Control Plan Generation & Bidirectional Sync
+Nodes (4): File naming rule, File template (keep fields in order), Release index (newest first), Version & Change Ledger
 
-### Community 197 - "Workflow: Corrective Actions Optimization & Tracking Lifecycle"
-Cohesion: 0.33
-Nodes (5): 1. Action Lifecycle, 2. Technical Scope, 3. Validation Rules & Edge Cases, 4. Related Workflows, Workflow: Corrective Actions Optimization & Tracking Lifecycle
+### Community 197 - "jwt-auth.guard.ts"
+Cohesion: 0.43
+Nodes (4): PERMISSIONS_KEY, IS_PUBLIC_KEY, @nestjs/core, @nestjs/passport
 
-### Community 198 - "Workflow: PFD ↔ PFMEA Bidirectional Linking & Gap Analysis"
-Cohesion: 0.33
-Nodes (5): 1. Sequence of Steps, 2. Technical Scope, 3. Gap Check Rules & Edge Cases, 4. Related Workflows, Workflow: PFD ↔ PFMEA Bidirectional Linking & Gap Analysis
+### Community 198 - "v0.5.1 — 2026-09-01"
+Cohesion: 0.22
+Nodes (8): Breaking / Notes, Changes, Features, Files Touched, Fixes, Refactors, Summary, v0.5.1 — 2026-09-01
 
 ### Community 199 - "Action Agent — Corrective Actions & Lifecycle Specialist (portable)"
 Cohesion: 0.33
@@ -1100,9 +1182,9 @@ Nodes (5): 17. Appendices, Appendix A: AIAG–VDA AP Lookup Table (Default), App
 Cohesion: 0.40
 Nodes (4): 1. Revision Lifecycle States, 2. Technical Scope, 3. Related Workflows, Workflow: Document Revision Submission, Review, and Approval
 
-### Community 219 - "Pricing — FMEApex AI Quality Risk Platform"
+### Community 219 - "FMEApex pricing"
 Cohesion: 0.40
-Nodes (4): Enterprise Manufacturing Tier, Guest / Sandbox Tier, Pricing — FMEApex AI Quality Risk Platform, Professional Quality Engineer Tier
+Nodes (4): Enterprise enquiries, FMEApex pricing, For teams, Try FMEApex
 
 ### Community 220 - "AI Suggestion Agent — Human-in-the-Loop Review Specialist (portable)"
 Cohesion: 0.40
@@ -1112,13 +1194,13 @@ Nodes (4): AI Suggestion Agent — Human-in-the-Loop Review Specialist (portable
 Cohesion: 0.40
 Nodes (4): Bus, Must Enforce, Repository Agent — Package Library & Enterprise Integrations Specialist (portable), Role
 
-### Community 222 - "OpenAI Codex Guide: FMEApex Platform"
-Cohesion: 0.29
-Nodes (7): 1. Session Start (Mandatory), 2. Invariants, 3. Graphify Knowledge Graph, 4. CLI Helpers, 5. Session End Protocol, Current UI and activity handoff, OpenAI Codex Guide: FMEApex Platform
-
-### Community 223 - "4. Standard Component Patterns & Code Examples"
+### Community 222 - "Auth Agent — SSO, Tenant & RBAC Specialist (portable)"
 Cohesion: 0.33
-Nodes (6): 4.1 Page Header Pattern, 4.2 Segmented Pill Tab Bar Pattern, 4.3 Space-Optimized Table Pattern, 4.4 Space-Optimized Modal / Dialog Pattern, 4.5 Risk & Priority Badge Pattern, 4. Standard Component Patterns & Code Examples
+Nodes (5): Auth Agent — SSO, Tenant & RBAC Specialist (portable), Bus, Key Files, Must Enforce, Role
+
+### Community 224 - "context/README.md"
+Cohesion: 0.17
+Nodes (7): Context Documents, Project Context Catalog (`.agents/context/`), Agent Routing Table — Portable Mesh Dispatch, Dispatch, Orchestrator Behavior, Ownership vs Legacy JSON, Tri-compat Mapping
 
 ### Community 225 - "Fullstack Developer Agent (portable)"
 Cohesion: 0.50
@@ -1132,81 +1214,89 @@ Nodes (3): Code & Compliance Reviewer Agent (portable), Review Checklist & Manda
 Cohesion: 0.50
 Nodes (3): Ergonomics — Dense, Visible, Low-Friction, Principles, Verified
 
-### Community 228 - "auth.service.ts"
-Cohesion: 0.18
-Nodes (8): PERMISSIONS, JwtPayload, JwtStrategy, @nestjs/config, @nestjs/jwt, @nestjs/passport, passport-jwt, Files Touched
+### Community 228 - "5. Styling Rules"
+Cohesion: 0.29
+Nodes (7): 5. Styling Rules, Alignment Summary, Borders, Fill, Fonts, Merged Cells, Row Heights
 
-### Community 229 - "ErrorBoundary"
-Cohesion: 0.20
-Nodes (5): 4.1 Cold-Start & Health Monitoring, 4.2 Guest Account Lifecycles, 4.3 Contextual Feedback & Error Boundary, 4. Landing Page, Guest Access & Feedback System Rules, ErrorBoundary
+### Community 229 - "FMEApex — active handoff"
+Cohesion: 0.29
+Nodes (7): Current objective and status, Delivered, FMEApex — active handoff, Material limits / existing backlog, Release handoff, Source map / next agent, Verified
 
-### Community 233 - "FMEApex — AI-Powered FMEA Quality Risk Platform"
-Cohesion: 0.40
-Nodes (5): Core Features, FMEApex — AI-Powered FMEA Quality Risk Platform, Getting Started, Project Structure, v0.9.0 experience (2026-10-19)
+### Community 233 - "README.md"
+Cohesion: 0.17
+Nodes (9): FMEApex Quality Platform — Agent Rules & Knowledge Graph, graphify, OpenAI Codex guide: FMEApex, Core Features, FMEApex — AI-Powered FMEA Quality Risk Platform, Getting Started, Project Structure, v0.10.0 connected quality release (+1 more)
 
 ### Community 239 - "v0.6.0 — 2026-10-17"
-Cohesion: 0.20
-Nodes (10): 2026-10-17 — ADR-031: Complete Frontend Overhaul to Industrial Quality Engineering Platform, BackendWarmupContainer(), Breaking / Notes, Changes, Features, Files Touched, Fixes, Schema/Migrations (+2 more)
+Cohesion: 0.29
+Nodes (6): Breaking / Notes, Changes, Fixes, Schema/Migrations, Summary, v0.6.0 — 2026-10-17
 
 ### Community 240 - "FMEApex product story"
-Cohesion: 0.33
-Nodes (5): Demonstration integrity, Design decisions, FMEApex product story, Project context, Verify
+Cohesion: 0.29
+Nodes (6): Demonstration integrity, Design decisions, FMEApex product story, Project context, Public resource and metadata contract, Verify
 
-### Community 242 - "AuditInterceptor"
-Cohesion: 0.15
-Nodes (4): AuditInterceptor, UserWithTenant, AuditLogService, rxjs
-
-### Community 243 - "Web Interface Guidelines"
-Cohesion: 0.22
-Nodes (6): Context Optimization Rules, README Sync and Context Optimization Skill, Guidelines Source, How It Works, Usage, Web Interface Guidelines
-
-### Community 244 - "📋 5. What Is Left (Prioritized Backlog)"
-Cohesion: 0.50
-Nodes (4): 📋 5. What Is Left (Prioritized Backlog), Immediate (P0), Polish (P2), Pre-Launch (P1)
-
-### Community 246 - "🤝 6. Inter-Harness Handoff Protocol"
-Cohesion: 0.67
-Nodes (3): 🤝 6. Inter-Harness Handoff Protocol, On Session End (Any Harness), On Session Start (Any Harness)
-
-### Community 247 - "useBackendWarmup"
-Cohesion: 0.14
-Nodes (13): Auth Agent — SSO, Tenant & RBAC Specialist (portable), Bus, Key Files, Must Enforce, Role, Targets, 2. Cloudflare Pages (Frontend Hosting), parseJwt() (+5 more)
-
-### Community 250 - "Auth Agent — SSO, Tenant & RBAC Specialist (portable)"
-Cohesion: 0.33
-Nodes (5): Auth Agent — SSO, Tenant & RBAC Specialist (portable), Bus, Key Files, Must Enforce, Role
-
-### Community 251 - "2. Process-Specific Customization Rules"
+### Community 241 - "2. Process-Specific Customization Rules"
 Cohesion: 0.40
-Nodes (5): 2.1 PFD ↔ PFMEA Bidirectional Linking, 2.2 Control Plan (CP) Synchronization, 2.3 Corrective Actions & Life Cycle, 2.4 Revisions & Approvals (21 CFR Part 11), 2. Process-Specific Customization Rules
+Nodes (5): 2.1 PFD ↔ PFMEA Bidirectional Linking, 2.2 Control Plan (CP) Synchronization, 2.3 Corrective Actions & Life Cycle, 2.4 Revision protection and approval records, 2. Process-Specific Customization Rules
 
-### Community 252 - "8.1 Pre-Planning Mandatory Graph Inspection"
-Cohesion: 0.40
-Nodes (5): 8.1 Pre-Planning Mandatory Graph Inspection, 8.2 Post-Change Graph Synchronization, 8.3 Always-on incremental handoff rule (2026-10-19), 8.4 Dashboard onboarding and activity invariants (2026-10-19), 8. Graphify Knowledge Graph Architecture
-
-### Community 253 - "Glossary"
+### Community 242 - "Glossary"
 Cohesion: 0.40
 Nodes (4): Codebase-Specific Terms, FMEA & Quality Terms, Glossary, Technical Terms
 
-### Community 255 - "FRONTEND/SRC/FEATURES/PFD Directory"
+### Community 243 - "Web Interface Guidelines"
 Cohesion: 0.40
-Nodes (4): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFD Directory, Subdirectories
+Nodes (4): Guidelines Source, How It Works, Usage, Web Interface Guidelines
 
-### Community 256 - "3. AI Copilot, Webhooks & Embedding Rules"
+### Community 246 - "11. Companion Script: `pfd-excel-formatter.js`"
+Cohesion: 0.40
+Nodes (5): 11. Companion Script: `pfd-excel-formatter.js`, File structure, How to modify the script to match your exact export rules, Integration example, Validation before deployment
+
+### Community 247 - "🛠️ Project Setup & Commands"
+Cohesion: 0.33
+Nodes (6): Build for Production, Code Linting, Install Dependencies, Prerequisites, 🛠️ Project Setup & Commands, Start Development Server
+
+### Community 249 - "vite.config.ts"
+Cohesion: 0.50
+Nodes (3): @tailwindcss/vite, vite, @vitejs/plugin-react
+
+### Community 250 - "8.1 Pre-Planning Mandatory Graph Inspection"
+Cohesion: 0.40
+Nodes (5): 8.1 Pre-Planning Mandatory Graph Inspection, 8.2 Post-Change Graph Synchronization, 8.3 Always-on incremental handoff rule (2026-10-19), 8.4 Dashboard onboarding and activity invariants (2026-10-19), 8. Graphify Knowledge Graph Architecture
+
+### Community 251 - "auth.service.ts"
+Cohesion: 0.16
+Nodes (6): PERMISSIONS, SignupDto, HANDLE_CAPACITY, HANDLE_WORDS, reservePublicHandle(), @nestjs/jwt
+
+### Community 252 - "BACKEND/PRISMA Directory"
+Cohesion: 0.40
+Nodes (4): BACKEND/PRISMA Directory, Directory Metadata, File Map, Subdirectories
+
+### Community 253 - "Auth Agent — SSO, Tenant & RBAC Specialist (portable)"
+Cohesion: 0.40
+Nodes (4): Auth Agent — SSO, Tenant & RBAC Specialist (portable), Bus, Key Files, Role
+
+### Community 254 - "3. AI Copilot, Webhooks & Embedding Rules"
 Cohesion: 0.50
 Nodes (4): 3.1 Human-in-the-Loop Suggestion Review, 3.2 Embedding Partitioning, 3.3 Webhook Integrations Security, 3. AI Copilot, Webhooks & Embedding Rules
+
+### Community 255 - "features/pfd/README.md"
+Cohesion: 0.15
+Nodes (10): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFD/COMPONENTS Directory, Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PFD Directory, Subdirectories, Directory Metadata (+2 more)
+
+### Community 256 - "BACKEND/PRISMA/MIGRATIONS/202610190002_PFD_GRAPH Directory"
+Cohesion: 0.50
+Nodes (3): BACKEND/PRISMA/MIGRATIONS/202610190002_PFD_GRAPH Directory, Directory Metadata, File Map
 
 ### Community 257 - "BACKEND/SRC/COMMON Directory"
 Cohesion: 0.50
 Nodes (3): BACKEND/SRC/COMMON Directory, Directory Metadata, File Map
 
-### Community 258 - "BACKEND/SRC/MODULES/AUDIT Directory"
-Cohesion: 0.50
-Nodes (3): BACKEND/SRC/MODULES/AUDIT Directory, Directory Metadata, File Map
+### Community 258 - "modules/README.md"
+Cohesion: 0.17
+Nodes (9): BACKEND/SRC/MODULES/AUDIT Directory, Directory Metadata, File Map, BACKEND/SRC/MODULES Directory, Directory Metadata, Subdirectories, BACKEND/SRC/MODULES/REPOSITORY Directory, Directory Metadata (+1 more)
 
-### Community 259 - "FRONTEND/SRC/COMPONENTS/LAYOUT Directory"
-Cohesion: 0.50
-Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/LAYOUT Directory
+### Community 259 - "src/components/README.md"
+Cohesion: 0.22
+Nodes (6): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/FEEDBACKWIDGET Directory, Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/LAYOUT Directory
 
 ### Community 260 - "FRONTEND/SRC/FEATURES/ACTIONS Directory"
 Cohesion: 0.50
@@ -1216,37 +1306,141 @@ Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/ACTIONS Directory
 Cohesion: 0.50
 Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/AUTH Directory
 
-### Community 262 - "FRONTEND/SRC/FEATURES/CONTROL-PLAN Directory"
+### Community 262 - "features/README.md"
+Cohesion: 0.25
+Nodes (6): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/CONTROL-PLAN Directory, Directory Metadata, FRONTEND/SRC/FEATURES Directory, Subdirectories
+
+### Community 263 - "BACKEND/PRISMA/MIGRATIONS/20261019090000_PUBLIC_HANDLES Directory"
 Cohesion: 0.50
-Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/CONTROL-PLAN Directory
+Nodes (3): BACKEND/PRISMA/MIGRATIONS/20261019090000_PUBLIC_HANDLES Directory, Directory Metadata, File Map
 
 ### Community 264 - "FRONTEND/SRC/FEATURES/LANDING Directory"
 Cohesion: 0.50
 Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/LANDING Directory
 
-### Community 265 - "Changes"
+### Community 265 - "BACKEND/PRISMA/MIGRATIONS/20261019130000_REQUIRE_TRIAL_HANDLE Directory"
 Cohesion: 0.50
-Nodes (4): Architecture, Changes, Features, Fixes
+Nodes (3): BACKEND/PRISMA/MIGRATIONS/20261019130000_REQUIRE_TRIAL_HANDLE Directory, Directory Metadata, File Map
+
+### Community 266 - "BACKEND/PRISMA/MIGRATIONS Directory"
+Cohesion: 0.50
+Nodes (4): BACKEND/PRISMA/MIGRATIONS Directory, Directory Metadata, File Map, Subdirectories
+
+### Community 267 - "BACKEND/SRC/MODULES/AUTH/INTERFACES Directory"
+Cohesion: 0.50
+Nodes (3): BACKEND/SRC/MODULES/AUTH/INTERFACES Directory, Directory Metadata, File Map
+
+### Community 268 - "BACKEND/SRC/MODULES/USER Directory"
+Cohesion: 0.50
+Nodes (3): BACKEND/SRC/MODULES/USER Directory, Directory Metadata, File Map
+
+### Community 269 - "BACKEND/SRC/QUEUES Directory"
+Cohesion: 0.50
+Nodes (3): BACKEND/SRC/QUEUES Directory, Directory Metadata, File Map
+
+### Community 270 - "BACKEND/SRC Directory"
+Cohesion: 0.50
+Nodes (4): BACKEND/SRC Directory, Directory Metadata, File Map, Subdirectories
+
+### Community 271 - "assets/README.md"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/ASSETS Directory
+
+### Community 272 - "FRONTEND/SRC/COMPONENTS Directory"
+Cohesion: 0.50
+Nodes (4): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS Directory, Subdirectories
+
+### Community 273 - "FRONTEND/SRC/COMPONENTS/SEO Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/SEO Directory
+
+### Community 274 - "FRONTEND/SRC/COMPONENTS/SITE Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/SITE Directory
+
+### Community 275 - "FRONTEND/SRC/COMPONENTS/THEMETOGGLE Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/THEMETOGGLE Directory
+
+### Community 276 - "FRONTEND/SRC/COMPONENTS/TOAST Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/COMPONENTS/TOAST Directory
+
+### Community 277 - "FRONTEND/SRC/FEATURES/ADMIN Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/ADMIN Directory
+
+### Community 278 - "FRONTEND/SRC/FEATURES/BLOG Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/BLOG Directory
+
+### Community 279 - "FRONTEND/SRC/FEATURES/COMPANY Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/COMPANY Directory
+
+### Community 280 - "FRONTEND/SRC/FEATURES/CONTENT Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/CONTENT Directory
+
+### Community 281 - "FRONTEND/SRC/FEATURES/LEARN Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/LEARN Directory
+
+### Community 282 - "FRONTEND/SRC/FEATURES/LINKAGE Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/LINKAGE Directory
+
+### Community 283 - "FRONTEND/SRC/FEATURES/PRICING Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PRICING Directory
+
+### Community 284 - "FRONTEND/SRC/FEATURES/PRODUCT Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PRODUCT Directory
+
+### Community 285 - "FRONTEND/SRC/FEATURES/PROGRAMMATIC Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/PROGRAMMATIC Directory
+
+### Community 286 - "FRONTEND/SRC/FEATURES/REPORTS Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/REPORTS Directory
+
+### Community 287 - "FRONTEND/SRC/FEATURES/REPOSITORY Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/REPOSITORY Directory
+
+### Community 288 - "FRONTEND/SRC/FEATURES/SHARED Directory"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/FEATURES/SHARED Directory
+
+### Community 289 - "hooks/README.md"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/HOOKS Directory
+
+### Community 290 - "theme/README.md"
+Cohesion: 0.50
+Nodes (3): Directory Metadata, File Map, FRONTEND/SRC/THEME Directory
 
 ## Knowledge Gaps
 - **40 isolated node(s):** `ioredis`, `passport`, `reflect-metadata`, `@eslint/eslintrc`, `@nestjs/cli` (+35 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1789 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1919 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Post` connect `Post` to `LoginDto`, `repository.controller.ts`, `router.tsx`, `AuthService`, `PfmeaRowController`, `StructureLinkageService`, `StructureFailureController`, `Permissions`, `UserService`, `SignupDto`, `AuthService`, `ControlPlanRowController`, `ActionController`, `FailureLinkController`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+- **Why does `DocumentHeader()` connect `parseApiError` to `DfmeaWorkspace.tsx`, `frontend/README.md`, `react`?**
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **What connects `ioredis`, `passport`, `reflect-metadata` to the rest of the system?**
   _40 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `router.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09120415449529373 - nodes in this community are weakly interconnected._
-- **Why does `Must Enforce` connect `useBackendWarmup` to `.getMe`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
-- **Should `repository.controller.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.10101010101010101 - nodes in this community are weakly interconnected._
-- **Should `scaffold_architecture.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.05432692307692308 - nodes in this community are weakly interconnected._
-- **Should `ActionService` be split into smaller, more focused modules?**
-  _Cohesion score 0.07564102564102564 - nodes in this community are weakly interconnected._
+- **Should `DfmeaWorkspace.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.07575757575757576 - nodes in this community are weakly interconnected._
+- **Why does `🗺️ Frontend Directory Structure` connect `frontend/README.md` to `parseApiError`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Should `@nestjs/common` be split into smaller, more focused modules?**
+  _Cohesion score 0.05285592497868713 - nodes in this community are weakly interconnected._
+- **Why does `FMEA Platform Frontend` connect `frontend/README.md` to `🛠️ Project Setup & Commands`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Should `App.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.09971509971509972 - nodes in this community are weakly interconnected._

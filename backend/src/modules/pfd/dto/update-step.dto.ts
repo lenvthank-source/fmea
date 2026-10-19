@@ -11,7 +11,7 @@ export class UpdateStepDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'decision'])
+  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'repair', 'decision', 'combined', 'hold', 'scrap', 'return'])
   stepType?: string;
 
   @IsString()

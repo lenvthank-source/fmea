@@ -273,3 +273,7 @@ When creating or modernizing a page, verify:
 - Use a compact summary strip, smaller headers and card padding, and a wider program column. On phones show the total and put phase filters on a horizontal scroller; prevent app-header overflow.
 - Trial UI says Trial workspace (Trial on narrow screens), hides archive navigation/actions, and suppresses redundant current-page account-menu navigation.
 - Activity must come from viewer-scoped recorded audits. Refresh periodically, on focus, after mutations, and manually. Display loading, empty, error, and updated-at states honestly; never label polling as streaming.
+
+
+## Approved account/card/repository refinements (2026-10-19)
+Display the server-assigned publicHandle in the minimal avatar/name/chevron account control; keep trial state and theme controls in its menu. Do not reintroduce a separate trial badge or inactive bell. Preserve all project fields/actions with wrapping and natural card height; no title line clamps hiding data. Repository overview must expose actual package/function/cause/control relationships with counts and missing-data states; structural completeness differs from approval. Full text remains available in the inspector. See engineering-rule-register for domain meaning and ACTIVE_STATE for integration status.

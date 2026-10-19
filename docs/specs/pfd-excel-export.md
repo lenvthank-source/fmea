@@ -1,5 +1,8 @@
 # PFD Excel Export — Formatting Implementation Spec
 
+> Historical design/specification: consult the [engineering rule register](../../.agents/context/engineering-rule-register.md) and current source for implemented behavior. Eight-column exports and proposed APIs/sync/gating are not universal standards or proof of implementation. Existing data must remain intact.
+
+
 ## 1. Objective
 Upgrade the existing PFD (Process Flow Diagram) Excel export so that instead of a raw data dump, it produces a professional engineering document suitable for customer submission, APQP, and PPAP packages — matching the target layout (`target_pfd_format.jpg`) while preserving the existing data model, row order, and process hierarchy shown in the application UI (`image.jpg`).
 

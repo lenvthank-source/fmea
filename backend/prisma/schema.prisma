@@ -38,6 +38,8 @@ model User {
   tenantId     String         @map("tenant_id") @db.Uuid
   email        String         @db.VarChar(255)
   name         String         @db.VarChar(255)
+  publicHandle String? @unique @map("public_handle") @db.VarChar(63)
+  handleReservation PublicHandleReservation? @relation(fields: [publicHandle], references: [handle], onDelete: Restrict)
   passwordHash String?        @map("password_hash") @db.VarChar(255)
   avatarUrl    String?        @map("avatar_url") @db.VarChar(500)
   status       String         @default("active") @db.VarChar(20)
@@ -205,6 +207,8 @@ model DocumentRevision {
   submittedAt       DateTime?  @map("submitted_at") @db.Timestamptz
   approvedAt        DateTime?  @map("approved_at") @db.Timestamptz
   lockedAt          DateTime?  @map("locked_at") @db.Timestamptz
+  pfdGraph          Json?      @map("pfd_graph")
+  pfdGraphVersion   Int        @default(0) @map("pfd_graph_version")
   document          Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
   creator           User          @relation("RevisionCreator", fields: [createdById], references: [id])
   approvals         Approval[]
@@ -814,4 +818,12 @@ model DetectionScale {
   color    String @default("#64748b") @db.VarChar(20)
 
   @@map("detection_scale")
+}
+
+// Global tombstones intentionally have no tenant/user cascade: handles are never recycled.
+model PublicHandleReservation {
+  handle String @id @db.VarChar(63)
+  reservedAt DateTime @default(now()) @map("reserved_at") @db.Timestamptz
+  users User[]
+  @@map("public_handle_reservation")
 }

@@ -30,7 +30,7 @@ Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.ser
 - **CRITICAL**: Every database query on user data MUST include `tenantId` filter
 - Cross-tenant data leakage is a security violation
 - RLS session variables: `SET app.current_tenant_id` and `SET app.current_user_id`
-- All tables cascade delete relative to `tenant` table
+- Tenant-owned data retains existing lifecycle rules. Global public-handle reservations intentionally have no tenant/user cascade, are immutable, and survive account/tenant deletion.
 - Source: [prisma.service.ts](file:///f:/proj-fmea/backend/src/prisma/prisma.service.ts)
 
 ## Guest Accounts
@@ -50,7 +50,7 @@ Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.ser
 ### Viewer-scoped workspace activity
 - `GET /api/v1/audit-logs/recent` receives the authenticated viewer as well as tenant context. Project, document, revision, row, structure, and actor lookups retain tenant constraints and project-list visibility rules (guest reference + own unexpired program, owner scope for regular users, tenant scope for Admin).
 - Only recorded audit rows are returned. Unattributable or inaccessible rows are omitted; no synthetic fallback records. Collection POST audit writes obtain the entity ID from the successful response when the URL has no ID.
-- Presentation label Trial workspace does not change `isGuest`, JWT claims, session storage, guest limits, or permissions. Guest archive controls are hidden.
+- Account control displays the stable server-assigned `publicHandle`; trial information is in its menu. Internal `isGuest`, session storage, limits and permissions are preserved. Guest archive controls remain hidden.
 
 ## Secrets Management
 
@@ -70,12 +70,12 @@ Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.ser
 - S/O/D ratings constrained to `@Min(1) @Max(10) @IsInt()`
 - Source: [main.ts](file:///f:/proj-fmea/backend/src/main.ts)
 
-## Revision Immutability (21 CFR Part 11)
+## Revision protection and approval records
 
 - Locked revisions (`lockedAt !== null`) block all write mutations
 - Revision creator cannot be reviewer or approver
 - Audit log entries are write-only (no UPDATE/DELETE)
-- Digital signatures: timestamp + user name + action type + hash
+- Approval currently records approver ID, decision, comment and timestamp after password confirmation; no cryptographic approval hash is persisted by the inspected method. These controls alone are not regulatory certification.
 
 ## File Upload Security
 
@@ -89,3 +89,6 @@ Source: [auth.service.ts](file:///f:/proj-fmea/backend/src/modules/auth/auth.ser
 
 - Outbound: HMAC-SHA256 signed with `X-FMEA-Signature` header
 - Inbound: Must verify active tenant authorization tokens
+
+## Permanent public handles
+Guest creation allocates a lowercase two-word handle transactionally using secure randomness, a global unique ledger insert, and collision retries. PublicHandleReservation has no user/tenant ownership FK; permanent tombstones are a deliberate exception to tenant cascades. Database triggers prevent reservation update/delete/truncate and prevent changing an assigned user handle. Migration backfills existing guest accounts without modifying historical names/emails, IDs, ownership or audit events. New access claims, login response and `/auth/me` expose publicHandle; registered names remain unchanged. Display handles are not authentication secrets. Sources: `backend/src/modules/auth/public-handle.ts:1`, migration `20261019090000_public_handles/migration.sql:1`.

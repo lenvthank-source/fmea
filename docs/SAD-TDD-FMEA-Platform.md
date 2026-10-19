@@ -1,4 +1,7 @@
 # AI-Powered FMEA Platform
+
+> Historical architecture proposal: current implementation and [.agents/context/engineering-rule-register.md](../.agents/context/engineering-rule-register.md) supersede conflicting AP, draft-gating, PFD topology, synchronization and compliance claims. Do not treat proposed tables/APIs as deployed behavior.
+
 ## Software Architecture Document (SAD) & Technical Design Document (TDD)
 
 | **Document ID** | FMEA-SAD-TDD-2026-001 |

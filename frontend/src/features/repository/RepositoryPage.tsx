@@ -1,566 +1,373 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
+  Alert,
   Button,
-  TextField,
-  InputAdornment,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Stack,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-} from '@mui/material';
-import {
-  Search as SearchIcon,
-  CheckCircle as CheckIcon,
-  Cancel as CancelIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
-import { useAuth } from '../auth/AuthContext';
-import { API_BASE_URL } from '../../config';
-import { PackagePreviewCard } from './PackagePreviewCard';
-import { EditPackageDialog } from './EditPackageDialog';
-import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
-import { parseApiError } from '../../lib/api';
-
-export const RepositoryPage: React.FC = () => {
+  TextField,
+} from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from "../../config";
+import { parseApiError } from "../../lib/api";
+import { PackagePreviewCard } from "./PackagePreviewCard";
+import { EditPackageDialog } from "./EditPackageDialog";
+import { ImportTargetDialog } from "./ImportTargetDialog";
+import { normalizePackage, packageSearchText } from "./packageStructure";
+import "./repository.css";
+interface Package {
+  id: string;
+  name: string;
+  description?: string;
+  packageData: unknown;
+  contributorName: string;
+  contributorTenantId: string;
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt?: string;
+  status: string;
+  rejectionReason?: string;
+}
+export function RepositoryPage() {
   const { token, user } = useAuth();
-  const { showToast } = useToast();
-  const isGuest = Boolean(
-    user?.isGuest ||
-      user?.roles?.includes('Guest') ||
-      (user?.email && user.email.toLowerCase().startsWith('guest'))
+  const isGuest = !!user?.isGuest || !!user?.roles?.includes("Guest");
+  const isAdmin = !isGuest && !!user?.permissions?.includes("admin.config");
+  const canImport = !!user?.permissions?.some((p) =>
+    ["pfmea.create", "pfmea.edit"].includes(p),
   );
-  const isAdmin = Boolean(
-    !isGuest &&
-      (user?.roles?.includes('Admin') ||
-        user?.permissions?.includes('admin.config') ||
-        user?.permissions?.includes('admin.users') ||
-        (user?.email && user.email.includes('lenvthank')))
-  );
-
-  const [activeTab, setActiveTab] = useState<number>(0);
-  const [approvedPackages, setApprovedPackages] = useState<any[]>([]);
-  const [pendingPackages, setPendingPackages] = useState<any[]>([]);
-  const [mySubmissions, setMySubmissions] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Selected package for preview / edit / rejection
-  const [previewPackage, setPreviewPackage] = useState<any | null>(null);
-  const [editingPackage, setEditingPackage] = useState<any | null>(null);
-  const [rejectingPackageId, setRejectingPackageId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState('');
-
-  const fetchData = async () => {
+  const [params, setParams] = useSearchParams();
+  const tab =
+    params.get("tab") === "pending" && isAdmin
+      ? "pending"
+      : params.get("tab") === "mine" && !isGuest
+        ? "mine"
+        : "approved";
+  const query = params.get("q") || "";
+  const filter = params.get("coverage") || "all";
+  const [packages, setPackages] = useState<{
+    approved: Package[];
+    pending: Package[];
+    mine: Package[];
+  }>({ approved: [], pending: [], mine: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState<Package | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const update = (key: string, value: string) =>
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        if (key !== "package") next.delete("package");
+        return next;
+      },
+      { replace: true },
+    );
+  const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
-    setError(null);
+    setError("");
     try {
-      // Approved packages
-      const appRes = await fetch(`${API_BASE_URL}/repository/packages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (appRes.ok) {
-        const appData = await appRes.json();
-        setApprovedPackages(Array.isArray(appData) ? appData : []);
-      }
-
-      // Pending packages (Admin only)
-      if (isAdmin) {
-        const pendRes = await fetch(`${API_BASE_URL}/repository/packages/pending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (pendRes.ok) {
-          const pendData = await pendRes.json();
-          setPendingPackages(Array.isArray(pendData) ? pendData : []);
-        }
-      }
-
-      // My submissions
-      const myRes = await fetch(`${API_BASE_URL}/repository/packages/my-submissions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (myRes.ok) {
-        const myData = await myRes.json();
-        setMySubmissions(Array.isArray(myData) ? myData : []);
-      }
-    } catch (err: any) {
-      console.error(err);
-      const msg = (err as any)?.message || 'Failed to fetch repository packages';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
+      const read = async (suffix: string) => {
+        const res = await fetch(
+          `${API_BASE_URL}/repository/packages${suffix}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!res.ok)
+          throw new Error(await parseApiError(res, "Unable to load packages"));
+        const data = await res.json();
+        if (!Array.isArray(data))
+          throw new Error("Unexpected repository response");
+        return data as Package[];
+      };
+      const [approved, pending, mine] = await Promise.all([
+        read(""),
+        isAdmin ? read("/pending") : Promise.resolve([]),
+        !isGuest ? read("/my-submissions") : Promise.resolve([]),
+      ]);
+      setPackages({ approved, pending, mine });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load packages");
     } finally {
       setLoading(false);
     }
-  };
-
+  }, [token, isAdmin, isGuest]);
   useEffect(() => {
-    fetchData();
-  }, [token, isAdmin]);
-
-  const handleApprove = async (id: string) => {
+    void load();
+  }, [load]);
+  const visible = packages[tab].filter((pkg) => {
+    const model = normalizePackage(pkg.packageData, pkg.name);
+    return (
+      packageSearchText(pkg.packageData, pkg.name, pkg.description).includes(
+        query.toLowerCase(),
+      ) &&
+      (filter === "all" ||
+        (filter === "gaps"
+          ? model.missingControls > 0 ||
+            model.root.children.some((fn) => !fn.children.length) ||
+            !model.functions ||
+            model.issues.length > 0
+          : model.functions > 0 &&
+            model.causes > 0 &&
+            !model.root.children.some((fn) => !fn.children.length) &&
+            model.missingControls === 0 &&
+            !model.issues.length))
+    );
+  });
+  const selected =
+    visible.find((pkg) => pkg.id === params.get("package")) || visible[0];
+  const mutate = async (action: string, method = "POST", body?: unknown) => {
+    if (!selected) return;
+    setBusy(true);
+    setError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/repository/packages/${id}/approve`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const msg = await parseApiError(res, 'Failed to approve package');
-        throw new Error(msg);
-      }
-      if (res.ok) {
-        fetchData();
-      }
-    } catch (err: any) {
-      console.error(err);
-      const msg = err.message || 'Failed to approve package';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectingPackageId || !rejectionReason.trim()) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/repository/packages/${rejectingPackageId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${API_BASE_URL}/repository/packages/${selected.id}${action}`,
+        {
+          method,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          ...(body ? { body: JSON.stringify(body) } : {}),
         },
-        body: JSON.stringify({ rejectionReason }),
-      });
-      if (!res.ok) {
-        const msg = await parseApiError(res, 'Failed to reject package');
-        throw new Error(msg);
-      }
-      if (res.ok) {
-        setRejectingPackageId(null);
-        setRejectionReason('');
-        fetchData();
-      }
-    } catch (err: any) {
-      console.error(err);
-      const msg = err.message || 'Failed to reject package';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
+      );
+      if (!res.ok)
+        throw new Error(await parseApiError(res, "Package action failed"));
+      setRejecting(false);
+      setReason("");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Package action failed");
+    } finally {
+      setBusy(false);
     }
   };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this repository package?')) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/repository/packages/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const msg = await parseApiError(res, 'Failed to delete repository package');
-        throw new Error(msg);
-      }
-      if (res.ok) {
-        fetchData();
-      }
-    } catch (err: any) {
-      console.error(err);
-      const msg = err.message || 'Failed to delete repository package';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-    }
-  };
-
-  const filteredApproved = approvedPackages.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  const TextFieldAny = TextField as any;
-
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
-      {/* Header Banner — Shadcn Admin Layout */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.03em', color: '#09090b', fontSize: { xs: '1.5rem', sm: '1.875rem' } }}>
-          Standard Packages Repository
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#71717a', fontWeight: 500, mt: 0.5 }}>
-          Central library of standardized Work Element packages containing pre-defined functions, causes, and S/O/D ratings.
-        </Typography>
-      </Box>
-
+    <main className="repository-page">
+      <h1>Standard Packages Repository</h1>
+      <p className="repo-subtitle">
+        Reusable work elements. See the function, cause, and control
+        relationships before you import.
+      </p>
+      <div className="repo-tools" aria-label="Package collections">
+        <button
+          aria-pressed={tab === "approved"}
+          onClick={() => update("tab", "")}
+        >
+          Approved ({packages.approved.length})
+        </button>
+        {isAdmin && (
+          <button
+            aria-pressed={tab === "pending"}
+            onClick={() => update("tab", "pending")}
+          >
+            Pending review ({packages.pending.length})
+          </button>
+        )}
+        {!isGuest && (
+          <button
+            aria-pressed={tab === "mine"}
+            onClick={() => update("tab", "mine")}
+          >
+            My submissions ({packages.mine.length})
+          </button>
+        )}
+      </div>
       {error && (
-        <Alert severity="error" sx={{ mb: 2.5, borderRadius: '10px', border: '1px solid #fecaca', bgcolor: '#fef2f2', fontSize: '0.825rem' }}>
+        <Alert
+          severity="error"
+          sx={{ my: 2 }}
+          action={<Button onClick={load}>Retry</Button>}
+        >
           {error}
         </Alert>
       )}
-
-      {/* Main Segmented Pill Tabs */}
-      <Box sx={{ mb: 3 }}>
-        <Paper
-          sx={{
-            display: 'inline-flex',
-            p: 0.5,
-            borderRadius: '8px',
-            bgcolor: '#f4f4f5',
-            border: '1px solid #e4e4e7',
-            boxShadow: 'none',
-          }}
+      <div className="repo-search" style={{ marginTop: 16 }}>
+        <input
+          aria-label="Search packages, functions, causes and controls"
+          placeholder="Search packages, functions, causes, controls…"
+          value={query}
+          onChange={(e) => update("q", e.target.value)}
+        />
+        <select
+          aria-label="Filter structural coverage"
+          value={filter}
+          onChange={(e) => update("coverage", e.target.value)}
         >
-          <Tabs
-            value={activeTab}
-            onChange={(_, val) => setActiveTab(val)}
-            sx={{
-              minHeight: 34,
-              '& .MuiTabs-indicator': { display: 'none' },
-              '& .MuiTab-root': {
-                minHeight: 32,
-                px: 2,
-                py: 0.5,
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                color: '#71717a',
-                transition: 'all 0.15s',
-                '&.Mui-selected': {
-                  bgcolor: '#ffffff',
-                  color: '#09090b',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                },
-              },
-            }}
+          <option value="all">All structures</option>
+          <option value="gaps">Missing structure / controls</option>
+          <option value="recorded">Controls recorded for all causes</option>
+        </select>
+      </div>
+      {loading ? (
+        <div className="repo-empty" role="status">
+          <CircularProgress size={22} /> Loading packages…
+        </div>
+      ) : !visible.length ? (
+        <div className="repo-empty">
+          {query || filter !== "all"
+            ? "No packages match these filters."
+            : "No packages in this collection."}
+        </div>
+      ) : (
+        <div className="repo-library">
+          <nav
+            className="repo-navigator"
+            aria-label="Select work-element package"
           >
-            <Tab label={`Approved Packages (${approvedPackages.length})`} />
-            {isAdmin && (
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <span>Pending Approvals</span>
-                    {pendingPackages.length > 0 && (
-                      <Chip
-                        label={pendingPackages.length}
-                        size="small"
-                        sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#ef4444', color: '#ffffff' }}
-                      />
-                    )}
-                  </Box>
-                }
+            {visible.map((pkg) => {
+              const model = normalizePackage(pkg.packageData, pkg.name);
+              return (
+                <button
+                  key={pkg.id}
+                  className="repo-package-button"
+                  aria-current={selected?.id === pkg.id}
+                  onClick={() => update("package", pkg.id)}
+                >
+                  <strong>{pkg.name}</strong>
+                  <small>
+                    {model.functions} functions · {model.causes} causes ·{" "}
+                    {model.controls} controls
+                  </small>
+                  <small>
+                    {pkg.status} · #{pkg.id.slice(-8)}
+                    {model.missingControls
+                      ? ` · ${model.missingControls} control gaps`
+                      : ""}
+                  </small>
+                </button>
+              );
+            })}
+          </nav>
+          {selected && (
+            <div className="repo-library-main">
+              <PackagePreviewCard
+                key={selected.id}
+                packageData={selected.packageData}
+                packageName={selected.name}
               />
-            )}
-            <Tab label={`My Submissions (${mySubmissions.length})`} />
-          </Tabs>
-        </Paper>
-      </Box>
-
-      {/* Tab 0: Approved Packages */}
-      {activeTab === 0 && (
-        <Box>
-          <Box sx={{ mb: 2.5 }}>
-            <TextFieldAny
-              placeholder="Search work element packages... (⌘K)"
-              size="small"
-              fullWidth
-              value={searchQuery}
-              onChange={(e: any) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#a1a1aa', fontSize: '1.1rem' }} />
-                    </InputAdornment>
-                  ),
-                }
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  bgcolor: '#ffffff',
-                  '& fieldset': { borderColor: '#e4e4e7' },
-                  '&:hover fieldset': { borderColor: '#d4d4d8' },
-                  '&.Mui-focused fieldset': { borderColor: '#09090b' },
-                }
-              }}
-            />
-          </Box>
-
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : filteredApproved.length === 0 ? (
-            <Card variant="outlined">
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="text.secondary">No approved work element packages found.</Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <TableContainer component={Paper} sx={{ borderRadius: '10px', border: '1px solid #e4e4e7', boxShadow: 'none', overflow: 'hidden' }}>
-              <Table size="small">
-                <TableHead sx={{ bgcolor: '#fafafa' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>Work Element Package</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Description</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Functions</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contributor</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Date Approved</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredApproved.map((pkg) => {
-                    const fnCount = (pkg.packageData?.functions || []).length;
-                    return (
-                      <React.Fragment key={pkg.id}>
-                        <TableRow hover>
-                          <TableCell sx={{ fontWeight: 600, color: '#0f172a' }}>{pkg.name}</TableCell>
-                          <TableCell>{pkg.description || '—'}</TableCell>
-                          <TableCell>
-                            <Chip label={`${fnCount} functions`} size="small" color="primary" variant="outlined" />
-                          </TableCell>
-                          <TableCell>{pkg.contributorName}</TableCell>
-                          <TableCell>{new Date(pkg.updatedAt).toLocaleDateString()}</TableCell>
-                          <TableCell align="right">
-                            <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => setPreviewPackage(previewPackage?.id === pkg.id ? null : pkg)}
-                              >
-                                {previewPackage?.id === pkg.id ? 'Hide Structure' : 'View Structure'}
-                              </Button>
-                              {!isGuest && (
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  color="primary"
-                                  startIcon={<EditIcon />}
-                                  onClick={() => setEditingPackage(pkg)}
-                                >
-                                  Edit
-                                </Button>
-                              )}
-                              {!isGuest && isAdmin && (
-                                <IconButton size="small" color="error" onClick={() => handleDelete(pkg.id)}>
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              )}
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                        {previewPackage?.id === pkg.id && (
-                          <TableRow>
-                            <TableCell colSpan={6} sx={{ bgcolor: '#fafafa', p: 2 }}>
-                              <PackagePreviewCard packageData={pkg.packageData} packageName={pkg.name} />
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Box>
-      )}
-
-      {/* Tab 1: Pending Approvals (Admin) */}
-      {isAdmin && activeTab === 1 && (
-        <Box>
-          {pendingPackages.length === 0 ? (
-            <Card variant="outlined">
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="text.secondary">No pending package submissions to review.</Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <Stack spacing={2}>
-              {pendingPackages.map((pkg) => (
-                <Card key={pkg.id} variant="outlined">
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                          {pkg.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Submitted by {pkg.contributorName} on {new Date(pkg.createdAt).toLocaleDateString()}
-                        </Typography>
-                        {pkg.description && (
-                          <Typography variant="body2" sx={{ mt: 1 }}>
-                            {pkg.description}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Stack direction="row" spacing={1}>
+              <div className="repo-package-actions">
+                {canImport && selected.status === "approved" && (
+                  <Button
+                    variant="contained"
+                    onClick={() => setImporting(true)}
+                  >
+                    Import into a process
+                  </Button>
+                )}
+                {isAdmin && selected.contributorTenantId === user?.tenantId && (
+                  <>
+                    <Button onClick={() => setEditing(selected)}>
+                      Edit package
+                    </Button>
+                    {selected.status === "pending" && (
+                      <>
                         <Button
-                          variant="contained"
-                          color="success"
-                          startIcon={<CheckIcon />}
-                          onClick={() => handleApprove(pkg.id)}
+                          disabled={busy}
+                          onClick={() => mutate("/approve")}
                         >
                           Approve
                         </Button>
                         <Button
-                          variant="outlined"
-                          color="error"
-                          startIcon={<CancelIcon />}
-                          onClick={() => setRejectingPackageId(pkg.id)}
+                          disabled={busy}
+                          onClick={() => setRejecting(true)}
                         >
                           Reject
                         </Button>
-                      </Stack>
-                    </Box>
-                    <PackagePreviewCard packageData={pkg.packageData} packageName={pkg.name} />
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
+                      </>
+                    )}
+                    <Button
+                      color="error"
+                      disabled={busy}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete ${selected.name}? This cannot be undone.`,
+                          )
+                        )
+                          void mutate("", "DELETE");
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
+              <p className="repo-note">
+                {selected.status} · Contributor:{" "}
+                {selected.contributorName || "Not recorded"} ·{" "}
+                {selected.reviewedAt
+                  ? `Reviewed ${new Date(selected.reviewedAt).toLocaleDateString()}`
+                  : `Updated ${new Date(selected.updatedAt).toLocaleDateString()}`}{" "}
+                · #{selected.id.slice(-8)}
+              </p>
+              {selected.description && (
+                <p className="repo-note">{selected.description}</p>
+              )}
+              {selected.rejectionReason && (
+                <Alert severity="info">
+                  Review feedback: {selected.rejectionReason}
+                </Alert>
+              )}
+            </div>
           )}
-        </Box>
+        </div>
       )}
-
-      {/* Tab 2: My Submissions */}
-      {(activeTab === 2 || (!isAdmin && activeTab === 1)) && (
-        <Box>
-          {mySubmissions.length === 0 ? (
-            <Card variant="outlined">
-              <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                <Typography color="text.secondary">You have not submitted any work element packages yet.</Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <TableContainer component={Paper} sx={{ borderRadius: '10px', border: '1px solid #e4e4e7', boxShadow: 'none', overflow: 'hidden' }}>
-              <Table size="small">
-                <TableHead sx={{ bgcolor: '#fafafa' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', py: 1.5 }}>Package Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Submitted Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: '#71717a', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rejection Reason</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {mySubmissions.map((pkg) => (
-                    <TableRow key={pkg.id} hover>
-                      <TableCell sx={{ fontWeight: 600 }}>{pkg.name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={pkg.status.toUpperCase()}
-                          size="small"
-                          color={
-                            pkg.status === 'approved'
-                              ? 'success'
-                              : pkg.status === 'pending'
-                              ? 'warning'
-                              : 'error'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>{new Date(pkg.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>{pkg.rejectionReason || '—'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Box>
+      {editing && (
+        <EditPackageDialog
+          open
+          pkg={editing}
+          onClose={() => setEditing(null)}
+          onSuccess={load}
+        />
       )}
-
-      {/* Rejection Dialog — Modernized */}
-      <Dialog 
-        open={Boolean(rejectingPackageId)} 
-        onClose={() => setRejectingPackageId(null)}
-        maxWidth="xs"
+      {selected && importing && (
+        <ImportTargetDialog
+          open
+          packageId={selected.id}
+          packageName={selected.name}
+          onClose={() => setImporting(false)}
+          onSuccess={() => setImporting(false)}
+        />
+      )}
+      <Dialog
+        open={rejecting}
+        onClose={() => setRejecting(false)}
         fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: '14px',
-              border: '1px solid #e4e4e7',
-              boxShadow: '0 20px 50px -10px rgba(0,0,0,0.15)',
-              p: 1
-            }
-          }
-        }}
+        maxWidth="sm"
       >
-        <DialogTitle sx={{ fontWeight: 700, color: '#09090b', fontSize: '1.05rem', pt: 2, px: 2.5 }}>
-          Reject Submission
-        </DialogTitle>
-        <DialogContent sx={{ px: 2.5, py: 1 }}>
-          <Typography sx={{ color: '#71717a', fontSize: '0.825rem', mb: 1.5 }}>
-            Provide feedback explaining why this package does not meet standardization criteria:
-          </Typography>
+        <DialogTitle>Request package changes</DialogTitle>
+        <DialogContent>
           <TextField
-            size="small"
-            label="Reason for Rejection *"
-            multiline
-            rows={3}
+            label="Review feedback"
             fullWidth
-            value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '8px',
-                '& fieldset': { borderColor: '#e4e4e7' }
-              }
-            }}
+            multiline
+            minRows={3}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 2.5, pb: 2, pt: 1, gap: 1 }}>
-          <Button 
-            onClick={() => setRejectingPackageId(null)}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#71717a', border: '1px solid #e4e4e7' }}
+        <DialogActions>
+          <Button onClick={() => setRejecting(false)}>Cancel</Button>
+          <Button
+            disabled={busy || !reason.trim()}
+            onClick={() =>
+              mutate("/reject", "POST", { rejectionReason: reason })
+            }
           >
-            Cancel
-          </Button>
-          <Button 
-            variant="contained" 
-            onClick={handleReject} 
-            disabled={!rejectionReason.trim()}
-            sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, bgcolor: '#ef4444', color: '#ffffff', boxShadow: 'none' }}
-          >
-            Confirm Rejection
+            Reject package
           </Button>
         </DialogActions>
       </Dialog>
-
-
-
-      {/* Edit Package Dialog */}
-      {editingPackage && (
-        <EditPackageDialog
-          open={Boolean(editingPackage)}
-          onClose={() => setEditingPackage(null)}
-          pkg={editingPackage}
-          onSuccess={() => {
-            fetchData();
-          }}
-        />
-      )}
-    </Box>
+    </main>
   );
-};
-
+}
 export default RepositoryPage;

@@ -11,6 +11,9 @@ import { AuditLogService } from '../audit/audit-log.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import * as bcrypt from 'bcryptjs';
+import { revisionReadiness } from './revision-readiness';
+import { PfdGraph } from '../pfd/pfd-graph';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
@@ -18,6 +21,18 @@ export class ProjectService {
     private prisma: PrismaService,
     private auditLogService: AuditLogService,
   ) {}
+
+  private async copyProcessGraph(tx: Prisma.TransactionClient, sourceRevisionId: string, targetRevisionId: string, stepIds: Map<string, string>) {
+    const source = await tx.documentRevision.findUnique({ where: { id: sourceRevisionId }, select: { pfdGraph: true } });
+    const graph = source?.pfdGraph as unknown as PfdGraph | null;
+    if (!graph || graph.schemaVersion !== 1) return;
+    const nodes = graph.nodes.filter(n => n.kind !== 'step' || (n.stepId && stepIds.has(n.stepId))).map(n => ({ ...n, ...(n.stepId ? { stepId: stepIds.get(n.stepId)! } : {}) }));
+    const nodeIds = new Set(nodes.map(n => n.id));
+    await tx.documentRevision.update({ where: { id: targetRevisionId }, data: {
+      pfdGraph: { ...graph, nodes, edges: graph.edges.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target)), reviewStatus: 'draft' } as unknown as Prisma.InputJsonValue,
+      pfdGraphVersion: 0,
+    } });
+  }
 
   private async autoArchiveExpiredGuestProjects(tenantId: string) {
     try {
@@ -341,6 +356,7 @@ export class ProjectService {
               });
               stepIdMap.set(step.id, newStep.id);
             }
+            await this.copyProcessGraph(tx, oldRevisionId, revision.id, stepIdMap);
           } else if (type === 'PFMEA' || type === 'DFMEA') {
             const oldRows = await tx.pfmeaRow.findMany({
               where: { revisionId: oldRevisionId },
@@ -631,6 +647,7 @@ async replicate(
             });
             stepIdMap.set(step.id, newStep.id);
           }
+          await this.copyProcessGraph(tx, sourceRevisionId, revision.id, stepIdMap);
         } else if (type === 'PFMEA' || type === 'DFMEA') {
           const oldRows = await tx.pfmeaRow.findMany({
             where: { revisionId: sourceRevisionId },
@@ -847,11 +864,11 @@ async replicate(
     });
   }
 
-  async findDocuments(tenantId: string, projectId: string) {
-    await this.findOne(tenantId, projectId);
+  async findDocuments(tenantId: string, projectId: string, isAdmin = false) {
+    const project = await this.findOne(tenantId, projectId, true, isAdmin);
 
     return this.prisma.document.findMany({
-      where: { projectId, tenantId },
+      where: { projectId, tenantId: project.tenantId },
     });
   }
 
@@ -942,8 +959,9 @@ async replicate(
             const oldSteps = await tx.processStep.findMany({
               where: { revisionId: oldRevisionId },
             });
+            const stepIdMap = new Map<string, string>();
             for (const step of oldSteps) {
-              await tx.processStep.create({
+              const copiedStep = await tx.processStep.create({
                 data: {
                   revisionId: newRevision.id,
                   processItemId: step.processItemId,
@@ -965,7 +983,9 @@ async replicate(
                   isOrphaned: step.isOrphaned,
                 },
               });
+              stepIdMap.set(step.id, copiedStep.id);
             }
+            await this.copyProcessGraph(tx, oldRevisionId, newRevision.id, stepIdMap);
           }
 
           // Copy PfmeaRows (for PFMEA documents)
@@ -1150,12 +1170,12 @@ async replicate(
     return createdRevisions;
   }
 
-  async getRevisions(tenantId: string, projectId: string) {
-    await this.findOne(tenantId, projectId);
+  async getRevisions(tenantId: string, projectId: string, isAdmin = false) {
+    const project = await this.findOne(tenantId, projectId, true, isAdmin);
 
     // Fetch DocumentRevision records for all documents of the project
     const documents = await this.prisma.document.findMany({
-      where: { projectId, tenantId },
+      where: { projectId, tenantId: project.tenantId },
       select: { id: true },
     });
 
@@ -1573,6 +1593,20 @@ async replicate(
 
   // ===== Revision Approval Workflow =====
 
+  async getRevisionReadiness(tenantId: string, revisionId: string) {
+    const revision = await this.prisma.documentRevision.findFirst({
+      where: { id: revisionId, document: { tenantId } },
+      include: { document: true, processSteps: { select: { id: true, stepType: true } }, pfmeaRows: { include: { functions: true, requirements: true, failureModes: true, effects: true, causes: true, controls: true } }, controlPlanRows: true },
+    });
+    if (!revision) throw new NotFoundException('Revision not found');
+    return revisionReadiness({ type: revision.document.type, graph: revision.pfdGraph, steps: revision.processSteps, rows: revision.pfmeaRows, controlRows: revision.controlPlanRows });
+  }
+
+  private async assertSubmissionReady(tenantId: string, revisionId: string) {
+    const readiness = await this.getRevisionReadiness(tenantId, revisionId);
+    if (!readiness.ready) throw new BadRequestException({ message: readiness.errors.join(' '), readiness });
+  }
+
   /**
    * Submit a draft revision for approval
    * Changes status from 'draft' to 'in_review'
@@ -1598,6 +1632,8 @@ async replicate(
     if (revision.status !== 'draft') {
       throw new BadRequestException('Only draft revisions can be submitted for approval');
     }
+
+    await this.assertSubmissionReady(tenantId, revisionId);
 
     const updated = await this.prisma.documentRevision.update({
       where: { id: revisionId },
@@ -1646,6 +1682,8 @@ async replicate(
     if (revision.status !== 'in_review') {
       throw new BadRequestException('Only revisions in review can be approved');
     }
+
+    await this.assertSubmissionReady(tenantId, revisionId);
 
     // Segregation of duties: submitter cannot approve their own revision
     if (revision.createdById === userId) {

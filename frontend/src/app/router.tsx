@@ -18,6 +18,7 @@ import { PricingPage } from '../features/pricing/PricingPage';
 import { LearnHubPage } from '../features/learn/LearnHubPage';
 import { BlogListPage } from '../features/blog/BlogListPage';
 import { BlogPostPage } from '../features/blog/BlogPostPage';
+import { EnglishAlias, PublicNotFound } from '../components/site/PublicLayout';
 
 const PfdWorkspace = lazy(() => import('../features/pfd/PfdWorkspace'));
 const PfmeaWorkspace = lazy(() => import('../features/pfmea/PfmeaWorkspace'));
@@ -74,19 +75,19 @@ export const AppRouter: React.FC = () => {
       <Route path="/blog/:slug" element={<BlogPostPage />} />
       {/* SEO Educational Pillar Hubs */}
       <Route path="/learn/:slug" element={<PillarPage />} />
-      <Route path="/:lang/learn/:slug" element={<PillarPage />} />
+      <Route path="/:lang/learn/:slug" element={<EnglishAlias />} />
 
       {/* Programmatic Industry Pages */}
       <Route path="/fmea/:industry" element={<IndustryFmeaPage />} />
-      <Route path="/:lang/fmea/:industry" element={<IndustryFmeaPage />} />
+      <Route path="/:lang/fmea/:industry" element={<EnglishAlias />} />
 
       {/* Programmatic Competitor Comparison Pages */}
       <Route path="/vs/:competitor" element={<CompetitorVsPage />} />
-      <Route path="/:lang/vs/:competitor" element={<CompetitorVsPage />} />
+      <Route path="/:lang/vs/:competitor" element={<EnglishAlias />} />
 
       {/* Programmatic Glossary Pages */}
       <Route path="/glossary/:term" element={<GlossaryPage />} />
-      <Route path="/:lang/glossary/:term" element={<GlossaryPage />} />
+      <Route path="/:lang/glossary/:term" element={<EnglishAlias />} />
       
       {/* Protected App Workspace Routes */}
       <Route
@@ -121,7 +122,7 @@ export const AppRouter: React.FC = () => {
       } />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<PublicNotFound />} />
     </Routes>
   );
 };

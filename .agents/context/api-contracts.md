@@ -76,3 +76,14 @@ Pagination: `{data:[T], total, page, limit}` → `frontend/src/lib/pagination.ts
 - Access follows active project-list visibility for the authenticated user. Every lookup is tenant-scoped, directly or through a tenant-scoped relation. Resolve event labels and projects from actual entities or attributable immutable snapshots. No filler activity, hard-coded project attribution, or invented compliance claims.
 - Source: `backend/src/modules/audit/audit-log.controller.ts:1`, `audit-log.service.ts:1`. Regression tests: `audit-log.service.spec.ts:1`, `backend/src/common/audit.interceptor.spec.ts:1`.
 - UI polls every 30 seconds while visible and refreshes on focus, mutations, and manual action; errors clear stale items and show a retryable state. No schema or migration changes.
+
+## 2026-10-19 additive contracts
+- Auth user/session and access-token claims add nullable `publicHandle`; `/auth/me` returns it. Refresh keeps the stored handle. Legacy names/emails and registered chosen names are preserved. Generated handles are never reused; frontend does not allocate identity.
+- PFD: `GET /revisions/:id/pfd-graph` reads revision topology/version; `PUT` accepts `{version, graph}` with optimistic concurrency. Graph schema version 1 contains manufacturing notation, review status, nodes and explicit edges. Existing step CRUD and table order remain compatible. Source: `backend/src/modules/pfd/pfd.controller.ts:1`.
+- CP current interfaces are `/control-plan-rows` and explicit `/sync`, `/sync-pfd`; PATCH CP does not automatically update PFMEA. Historical generic generation endpoints/reverse listeners are not implemented.
+- Repository graph is a normalized view of package JSON; approval does not imply structural completeness or validated ratings. Preserve server-side package visibility and authorized import/review flows.
+
+## PFD/release integration contract
+- Each successful step create/update/delete request increments the target graph version once; a nonempty batch increments it once. Existing explicit routing is retained and marked draft; deleted operation nodes/incident routes are removed. Import topology uses initial version plus its own successful mutation-request count, so concurrent editors cause a conflict rather than silent overwrite.
+- `GET /projects/:id/revisions/:revisionId/readiness` returns product-policy errors/warnings. Submission and approval reject incomplete or blank artifacts; drafts retain iterative editing.
+- Graph access exposes `writable` from revision state, permissions and trial ownership. Trial reference PFD writes are blocked in the API and UI.

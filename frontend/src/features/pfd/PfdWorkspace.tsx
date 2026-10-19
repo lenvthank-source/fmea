@@ -1,3 +1,4 @@
+import { pfdActivityFromSymbols } from './utils/pfdGraph';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -172,6 +173,8 @@ export const PfdWorkspace: React.FC = () => {
   const { showToast } = useToast();
 
   const [revisionId, setRevisionId] = useState<string | null>(null);
+  const [graphReloadKey, setGraphReloadKey] = useState(0);
+  const [canEdit, setCanEdit] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectData, setProjectData] = useState<any>(null);
   const [dragAllowedIndex, setDragAllowedIndex] = useState<number | null>(null);
@@ -290,6 +293,7 @@ export const PfdWorkspace: React.FC = () => {
 
   // Multi-value delete helpers — now require confirmation (was silent)
   const executeMultiDelete = async (stepId: string, fieldName: 'incomingVariation' | 'machinesEquipmentDocs' | 'desiredOutcome' | 'processCharacteristics', idx: number) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     const step = steps.find(s => s.id === stepId);
     if (!step) return;
     let items: string[] = [];
@@ -347,6 +351,7 @@ export const PfdWorkspace: React.FC = () => {
         if (!pfdDoc || !pfdDoc.currentRevisionId) {
           throw new Error('PFD Document not found or revision not initialized');
         }
+        setCanEdit(false);
         setRevisionId(pfdDoc.currentRevisionId);
       } catch (err: any) {
         const msg = err.message || 'An error occurred while loading project context';
@@ -369,7 +374,10 @@ export const PfdWorkspace: React.FC = () => {
       });
       if (!response.ok) throw new Error('Failed to load PFD steps');
       const data = await response.json();
+      const graphResponse = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, { headers: { Authorization: `Bearer ${token}` } });
+      setCanEdit(graphResponse.ok && Boolean((await graphResponse.json()).writable));
       setSteps(data);
+        setGraphReloadKey(key => key + 1);
       // Collapse all steps by default for maximum screen ergonomics and minimal scrolling
       if (Array.isArray(data) && data.length > 0) {
         setCollapsedSteps(new Set(data.map((s: any) => s.id)));
@@ -391,6 +399,7 @@ export const PfdWorkspace: React.FC = () => {
 
   // Inline changes handler
   const handleFieldChange = async (stepId: string, fieldName: string, value: string) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     // Optimistic local update
     setSteps(prev => prev.map(s => s.id === stepId ? { ...s, [fieldName]: value } : s));
 
@@ -443,6 +452,7 @@ export const PfdWorkspace: React.FC = () => {
     }
 
     const handleChange = async (idx: number, newVal: string) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
       const updated = [...items];
       updated[idx] = newVal;
       
@@ -473,6 +483,7 @@ export const PfdWorkspace: React.FC = () => {
     };
 
     const handleKeyDown = async (e: React.KeyboardEvent, idx: number) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
       if (e.key === 'Enter') {
         e.preventDefault();
         const updated = [...items];
@@ -514,6 +525,7 @@ export const PfdWorkspace: React.FC = () => {
     };
 
     const handleDelete = async (idx: number) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
       if (items.length <= 1) return;
       requestMultiDelete(stepId, fieldName, idx, items[idx]);
     };
@@ -566,17 +578,12 @@ export const PfdWorkspace: React.FC = () => {
 
 
   const handleSaveFlowIcons = async (stepId: string) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     const step = steps.find(s => s.id === stepId);
     if (!step) return;
 
-    let stepType = step.stepType;
-    if (tempIcons.oper) stepType = 'operation';
-    else if (tempIcons.insp) stepType = 'inspection';
-    else if (tempIcons.trans) stepType = 'transport';
-    else if (tempIcons.store) stepType = 'storage';
-    else if (tempIcons.decs) stepType = 'decision';
-    else if (tempIcons.rework) stepType = 'rework';
-    else if (tempIcons.reject) stepType = 'rework';
+    const stepType = pfdActivityFromSymbols(tempIcons) || step.stepType;
+    // Mixed activities, WIP, and rejection require explicit classification; preserve the declared type.
 
     setSteps(prev => prev.map(s => s.id === stepId ? { ...s, flowIcons: tempIcons, stepType } : s));
     setEditingFlowSymbolsStepId(null);
@@ -603,6 +610,7 @@ export const PfdWorkspace: React.FC = () => {
 
   // Add Step Drawer Handlers
   const handleOpenAddDrawer = () => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     setError(null);
     const nextSequence = steps.length + 1;
     setAddStepNumber(`OP${nextSequence * 10}`);
@@ -617,6 +625,7 @@ export const PfdWorkspace: React.FC = () => {
   };
 
   const handleCreateStep = async () => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     setError(null);
     try {
       const variationList = addIncomingVariation.split('\n').map(v => v.trim()).filter(Boolean);
@@ -625,7 +634,8 @@ export const PfdWorkspace: React.FC = () => {
       const processCharStr = addProcessCharacteristics.split('\n').map(p => p.trim()).filter(Boolean).join('\n');
 
       const flowIcons: Record<string, boolean> = {};
-      if (addStepType === 'operation') flowIcons.oper = true;
+      if (addStepType === 'combined') {flowIcons.oper = true;flowIcons.insp = true;}
+      else if (addStepType === 'operation') flowIcons.oper = true;
       else if (addStepType === 'inspection') flowIcons.insp = true;
       else if (addStepType === 'transport') flowIcons.trans = true;
       else if (addStepType === 'storage') flowIcons.store = true;
@@ -668,6 +678,7 @@ export const PfdWorkspace: React.FC = () => {
 
   // Duplicate step
   const handleDuplicateStep = async (step: ProcessStep) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     setError(null);
     try {
       
@@ -726,6 +737,7 @@ export const PfdWorkspace: React.FC = () => {
     }
   };
   const handleDeleteStep = (stepId: string) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     const step = steps.find(s => s.id === stepId);
     const label = step ? `${step.stepNumber} - ${step.name}`.trim() : stepId;
     setConfirmState({
@@ -747,6 +759,7 @@ export const PfdWorkspace: React.FC = () => {
   };
 
   const handleDrop = async (index: number) => {
+    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
     if (draggedIndex === null || draggedIndex === index) return;
     const newSteps = [...steps];
     const draggedItem = newSteps[draggedIndex];
@@ -854,7 +867,7 @@ export const PfdWorkspace: React.FC = () => {
             variant="contained"
             size="small"
             data-tour="pfd-add-step"
-            onClick={handleOpenAddDrawer}
+            disabled={!canEdit} onClick={handleOpenAddDrawer}
             startIcon={<AddIcon fontSize="small" />}
             sx={{
               bgcolor: '#09090b',
@@ -913,7 +926,7 @@ export const PfdWorkspace: React.FC = () => {
           <Button
             variant="outlined"
             size="small"
-            onClick={() => setImportOpen(true)}
+            disabled={!canEdit} onClick={() => setImportOpen(true)}
             startIcon={<UploadIcon fontSize="small" />}
             sx={{
               color: '#09090b',
@@ -970,7 +983,8 @@ export const PfdWorkspace: React.FC = () => {
           <Table aria-label="PFD spreadsheet grid" size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: '#fafafa', borderBottom: '1px solid #e4e4e7' }}>
-                <TableCell style={{ width: 40 }} /> {/* Drag Handle */}
+                {/* Drag Handle */}
+                <TableCell style={{ width: 40 }} />
                 <TableCell sx={{ minWidth: 120, width: 120, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Step #</TableCell>
                 <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Description</TableCell>
                 <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Incoming Source of Variation</TableCell>
@@ -992,7 +1006,7 @@ export const PfdWorkspace: React.FC = () => {
                     <Button
                       variant="contained"
                       data-tour="pfd-add-step"
-            onClick={handleOpenAddDrawer}
+            disabled={!canEdit} onClick={handleOpenAddDrawer}
                       startIcon={<AddIcon />}
                       sx={{ textTransform: 'none', fontWeight: 'bold' }}
                     >
@@ -1007,7 +1021,7 @@ export const PfdWorkspace: React.FC = () => {
                   return (
                     <TableRow
                       key={step.id}
-                      draggable={dragAllowedIndex === index}
+                      draggable={canEdit && dragAllowedIndex === index}
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={handleDragOver}
                       onDrop={() => handleDrop(index)}
@@ -1220,7 +1234,7 @@ export const PfdWorkspace: React.FC = () => {
                               <Tooltip title="Save Selection" arrow>
                                 <IconButton
                                   size="small"
-                                  onClick={(e) => { e.stopPropagation(); handleSaveFlowIcons(step.id); }}
+                                  disabled={!canEdit} onClick={(e) => { e.stopPropagation(); handleSaveFlowIcons(step.id); }}
                                   color="success"
                                   sx={{ p: 0.25 }}
                                 >
@@ -1346,10 +1360,10 @@ export const PfdWorkspace: React.FC = () => {
                           <IconButton size="small" onClick={() => openDetails(step)}>
                             <DetailsIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" onClick={() => handleDuplicateStep(step)}>
+                          <IconButton size="small" disabled={!canEdit} onClick={() => handleDuplicateStep(step)}>
                             <DuplicateIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDeleteStep(step.id)}>
+                          <IconButton size="small" color="error" disabled={!canEdit} onClick={() => handleDeleteStep(step.id)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Stack>
@@ -1367,7 +1381,7 @@ export const PfdWorkspace: React.FC = () => {
               color="primary"
               variant="extended"
               data-tour="pfd-add-step"
-            onClick={handleOpenAddDrawer}
+            disabled={!canEdit} onClick={handleOpenAddDrawer}
               sx={{
                 textTransform: 'none',
                 fontWeight: 'bold',
@@ -1381,8 +1395,12 @@ export const PfdWorkspace: React.FC = () => {
         )}
       </>
       ) : (
-        /* Flow Diagram View — Built from scratch to AIAG/ASME & Industrial PFD standards */
+        /* Manufacturing routing is explicit and independent of display order. */
         <PfdEngineeringCanvas
+          revisionId={revisionId}
+          token={token}
+          reloadKey={graphReloadKey}
+          project={projectData || { partName: projectName }}
           steps={steps}
           hoveredStepId={hoveredStepId}
           onHoverStep={setHoveredStepId}
@@ -1525,7 +1543,8 @@ export const PfdWorkspace: React.FC = () => {
                           
                           // Also sync selected flow icon
                           const newIcons: Record<string, boolean> = {};
-                          if (val === 'operation') newIcons.oper = true;
+                          if (val === 'combined') {newIcons.oper = true;newIcons.insp = true;}
+                          else if (val === 'operation') newIcons.oper = true;
                           else if (val === 'inspection') newIcons.insp = true;
                           else if (val === 'transport') newIcons.trans = true;
                           else if (val === 'storage') newIcons.store = true;
@@ -1539,6 +1558,11 @@ export const PfdWorkspace: React.FC = () => {
                       >
                         <MenuItem value="operation">Operation (◯)</MenuItem>
                         <MenuItem value="inspection">Inspection (□)</MenuItem>
+                        <MenuItem value="combined">Operation + inspection (circle in square)</MenuItem>
+                        <MenuItem value="repair">Repair (RP)</MenuItem>
+                        <MenuItem value="hold">Hold / disposition (H)</MenuItem>
+                        <MenuItem value="scrap">Scrap (X)</MenuItem>
+                        <MenuItem value="return">Return</MenuItem>
                         <MenuItem value="transport">Transport (⇨)</MenuItem>
                         <MenuItem value="storage">Storage (▽)</MenuItem>
                         <MenuItem value="delay">Delay (☉)</MenuItem>
@@ -1713,6 +1737,11 @@ export const PfdWorkspace: React.FC = () => {
                     >
                       <MenuItem value="operation">Operation (◯)</MenuItem>
                       <MenuItem value="inspection">Inspection (□)</MenuItem>
+                        <MenuItem value="combined">Operation + inspection (circle in square)</MenuItem>
+                        <MenuItem value="repair">Repair (RP)</MenuItem>
+                        <MenuItem value="hold">Hold / disposition (H)</MenuItem>
+                        <MenuItem value="scrap">Scrap (X)</MenuItem>
+                        <MenuItem value="return">Return</MenuItem>
                       <MenuItem value="transport">Transport (⇨)</MenuItem>
                       <MenuItem value="storage">Storage (▽)</MenuItem>
                       <MenuItem value="delay">Delay (☉)</MenuItem>
@@ -1778,6 +1807,7 @@ export const PfdWorkspace: React.FC = () => {
       </Drawer>
 
       <ReportExporter
+        revisionId={revisionId}
         open={exportOpen}
         onClose={() => setExportOpen(false)}
         docType="PFD"

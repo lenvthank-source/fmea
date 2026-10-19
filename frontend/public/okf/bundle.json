@@ -1,40 +1,124 @@
 {
-  "$schema": "https://schema.org",
   "name": "FMEApex Open Knowledge Bundle",
-  "version": "1.0.0",
+  "language": "en",
   "publisher": {
-    "@type": "Organization",
     "name": "FMEApex",
     "url": "https://fmeapex.online"
   },
+  "description": "Connected structure, process risk, control planning, and verified actions. Public examples are illustrative.",
+  "offers": {
+    "trial": "Reference project and one custom project for 24 hours",
+    "teams": "Request a quote",
+    "enterprise": "Requirements and feasibility review; request a quote"
+  },
   "knowledgeNodes": [
     {
-      "id": "node-aiag-vda-7step",
-      "name": "AIAG-VDA 2019 7-Step FMEA Methodology",
-      "category": "Standard",
-      "description": "Standardized 7-step FMEA framework combining AIAG and VDA guidelines. Steps: 1. Planning, 2. Structure Analysis, 3. Function Analysis, 4. Failure Analysis, 5. Risk Analysis, 6. Optimization, 7. Documentation.",
-      "url": "https://fmeapex.online/en/learn/aiag-vda-7-step-fmea"
+      "id": "aiag-vda-7-step-fmea",
+      "name": "Seven steps. One connected engineering analysis.",
+      "category": "Guide",
+      "url": "https://fmeapex.online/learn/aiag-vda-7-step-fmea"
     },
     {
-      "id": "node-pfd-pfmea-linking",
-      "name": "PFD to PFMEA Bidirectional Linking",
-      "category": "Feature",
-      "description": "Real-time synchronization connecting Process Flow Diagram (PFD) operation steps with PFMEA failure chain rows, automatically catching orphan steps.",
-      "url": "https://fmeapex.online/en/learn/pfd-pfmea-linking"
+      "id": "pfd-pfmea-linking",
+      "name": "Keep the process route and its risk analysis connected.",
+      "category": "Guide",
+      "url": "https://fmeapex.online/learn/pfd-pfmea-linking"
     },
     {
-      "id": "node-control-plan-sync",
-      "name": "Control Plan Synchronization",
-      "category": "Feature",
-      "description": "Bidirectional propagation of prevention and detection controls between PFMEA and Control Plan documents in a serializable transaction.",
-      "url": "https://fmeapex.online/en/learn/control-plan-sync"
+      "id": "control-plan-sync",
+      "name": "Turn the risk analysis into an actionable control plan.",
+      "category": "Guide",
+      "url": "https://fmeapex.online/learn/control-plan-sync"
     },
     {
-      "id": "node-21cfr11-compliance",
-      "name": "21 CFR Part 11 Audit Trail",
-      "category": "Compliance",
-      "description": "Immutable audit trails, role-segregated digital signatures (Creator vs Reviewer vs Approver), and document revision locks for regulatory readiness.",
-      "url": "https://fmeapex.online/en/learn/21-cfr-part-11-fmea"
+      "id": "21-cfr-part-11-fmea",
+      "name": "Electronic records need a defined control strategy.",
+      "category": "Guide",
+      "url": "https://fmeapex.online/learn/21-cfr-part-11-fmea"
+    },
+    {
+      "id": "automotive-iatf-16949",
+      "name": "Follow automotive risk from design intent to the production control.",
+      "category": "Industry",
+      "url": "https://fmeapex.online/fmea/automotive-iatf-16949"
+    },
+    {
+      "id": "aerospace-as9100",
+      "name": "Make aerospace process decisions traceable to their engineering context.",
+      "category": "Industry",
+      "url": "https://fmeapex.online/fmea/aerospace-as9100"
+    },
+    {
+      "id": "medical-iso-13485",
+      "name": "Keep medical-device manufacturing analysis connected to the requirement.",
+      "category": "Industry",
+      "url": "https://fmeapex.online/fmea/medical-iso-13485"
+    },
+    {
+      "id": "semiconductor-jedec",
+      "name": "Connect semiconductor process conditions to failure mechanisms and controls.",
+      "category": "Industry",
+      "url": "https://fmeapex.online/fmea/semiconductor-jedec"
+    },
+    {
+      "id": "excel-fmea",
+      "name": "From individual spreadsheet rows to connected engineering records.",
+      "category": "Comparison",
+      "url": "https://fmeapex.online/vs/excel-fmea"
+    },
+    {
+      "id": "iq-rm",
+      "name": "Evaluate an FMEA workflow against the way your team works.",
+      "category": "Comparison",
+      "url": "https://fmeapex.online/vs/iq-rm"
+    },
+    {
+      "id": "action-priority",
+      "name": "Action Priority",
+      "category": "Glossary",
+      "url": "https://fmeapex.online/glossary/action-priority"
+    },
+    {
+      "id": "process-flow-diagram",
+      "name": "Process flow diagram",
+      "category": "Glossary",
+      "url": "https://fmeapex.online/glossary/process-flow-diagram"
+    },
+    {
+      "id": "control-plan",
+      "name": "Control plan",
+      "category": "Glossary",
+      "url": "https://fmeapex.online/glossary/control-plan"
+    },
+    {
+      "id": "21-cfr-part-11",
+      "name": "21 CFR Part 11",
+      "category": "Glossary",
+      "url": "https://fmeapex.online/glossary/21-cfr-part-11"
+    },
+    {
+      "id": "ai-fmea-7-step-deep-dive",
+      "name": "Where AI belongs in a seven-step FMEA workflow.",
+      "category": "Journal",
+      "url": "https://fmeapex.online/blog/ai-fmea-7-step-deep-dive"
+    },
+    {
+      "id": "pfd-pfmea-orphan-detection",
+      "name": "A missing link is a question worth asking.",
+      "category": "Journal",
+      "url": "https://fmeapex.online/blog/pfd-pfmea-orphan-detection"
+    },
+    {
+      "id": "control-plan-enterprise-sync",
+      "name": "A changed control should have an understandable path.",
+      "category": "Journal",
+      "url": "https://fmeapex.online/blog/control-plan-enterprise-sync"
     }
+  ],
+  "limitations": [
+    "No blanket regulatory compliance or certification claim.",
+    "No automatic risk reduction from task completion.",
+    "Exact rating-table conformity requires authoritative verification.",
+    "English content only; language aliases redirect to English."
   ]
 }

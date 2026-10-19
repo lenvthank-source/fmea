@@ -14,6 +14,7 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 ## Index (leading entries)
 | Version | Date | Summary |
 |---------|------|---------|
+| v0.10.0 | 2026-10-19 | Complete public identity, permanent trial handles, explicit PFD graph and native exports, visual repository, review readiness |
 | v0.0.0 | 2026-08-12 | Init scaffold |
 | v0.1.0 | 2026-08-20 | Replication + project CRUD |
 | v0.2.0 | 2026-08-24 | Revision workflow (Submit→InReview→Approve/Reject), semver 1.9→1.10 fix, junction clone, `RevisionGuard` |
@@ -23,7 +24,7 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 | v0.3.0 (next) | 2026-08-27 planned | Session hydration + 72h sliding `lastActivityAt`, PFD Import wiring (`ExcelImportWizard` → `POST /pfd-steps/batch`), Linkage blink fix (remove `zoom/pan` deps), deletes via `ConfirmDialog` (multi-value + unlink), history guards (`submittedAt/approvedAt`, draft-only PATCH, effective date validation), `.agents` context expansion + `AGENTS.md §6` |
 
 ## Schema / migration linkage
-- `backend/prisma/schema.prisma` 41 models; `prisma db push` (no migrations). Additions noted in ledger under **Schema/Migrations** with required commands:
+- Current schema has 45 models and committed Prisma migration history. Use `npx prisma migrate deploy` for reviewed additive changes, not `db push` for ledger-backed releases. Existing-schema baseline was verified/resolved once on configured Neon; never baseline an unverified database. Historical commands below describe older releases only:
   - `v0.2.3`: `SeverityScale/OccurrenceScale/DetectionScale` (`schema.prisma:791`) + indexes (`schema:165`) → `npx prisma generate && npx prisma db push` or `migrate dev --name add-rating-scales`
   - `v0.3.0`: `User.lastActivityAt @map("last_activity_at")` (`schema:46-48`) + `@@index([lastActivityAt])` if added → same commands + `ensureSeeded` on boot.
 

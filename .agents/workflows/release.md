@@ -4,7 +4,7 @@
 
 - **Frontend**: Auto-deploys to Cloudflare Pages on `main` push
 - **Backend**: Auto-deploys to Render (Docker) on `main` push
-- **Database**: Schema changes via `npx prisma db push` to Neon
+- **Database**: Reviewed migration history via `npx prisma migrate deploy` to Neon; validate Prisma first and confirm status/drift afterward
 
 Source: [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
 
@@ -14,7 +14,7 @@ Source: [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
 - [ ] `cd frontend && npm run build` passes (tsc + vite)
 - [ ] `cd backend && npm run build` passes (nest build)
 - [ ] `cd backend && npm test` passes
-- [ ] Database schema changes pushed: `cd backend && npx prisma db push`
+- [ ] Reviewed database migrations applied: `cd backend && npx prisma migrate deploy`; no reset/data-loss flags
 - [ ] No `.env` changes needed (or communicated to deployment platform)
 
 ## Post-Release Verification
@@ -29,3 +29,5 @@ Source: [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
 > Never invent deployment commands. Use only commands documented in
 > [deployment_guide.md](file:///f:/proj-fmea/deployment_guide.md)
 > and [package.json](file:///f:/proj-fmea/package.json).
+
+Release 0.10.0: five migrations already applied to configured Neon, including the existing-schema baseline and legacy-API handle compatibility. Do not re-resolve the baseline on a fresh database. Normal deployment uses the committed history. Never print credential-helper output or include runtime logs in a release.

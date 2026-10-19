@@ -71,10 +71,7 @@ git config --local credential.helper ""
 git config --local --add credential.helper wincred
 ```
 
-Verify that it resolves instantly (should output username & token within <1s without hanging):
-```powershell
-"protocol=https`nhost=github.com`n`n" | git credential fill
-```
+Verify the configured helper with `git config --local --get-all credential.helper`; never print `git credential fill` output because it contains secrets. Use a read-only `git ls-remote origin refs/heads/main` to test connectivity.
 
 ### Protocol for Autonomous Agents Before Pushing
 Before executing any `git push` command, agents MUST:

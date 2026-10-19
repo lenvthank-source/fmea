@@ -84,3 +84,14 @@ graphify-out/.graphify_*
 !/backend/README.md
 !/frontend/README.md
 
+
+# Runtime diagnostics and temporary graph locks
+/backend/local-api.*.log
+graphify-out/.rebuild.lock
+
+# Maintainable source/migration directory indexes
+!/backend/src/**/README.md
+!/backend/prisma/**/README.md
+!/backend/scripts/README.md
+!/backend/test/README.md
+!/frontend/src/**/README.md

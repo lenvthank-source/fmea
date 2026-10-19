@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.10.0.md` — Complete public identity, permanent trial usernames, compact workspace cards, visual package repository, explicit PFD routing/import/export and review-readiness policy.
 - `v0.9.0.md` — Connected homepage, cohesive sign-in/dashboard theme, direct trial entry, contextual seven-step walkthrough, real viewer-scoped activity, and portable Graphify/handoff documentation.
 - `v0.8.4.md` — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas: eliminated letterboxed dark container in ExcelRetirementShowcase, replacing it with a full-width light-enterprise design featuring 3 inspection modes (Old Excel Sheet with #REF! errors and green header, FMEApex Engine with active Golden Thread and 0 orphan rows, and Side-by-Side comparison); cleaned unused imports and verified zero TypeScript/Vite bundling warnings; validated responsive layouts across 13" laptop to 27" desktop viewports with Puppeteer MCP.
 - `v0.8.3.md` — Visual Excel Retirement Animated Showcase & Light-Theme Action Priority Dual Simulator: introduced interactive visual before-and-after comparison between fragile corporate Excel sheets (formula errors, #REF! breaks, hidden hazards, version chaos) and FMEApex deterministic Quality OS; overhauled dark AP simulator into a light enterprise tool featuring direct side-by-side comparison between legacy Excel RPN (S × O × D) arithmetic and AIAG-VDA 2019 deterministic Action Priority.

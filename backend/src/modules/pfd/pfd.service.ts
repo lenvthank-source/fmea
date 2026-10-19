@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateStepDto } from './dto/create-step.dto';
 import { UpdateStepDto } from './dto/update-step.dto';
 import { RevisionGuard } from '../../common/revision-guard';
+import { SavePfdGraphDto } from './dto/save-pfd-graph.dto';
+import { validatePfdGraph } from './pfd-graph';
+import type { PfdGraph } from './pfd-graph';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PfdService {
@@ -10,6 +14,61 @@ export class PfdService {
     private prisma: PrismaService,
     private revisionGuard: RevisionGuard,
   ) {}
+
+  private async invalidateGraph(tx: Prisma.TransactionClient, tenantId: string, revisionId: string, removedStepId?: string) {
+    const revision = await tx.documentRevision.findFirst({
+      where: { id: revisionId, document: { tenantId }, status: 'draft', lockedAt: null },
+      select: { pfdGraph: true, pfdGraphVersion: true },
+    });
+    if (!revision) throw new ConflictException('The revision changed or was locked. Reload before editing.');
+    const graph = revision.pfdGraph as unknown as PfdGraph | null;
+    const data: Prisma.DocumentRevisionUpdateManyMutationInput = { pfdGraphVersion: { increment: 1 } };
+    if (graph?.schemaVersion === 1) {
+      const nodes = graph.nodes.filter(n => !removedStepId || n.stepId !== removedStepId);
+      const ids = new Set(nodes.map(n => n.id));
+      data.pfdGraph = { ...graph, reviewStatus: 'draft', nodes, edges: graph.edges.filter(e => ids.has(e.source) && ids.has(e.target)) } as unknown as Prisma.InputJsonValue;
+    }
+    const changed = await tx.documentRevision.updateMany({
+      where: { id: revisionId, document: { tenantId }, status: 'draft', lockedAt: null, pfdGraphVersion: revision.pfdGraphVersion }, data,
+    });
+    if (changed.count !== 1) throw new ConflictException('The process flow changed. Reload before editing.');
+  }
+
+  async assertActorAccess(user: { tenantId: string; sub?: string; isGuest?: boolean }, id: string, write: boolean, byStep = false) {
+    const revision = byStep
+      ? (await this.verifyStepAccess(user.tenantId, id)).revision
+      : await this.verifyRevisionAccess(user.tenantId, id);
+    if (!user.isGuest) return true;
+    const project = await this.prisma.project.findFirst({ where: { id: revision.document.projectId, tenantId: user.tenantId } });
+    const settings = project?.uiSettings as { isDemo?: boolean } | null;
+    const reference = settings?.isDemo || project?.id === 'c439cfbe-548a-4e25-a37c-0194652b8526';
+    const ownActive = project && project.createdById === user.sub && project.status !== 'archived' && project.createdAt.getTime() > Date.now() - 24 * 60 * 60 * 1000;
+    if ((write && (reference || !ownActive)) || (!write && !reference && !ownActive)) {
+      throw new ForbiddenException(write ? 'Trial sessions may edit only their own active trial project. Reference projects are read-only.' : 'This program is not available in your trial workspace.');
+    }
+    return Boolean(ownActive && !reference);
+  }
+
+  async getGraph(tenantId: string, revisionId: string) {
+    const revision = await this.verifyRevisionAccess(tenantId, revisionId);
+    return { graph: revision.pfdGraph, version: revision.pfdGraphVersion, writable: revision.status === 'draft' && !revision.lockedAt };
+  }
+
+  async saveGraph(tenantId: string, revisionId: string, dto: SavePfdGraphDto) {
+    await this.verifyRevisionAccess(tenantId, revisionId);
+    await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
+    return this.prisma.$transaction(async tx => {
+      const steps = await tx.processStep.findMany({ where: { revisionId, revision: { document: { tenantId } } }, select: { id: true, stepType: true } });
+      const errors = validatePfdGraph(dto.graph, steps);
+      if (errors.length) throw new BadRequestException(errors.join('; '));
+      const saved = await tx.documentRevision.updateMany({
+        where: { id: revisionId, document: { tenantId }, status: 'draft', lockedAt: null, pfdGraphVersion: dto.version },
+        data: { pfdGraph: dto.graph as unknown as Prisma.InputJsonValue, pfdGraphVersion: { increment: 1 } },
+      });
+      if (saved.count !== 1) throw new ConflictException('The process flow changed or was locked. Reload before saving.');
+      return { graph: dto.graph, version: dto.version + 1, writable: true };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
 
   private async verifyRevisionAccess(tenantId: string, revisionId: string) {
     const revision = await this.prisma.documentRevision.findUnique({
@@ -62,15 +121,19 @@ export class PfdService {
     const revision = await this.verifyRevisionAccess(tenantId, revisionId);
     await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
 
+    return this.prisma.$transaction(async tx => {
     // Resolve or create a default ProcessItem for the project
     let processItemId = dto.processItemId;
+    if (processItemId && !await tx.processItem.findFirst({ where: { id: processItemId, tenantId, projectId: revision.document.projectId } })) {
+      throw new BadRequestException('Process item must belong to this program and tenant');
+    }
     if (!processItemId) {
-      let processItem = await this.prisma.processItem.findFirst({
+      let processItem = await tx.processItem.findFirst({
         where: { projectId: revision.document.projectId, tenantId },
       });
 
       if (!processItem) {
-        processItem = await this.prisma.processItem.create({
+        processItem = await tx.processItem.create({
           data: {
             tenantId,
             projectId: revision.document.projectId,
@@ -83,18 +146,19 @@ export class PfdService {
     }
 
     // Get next sequence order
-    const stepCount = await this.prisma.processStep.count({
+    const stepCount = await tx.processStep.count({
       where: { revisionId },
     });
 
     // Get all step numbers in this revision to compute a unique auto-incrementing stepNumber
-    const existingSteps = await this.prisma.processStep.findMany({
+    const existingSteps = await tx.processStep.findMany({
       where: { revisionId },
       select: { stepNumber: true },
     });
     const stepNumbers = existingSteps.map((s) => s.stepNumber);
 
     let calculatedStepNumber = dto.stepNumber;
+    if (calculatedStepNumber && stepNumbers.includes(calculatedStepNumber)) throw new BadRequestException('Operation number already exists in this revision');
     if (!calculatedStepNumber) {
       let maxVal = 0;
       let prefix = 'OP';
@@ -120,7 +184,7 @@ export class PfdService {
       }
     }
 
-    return this.prisma.processStep.create({
+    const created = await tx.processStep.create({
       data: {
         revisionId,
         processItemId,
@@ -140,6 +204,9 @@ export class PfdService {
         processCharacteristics: dto.processCharacteristics,
       },
     });
+    await this.invalidateGraph(tx, tenantId, revisionId);
+    return created;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async updateStep(tenantId: string, stepId: string, dto: UpdateStepDto) {
@@ -159,7 +226,8 @@ export class PfdService {
       }
     }
 
-    const updatedStep = await this.prisma.processStep.update({
+    return this.prisma.$transaction(async tx => {
+    const updatedStep = await tx.processStep.update({
       where: { id: stepId },
       data: {
         stepNumber: dto.stepNumber,
@@ -179,71 +247,73 @@ export class PfdService {
 
     // If this is a master PFD step, sync the updates to downstream PFMEA / Control Plan steps
     if (!updatedStep.linkedPfdStepId) {
-      await this.prisma.processStep.updateMany({
-        where: { linkedPfdStepId: stepId },
+      const downstreamWhere = { linkedPfdStepId: stepId, revision: { document: { tenantId }, status: 'draft', lockedAt: null } };
+      const downstream = await tx.processStep.findMany({ where: downstreamWhere, select: { revisionId: true } });
+      await tx.processStep.updateMany({
+        where: downstreamWhere,
         data: {
           stepNumber: updatedStep.stepNumber,
           name: updatedStep.name,
           machinesEquipmentDocs: updatedStep.machinesEquipmentDocs || [],
         },
       });
+      for (const revisionId of new Set(downstream.map(row => row.revisionId))) {
+        if (revisionId !== step.revisionId) await this.invalidateGraph(tx, tenantId, revisionId);
+      }
     }
 
+    await this.invalidateGraph(tx, tenantId, step.revisionId);
     return updatedStep;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async removeStep(tenantId: string, stepId: string) {
     await this.revisionGuard.assertRevisionWritableByStep(tenantId, stepId);
     const step = await this.verifyStepAccess(tenantId, stepId);
-
-    // If it's a master PFD step, mark downstream steps as orphaned instead of cascade deleting them
-    if (!step.linkedPfdStepId) {
-      await this.prisma.processStep.updateMany({
-        where: { linkedPfdStepId: stepId },
-        data: { isOrphaned: true },
-      });
-    }
-
-    // Safety check: Prevent deletion if FMEA rows or Control Plan rows are linked to this specific step record
-    const fmeaCount = await this.prisma.pfmeaRow.count({
-      where: { processStepId: stepId },
-    });
-
-    const cpCount = await this.prisma.controlPlanRow.count({
-      where: { processStepId: stepId },
-    });
-
-    if (fmeaCount > 0 || cpCount > 0) {
-      throw new BadRequestException(
+    return this.prisma.$transaction(async tx => {
+      // Validate dependencies before any mutation, including downstream orphan flags.
+      const [fmeaCount, cpCount] = await Promise.all([
+        tx.pfmeaRow.count({ where: { processStepId: stepId } }),
+        tx.controlPlanRow.count({ where: { processStepId: stepId } }),
+      ]);
+      if (fmeaCount > 0 || cpCount > 0) throw new BadRequestException(
         'Cannot delete step: Associated FMEA rows or Control Plan items already exist. Please delete those analysis rows first to maintain document integrity.',
       );
-    }
-
-    return this.prisma.processStep.delete({
-      where: { id: stepId },
-    });
+      if (!step.linkedPfdStepId) {
+        const where = { linkedPfdStepId: stepId, revision: { document: { tenantId }, status: 'draft', lockedAt: null } };
+        const downstream = await tx.processStep.findMany({ where, select: { revisionId: true } });
+        await tx.processStep.updateMany({ where, data: { isOrphaned: true } });
+        for (const revisionId of new Set(downstream.map(row => row.revisionId))) {
+          if (revisionId !== step.revisionId) await this.invalidateGraph(tx, tenantId, revisionId);
+        }
+      }
+      const deleted = await tx.processStep.delete({ where: { id: stepId } });
+      await this.invalidateGraph(tx, tenantId, step.revisionId, stepId);
+      return deleted;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async importSteps(tenantId: string, targetRevisionId: string, sourceRevisionId: string) {
     await this.revisionGuard.assertRevisionWritable(tenantId, targetRevisionId);
     await this.verifyRevisionAccess(tenantId, sourceRevisionId);
 
-    const sourceSteps = await this.prisma.processStep.findMany({
+    return this.prisma.$transaction(async tx => {
+    const sourceSteps = await tx.processStep.findMany({
       where: { revisionId: sourceRevisionId },
       orderBy: { sequenceOrder: 'asc' },
     });
 
-    const targetRevision = await this.prisma.documentRevision.findUnique({
+    const targetRevision = await tx.documentRevision.findUnique({
       where: { id: targetRevisionId },
       include: { document: true },
     });
 
-    let processItem = await this.prisma.processItem.findFirst({
+    let processItem = await tx.processItem.findFirst({
       where: { projectId: targetRevision!.document.projectId, tenantId },
     });
 
     if (!processItem) {
-      processItem = await this.prisma.processItem.create({
+      processItem = await tx.processItem.create({
         data: {
           tenantId,
           projectId: targetRevision!.document.projectId,
@@ -255,12 +325,12 @@ export class PfdService {
 
     let importedCount = 0;
     for (const src of sourceSteps) {
-      const existing = await this.prisma.processStep.findFirst({
+      const existing = await tx.processStep.findFirst({
         where: { revisionId: targetRevisionId, linkedPfdStepId: src.id },
       });
 
       if (!existing) {
-        await this.prisma.processStep.create({
+        await tx.processStep.create({
           data: {
             revisionId: targetRevisionId,
             processItemId: processItem.id,
@@ -285,11 +355,18 @@ export class PfdService {
       }
     }
 
+    if (importedCount) await this.invalidateGraph(tx, tenantId, targetRevisionId);
     return { importedCount };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async reorderSteps(tenantId: string, revisionId: string, orderedStepIds: string[]) {
     await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
+
+    const steps = await this.prisma.processStep.findMany({ where: { revisionId, revision: { document: { tenantId } } }, select: { id: true } });
+    if (new Set(orderedStepIds).size !== orderedStepIds.length || steps.length !== orderedStepIds.length || steps.some(s => !orderedStepIds.includes(s.id))) {
+      throw new BadRequestException('Reordering must contain each operation in this revision exactly once');
+    }
 
     return this.prisma.$transaction(
       orderedStepIds.map((id, index) =>
@@ -305,17 +382,19 @@ export class PfdService {
     await this.revisionGuard.assertRevisionWritable(tenantId, revisionId);
     const revision = await this.verifyRevisionAccess(tenantId, revisionId);
 
+    return this.prisma.$transaction(async (tx) => {
     // Resolve or create a default ProcessItem for the project
     let processItemId: string | undefined;
     const firstDto = dtos[0];
     if (firstDto?.processItemId) {
+      if (!await tx.processItem.findFirst({ where: { id: firstDto.processItemId, tenantId, projectId: revision.document.projectId } })) throw new BadRequestException('Process item must belong to this program and tenant');
       processItemId = firstDto.processItemId;
     } else {
-      let processItem = await this.prisma.processItem.findFirst({
+      let processItem = await tx.processItem.findFirst({
         where: { projectId: revision.document.projectId, tenantId },
       });
       if (!processItem) {
-        processItem = await this.prisma.processItem.create({
+        processItem = await tx.processItem.create({
           data: {
             tenantId,
             projectId: revision.document.projectId,
@@ -328,7 +407,7 @@ export class PfdService {
     }
 
     // Get existing steps to calculate sequence orders and step numbers
-    const existingSteps = await this.prisma.processStep.findMany({
+    const existingSteps = await tx.processStep.findMany({
       where: { revisionId },
       orderBy: { sequenceOrder: 'asc' },
       select: { stepNumber: true, sequenceOrder: true },
@@ -351,7 +430,6 @@ export class PfdService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
       const createdSteps: any[] = [];
       let sequenceOrder = maxSequenceOrder;
       let nextVal = maxVal;
@@ -359,6 +437,7 @@ export class PfdService {
       for (const dto of dtos) {
         // Determine step number
         let stepNumber = dto.stepNumber;
+        if (stepNumber && existingStepNumbers.has(stepNumber)) throw new BadRequestException(`Operation number '${stepNumber}' already exists`);
         if (!stepNumber) {
           nextVal += 10;
           if (nextVal === 10 && maxVal === 0 && existingSteps.length > 0) {
@@ -396,7 +475,8 @@ export class PfdService {
         });
         createdSteps.push(step);
       }
+      if (createdSteps.length) await this.invalidateGraph(tx, tenantId, revisionId);
       return createdSteps;
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }

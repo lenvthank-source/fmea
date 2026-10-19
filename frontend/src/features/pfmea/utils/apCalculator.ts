@@ -1,6 +1,6 @@
 /**
  * Client-side Action Priority (AP) calculator matching backend logic.
- * Default rules from AIAG-VDA FMEA Handbook (2019).
+ * Current configured FMEApex profile; numerical handbook conformity is not yet independently verified.
  */
 export function calculateAP(
   severity: number | string | null | undefined,
@@ -13,9 +13,12 @@ export function calculateAP(
     return null;
   }
 
-  const S = Math.floor(Number(severity));
-  const O = Math.floor(Number(occurrence));
-  const D = Math.floor(Number(detection));
+  const values = [severity, occurrence, detection];
+  if (values.some(value => typeof value === "string" && !/^\d+$/.test(value.trim()))) return null;
+  const S = Number(severity);
+  const O = Number(occurrence);
+  const D = Number(detection);
+  if (![S, O, D].every(Number.isInteger)) return null;
 
   if (isNaN(S) || isNaN(O) || isNaN(D) || S < 1 || S > 10 || O < 1 || O > 10 || D < 1 || D > 10) {
     return null;

@@ -139,3 +139,10 @@ Source: [r2.service.ts](file:///f:/proj-fmea/backend/src/modules/action/r2.servi
 - Decision: Replace the rail with collision-aware coachmarks anchored to real controls and actual wizard/route state. Compact the dashboard, hide trial archives, and use a clear Trial workspace identity. Return only viewer-scoped recorded audit events, with real project attribution, refresh states, and collection-POST audit IDs.
 - Validation: focused backend regression tests cover audit-only behavior, guest/owner/admin scope, inaccessible events, actual attribution, bounds, and creation IDs; browser checks cover validation, contextual prompts, all workflow chapters, and responsive layout.
 - Sources: `frontend/src/features/projects/components/FmeaTutorialGuide.tsx:1`, `frontend/src/features/projects/ProjectList.tsx:1`, `backend/src/modules/audit/audit-log.service.ts:1`, `backend/src/common/audit.interceptor.ts:1`. Release ledger remains pending a user-confirmed version under [versions/README.md](../../versions/README.md); no release file or existing version entry changed.
+
+
+## 2026-10-19 — Rule provenance, iterative drafts, permanent public identity (unreleased)
+Status: Accepted by user's full-plan approval; implementation integration in progress.
+Decision: Keep verified external/customer rules separate from product policy and actual implementation. Allow iterative drafts; preserve immediate integrity/permission/lock checks and evaluate review/release completeness. Preserve valid AP mappings while rejecting fractions; browser/backend parity does not prove handbook conformity. Use revision-owned explicit PFD topology rather than guessed routes. Reserve short public trial handles permanently in a global immutable ledger with no tenant/user cascade.
+Evidence: `.agents/context/engineering-rule-register.md:1`, `backend/src/modules/auth/public-handle.ts:1`, migration `20261019090000_public_handles/migration.sql:1`, `backend/src/modules/pfmea/ap-calculator.spec.ts:1`.
+Release: Not yet versioned/published; append a new versions ledger only after user confirmation. Existing release ledgers remain unchanged.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,12 +13,16 @@ import {
   Alert,
   CircularProgress,
   Typography,
-} from '@mui/material';
-import { useAuth } from '../auth/AuthContext';
-import { API_BASE_URL } from '../../config';
-import { dialogSelectProps } from '../../theme/muiSelectConfig';
-import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
-import { parseApiError } from '../../lib/api';
+} from "@mui/material";
+import { PackagePreviewCard } from "./PackagePreviewCard";
+import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from "../../config";
+import { dialogSelectProps } from "../../theme/muiSelectConfig";
+import {
+  useToast,
+  getToastSeverity,
+} from "../../components/Toast/ToastProvider";
+import { parseApiError } from "../../lib/api";
 
 interface ImportTargetDialogProps {
   open: boolean;
@@ -37,16 +41,47 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
 }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const [previewData, setPreviewData] = useState<unknown>(null);
   const [projects, setProjects] = useState<any[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [selectedRevisionId, setSelectedRevisionId] = useState<string>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedRevisionId, setSelectedRevisionId] = useState<string>("");
   const [processSteps, setProcessSteps] = useState<any[]>([]);
-  const [selectedProcessStepId, setSelectedProcessStepId] = useState<string>('');
+  const [selectedProcessStepId, setSelectedProcessStepId] =
+    useState<string>("");
 
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingSteps, setLoadingSteps] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !token) return;
+    let current = true;
+    setSelectedProjectId("");
+    setSelectedRevisionId("");
+    setSelectedProcessStepId("");
+    setProcessSteps([]);
+    setPreviewData(null);
+    fetch(`${API_BASE_URL}/repository/packages/${packageId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok)
+          throw new Error(
+            await parseApiError(res, "Unable to preview package"),
+          );
+        return res.json();
+      })
+      .then((pkg) => {
+        if (current) setPreviewData(pkg.packageData);
+      })
+      .catch((err) => {
+        if (current) setError(err.message);
+      });
+    return () => {
+      current = false;
+    };
+  }, [open, token, packageId]);
 
   // Fetch projects on mount
   useEffect(() => {
@@ -56,39 +91,73 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
       fetch(`${API_BASE_URL}/projects`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok)
+            throw new Error(
+              await parseApiError(res, "Unable to load import destinations"),
+            );
+          return res.json();
+        })
         .then((data) => {
-          setProjects(Array.isArray(data) ? data : []);
+          setProjects(
+            (Array.isArray(data) ? data : data.data || []).filter(
+              (project: any) =>
+                project.status === "active" &&
+                !project.uiSettings?.isDemo &&
+                project.id !== "c439cfbe-548a-4e25-a37c-0194652b8526",
+            ),
+          );
           setLoadingProjects(false);
         })
         .catch((err: any) => {
           console.error(err);
-          const msg = err.message || 'Failed to load projects';
+          const msg = err.message || "Failed to load projects";
           setError(msg);
           showToast(msg, getToastSeverity(msg));
           setLoadingProjects(false);
         });
     }
-  }, [open, token]);
+  }, [open, token, showToast]);
 
   // When project changes, fetch its active revision and process steps
   useEffect(() => {
+    setSelectedRevisionId("");
+    setSelectedProcessStepId("");
+    setProcessSteps([]);
     if (selectedProjectId && token) {
       setLoadingSteps(true);
       fetch(`${API_BASE_URL}/projects/${selectedProjectId}/revisions`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok)
+            throw new Error(
+              await parseApiError(res, "Unable to load import destinations"),
+            );
+          return res.json();
+        })
         .then((revs) => {
           const revList = Array.isArray(revs) ? revs : [];
-          const activeRev = revList.find((r: any) => r.status !== 'superseded') || revList[0];
+          const activeRev = revList.find(
+            (r: any) =>
+              r.status === "draft" && !r.lockedAt && r.document?.type === "PFD",
+          );
           if (activeRev) {
             setSelectedRevisionId(activeRev.id);
             // Fetch process steps for active revision
-            fetch(`${API_BASE_URL}/pfd-steps?revisionId=${activeRev.id}`, {
+            fetch(`${API_BASE_URL}/revisions/${activeRev.id}/pfd-steps`, {
               headers: { Authorization: `Bearer ${token}` },
             })
-              .then((res) => res.json())
+              .then(async (res) => {
+                if (!res.ok)
+                  throw new Error(
+                    await parseApiError(
+                      res,
+                      "Unable to load import destinations",
+                    ),
+                  );
+                return res.json();
+              })
               .then((steps) => {
                 setProcessSteps(Array.isArray(steps) ? steps : []);
                 setLoadingSteps(false);
@@ -98,6 +167,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
                 setLoadingSteps(false);
               });
           } else {
+            setError("This project has no writable draft revision.");
             setLoadingSteps(false);
           }
         })
@@ -110,7 +180,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
 
   const handleImport = async () => {
     if (!selectedRevisionId || !selectedProcessStepId) {
-      setError('Please select a target project and process step.');
+      setError("Please select a target project and process step.");
       return;
     }
 
@@ -118,20 +188,23 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/repository/packages/${packageId}/import`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${API_BASE_URL}/repository/packages/${packageId}/import`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            revisionId: selectedRevisionId,
+            processStepId: selectedProcessStepId,
+          }),
         },
-        body: JSON.stringify({
-          revisionId: selectedRevisionId,
-          processStepId: selectedProcessStepId,
-        }),
-      });
+      );
 
       if (!res.ok) {
-        const msg = await parseApiError(res, 'Failed to import package');
+        const msg = await parseApiError(res, "Failed to import package");
         throw new Error(msg);
       }
 
@@ -139,7 +212,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      const msg = err.message || 'Failed to import package';
+      const msg = err.message || "Failed to import package";
       setError(msg);
       showToast(msg, getToastSeverity(msg));
       setImporting(false);
@@ -147,16 +220,23 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <DialogTitle sx={{ fontWeight: "bold" }}>
         Import Work Element: {packageName}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
+          {previewData !== null && (
+            <PackagePreviewCard
+              packageData={previewData}
+              packageName={packageName}
+            />
+          )}
           {error && <Alert severity="error">{error}</Alert>}
 
           <Typography variant="body2" color="text.secondary">
-            Select the destination project and process step to import this work element package into.
+            Select the destination project and process step to import this work
+            element package into.
           </Typography>
 
           <FormControl fullWidth size="small">
@@ -170,7 +250,7 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
             >
               {projects.map((p) => (
                 <MenuItem key={p.id} value={p.id}>
-                  {p.name} {p.orgPartNumber ? `(${p.orgPartNumber})` : ''}
+                  {p.name} {p.orgPartNumber ? `(${p.orgPartNumber})` : ""}
                 </MenuItem>
               ))}
             </Select>
@@ -204,10 +284,18 @@ export const ImportTargetDialog: React.FC<ImportTargetDialogProps> = ({
           variant="contained"
           color="primary"
           onClick={handleImport}
-          disabled={importing || !selectedProcessStepId}
-          startIcon={importing ? <CircularProgress size={18} color="inherit" /> : null}
+          disabled={
+            importing ||
+            loadingSteps ||
+            !selectedRevisionId ||
+            !selectedProcessStepId ||
+            previewData === null
+          }
+          startIcon={
+            importing ? <CircularProgress size={18} color="inherit" /> : null
+          }
         >
-          {importing ? 'Importing...' : 'Confirm Import'}
+          {importing ? "Importing..." : "Confirm Import"}
         </Button>
       </DialogActions>
     </Dialog>

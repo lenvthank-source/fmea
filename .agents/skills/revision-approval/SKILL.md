@@ -1,38 +1,21 @@
 ---
 name: "Document Revision Submission, Review, and Approval"
-description: "Controls the FMEA document lifecycle, reviewer segregation, 21 CFR Part 11 signatures, and immutable revisions."
+description: "Maintain actual revision readiness, submission, password-confirmed approval, reviewer segregation, audit records and protected content."
 ---
+# Revision review and approval
 
-# Document Revision Submission, Review, and Approval Skill
+Inspect `backend/src/modules/project/project.controller.ts:173` and project.service.ts before changing lifecycle behavior. Rule applicability: `.agents/context/engineering-rule-register.md`.
 
-This skill governs the compliance, transitions, and auditing of FMEA revisions from creation to final approval sign-off.
+## Implemented contract
+Under `/api/v1/projects/:id/revisions/:revisionId`:
+- GET `/readiness`: inspect review completeness.
+- POST `/submit`: submit writable draft after readiness checks.
+- POST `/approve`: authorized approver sends password/comment; creator cannot approve own revision. Approval changes status and sets lockedAt/approvedAt, stores approval record and audit event.
+- POST `/reject`: authorized review decision with comment.
 
-## 1. Flow Details
-1. **Draft**: Revision created. Quality engineers edit PFD/FMEA/CP rows.
-2. **InReview**: Submitted for approvals. Writes are blocked except for comments/reviews.
-3. **ChangesRequested**: Reviewers request changes. Status reverts to `Draft` for rework. Can be re-submitted (`ChangesRequested` → `InReview`).
-4. **Approved**: All designated approvers sign off. Content is finalized.
-5. **Locked**: Approved revisions are locked (setting `locked_at` timestamp), making the revision content entirely read-only.
-6. **Superseded**: A new revision is approved, deprecating the older one.
+A separate universal `/revisions/:id/lock` route, configurable minimum reviewer/approver counts, cryptographic approval hash, and automatic vector-index job are not established by this implementation. Do not invent those capabilities or equate approval records with regulatory certification.
 
-## 2. Integrity Rules
-- **Prerequisite Check**: Submission requires a passed consistency and coverage check.
-- **Segregation of Duties**: A user cannot approve a revision they authored.
-- **Approver Count**: Minimum 1 reviewer and 1 approver (configurable per tenant) must sign off.
-- **21 CFR Part 11 Compliance**: Approvals must record user name, timestamp, digital signature verification hash, and decision comment.
-- **Audit Trails**: All status mutations must write to the partitioned `audit_log` database table. No UPDATE or DELETE operations are allowed on the `audit_log` table (immutability constraint).
+## Integrity
+Allow incomplete drafts and revisiting analysis activities. Enforce tenant permissions, valid references, integer ratings and protected-revision restrictions immediately. Evaluate completeness before submission/approval, preserving approved content. Review checks must explain missing data instead of silently fabricating it. Results documentation is broader than locking a revision.
 
-## 3. Key Database Tables
-- `document`: Master FMEA document record.
-- `document_revision`: Tracks revision numbering and status (`draft`, `in_review`, `changes_requested`, `approved`, `superseded`, `archived`).
-- `approval`: Captures digital signatures, comments, and reviewer/approver role links.
-- `audit_log`: Partitioned history logging all mutations with signatures.
-
-## 4. API Endpoints
-- `POST /api/v1/revisions/:revisionId/submit` — Submit a draft revision for review.
-- `POST /api/v1/revisions/:revisionId/approve` — Reviewer/Approver digital sign-off.
-- `POST /api/v1/revisions/:revisionId/lock` — Lock an approved revision (sets `locked_at` and enforces immutability).
-
-## 5. Related Skills
-- `fmea-authoring`: Step 7 results in revision submissions.
-- `vector-indexing`: Revision approval triggers asynchronous indexing pipeline.
+Audit each mutation path for RevisionGuard use; do not assume ActionService enforces full linked-revision/evidence transitions. Preserve existing audit history and separate product policies from independently verified customer/regulatory requirements.

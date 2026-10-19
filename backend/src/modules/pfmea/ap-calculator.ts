@@ -1,6 +1,6 @@
 /**
  * Calculates the Action Priority (AP) based on Severity (S), Occurrence (O), and Detection (D)
- * according to the AIAG-VDA FMEA Handbook (2019) default lookup rules.
+ * using the currently configured FMEApex AP profile. Handbook numerical conformity remains pending independent verification.
  * S, O, and D must be integers between 1 and 10.
  * If any value is missing or out of bounds, returns null.
  */
@@ -20,9 +20,11 @@ export function calculateAP(
     return null;
   }
 
-  const S = Math.floor(severity);
-  const O = Math.floor(occurrence);
-  const D = Math.floor(detection);
+  const S = severity;
+  const O = occurrence;
+  const D = detection;
+
+  if (![S, O, D].every(Number.isInteger)) return null;
 
   if (S < 1 || S > 10 || O < 1 || O > 10 || D < 1 || D > 10) {
     return null;

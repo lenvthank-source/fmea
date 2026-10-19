@@ -15,9 +15,9 @@ Project-specific terms, abbreviations, and domain names.
 | VDA | Verband der Automobilindustrie (German auto industry association) |
 | AP | Action Priority (H/M/L derived from S/O/D lookup) |
 | S/O/D | Severity / Occurrence / Detection ratings (1–10) |
-| RPN | Risk Priority Number (legacy, NOT used in AIAG-VDA 2019) |
-| 4M | Man, Machine, Material, Method (work element categories) |
-| 5Ts | Team, Timing, Tools, Tasks, boundary (planning elements) |
+| RPN | Risk Priority Number (S × O × D); not this product's primary AP ranking |
+| 4M | AIAG/VDA errata examples: Man, Machine, Material, Environment; preserve Method/customer extensions |
+| 5Ts | InTent, Timing, Team, Tasks, Tools (planning context; scope/boundaries documented alongside) |
 | CFT | Cross-Functional Team |
 | 21 CFR Part 11 | FDA regulation for electronic records and signatures |
 | IATF 16949 | Automotive quality management standard |
@@ -50,8 +50,10 @@ Project-specific terms, abbreviations, and domain names.
 | Process Step | PFD step (also referenced in PFMEA/CP rows) |
 | Process Item | Container entity for process steps within a revision |
 | Package | Reusable work element template in the Repository |
-| Evidence | File attachment proving corrective action completion |
+| Evidence | Supporting information requiring review to assess action completion/effectiveness |
 | Guest Tenant | Special workspace (`guest-tenant`) for trial/demo accounts |
 | Revision | Versioned snapshot of document content (PFD/PFMEA/DFMEA/CP) |
 | Locked Revision | Revision with `lockedAt` set — permanently immutable |
 | AP Lookup | Pure function mapping S/O/D to H/M/L per AIAG-VDA 2019 table |
+
+Applicable sources and verification: [engineering rule register](engineering-rule-register.md).

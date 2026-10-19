@@ -34,6 +34,7 @@ async function bootstrap() {
     exclude: [
       { path: '', method: RequestMethod.ALL },
       { path: 'health', method: RequestMethod.ALL },
+      { path: 'api/v1/health', method: RequestMethod.ALL },
     ],
   });
 

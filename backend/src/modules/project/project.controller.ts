@@ -125,7 +125,8 @@ export class ProjectController {
   @Get(':id/documents')
   @Permissions('project.view')
   async findDocuments(@Request() req: RequestWithUser, @Param('id') id: string) {
-    return this.projectService.findDocuments(req.user.tenantId, id);
+    const isAdmin = req.user.roles?.includes('Admin') || false;
+    return this.projectService.findDocuments(req.user.tenantId, id, isAdmin);
   }
 
   @Post(':id/revisions')
@@ -161,7 +162,8 @@ export class ProjectController {
     @Request() req: RequestWithUser,
     @Param('id') id: string,
   ) {
-    return this.projectService.getRevisions(req.user.tenantId, id);
+    const isAdmin = req.user.roles?.includes('Admin') || false;
+    return this.projectService.getRevisions(req.user.tenantId, id, isAdmin);
   }
 
   @Get(':id/revisions/:revisionId')
@@ -171,6 +173,12 @@ export class ProjectController {
     @Param('revisionId') revisionId: string,
   ) {
     return this.projectService.getRevisionDetail(req.user.tenantId, revisionId);
+  }
+
+  @Get(':id/revisions/:revisionId/readiness')
+  @Permissions('project.view')
+  getReadiness(@Request() req: RequestWithUser, @Param('revisionId') revisionId: string) {
+    return this.projectService.getRevisionReadiness(req.user.tenantId, revisionId);
   }
 
   @Post(':id/revisions/:revisionId/submit')

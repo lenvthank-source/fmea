@@ -683,3 +683,10 @@
     }
   }
 }
+
+.quality-account-control { max-width: min(240px, 46vw); }
+.quality-program-card .MuiCardContent-root { min-width: 0; }
+.quality-program-card .MuiTypography-root { overflow-wrap: anywhere; }
+.quality-program-card .MuiChip-root { max-width: 100%; height: auto; min-height: 18px; }
+.quality-program-card .MuiChip-label { white-space: normal; overflow: visible; padding-block: 2px; }
+.quality-program-card .MuiIconButton-root { flex-shrink: 0; }

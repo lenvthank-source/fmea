@@ -1,4 +1,4 @@
-# Data Model — Prisma 5.20 (41 models)
+# Data Model — Prisma 5.22 (45 models)
 
 Source of truth: `backend/prisma/schema.prisma:1`.
 
@@ -38,3 +38,12 @@ Source of truth: `backend/prisma/schema.prisma:1`.
 - **Pagination:** `project.service:35` OR ILIKE without `pg_trgm` (B-tree indexes only); results wrapped `{data,total,page,limit}` via `lib/pagination unwrapPaginated`.
 - **Soft archive:** guests `isGuest + guestExpiresAt +15d` (`auth.service:530`), sweep `user.service:15` after 15d inactivity.
 - **Inactivity:** `lastActivityAt` bumped on `refresh` (always) + `getMe` throttled >5min + `login` (`auth.service:367,437,667`).
+
+## 2026-10-19 additive model changes
+`User.publicHandle` is nullable/globally unique and references immutable `PublicHandleReservation.handle`. The permanent global reservation ledger has no user/tenant cascade, so cleanup cannot recycle names. Migration backfills existing guest accounts and protects assigned handles against changes. Historical identity fields and user IDs remain unchanged. Source: `backend/prisma/schema.prisma:36`, migration `20261019090000_public_handles/migration.sql:1`.
+
+`DocumentRevision.pfdGraph` (nullable JSON) and `pfdGraphVersion` (default 0) hold explicit physical topology and concurrency version. This is not a React Flow coordinate table or a replacement for existing ProcessStep identities. Source: migration `202610190002_pfd_graph/migration.sql:1`. Check ACTIVE_STATE for actual migration application; source addition alone does not prove database synchronization.
+
+Trial identities require a non-null reserved handle via `guest_public_handle_required`. During rolling upgrades, run `backend/scripts/backfill-public-handles.cjs` after building if an older API admitted missing handles, before validating the constraint. Applied migration and drift evidence is recorded in ACTIVE_STATE.
+
+Migration `20261019133000_legacy_trial_handle_compatibility` assigns and reserves a missing trial handle at the database boundary for older APIs during rollout. Existing non-null handles and registered names remain untouched. This retains the required-handle invariant without breaking old trial-login requests.
