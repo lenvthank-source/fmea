@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.10.1.md` — Resilient PFD graph fallback, token-guarded step fetching, non-fatal Excel export, and admin archived project visibility.
 - `v0.10.0.md` — Complete public identity, permanent trial usernames, compact workspace cards, visual package repository, explicit PFD routing/import/export and review-readiness policy.
 - `v0.9.0.md` — Connected homepage, cohesive sign-in/dashboard theme, direct trial entry, contextual seven-step walkthrough, real viewer-scoped activity, and portable Graphify/handoff documentation.
 - `v0.8.4.md` — Full-Width Light Enterprise Excel Retirement Showcase & Responsive Quality Canvas: eliminated letterboxed dark container in ExcelRetirementShowcase, replacing it with a full-width light-enterprise design featuring 3 inspection modes (Old Excel Sheet with #REF! errors and green header, FMEApex Engine with active Golden Thread and 0 orphan rows, and Side-by-Side comparison); cleaned unused imports and verified zero TypeScript/Vite bundling warnings; validated responsive layouts across 13" laptop to 27" desktop viewports with Puppeteer MCP.

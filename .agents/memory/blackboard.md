@@ -21,6 +21,12 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 
 ## Entries (newest first)
 
+## 2026-10-19T15:08:55Z — Smoke test PFD workspace canvas and report exporte — google antigravity — in_progress — priority:1
+- owns: all
+- artifacts: [.agents/ACTIVE_STATE.md]
+- depends_on: []
+> google antigravity → all: Completed 'Fixed 404 'Cannot GET /revisions/:id/pfd-graph' fragility by adding resilient fa'. Next focus: 'Smoke test PFD workspace canvas and report exporter in browser'.
+
 ## 2026-10-19T10:13:55Z — Smoke test UI workspace access on archived and act — google antigravity — in_progress — priority:1
 - owns: all
 - artifacts: [.agents/ACTIVE_STATE.md]

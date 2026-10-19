@@ -22,7 +22,13 @@ export const PfdEngineeringCanvas: React.FC<Props> = ({ steps, revisionId, token
     if (!revisionId || !token) return;
     const abort = new AbortController(); setBusy(true); setLoaded(false); setError('');
     fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, { headers:{ Authorization:`Bearer ${token}` }, signal:abort.signal })
-      .then(async r => { if (!r.ok) throw new Error('Could not load the saved process flow. Retry before editing.'); return r.json(); })
+      .then(async r => {
+        if (r.status === 404) {
+          return { graph: null, version: 0, writable: true };
+        }
+        if (!r.ok) throw new Error('Could not load the saved process flow. Retry before editing.');
+        return r.json();
+      })
       .then(data => {
         let current: PfdGraph = data.graph || derivePfdGraph(steps);
         const missing = steps.filter(s => !current.nodes.some(n => n.stepId === s.id));

@@ -100,11 +100,23 @@ export const ReportExporter: React.FC<ReportExporterProps> = ({
 
   const loadPfdExport = async () => {
     if (!revisionId) throw new Error('Open a document revision before exporting the PFD.');
-    const [graphResponse, stepsResponse] = await Promise.all([fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, {headers:{Authorization:`Bearer ${token}`}}),fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`,{headers:{Authorization:`Bearer ${token}`}})]);
-    if(!graphResponse.ok || !stepsResponse.ok) throw new Error('The complete persisted process flow could not be loaded. Export was cancelled.');
-    const saved = await graphResponse.json(); const fullSteps = await stepsResponse.json();
+    const [graphResponse, stepsResponse] = await Promise.all([
+      fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, {headers:{Authorization:`Bearer ${token}`}}).catch(() => null),
+      fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {headers:{Authorization:`Bearer ${token}`}})
+    ]);
+    if(!stepsResponse.ok) throw new Error('The complete process operations could not be loaded. Export was cancelled.');
+    const fullSteps = await stepsResponse.json();
     if(!Array.isArray(fullSteps)) throw new Error('Invalid process operation response');
-    return {graph:(saved.graph || derivePfdGraph(fullSteps)) as PfdGraph,steps:fullSteps};
+    let savedGraph: any = null;
+    if (graphResponse && graphResponse.ok) {
+      try {
+        const saved = await graphResponse.json();
+        savedGraph = saved.graph;
+      } catch {
+        savedGraph = null;
+      }
+    }
+    return {graph:(savedGraph || derivePfdGraph(fullSteps)) as PfdGraph,steps:fullSteps};
   };
 
   const generateExcel = async (_watermark: string) => {

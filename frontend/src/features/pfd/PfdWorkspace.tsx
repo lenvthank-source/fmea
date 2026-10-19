@@ -367,17 +367,28 @@ export const PfdWorkspace: React.FC = () => {
   }, [projectId, token]);
 
   const fetchSteps = async () => {
-    if (!revisionId) return;
+    if (!revisionId || !token) return;
     try {
       const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to load PFD steps');
       const data = await response.json();
-      const graphResponse = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, { headers: { Authorization: `Bearer ${token}` } });
-      setCanEdit(graphResponse.ok && Boolean((await graphResponse.json()).writable));
+      let isWritable = false;
+      try {
+        const graphResponse = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-graph`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (graphResponse.ok) {
+          const graphData = await graphResponse.json();
+          isWritable = Boolean(graphData.writable);
+        }
+      } catch {
+        // Tolerant fallback for rolling deployments
+      }
+      setCanEdit(isWritable);
       setSteps(data);
-        setGraphReloadKey(key => key + 1);
+      setGraphReloadKey(key => key + 1);
       // Collapse all steps by default for maximum screen ergonomics and minimal scrolling
       if (Array.isArray(data) && data.length > 0) {
         setCollapsedSteps(new Set(data.map((s: any) => s.id)));
@@ -392,10 +403,10 @@ export const PfdWorkspace: React.FC = () => {
   };
 
   useEffect(() => {
-    if (revisionId) {
+    if (revisionId && token) {
       fetchSteps();
     }
-  }, [revisionId]);
+  }, [revisionId, token]);
 
   // Inline changes handler
   const handleFieldChange = async (stepId: string, fieldName: string, value: string) => {

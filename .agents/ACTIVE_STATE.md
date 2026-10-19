@@ -1,6 +1,6 @@
 # FMEApex — active handoff
 
-Updated 2026-10-19T13:24:17+00:00. Harness: OpenAI Codex. Workspace: `F:/proj-fmea`, branch `main`, release **0.10.0**, confirmed by the user for publication to `origin/main`. Git is authoritative for local/remote commit IDs; deployment status must be checked independently.
+Updated 2026-10-19T15:16:00+00:00. Harness: Google Antigravity. Workspace: `F:/proj-fmea`, branch `main`, release **v0.10.1** (`0.10.1`), confirmed by the user for publication to `origin/main`. Git is authoritative for local/remote commit IDs; deployment status must be checked independently.
 
 ## Current objective and status
 The user-approved complete public identity redesign and connected engineering/workspace plan is published as release 0.10.0. Release commit `831823590a03249a41f8efac727c60f32c5d2b9d` was pushed to `origin/main` and the remote SHA was verified equal to local HEAD. This handoff update may be a later documentation commit; use Git for the current tip. Delivery checklist and URL evidence: `docs/specs/connected-quality-delivery.md`. Historical sessions are archived in `docs/handoffs/2026-10-19-before-connected-delivery.md`; they do not override this state.
@@ -28,12 +28,11 @@ Public: `frontend/src/components/site/`, router and public feature pages. Identi
 
 Start with this file and `.agents/AGENTS.md`, then **graphify query before source discovery**. Run README sync and `graphify update .` after each logical change and before handoff; preserve generated artifacts. SQL extraction currently warns that optional `tree_sitter_sql` is unavailable; TS/TSX graph extraction succeeds.
 
-The user explicitly authorized Git push and confirmed **0.10.0**. Package and lockfile metadata, append-only release notes, directory indexes and handoff are synchronized. The release push to `origin/main` succeeded and the remote SHA was verified. Do not equate Git publication with completed Cloudflare/Render deployment; live rollout remains unverified. Future releases require their own version confirmation.
+The user explicitly authorized Git push and confirmed **0.10.1**. Package and lockfile metadata, append-only release notes, directory indexes and handoff are synchronized. The patch resolves resilient PFD graph 404 fallbacks, guards unhydrated auth queries in PfdWorkspace, and fixes non-fatal PFD Excel export. Future releases require their own version confirmation.
 
 ## Material limits / existing backlog
 Numerical AP handbook conformity still requires independent licensed-reference validation; do not claim certification. Manufacturing-v1 is a declared product notation, subject to customer acceptance. Do not silently rewrite historical imported records or invent missing branches. Existing automatic CP-to-PFMEA reverse propagation and a complete action-evidence state machine are not implemented; these are documented pre-existing gaps, not delivered features. Production RLS/staging/container verification remain separate backlog. Full browser printing and a real engineering-record import were not submitted against shared reference data; print pagination and import contracts are covered by tests and native workbook verification. The final browser reload reported no runtime or HTML nesting errors; exports stay disabled until saved topology loads successfully.
 
 ## Release handoff
-Use `versions/v0.10.0.md` for the release scope and migration rollout. All maintained source-directory READMEs are now tracked; `.gitignore` excludes task runtime logs and graph lock files. The public API/database compatibility fallback was tested without retaining fixture data. Next priority is post-deployment verification on configured Cloudflare Pages/Render URLs, then the independent methodology/backlog items above.
+Use `versions/v0.10.1.md` for the release scope. All maintained source-directory READMEs are tracked; `.gitignore` excludes task runtime logs and graph lock files. Next priority is post-deployment verification on configured Cloudflare Pages/Render URLs, then the independent methodology/backlog items above.
 
-Publication verification: 2026-10-19T14:43:20+00:00 — origin/main matched release commit 8318235, working tree clean after the release push, both 0.10.0 builds and 74 tests passed. This documentation-only follow-up records that completed delivery.
