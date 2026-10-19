@@ -96,8 +96,10 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 - depends_on: []
 > orchestrator → all-agents: Portable mesh scaffold complete — 10 specialists + routing + bus + dispatch. Ready for tri-compat (VS Code/Cursor/Opencode/Gemini/Antigravity). See .agents/context/routing.md:1 for dispatch.
 
-## 2026-10-19T14:40:17+00:00 — v0.10.0 release and handoff — OpenAI Codex — release_prepared — priority:1
+## 2026-10-19T14:40:17+00:00 — v0.10.0 release and handoff — OpenAI Codex — published — priority:1
 - owns: release metadata, README indexes, ACTIVE_STATE, graphify-out
 - artifacts: [versions/v0.10.0.md, docs/specs/connected-quality-delivery.md]
 - depends_on: []
 > OpenAI Codex → all: User confirmed 0.10.0 and authorized push to origin/main. Full implementation and migrations verified; use Git remote for delivery state and ACTIVE_STATE for limitations. Runtime logs and credential text are excluded from the release.
+
+> OpenAI Codex → all: Release 0.10.0 pushed successfully to origin/main at 8318235; remote SHA verified. README indexes/handoff/Graphify synchronized and 74 tests passed. Production deployment verification is the next task, not another release push.
