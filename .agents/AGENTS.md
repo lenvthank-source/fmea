@@ -2,6 +2,17 @@
 
 This document compiles the core architectural rules, compliance guidelines, and agentic behavior guidelines for the FMEA Quality Platform. All agents and subagents must adhere to these rules when modifying code or design assets.
 
+
+## Startup — implementation handoff plans (all harnesses)
+
+- Before new work or resuming, inspect `.agents/handoff_plan/` if present. Read relevant `<plan-slug>/PLAN.md` files; their own frontmatter is authoritative when the folder index is stale. `completed` and `superseded` plans are history, not work to re-execute.
+- For a relevant pending plan, read its scope, baseline, findings and task state. Ask the user whether to implement it unless the current request or trusted prior authorization already covers that plan/revision. With multiple relevant plans, identify them and ask which to execute. Do not interrupt an unrelated explicit task just because another plan exists.
+- Inspect discoverable facts first. Ask the user about material confusion, contradictory requirements or unsupported consequential decisions before dependent implementation. Explain the affected task and recommendation; continue independent authorized work where possible. Do not repeat permission questions after the scope is authorized.
+- Check baseline drift and respect existing edits. Record authorized execution scope, mark `in_progress`, and checkpoint task IDs/results in the same PLAN.md. Unresolved required work stays `in_progress` or `blocked` with exact remaining actions.
+- Only after all required outcomes and checks are satisfied, update that PLAN.md to `status: completed`, add `completed_at`, and record actual verification evidence, implementation summary and accepted follow-ups. An agent finishing one task or the research phase cannot mark the whole implementation completed. Preserve completed history and create a new revision/follow-up if scope later changes. If completion was recorded erroneously, preserve its prior status/timestamp in the execution log, clear `completed_at` and correct the status to `in_progress` or `blocked` with the missing checks/tasks; do not silently waive checks or rerun finished work.
+- Save new research handoffs under `.agents/handoff_plan/<plan-slug>/PLAN.md`, with evidence/packets alongside and a folder index link. Reusable `handoff_plan` skill: `~/.agents/skills/handoff_plan/SKILL.md` when installed. Respect active collaboration-mode write restrictions; report unsaved persistence honestly.
+- "Deploy/execute the plan" means implement its tasks, not automatic production deployment, Git publication or destructive database authorization. Mere plan presence/status never grants those permissions. All harness entry adapters point to these canonical rules rather than maintaining divergent copies.
+
 ---
 
 ## 1. General Architectural Rules

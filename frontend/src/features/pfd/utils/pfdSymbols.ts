@@ -8,6 +8,24 @@ export interface PfdSymbol {
   activityTypes?: string[];
 }
 export const PFD_SYMBOLS = catalog as PfdSymbol[];
+export const CLASSIC_MANUFACTURING_IDS = [
+  'manufacturing.classic.operation',
+  'manufacturing.classic.inspection',
+  'manufacturing.classic.transport',
+  'manufacturing.classic.storage',
+  'manufacturing.classic.decision',
+  'manufacturing.classic.rework',
+  'manufacturing.classic.combined',
+] as const;
+
+export function getClassicManufacturingSymbol(stepType: string): PfdSymbol | undefined {
+  return getPfdSymbol(`manufacturing.classic.${stepType}`) || getPfdSymbol(`manufacturing.${stepType}`);
+}
+
+export function getMarkerSymbol(marker: string): PfdSymbol | undefined {
+  return getPfdSymbol(`marker.${marker.toLowerCase()}`);
+}
+
 export function getPfdSymbol(id?: string | null): PfdSymbol | undefined {
   return id ? PFD_SYMBOLS.find(symbol => symbol.id === id) : undefined;
 }
@@ -33,6 +51,38 @@ export function legacyManufacturingSymbol(icons: Record<string, boolean> = {}) {
   return { id: activity ? `manufacturing.${activity}` : null, ambiguous: activities.length > 1 && activity !== 'combined',
     annotations: ['wip', 'reject'].filter(key => icons[key]) };
 }
+
+/** Synchronizes flowIcons boolean flags upon an explicit engineering edit. */
+export function syncFlowIcons(
+  existing: Record<string, boolean> = {},
+  stepType: string,
+  markers?: { wip?: boolean; reject?: boolean }
+): Record<string, boolean> {
+  const updated: Record<string, boolean> = { ...existing };
+  updated.oper = false;
+  updated.insp = false;
+  updated.trans = false;
+  updated.store = false;
+  updated.decs = false;
+  updated.rework = false;
+
+  if (stepType === 'operation') updated.oper = true;
+  else if (stepType === 'inspection') updated.insp = true;
+  else if (stepType === 'transport') updated.trans = true;
+  else if (stepType === 'storage') updated.store = true;
+  else if (stepType === 'decision') updated.decs = true;
+  else if (stepType === 'rework') updated.rework = true;
+  else if (stepType === 'combined') {
+    updated.oper = true;
+    updated.insp = true;
+  }
+
+  if (markers?.wip !== undefined) updated.wip = markers.wip;
+  if (markers?.reject !== undefined) updated.reject = markers.reject;
+
+  return updated;
+}
+
 export function resolveStepSymbol(step: SymbolStep, mode: PfdSymbolMode) {
   const findings: string[] = [];
   const legacy = legacyManufacturingSymbol(step.flowIcons || {});
@@ -45,7 +95,10 @@ export function resolveStepSymbol(step: SymbolStep, mode: PfdSymbolMode) {
     findings.push('Selected manufacturing symbol is incompatible with the declared activity.'); manufacturing = undefined;
   }
   if (step.manufacturingSymbolId && !getPfdSymbol(step.manufacturingSymbolId)) findings.push('Selected manufacturing symbol is unavailable.');
-  manufacturing ||= getPfdSymbol(legacyCompatible ? legacy.id : `manufacturing.${declaredType}`) || getPfdSymbol('manufacturing.operation')!;
+  manufacturing ||= (legacyCompatible ? getPfdSymbol(legacy.id) : undefined)
+    || getPfdSymbol(`manufacturing.${declaredType}`)
+    || getPfdSymbol(`manufacturing.classic.${declaredType}`)
+    || getPfdSymbol('manufacturing.operation')!;
   let symbol = manufacturing;
   if (mode === 'engineering') {
     const selected = getPfdSymbol(step.engineeringSymbolId);

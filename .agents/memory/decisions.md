@@ -160,3 +160,10 @@ The user requested Git push, README sync and handoff and explicitly confirmed mi
 
 ##2026-10-20 — PFD symbol and routing presentation (unreleased)
 User approved dual modes with Manufacturing default, explicit table symbols, reviewed sequence generation and whole publicly discoverable reference inventory. Introduced graphv2 and additive symbol columns; renderer/export geometry shared. No route/equipment guessing, sourceSVGshipping or exact-standard glyph claims. Public editable native exports remain unavailable; vector previews archived separately. Runtime/browser/PDF acceptance recorded in docs/specs/pfd-symbols-delivery.md. No release version or Git publication authorized.
+
+## 2026-10-20 — Portable researched implementation handoffs
+User requested `handoff_plan` in personal `~/.agents/skills` for compatible harnesses, project artifacts in `.agents/handoff_plan/<slug>/PLAN.md`, startup discovery/implementation confirmation, user clarification of material uncertainty and verified completion in the same plan. Implemented canonical rules in .agents/AGENTS.md:1 and folder index .agents/handoff_plan/README.md:1. Existing harness entry adapters remain pointers. Status does not grant publication/production permissions; preserve valid prior authorization and avoid repeated prompts. This instruction update is uncommitted; published release remains versions/v0.12.0.md:1.
+
+
+## 2026-10-21 — Classic manufacturing symbols restoration (v0.12.1)
+User confirmed patch version bump to 0.12.1 and requested git push. Restored authentic classic manufacturing outlines (Operation = circle, Inspection = square, Transport = arrow, Storage = inverted triangle, Decision = diamond, Rework = pentagon outline, Combined = circle-in-square) and route markers (marker.wip, marker.reject) across 417 catalog symbols. Added compact PFD table cell, single primary activity selection, and atomic step patching. Full release ledger: `versions/v0.12.1.md`.

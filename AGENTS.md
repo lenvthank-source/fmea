@@ -3,6 +3,7 @@
 > **Universal Context Architecture**:
 > - Core Architecture & Invariants: [`.agents/AGENTS.md`](file:///f:/proj-fmea/.agents/AGENTS.md)
 > - Active Session State & Handoff: [`.agents/ACTIVE_STATE.md`](file:///f:/proj-fmea/.agents/ACTIVE_STATE.md)
+> - Pending implementation plans: [`.agents/handoff_plan/README.md`](.agents/handoff_plan/README.md) (startup behavior is defined in `.agents/AGENTS.md`)
 > - OpenAI Codex Guide: [`CODEX.md`](file:///f:/proj-fmea/CODEX.md)
 
 ## graphify

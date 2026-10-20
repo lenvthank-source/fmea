@@ -1,0 +1,69 @@
+{
+  "current_heading_update": {
+    "return": 0,
+    "state_bytes_unchanged": true,
+    "blackboard_updated": true
+  },
+  "legacy_update": {
+    "old_summary_removed": true,
+    "old_task_removed": true,
+    "backlog_retained": true
+  },
+  "missing_bus_heading": {
+    "return": 0,
+    "blackboard_unchanged": true
+  },
+  "failed_graph_refresh": {
+    "return": 0
+  },
+  "replacement_backslash": {
+    "error": "error",
+    "message": "bad escape \\q at position 109 (line 2, column 29)"
+  },
+  "partial_write": {
+    "error": "OSError",
+    "active_state_already_changed": true
+  },
+  "racing_writers": {
+    "failures": [],
+    "surviving_entries": 1,
+    "expected_entries": 2
+  },
+  "false_consistency": {
+    "return": 0,
+    "all_packages_invalid": true,
+    "graph_invalid": true,
+    "bridge_content_unchecked": true
+  },
+  "routing_parse": {
+    "rows": 11,
+    "agents": [
+      "Agent",
+      "pfd-agent",
+      "pfmea-agent",
+      "dfmea-agent",
+      "control-plan-agent",
+      "action-agent",
+      "revision-agent",
+      "rag-agent",
+      "auth-agent",
+      "repository-agent",
+      "ai-suggestion-agent"
+    ],
+    "seo_hits": [],
+    "substring_hits": []
+  },
+  "dispatch_ungated_repeat": {
+    "pending_entries": 2,
+    "approval_present": false,
+    "task_id_persisted": false,
+    "printed_prompt": true
+  },
+  "dispatch_append_boundary": {
+    "heading_glued_to_prior_line": true
+  },
+  "dispatch_failed_bus": {
+    "returned_normally": true,
+    "warned": true
+  }
+}

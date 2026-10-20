@@ -41,6 +41,7 @@ __pycache__/
 !.agents/AGENTS.md
 !.agents/README.md
 !.agents/ACTIVE_STATE.md
+!.agents/handoff_plan/
 !.agents/agents/
 !.agents/context/
 !.agents/memory/

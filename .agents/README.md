@@ -18,6 +18,8 @@ When `.agents/` conflicts with source code, **source code wins**.
 .agents/
 ├── README.md              ← You are here (always load)
 ├── AGENTS.md              ← Core project rules (always load)
+├── handoff_plan/          ← Canonical implementation plans, status and evidence
+│   └── <plan-slug>/PLAN.md ← Read at startup; confirm execution; record verified completion
 ├── rules/                 ← Stable coding & architecture rules
 │   ├── README.md            ← Rules navigation catalog
 │   ├── architecture.md
@@ -90,6 +92,8 @@ When `.agents/` conflicts with source code, **source code wins**.
 Agents must NOT load the entire `.agents/` directory. Load only what is relevant.
 
 ### Level 1 — Always Load
+
+Check `.agents/handoff_plan/` for relevant pending plans using the startup rule in `.agents/AGENTS.md`. Folder index: `handoff_plan/README.md`. Plan metadata owns status; completed plans are not offered for re-execution.
 - `.agents/README.md`
 - `.agents/AGENTS.md`
 

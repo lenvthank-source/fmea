@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-20",
+  "scope": "read-only feasibility audit baseline",
+  "root": "F:\\proj-fmea",
+  "commit": "6986f53c2b0e0a90ff69833e9967711bce213ccc",
+  "python": "3.12.6",
+  "sqlite": "3.45.3",
+  "files": {
+    "AGENTS.md": {
+      "sha256": "5b2f80cf39c954b4a00fb57f67217cdc3fad22e892bc718c6202d5da34b1e136",
+      "bytes": 2279
+    },
+    ".agents/AGENTS.md": {
+      "sha256": "cea45710320263ad9fb3eab5627512632b49609dacee794df2bd9f6898a42e3e",
+      "bytes": 21170
+    },
+    ".agents/README.md": {
+      "sha256": "440346708a65a7a59c717efbc6ea20d6c27104ce47c79d09c4b5a0ab3370844a",
+      "bytes": 8964
+    },
+    ".agents/ACTIVE_STATE.md": {
+      "sha256": "e6147291353f16a3a691a9335fb7e04aff5ec6e845b1b8410d56387314314fae",
+      "bytes": 7633
+    },
+    ".agents/memory/blackboard.md": {
+      "sha256": "e6e598e8fd0bc86640c611cb5b4dfb0b9fa4383eecdb412eea24636f7d23c0b4",
+      "bytes": 13750
+    },
+    ".agents/context/routing.md": {
+      "sha256": "2b5e14d7166b7bd3c9c881796ed2b769b42dfa0b271d7d48fc0e02fa9684a27e",
+      "bytes": 3976
+    },
+    ".agents/scripts/handoff.py": {
+      "sha256": "dfee47798f3be47d02c4ff5c6f43b04def57243f304cd5a55fb818909374d829",
+      "bytes": 15547
+    },
+    ".agents/scripts/dispatch.py": {
+      "sha256": "3d52a00ab14af1ce64ccc245fd415d62bb207593eac9535d7928b934a0fb2180",
+      "bytes": 6571
+    },
+    ".agents/agents/orchestrator/AGENT.md": {
+      "sha256": "9046ce2da71d812aef1d22d4f47fcf01594ad3fbc27a72a98aa63642e2467df8",
+      "bytes": 4702
+    },
+    "CODEX.md": {
+      "sha256": "7b7c0a7cd9025c224f1758086bd2a902f136ac60e462ad50ab049fce2334f61a",
+      "bytes": 2179
+    },
+    "CLAUDE.md": {
+      "sha256": "ce27a35a499187a535371d226bacfdc9ada90945402018d25a6b32137b5f2539",
+      "bytes": 1123
+    },
+    "GEMINI.md": {
+      "sha256": "0e9a2878fb3f3da59bd541815541630015605bce9085e0a09a08f07baa3b4e99",
+      "bytes": 717
+    },
+    ".cursorrules": {
+      "sha256": "da75e12034e150c768d7962a876f9e297c796d40876e7a88533a6ef66959116f",
+      "bytes": 572
+    },
+    ".github/copilot-instructions.md": {
+      "sha256": "8ed34779e4c1f024b2281383d35d1ac46688a5cc906ab54f78481749e69c9adb",
+      "bytes": 638
+    },
+    ".agents/checklists/pre-commit.md": {
+      "sha256": "792d7e8802ede0acc94ec412cbe76ee4e662ac4c56f5153630cf0fb776d2acf1",
+      "bytes": 536
+    }
+  }
+}

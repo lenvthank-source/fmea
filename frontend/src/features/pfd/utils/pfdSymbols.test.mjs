@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PFD_SYMBOLS, getPfdSymbol, isEngineeringSymbol, isManufacturingSymbolCompatible, legacyManufacturingSymbol, resolveStepSymbol, escapePfdSymbolLabel } from './pfdSymbols.ts';
+import { PFD_SYMBOLS, getPfdSymbol, isEngineeringSymbol, isManufacturingSymbolCompatible, legacyManufacturingSymbol, resolveStepSymbol, escapePfdSymbolLabel, CLASSIC_MANUFACTURING_IDS, getClassicManufacturingSymbol, getMarkerSymbol } from './pfdSymbols.ts';
 
 test('every catalog entry has unique stable identity, accessible label, bounded ports and safe geometry', () => {
   assert.equal(new Set(PFD_SYMBOLS.map(symbol => symbol.id)).size, PFD_SYMBOLS.length);
@@ -44,6 +44,28 @@ test('legacy mapping is read-only, records ambiguity and does not override decla
   assert.deepEqual(legacyManufacturingSymbol({ oper: true, insp: true }).id, 'manufacturing.combined');
   assert.equal(legacyManufacturingSymbol({ wip: true, reject: true }).id, null);
   assert.ok(resolveStepSymbol({ stepType: 'operation', flowIcons: { insp: true } }, 'manufacturing').findings.length);
+});
+test('classic manufacturing symbols and markers maintain authentic outlines', () => {
+  for (const id of CLASSIC_MANUFACTURING_IDS) {
+    const symbol = getPfdSymbol(id);
+    assert.ok(symbol, `Missing classic symbol ${id}`);
+    assert.equal(symbol.kind, 'manufacturing');
+    assert.ok(symbol.activityTypes?.length);
+  }
+  const classicRework = getPfdSymbol('manufacturing.classic.rework');
+  assert.ok(!classicRework?.svg.includes('RW'), 'Classic rework must use pentagon outline, not text RW');
+  assert.ok(classicRework?.svg.includes('M48 9L81 30'), 'Classic rework outline must be pentagonal');
+
+  const baseRework = getPfdSymbol('manufacturing.rework');
+  assert.ok(!baseRework?.svg.includes('RW'), 'Base rework must use pentagon outline, not text RW');
+
+  const wip = getMarkerSymbol('wip');
+  assert.ok(wip, 'WIP marker must exist in registry');
+  const reject = getMarkerSymbol('reject');
+  assert.ok(reject, 'Reject marker must exist in registry');
+  assert.ok(reject?.svg.includes('M14 36L28 9'), 'Reject marker must use hexagonal outline');
+
+  assert.equal(getClassicManufacturingSymbol('operation')?.id, 'manufacturing.classic.operation');
 });
 test('export label escaping preserves Unicode and rejects active markup as text', () => {
   assert.equal(escapePfdSymbolLabel('<script>"\'&日本'), '&lt;script&gt;&quot;&apos;&amp;日本');

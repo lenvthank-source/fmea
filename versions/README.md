@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.12.1.md` — Restored classic manufacturing symbols (clean circle, square, arrow, inverted triangle, diamond, pentagon rework, combined), compact PFD table cell, atomic step patching, and 417 identical catalog symbols.
 - `v0.12.0.md` — Explicit PFD symbols, reviewed automatic diagrams, protected graph v2, complete diagram exports and reference inventory.
 - `v0.11.0.md` — Controlled DFMEA and phase-specific Control Plan workflows, reviewed source synchronization, protected revision history, complete engineering exports and verified handoff.
 - `v0.10.1.md` — Resilient PFD graph fallback, token-guarded step fetching, non-fatal Excel export, and admin archived project visibility.

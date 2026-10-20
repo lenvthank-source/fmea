@@ -1,5 +1,5 @@
 """Generate original FMEApex SVG symbols from a reviewed public name inventory.
-Usage: python scripts/build-pfd-symbols.py <reference inventory.json>
+Usage: python scripts/build-pfd-symbols.py [reference inventory.json]
 The source supplies names only: geometry is original application notation, unverified
 against complete ISO/ISA references. Identical generated JSON is shipped to both apps.
 """
@@ -98,23 +98,45 @@ def geometry(label,category):
  return g,family
 
 def main():
- source=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'));catalog=[];coverage=[];canonical={}
+ src_arg = sys.argv[1] if len(sys.argv) > 1 and Path(sys.argv[1]).exists() else None
+ if src_arg:
+  source_path = Path(src_arg)
+ elif Path('docs/references/pfd-symbol-coverage.json').exists():
+  source_path = Path('docs/references/pfd-symbol-coverage.json')
+ else:
+  source_path = Path('C:/Users/Palak/.codex/visualizations/2026/10/18/01a15026-af67-7522-87fc-f43cefdb4e2b/pfd-reference-archive/inventory.json')
+ source=json.loads(source_path.read_text(encoding='utf-8'));catalog=[];coverage=[];canonical={}
  ports={'north':[48,4],'east':[92,36],'south':[48,68],'west':[4,36]}
  def add(id,label,cat,kind,svg,**extra):
   catalog.append(dict(id=id,label=label,category=cat,kind=kind,aliases=[],viewBox='0 0 96 72',ports=ports,svg=svg,provenance='Original FMEApex geometry; public names used as visual reference',verificationStatus='application-notation-unverified',**extra))
  basics={
  'operation':circle(48,36,25),'inspection':rect(23,11,50,50),'transport':path('M4 25H58V10L92 36 58 62V47H4Z'),
- 'storage':path('M14 12H82L48 62Z'),'delay':path('M20 12H48A24 24 0 0 1 48 60H20Z'),
- 'decision':path('M48 4L92 36 48 68 4 36Z'),'combined':rect(23,11,50,50)+circle(48,36,20),
- 'rework':circle(48,36,25)+text('RW'),'repair':rect(20,12,56,48)+text('RP'),
- 'hold':rect(20,12,56,48)+text('HOLD',48,40,10),'scrap':path('M25 12L71 60M71 12L25 60')+rect(20,8,56,56),
+ 'storage':path('M12 11H84L48 61Z'),'delay':path('M20 12H48A24 24 0 0 1 48 60H20Z'),
+ 'decision':path('M48 4L92 36 48 68 4 36Z'),'combined':rect(23,11,50,50)+circle(48,36,18),
+ 'rework':path('M48 9L81 30 68 63H28L15 30Z'),'repair':rect(20,12,56,48)+text('RP'),
+ 'hold':rect(20,12,56,48)+text('HOLD',48,40,10),'scrap':path('M14 36L28 9H68L82 36 68 63H28Z'),
  'return':path('M82 54V30H26M26 30L42 14M26 30L42 46')}
  for k,g in basics.items():add('manufacturing.'+k,k.title(),'Manufacturing activities','manufacturing',g,activityTypes=[k])
+ classics={
+ 'operation':(circle(48,36,25),'Operation'),
+ 'inspection':(rect(23,11,50,50),'Inspection'),
+ 'transport':(path('M4 24H58V10L92 36 58 62V48H4Z'),'Transport'),
+ 'storage':(path('M12 11H84L48 61Z'),'Storage'),
+ 'decision':(path('M48 4L92 36 48 68 4 36Z'),'Decision'),
+ 'rework':(path('M48 9L81 30 68 63H28L15 30Z'),'Rework'),
+ 'combined':(rect(23,11,50,50)+circle(48,36,18),'Combined Operation & Inspection')
+ }
+ for k,(g,label) in classics.items():
+  add('manufacturing.classic.'+k,f'Classic {label}','Manufacturing activities','manufacturing',g,activityTypes=[k])
+ markers={
+ 'wip':(path('M14 11H84L48 61Z'),'WIP marker'),
+ 'reject':(path('M14 36L28 9H68L82 36 68 63H28Z'),'Reject marker')
+ }
+ for k,(g,label) in markers.items():
+  add('marker.'+k,label,'Process markers','annotation',g)
  shapes={'rectangle':rect(8,10,80,52),'rounded-rectangle':rect(8,10,80,52,10),'ellipse':'<ellipse cx="48" cy="36" rx="42" ry="27"/>','triangle':path('M48 4L92 66H4Z'),'diamond':path('M48 4L92 36 48 68 4 36Z'),'parallelogram':path('M20 10H92L76 62H4Z'),'document':path('M10 8H86V55Q66 45 48 57Q28 68 10 58Z'),'database':path('M16 16V56C16 70 80 70 80 56V16M16 16C16 2 80 2 80 16C80 30 16 30 16 16M16 51C16 65 80 65 80 51'),'terminator':rect(4,16,88,40,20),'connector':circle(48,36,20),'off-page':path('M16 8H80V42L48 66 16 42Z'),'callout':path('M8 8H88V50H46L24 66V50H8Z'),'table':rect(8,8,80,56)+path('M8 24H88M8 40H88M32 8V64M60 8V64')}
  for k,g in shapes.items():add('basic.'+k,k.replace('-',' ').title(),'Basic shapes','basic',g)
  for k,g in {'right':path('M4 24H62V10L92 36 62 62V48H4Z'),'left':path('M92 24H34V10L4 36 34 62V48H92Z'),'up':path('M36 68V28H20L48 4 76 28H60V68Z'),'down':path('M36 4V44H20L48 68 76 44H60V4Z'),'bidirectional':path('M4 36L28 12V25H68V12L92 36 68 60V47H28V60Z'),'chevron':path('M12 8H50L84 36 50 64H12L44 36Z'),'bent':path('M10 66V26H62V10L90 36 62 62V46H30V66Z'),'uturn':path('M16 66V28C16 -4 80 -4 80 28V42H92L68 66 44 42H56V28C56 16 40 16 40 28V66Z')}.items():add('arrow.'+k,k.replace('-',' ').title()+' arrow','Arrows','arrow',g)
- # Arrow families visible in the supplied browser reference, authored as
- # annotation glyphs; their geometry never creates process connectivity.
  extra_arrows={
  'vertical-bidirectional':path('M48 4L68 24H58V48H68L48 68 28 48H38V24H28Z'),
  'four-way':path('M48 4L62 20H56V28H70V20L92 36 70 52V44H56V52H62L48 68 34 52H40V44H26V52L4 36 26 20V28H40V20H34Z'),
@@ -139,7 +161,8 @@ def main():
  'thin-right':path('M4 32H70V22L92 36 70 50V40H4Z'),
  'thin-left':path('M92 32H26V22L4 36 26 50V40H92Z')}
  for k,g in extra_arrows.items():add('arrow.'+k,k.replace('-',' ').title()+' arrow','Arrows','arrow',g)
- for row in source['symbolEntries']:
+ raw_entries = source.get('symbolEntries') or source.get('entries') or []
+ for row in raw_entries:
   name=row['label'];normalized=re.sub(r'\s*\(duplicate\)','',name,flags=re.I).strip().lower()
   if normalized in canonical:
    id=canonical[normalized];target=next(x for x in catalog if x['id']==id);target['aliases'].append(row['category']+': '+name)

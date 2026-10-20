@@ -1,9 +1,32 @@
 # FMEApex — active handoff
 
-Updated 2026-10-20. Workspace F:/proj-fmea. User confirmed release **0.12.0** for commit and push to origin/main. PFD implementation and release ledger are complete; publication is being finalized. See versions/v0.12.0.md. Prior published baseline: 0.11.0 / a19a3bb.
+Updated 2026-10-21. Workspace F:/proj-fmea. Published **v0.12.1** (0.12.1), origin/main to be verified after push. PFD release ledger: versions/v0.12.1.md. Completed classic manufacturing symbols restoration and high-density PFD table ergonomics.
 
-## Current objective/status
+## Latest request — restore original manufacturing symbols (completed)
+
+Completed implementation plan .agents/handoff_plan/pfd-classic-manufacturing-symbols/PLAN.md (status: completed, 2026-10-21).
+Delivered:
+- Restored original classic manufacturing palette as default (Operation = circle, Inspection = square, Transport = arrow, Storage = inverted triangle, Decision = diamond, Rework = pentagon outline without text, Combined = circle-in-square).
+- Added 7 stable classic variants (manufacturing.classic.*) and route markers (marker.wip, marker.reject). 417 identical symbols generated across backend and frontend catalogs.
+- Compact PFD table cell: renders single primary symbol button, marker tags (WIP, Reject), and a neat 'Needs review' chip with tooltip instead of inflated diagnostic text paragraphs.
+- BrowseShapesDialog: default Manufacturing Symbols tab with instant click-to-select, optional route marker toggles, plus 'More symbols' library tab for expanded equipment/shapes.
+- Atomic updates: handleAtomicStepChange saves stepType, manufacturingSymbolId, and synchronized flowIcons in a single PATCH request without intermediate invalid states.
+- Verification: 27/27 frontend PFD tests PASS; 174/174 backend tests (20 suites) PASS; frontend production build PASS; backend build PASS; README sync and Graphify update complete.
+
+## Latest request — multi-harness feasibility (report completed)
+
+User requested extensive feasibility/review of multiple harnesses sharing one project, knowing prior work, plan linkage and next tasks. Report: `.agents/handoff_plan/multi-harness-coordination/FEASIBILITY.md`, with baseline hashes and synthetic results under its evidence folder. Independent source/helper audits and report review complete. No implementation PLAN.md, new product/runtime code, schema change, native harness launch, model setting change or publication is authorized by this assessment.
+
+Key findings: current handoff updater silently no-ops on the compact state headings; isolated concurrent writers lose a blackboard entry; checker accepts invalid state and therefore its prior "100% IN SYNC" output is NOT proof of actual cross-harness consistency. Dispatch only prints prompts and has routing/ID/approval/fencing gaps. Existing adapters contain stale/conflicting rules. Recommended future work is a deterministic local coordinator with one writer first, explicit plan/task/run/change evidence, native capability-tested adapters and crash reconciliation. Broader concurrent editing remains gated. Do not silently repair these audited helpers or rename the requested skill under the report-only scope.
+
+Next priority when requested: produce/review a concrete Phase A implementation plan using these findings, then build a single-writer coordinator and verify two actual harnesses. At assessment time no pending implementation plan existed; the later PFD symbols plan is now registered below. Report/links and README sync verified; Graphify refreshed for the documentation handoff. Source code and product tests were not changed or rerun for this report.
+
+## Product delivery baseline (completed)
 Implemented the full approved PFD symbol/library/automatic-layout plan using the same resumed specialists pfd_backend,pfd_table,pfd_canvas. All slices completed, parent integrated and verified actual browser/database/PDF behavior. Read **docs/specs/pfd-symbols-delivery.md** first; source inventory docs/references/README.md. Prior controlled DFMEA/Control Plan release evidence remains docs/specs/controlled-engineering-delivery.md.
+
+## Portable planning continuation
+
+User requested shared skill discovery and persistent cross-harness implementation plans. `handoff_plan` is installed at C:/Users/Palak/.agents/skills/handoff_plan (seven files); the previous Codex-only copy was hash-verified and removed. New lifecycle: canonical project plans `.agents/handoff_plan/<slug>/PLAN.md`, discovery at startup, ask to implement unless already authorized, clarify consequential confusion, track task evidence and mark completed only after required acceptance. Canonical `.agents/AGENTS.md` owns the rule; root AGENTS and folder index expose it to existing harness adapters. No pending plan fabricated. No new commit/version/push requested. README sync and multi-harness consistency checks PASS. Independent lifecycle review covered pending/unrelated/resumed/erroneously-completed plans; clarified logged correction of mistaken completion. Graphify refreshed after the instruction changes (optional SQL parser warning remains).
 
 ## Working implementation
 -408original application SVGs:366public source-name entries mapped with explicit aliases,12manufacturing activities,13basic,30arrows,4annotations. Registry copies frontend/src/features/pfd/symbols/pfd-symbols.json and backend/src/modules/pfd/pfd-symbols.json generated together; coverage SHA recorded. Original glyphs are NOT independently ISO/ISA/customer-verified.

@@ -602,6 +602,32 @@ export const PfdWorkspace: React.FC = () => {
     } catch (err: any) { showToast(err.message || 'Could not save the selected symbol', 'error'); }
   };
 
+  const handleAtomicStepChange = async (
+    step: ProcessStep,
+    updates: {
+      stepType?: string;
+      manufacturingSymbolId?: string | null;
+      engineeringSymbolId?: string | null;
+      flowIcons?: Record<string, boolean>;
+    }
+  ) => {
+    if (!canEdit) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/pfd-steps/${step.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res, 'Could not save the step symbol update'));
+      const savedStep = await res.json();
+      setSteps(previous => previous.map(item => item.id === step.id ? { ...item, ...savedStep } : item));
+      setSelectedStep(previous => previous?.id === step.id ? { ...previous, ...savedStep } : previous);
+      setGraphReloadKey(previous => previous + 1);
+    } catch (err: any) {
+      showToast(err.message || 'Could not save the step symbol update', 'error');
+    }
+  };
+
   // Add Step Drawer Handlers
   const handleOpenAddDrawer = () => {
     if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
@@ -1160,7 +1186,7 @@ export const PfdWorkspace: React.FC = () => {
 
                       {/* Explicit symbols never change the manufacturing activity. */}
                       <TableCell sx={{ minWidth: 190, maxWidth: 280, p: 1 }} onClick={event => event.stopPropagation()}>
-                        <PfdStepSymbolFields step={step} disabled={!canEdit} compact onChange={(field, value) => handleSymbolChange(step, field, value)} />
+                        <PfdStepSymbolFields step={step} disabled={!canEdit} compact onChange={(field, value) => handleSymbolChange(step, field, value)} onAtomicChange={(updates) => handleAtomicStepChange(step, updates)} />
                       </TableCell>
 
                       {/* Machines / Machinery / Docs */}
@@ -1440,7 +1466,7 @@ export const PfdWorkspace: React.FC = () => {
                         <MenuItem value="decision">Decision (◇)</MenuItem>
                       </Select>
                     </FormControl>
-                    <PfdStepSymbolFields step={selectedStep} disabled={!canEdit} onChange={(field, value) => handleSymbolChange(selectedStep, field, value)} />
+                    <PfdStepSymbolFields step={selectedStep} disabled={!canEdit} onChange={(field, value) => handleSymbolChange(selectedStep, field, value)} onAtomicChange={(updates) => handleAtomicStepChange(selectedStep, updates)} />
                     <TextFieldAny
                       fullWidth
                       label="Special Characteristics Code"
@@ -1620,7 +1646,7 @@ export const PfdWorkspace: React.FC = () => {
                       <MenuItem value="decision">Decision (◇)</MenuItem>
                     </Select>
                   </FormControl>
-                  <PfdStepSymbolFields step={{ stepType: addStepType, manufacturingSymbolId: addManufacturingSymbolId, engineeringSymbolId: addEngineeringSymbolId }} onChange={(field, value) => field === 'engineeringSymbolId' ? setAddEngineeringSymbolId(value) : setAddManufacturingSymbolId(value)} />
+                  <PfdStepSymbolFields step={{ stepType: addStepType, manufacturingSymbolId: addManufacturingSymbolId, engineeringSymbolId: addEngineeringSymbolId }} onChange={(field, value) => field === 'engineeringSymbolId' ? setAddEngineeringSymbolId(value) : setAddManufacturingSymbolId(value)} onAtomicChange={(updates) => { if (updates.stepType) setAddStepType(updates.stepType); if (updates.manufacturingSymbolId !== undefined) setAddManufacturingSymbolId(updates.manufacturingSymbolId); if (updates.engineeringSymbolId !== undefined) setAddEngineeringSymbolId(updates.engineeringSymbolId); }} />
                   <TextFieldAny
                     fullWidth
                     label="Special Characteristics Code"

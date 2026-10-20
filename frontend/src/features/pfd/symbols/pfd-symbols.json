@@ -120,7 +120,7 @@
         36
       ]
     },
-    "svg": "<path d=\"M14 12H82L48 62Z\"/>",
+    "svg": "<path d=\"M12 11H84L48 61Z\"/>",
     "provenance": "Original FMEApex geometry; public names used as visual reference",
     "verificationStatus": "application-notation-unverified",
     "activityTypes": [
@@ -216,7 +216,7 @@
         36
       ]
     },
-    "svg": "<rect x=\"23\" y=\"11\" width=\"50\" height=\"50\" rx=\"0\"/><circle cx=\"48\" cy=\"36\" r=\"20\"/>",
+    "svg": "<rect x=\"23\" y=\"11\" width=\"50\" height=\"50\" rx=\"0\"/><circle cx=\"48\" cy=\"36\" r=\"18\"/>",
     "provenance": "Original FMEApex geometry; public names used as visual reference",
     "verificationStatus": "application-notation-unverified",
     "activityTypes": [
@@ -248,7 +248,7 @@
         36
       ]
     },
-    "svg": "<circle cx=\"48\" cy=\"36\" r=\"25\"/><text x=\"48\" y=\"40\" font-size=\"11\" text-anchor=\"middle\" fill=\"currentColor\" stroke=\"none\" font-family=\"Arial,sans-serif\">RW</text>",
+    "svg": "<path d=\"M48 9L81 30 68 63H28L15 30Z\"/>",
     "provenance": "Original FMEApex geometry; public names used as visual reference",
     "verificationStatus": "application-notation-unverified",
     "activityTypes": [
@@ -344,7 +344,7 @@
         36
       ]
     },
-    "svg": "<path d=\"M25 12L71 60M71 12L25 60\"/><rect x=\"20\" y=\"8\" width=\"56\" height=\"56\" rx=\"0\"/>",
+    "svg": "<path d=\"M14 36L28 9H68L82 36 68 63H28Z\"/>",
     "provenance": "Original FMEApex geometry; public names used as visual reference",
     "verificationStatus": "application-notation-unverified",
     "activityTypes": [
@@ -382,6 +382,288 @@
     "activityTypes": [
       "return"
     ]
+  },
+  {
+    "id": "manufacturing.classic.operation",
+    "label": "Classic Operation",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<circle cx=\"48\" cy=\"36\" r=\"25\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "operation"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.inspection",
+    "label": "Classic Inspection",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<rect x=\"23\" y=\"11\" width=\"50\" height=\"50\" rx=\"0\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "inspection"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.transport",
+    "label": "Classic Transport",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M4 24H58V10L92 36 58 62V48H4Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "transport"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.storage",
+    "label": "Classic Storage",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M12 11H84L48 61Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "storage"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.decision",
+    "label": "Classic Decision",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M48 4L92 36 48 68 4 36Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "decision"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.rework",
+    "label": "Classic Rework",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M48 9L81 30 68 63H28L15 30Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "rework"
+    ]
+  },
+  {
+    "id": "manufacturing.classic.combined",
+    "label": "Classic Combined Operation & Inspection",
+    "category": "Manufacturing activities",
+    "kind": "manufacturing",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<rect x=\"23\" y=\"11\" width=\"50\" height=\"50\" rx=\"0\"/><circle cx=\"48\" cy=\"36\" r=\"18\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified",
+    "activityTypes": [
+      "combined"
+    ]
+  },
+  {
+    "id": "marker.wip",
+    "label": "WIP marker",
+    "category": "Process markers",
+    "kind": "annotation",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M14 11H84L48 61Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified"
+  },
+  {
+    "id": "marker.reject",
+    "label": "Reject marker",
+    "category": "Process markers",
+    "kind": "annotation",
+    "aliases": [],
+    "viewBox": "0 0 96 72",
+    "ports": {
+      "north": [
+        48,
+        4
+      ],
+      "east": [
+        92,
+        36
+      ],
+      "south": [
+        48,
+        68
+      ],
+      "west": [
+        4,
+        36
+      ]
+    },
+    "svg": "<path d=\"M14 36L28 9H68L82 36 68 63H28Z\"/>",
+    "provenance": "Original FMEApex geometry; public names used as visual reference",
+    "verificationStatus": "application-notation-unverified"
   },
   {
     "id": "basic.rectangle",
