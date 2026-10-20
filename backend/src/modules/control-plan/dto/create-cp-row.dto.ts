@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsOptional, IsUUID, IsInt, IsString, IsIn } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  IsInt,
+  IsString,
+  IsIn,
+} from 'class-validator';
 
 export class CreateCpRowDto {
   @IsUUID()

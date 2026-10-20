@@ -35,9 +35,9 @@ Admin bypass: `PermissionGuard` returns true if `user.roles.includes('Admin')` (
 | PFMEA | `GET /revisions/:id/pfmea-rows` | `pfmea.view` | Viewer+ |
 |  | `POST/PATCH/DELETE /pfmea-rows/*`, `sync-from-tree`, structure `structure-functions/failures`, `failure-modes/:id/link` | `pfmea.edit` + guard | QE/Admin |
 |  | `DELETE /failure-links, /link-actions` | `pfmea.edit` | QE/Admin |
-| DFMEA | parallel `dfmea.create/edit/view/delete` guards | `dfmea.*` | QE/Admin |
+| DFMEA | `GET/PUT /revisions/:id/dfmea-document`, `POST .../fork` | `dfmea.view` / `dfmea.edit` independently | QE/Admin for edit; view roles for read |
 | Control Plan | `GET /revisions/:id/control-plan-rows` | `cp.view` | Viewer+ |
-|  | `POST/PATCH/DELETE /control-plan-rows/*`, `sync` | `cp.edit` + guard | QE/Admin |
+|  | Canonical `/control-plan-document` save, sync-preview, sync-apply and fork | `cp.edit` + transactional access guard; old destructive writes retired | QE/Admin |
 | Actions | `GET /actions`, `GET /projects/:id/actions` | `action.view` | Reviewer+ |
 |  | `POST /projects/:id/actions`, `PATCH/DELETE /actions/*`, evidence upload | `action.create/edit/close` | QE/Admin |
 | Audit | `GET /revisions/:id/audit-logs`, `GET /audit-logs` | tenant-filtered, typically `revision.view` implied |  |
@@ -60,3 +60,8 @@ Admin bypass: `PermissionGuard` returns true if `user.roles.includes('Admin')` (
 - Direct `prisma.*` outside service → bypass `assertRevisionWritable`.
 - Using `user.sub` vs `userId` mismatch (payload `sub` is `user.id`).
 
+
+
+## Controlled document authority (2026-10-20)
+
+Permissions are necessary but insufficient: actual DB actor must be active; tenant/project/type, archived status, trial owner/expiry and reference protection are checked inside mutations. `forkable` means project writable plus module edit permission, independently of current revision lock; it is server-derived and rechecked by fork. Revision decisions retain distinct submit/review/approve permissions and creator segregation. Exact controllers: `backend/src/modules/dfmea/dfmea.controller.ts:1`, `backend/src/modules/control-plan/control-plan-document.controller.ts:1`, shared guard `backend/src/common/engineering-access.ts:1`. No new role grants or security fallback changes are part of this rebuild.

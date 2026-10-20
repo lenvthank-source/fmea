@@ -1,6 +1,11 @@
-# Data Model — Prisma 5.22 (45 models)
+# Data Model — Prisma 5.22
 
 Source of truth: `backend/prisma/schema.prisma:1`.
+
+## Controlled engineering aggregates (2026-10-20 working tree)
+`DfmeaDocument` and `ControlPlanDocument` each own revisionId unique, tenantId, optimistic version, strictly validated data JSON and timestamps. Their identities/relationships are stable within the revision aggregate; legacy rows remain intact. Source: `backend/prisma/schema.prisma:1`, module validators/services. Migration `20261019190000_controlled_engineering_documents` adds tables and SQL type/tenant/protected-parent triggers; no reset/backfill of guessed engineering decisions.
+
+DFMEA stores explicit hierarchy/functions/requirements/interfaces/parameter context, failure chains/cause evaluations, actions, reviewed legacyMappings and downstreamLinks. CP stores phase/header/source baselines, complete control lines, safe launch and source provenance/exclusions. New revisions copy canonical aggregates; cross-project cloning remaps database identities and marks unresolved sources for review.
 
 ## Core tenant & identity
 - `Tenant:10` `id, subdomain @unique, name` 1—N `User, Role, Project, Document, ProcessItem, Function|Requirement|FailureMode|Effect|Cause|Control|Characteristic, Action`

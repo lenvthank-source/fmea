@@ -1,18 +1,26 @@
-# FMEApex — AI-Powered FMEA Quality Risk Platform
+# FMEApex — Connected Engineering Quality Platform
 
-FMEApex is an interactive engineering workspace designed for quality risk management and analysis. The platform implements AI-powered assistance and standard Failure Mode and Effects Analysis (FMEA) methodologies to streamline engineering workflows, process flow diagrams, and corrective actions.
+FMEApex is an interactive engineering workspace designed for quality risk management and analysis. The platform connects design and process risk analysis, manufacturing routing, controls, revisions and documented mitigation decisions. Applicable methodology verification is recorded separately from software completeness.
 
 ## Core Features
 
 - **Seven-activity authoring:** Iterative drafts with integrity checks and review/release completeness. Applicable requirement verification is tracked explicitly.
 - **PFD/PFMEA traceability:** Explicit manufacturing routing with stable operation references and analytical coverage.
-- **Interactive Structure Trees:** Vibrant, high-contrast, text-only hierarchical maps of system and process items, color-coded by role (Electric Blue for Root, Orange for System Elements, Green for Functions, Purple for Component/Work Elements, Red/Cyan for Failure Modes) with 30px large visual icons.
-- **AI Copilot Suggestions:** Intelligent, context-aware suggestions for failure modes, causes, and controls based on Neon vector database similarity search.
+- **Design structure and failure chains:** Revision-owned system/subsystem/component identities, functions, requirements, interfaces and cause-level controls/evaluations; linked structure, focus and worksheet views.
+- **Engineering input integrity:** Simulated AI auto-fill is removed. Source-backed suggestions must remain proposed until explicitly reviewed; no generated failure or sampling decisions are silently inserted.
 - **Dual Authentication Model:** Pre-configured secure login for system administrators and instant trial access for Guest users.
 - **Contextual Feedback Widget:** Floating feedback button (praise, idea, frustration, bug) auto-capturing page context, browser agent, and screen resolution.
 - **Resilient Error Boundary:** Specialized error fallback modal that logs application crashes and stack traces to aid engineers in fixing bugs.
-- **Control Plan Generation:** Explicit PFMEA/PFD-to-control-plan synchronization and source traceability; automatic reverse propagation is not implemented.
+- **Controlled Control Plans:** Independent phase revision histories, revision-frozen headers, full characteristic/control/reaction fields and reviewed PFD/PFMEA change previews. Source conflicts and coverage exclusions require explicit decisions; automatic reverse propagation is not implemented.
 - **Revision controls:** Protected revisions, approval records and audit events; these software features are not a regulatory certification claim.
+
+## DFMEA and Control Plan — v0.11.0
+
+The canonical engineering editors use dedicated revision-owned documents, optimistic versions and transactional project/trial/revision checks. Legacy records remain preserved and explicitly unreviewed. DFMEA provides reviewed legacy-chain mapping and characteristic flow-down references. Control Plan updates preserve manual execution decisions and never invent sample sizes, frequencies or reactions.
+
+Native XLSX and printable documents cover the entire selected revision. Native workbooks preserve the complete structured model; changed DFMEA narrative worksheets require explicit mapping rather than guessing relationships. Long text is retained in continuation sheets.
+
+Verification and remaining methodology limits: [controlled engineering delivery](docs/specs/controlled-engineering-delivery.md). Start agent work from [.agents/ACTIVE_STATE.md](.agents/ACTIVE_STATE.md). Release [v0.11.0](versions/v0.11.0.md) records the user-approved controlled-engineering implementation, validation and remaining reference gates.
 
 ## Project Structure
 

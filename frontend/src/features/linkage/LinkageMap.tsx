@@ -1,411 +1,547 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
-  Box, Card, CardContent, Typography, Stack, Grid, CircularProgress,
-  Alert, Paper, Chip, Divider
-} from '@mui/material';
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import PfdIcon from "@mui/icons-material/AccountTree";
+import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from "../../config";
+import { DocumentHeader } from "../../components/DocumentHeader";
+import { parseApiError } from "../../lib/api";
 import {
-  AccountTree as PfdIcon,
-  HelpOutlined as FunctionIcon,
-  Warning as FailureIcon,
-  ListAlt as CpIcon,
-  AssignmentTurnedIn as ActionsIcon,
-  ArrowForward as ArrowIcon
-} from '@mui/icons-material';
-import { useAuth } from '../auth/AuthContext';
-import { API_BASE_URL } from '../../config';
-import { DocumentHeader } from '../../components/DocumentHeader';
-import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
-import { parseApiError } from '../../lib/api';
-
-interface ProcessStep {
+  controlOperationKey,
+  controlsForPfmeaRow,
+  normalizeControls,
+  normalizePfmeaRows,
+} from "./linkageData";
+import type {
+  JsonRecord,
+  LinkageControl,
+  LinkagePfmeaRow,
+  NamedReference,
+  OperationContext,
+} from "./linkageData";
+interface Revision {
   id: string;
-  stepNumber: string;
-  name: string;
+  revisionNumber: string;
+  status: string;
+  documentId: string;
+  document?: { type: string };
 }
-
-interface PfmeaRow {
+interface ProjectDocument {
   id: string;
-  processStepId: string;
-  rowNumber: number;
-  severity: number | null;
-  occurrence: number | null;
-  detection: number | null;
-  ap: string | null;
-  functions: { name: string }[];
-  failureModes: { name: string }[];
-  effects: { name: string }[];
-  causes: { name: string }[];
+  type: string;
+  currentRevisionId: string;
 }
-
-interface ControlPlanRow {
-  id: string;
-  processStepId: string;
-  characteristicName: string | null;
-  controlMethod: string | null;
+interface Context extends OperationContext {
+  type: string;
+  label: string;
+  rows: LinkagePfmeaRow[];
 }
-
-interface Action {
+interface LinkedAction {
   id: string;
   description: string;
   status: string;
-  fmeaLinks: { fmeaRowId: string }[];
+  fmeaLinks?: { fmeaRowId: string }[];
 }
-
+const associations = [
+  ["functions", "Functions", "#437A22", "#eefcf4"],
+  ["failureModes", "Failure modes", "#A13544", "#fdf2f2"],
+  ["effects", "Effects", "#A13544", "#fdf2f2"],
+  ["causes", "Causes", "#976800", "#fffbeb"],
+] as const;
 export const LinkageMap: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams();
   const { token } = useAuth();
-  const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Data states
-  const [steps, setSteps] = useState<ProcessStep[]>([]);
-  const [fmeaRows, setFmeaRows] = useState<PfmeaRow[]>([]);
-  const [cpRows, setCpRows] = useState<ControlPlanRow[]>([]);
-  const [actions, setActions] = useState<Action[]>([]);
-  const [projectName, setProjectName] = useState('');
-  const [structureFunctions, setStructureFunctions] = useState<any[]>([]);
-
+  const [loading, setLoading] = useState(true),
+    [errors, setErrors] = useState<string[]>([]),
+    [contexts, setContexts] = useState<Context[]>([]),
+    [controls, setControls] = useState<LinkageControl[]>([]),
+    [actions, setActions] = useState<LinkedAction[]>([]),
+    [baselineIds, setBaselineIds] = useState<string[]>([]),
+    [documents, setDocuments] = useState<ProjectDocument[]>([]),
+    [projectName, setProjectName] = useState(""),
+    [cpLabel, setCpLabel] = useState(""),
+    [reload, setReload] = useState(0);
   useEffect(() => {
-    const fetchLinkageData = async () => {
-      setLoading(true);
-      setError(null);
+    if (!projectId || !token) return;
+    let active = true;
+    const failures: string[] = [];
+    const request = async (path: string) => {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok)
+        throw new Error(
+          await parseApiError(response, `Failed to load ${path}.`),
+        );
+      return response.json();
+    };
+    const allRows = async (path: string): Promise<unknown[]> => {
+      const result: unknown[] = [];
+      for (let page = 1; page <= 10000; page++) {
+        const payload = await request(
+          `${path}${path.includes("?") ? "&" : "?"}page=${page}&limit=100`,
+        );
+        if (Array.isArray(payload)) return [...result, ...payload];
+        if (!payload || !Array.isArray(payload.data))
+          throw new Error(`Invalid paginated response for ${path}.`);
+        result.push(...payload.data);
+        if (result.length >= payload.total || payload.data.length === 0)
+          return result;
+      }
+      throw new Error("The row response exceeded the supported paging range.");
+    };
+    const optional = async <T,>(
+      label: string,
+      task: () => Promise<T>,
+      fallback: T,
+    ): Promise<T> => {
       try {
-        // 1. Fetch project document revisions
-        const docRes = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!docRes.ok) {
-          const msg = await parseApiError(docRes, 'Failed to load project revisions context.');
-          throw new Error(msg);
-        }
-        const documents = await docRes.json();
-
-        const pfmeaDoc = documents.find((doc: any) => doc.type === 'PFMEA');
-        const cpDoc = documents.find((doc: any) => doc.type === 'CONTROL_PLAN');
-
-        if (!pfmeaDoc || !pfmeaDoc.currentRevisionId) {
-          throw new Error('PFMEA revision context not initialized.');
-        }
-        if (!cpDoc || !cpDoc.currentRevisionId) {
-          throw new Error('Control Plan revision context not initialized.');
-        }
-
-        const pfmeaRevisionId = pfmeaDoc.currentRevisionId;
-        const cpRevisionId = cpDoc.currentRevisionId;
-
-        // 2. Fetch steps
-        const stepsRes = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfd-steps`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const stepsData = stepsRes.ok ? await stepsRes.json() : [];
-
-        // 3. Fetch PFMEA rows
-        const fmeaRes = await fetch(`${API_BASE_URL}/revisions/${pfmeaRevisionId}/pfmea-rows`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const fmeaData = fmeaRes.ok ? await fmeaRes.json() : [];
-
-        // 4. Fetch Control Plan rows
-        const cpRes = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const cpData = cpRes.ok ? await cpRes.json() : [];
-
-        // 5. Fetch actions
-        const actionsRes = await fetch(`${API_BASE_URL}/actions?projectId=${projectId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const actionsData = actionsRes.ok ? await actionsRes.json() : [];
-
-        // 6. Fetch structure functions
-        const structRes = await fetch(`${API_BASE_URL}/structure-functions/project/${projectId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const structData = structRes.ok ? await structRes.json() : [];
-
-        setSteps(stepsData);
-        setFmeaRows(fmeaData);
-        setCpRows(cpData);
-        setActions(actionsData);
-        setStructureFunctions(structData);
-      } catch (err: any) {
-        const msg = err.message || 'An error occurred while loading linkage map.';
-        setError(msg);
-        showToast(msg, getToastSeverity(msg));
-      } finally {
-        setLoading(false);
+        return await task();
+      } catch (reason) {
+        failures.push(
+          `${label}: ${reason instanceof Error ? reason.message : String(reason)}`,
+        );
+        return fallback;
       }
     };
-
-    if (projectId && token) {
-      fetchLinkageData();
-    }
-  }, [projectId, token]);
-
-  const getLinkedFailures = (row: PfmeaRow) => {
-    const fnName = row.functions?.[0]?.name;
-    const fmName = row.failureModes?.[0]?.name;
-    if (!fnName || !fmName || !structureFunctions) return { effects: [], causes: [] };
-
-    // Find the function node matching process step and function name
-    const fnNode = structureFunctions.find(
-      (f) => f.parentType === 'process_step' && f.parentId === row.processStepId && f.narration === fnName
-    );
-    if (!fnNode) return { effects: [], causes: [] };
-
-    // Find the failure mode matching failure name
-    const fmNode = fnNode.failures?.find(
-      (fail: any) => fail.narration === fmName && fail.role === 'mode'
-    );
-    if (!fmNode) return { effects: [], causes: [] };
-
-    const effects = fmNode.modeEffectLinks
-      ?.filter((l: any) => l.linkType === 'effect')
-      ?.map((l: any) => ({
-        narration: l.linkedFailure?.narration,
-        function: l.linkedFailure?.function?.narration
-      })) || [];
-
-    const causes = fmNode.modeEffectLinks
-      ?.filter((l: any) => l.linkType === 'cause')
-      ?.map((l: any) => ({
-        narration: l.linkedFailure?.narration,
-        function: l.linkedFailure?.function?.narration
-      })) || [];
-
-    return { effects, causes };
-  };
-
-  if (loading) {
+    (async () => {
+      setLoading(true);
+      setErrors([]);
+      try {
+        const [docs, revisions] = await Promise.all([
+          request(`/projects/${projectId}/documents`) as Promise<
+            ProjectDocument[]
+          >,
+          request(`/projects/${projectId}/revisions`) as Promise<Revision[]>,
+        ]);
+        const revisionType = (id: string) => {
+          const revision = revisions.find((entry) => entry.id === id);
+          return (
+            revision?.document?.type ??
+            docs.find((doc) => doc.id === revision?.documentId)?.type
+          );
+        };
+        const revisionLabel = (id: string) => {
+          const revision = revisions.find((entry) => entry.id === id);
+          return revision
+            ? `${revisionType(id) ?? "Document"} revision ${revision.revisionNumber} · ${revision.status}`
+            : `Source revision ${id}`;
+        };
+        const cpDoc = docs.find((doc) => doc.type === "CONTROL_PLAN");
+        const cp = cpDoc?.currentRevisionId
+          ? await optional(
+              "Control Plan",
+              () =>
+                request(
+                  `/revisions/${cpDoc.currentRevisionId}/control-plan-document`,
+                ),
+              null,
+            )
+          : null;
+        const cpLines = cp ? normalizeControls(cp) : [];
+        const baselines: JsonRecord[] = Array.isArray(
+          cp?.document?.sourceBaselines,
+        )
+          ? cp.document.sourceBaselines
+          : [];
+        const ids = new Set<string>();
+        docs
+          .filter(
+            (doc) =>
+              ["PFD", "PFMEA"].includes(doc.type) && doc.currentRevisionId,
+          )
+          .forEach((doc) => ids.add(doc.currentRevisionId));
+        baselines.forEach((baseline) => {
+          if (typeof baseline.revisionId === "string")
+            ids.add(baseline.revisionId);
+        });
+        cpLines.forEach((line) => {
+          if (line.sourceRevisionId) ids.add(line.sourceRevisionId);
+        });
+        const loaded = await Promise.all(
+          [...ids].map(async (id) => {
+            const type = revisionType(id);
+            if (!type || !["PFD", "PFMEA"].includes(type)) {
+              failures.push(
+                `Source revision ${id} cannot be resolved to a PFD/PFMEA in this project.`,
+              );
+              return null;
+            }
+            const steps = await optional(
+              `${revisionLabel(id)} operations`,
+              () => request(`/revisions/${id}/pfd-steps`),
+              [],
+            );
+            const rows =
+              type === "PFMEA"
+                ? await optional(
+                    `${revisionLabel(id)} rows`,
+                    async () =>
+                      normalizePfmeaRows(
+                        await allRows(`/revisions/${id}/pfmea-rows`),
+                        id,
+                      ),
+                    [],
+                  )
+                : [];
+            return {
+              revisionId: id,
+              type,
+              label: revisionLabel(id),
+              steps,
+              rows,
+            } as Context;
+          }),
+        );
+        const actionData = await optional(
+          "Linked actions",
+          () => allRows(`/actions?projectId=${projectId}`),
+          [],
+        );
+        if (active) {
+          setDocuments(docs);
+          setControls(cpLines);
+          setContexts(
+            loaded.filter((context): context is Context => !!context),
+          );
+          setBaselineIds(
+            baselines.map((baseline) => String(baseline.revisionId)),
+          );
+          setActions(actionData as LinkedAction[]);
+          setCpLabel(
+            cpDoc?.currentRevisionId
+              ? revisionLabel(cpDoc.currentRevisionId)
+              : "No Control Plan document",
+          );
+          setErrors(failures);
+        }
+      } catch (reason) {
+        if (active)
+          setErrors([
+            reason instanceof Error ? reason.message : String(reason),
+          ]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [projectId, token, reload]);
+  const renderControls = (lines: LinkageControl[]) =>
+    lines.map((line) => (
+      <Paper
+        variant="outlined"
+        key={line.id}
+        sx={{ p: 1.5, borderColor: "#d8e0d2", overflowWrap: "anywhere" }}
+      >
+        <Stack
+          direction="row"
+          sx={{ justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            {line.characteristicName || "Characteristic not defined"}
+          </Typography>
+          <Chip size="small" label={line.sourceState} />
+        </Stack>
+        <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+          Control: {line.controlMethod || "Not defined"}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ display: "block", whiteSpace: "pre-wrap" }}
+        >
+          Reaction: {line.reactionPlan || "Not defined"}
+        </Typography>
+        <Typography variant="caption" sx={{ display: "block" }}>
+          Recorded operation: {line.operationNumber}{" "}
+          {line.operationName || "Not defined"}
+        </Typography>
+        {line.sourceRevisionId && (
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Source:{" "}
+            {contexts.find(
+              (context) => context.revisionId === line.sourceRevisionId,
+            )?.label ?? line.sourceRevisionId}
+          </Typography>
+        )}
+        {line.pfmeaRowId && (
+          <Typography variant="caption">
+            Explicit PFMEA row reference: {line.pfmeaRowId}
+          </Typography>
+        )}
+      </Paper>
+    ));
+  const renderRow = (row: LinkagePfmeaRow) => {
+    const rowControls = controlsForPfmeaRow(controls, row),
+      rowActions = actions.filter((action) =>
+        action.fmeaLinks?.some((link) => link.fmeaRowId === row.id),
+      );
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+      <Box
+        key={row.id}
+        sx={{
+          p: 2,
+          border: "1px solid #e3e4db",
+          borderRadius: 2,
+          bgcolor: "#fff",
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          PFMEA row {row.rowNumber} · AP {row.ap || "—"} · Severity{" "}
+          {row.severity || "—"}
+        </Typography>
+        <Grid container spacing={2}>
+          {associations.map(([key, label, color, bgcolor]) => (
+            <Grid key={key} size={{ xs: 12, sm: 6, lg: 3 }}>
+              <Box
+                sx={{
+                  p: 1.25,
+                  border: `1px solid ${color}`,
+                  borderRadius: 2,
+                  bgcolor,
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 700, color }}>
+                  {label}
+                </Typography>
+                {row[key].length ? (
+                  row[key].map((entry: NamedReference, index) => (
+                    <Typography
+                      key={entry.id || index}
+                      variant="body2"
+                      sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                    >
+                      {entry.name || entry.id}
+                    </Typography>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Not authored
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 1 }}
+        >
+          These records are explicitly associated with this row; their listing
+          does not establish additional structure failure-chain relationships.
+        </Typography>
+        {!!rowControls.length && (
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Linked to {rowControls.length} Control Plan{" "}
+            {rowControls.length === 1 ? "line" : "lines"} by source revision and
+            PFMEA row ID.
+          </Typography>
+        )}
+        {rowActions.length > 0 && (
+          <Stack spacing={1} sx={{ mt: 1 }}>
+            {rowActions.map((action) => (
+              <Box key={action.id}>
+                <Chip size="small" label={action.status} />
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                  {action.description}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
+      </Box>
+    );
+  };
+  const unassigned = controls.filter(
+    (line) => !controlOperationKey(line, contexts, baselineIds),
+  );
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
         <CircularProgress />
       </Box>
     );
-  }
-
   return (
-    <Box>
+    <Box sx={{ minWidth: 0 }}>
       <DocumentHeader
         projectId={projectId!}
-        docType="PFMEA"
-        onHeaderLoaded={(p) => setProjectName(p.name)}
+        docType={
+          documents.some((doc) => doc.type === "PFMEA")
+            ? "PFMEA"
+            : documents.some((doc) => doc.type === "CONTROL_PLAN")
+              ? "CONTROL_PLAN"
+              : "PFD"
+        }
+        onHeaderLoaded={(project) => setProjectName(project.name)}
       />
-
       <Paper
         sx={{
-          p: 3,
-          mb: 4,
-          border: '1px solid rgba(40, 37, 29, 0.1)',
+          p: { xs: 2, sm: 3 },
+          mb: 3,
+          border: "1px solid #e3e4db",
           borderRadius: 3,
-          bgcolor: 'background.paper',
-          boxShadow: 'none'
+          boxShadow: "none",
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
-          Quality Lineage Traceability Map - {projectName}
+        <Stack
+          direction="row"
+          sx={{ justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Quality Lineage Traceability Map — {projectName}
+          </Typography>
+          <Button onClick={() => setReload((value) => value + 1)}>
+            Refresh
+          </Button>
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Trace recorded operation, risk, control and action references. Names
+          and display numbers never create a link.
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-          Trace the flow of specifications, risks, controls, and tasks across PFD, PFMEA, Control Plan, and Action Tracker.
-        </Typography>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        {errors.map((error, index) => (
+          <Alert key={index} severity="error" sx={{ mb: 1 }}>
             {error}
           </Alert>
-        )}
-
-        <Stack spacing={3.5}>
-          {steps.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 4 }}>
-              No process steps added yet. Add steps in PFD or PFMEA to visualize lineage.
-            </Typography>
-          ) : (
-            steps.map((step) => {
-              const stepFmeaRows = fmeaRows.filter(r => r.processStepId === step.id);
-              const stepCpRows = cpRows.filter(r => r.processStepId === step.id);
-
-              return (
-                <Card 
-                  key={step.id} 
-                  sx={{ 
-                    border: '1px solid rgba(40, 37, 29, 0.08)', 
-                    borderRadius: 3, 
-                    boxShadow: 'none',
-                    bgcolor: '#fafafa',
-                    position: 'relative',
-                    overflow: 'visible'
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    {/* Process Step Header */}
-                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2.5 }}>
-                      <Box sx={{ p: 0.75, bgcolor: 'rgba(1, 105, 111, 0.08)', borderRadius: 2, display: 'flex', alignItems: 'center' }}>
-                        <PfdIcon sx={{ color: 'primary.main', fontSize: '1.25rem' }} />
-                      </Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                        Step {step.stepNumber}: {step.name}
-                      </Typography>
-                    </Stack>
-
-                    <Divider sx={{ mb: 2.5 }} />
-
-                    {stepFmeaRows.length === 0 ? (
-                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontStyle: 'italic', pl: 1 }}>
-                        No PFMEA analysis rows associated with this step.
-                      </Typography>
-                    ) : (
-                      <Stack spacing={3}>
-                        {stepFmeaRows.map((row) => {
-                          const rowActions = actions.filter(act => 
-                            act.fmeaLinks?.some(link => link.fmeaRowId === row.id)
-                          );
-                          const linkedFailures = getLinkedFailures(row);
-
-                          return (
-                            <Box 
-                              key={row.id} 
-                              sx={{ 
-                                p: 2, 
-                                border: '1px solid rgba(40, 37, 29, 0.05)', 
-                                borderRadius: 2, 
-                                bgcolor: '#ffffff' 
-                              }}
-                            >
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 1.5 }}>
-                                FMEA Row #{row.rowNumber} (AP: {row.ap || '—'})
-                              </Typography>
-
-                              <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-                                {/* 1. Function */}
-                                <Grid size={{ xs: 12, md: 3 }}>
-                                  <Box sx={{ p: 1.25, border: '1px solid #437A22', bgcolor: '#eefcf4', borderRadius: 2 }}>
-                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                                      <FunctionIcon sx={{ color: '#437A22', fontSize: '0.9rem' }} />
-                                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#437A22' }}>FUNCTION</Typography>
-                                    </Stack>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
-                                      {row.functions?.[0]?.name || '—'}
-                                    </Typography>
-                                  </Box>
-                                </Grid>
-
-                                <Grid size={{ xs: 12, md: 0.5 }} sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
-                                  <ArrowIcon color="disabled" fontSize="small" />
-                                </Grid>
-
-                                {/* 2. Failure Mode & Severity */}
-                                <Grid size={{ xs: 12, md: 3.5 }}>
-                                  <Box sx={{ p: 1.25, border: '1px solid #A13544', bgcolor: '#fdf2f2', borderRadius: 2 }}>
-                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                                      <FailureIcon sx={{ color: '#A13544', fontSize: '0.9rem' }} />
-                                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#A13544' }}>
-                                        FAILURE MODE (S: {row.severity || '—'})
-                                      </Typography>
-                                    </Stack>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
-                                      {row.failureModes?.[0]?.name || '—'}
-                                    </Typography>
-                                  </Box>
-                                </Grid>
-
-                                <Grid size={{ xs: 12, md: 0.5 }} sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
-                                  <ArrowIcon color="disabled" fontSize="small" />
-                                </Grid>
-
-                                {/* 3. Control Plan controls */}
-                                <Grid size={{ xs: 12, md: 2.5 }}>
-                                  <Box sx={{ p: 1.25, border: '1px solid #01696F', bgcolor: 'rgba(1, 105, 111, 0.04)', borderRadius: 2 }}>
-                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                                      <CpIcon sx={{ color: 'primary.main', fontSize: '0.9rem' }} />
-                                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main' }}>CONTROL METHOD</Typography>
-                                    </Stack>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
-                                      {stepCpRows?.[0]?.controlMethod || '—'}
-                                    </Typography>
-                                  </Box>
-                                </Grid>
-
-                                <Grid size={{ xs: 12, md: 0.5 }} sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
-                                  <ArrowIcon color="disabled" fontSize="small" />
-                                </Grid>
-
-                                {/* 4. Actions status */}
-                                <Grid size={{ xs: 12, md: 2 }}>
-                                  <Box sx={{ p: 1.25, border: '1px solid #D19900', bgcolor: '#fffbeb', borderRadius: 2 }}>
-                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                                      <ActionsIcon sx={{ color: '#D19900', fontSize: '0.9rem' }} />
-                                      <Typography variant="caption" sx={{ fontWeight: 700, color: '#D19900' }}>CORRECTIVE ACTION</Typography>
-                                    </Stack>
-                                    {rowActions.length > 0 ? (
-                                      <Stack spacing={0.5}>
-                                        <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {rowActions[0].description}
-                                        </Typography>
-                                        <Chip 
-                                          label={rowActions[0].status.toUpperCase()} 
-                                          size="small" 
-                                          sx={{ 
-                                            height: 16, 
-                                            fontSize: '0.6rem', 
-                                            fontWeight: 'bold',
-                                            bgcolor: rowActions[0].status === 'completed' ? 'success.main' : 'warning.main',
-                                            color: 'white',
-                                            alignSelf: 'flex-start'
-                                          }}
-                                        />
-                                      </Stack>
-                                    ) : (
-                                      <Typography variant="body2" sx={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'text.secondary' }}>
-                                        No action linked
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Grid>
-                              </Grid>
-
-                              {/* Structure Failure Linkage Chain */}
-                              {(linkedFailures.effects.length > 0 || linkedFailures.causes.length > 0) && (
-                                <Box sx={{ mt: 2.5, pl: 2, borderLeft: '3px solid #b71c1c', py: 0.5 }}>
-                                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#b71c1c', display: 'block', mb: 1 }}>
-                                    STRUCTURE FAILURE LINKAGE CHAIN
-                                  </Typography>
-                                  <Stack spacing={1} sx={{ mt: 1 }}>
-                                    {linkedFailures.effects.map((eff: any, idx: number) => (
-                                      <Stack key={idx} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                        <Chip label="EFFECT" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#b71c1c', color: 'white', fontWeight: 'bold' }} />
-                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                                          {eff.narration} <span style={{ color: '#666', fontWeight: 400 }}>({eff.function})</span>
-                                        </Typography>
-                                      </Stack>
-                                    ))}
-                                    {linkedFailures.causes.map((cause: any, idx: number) => (
-                                      <Stack key={idx} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                                        <Chip label="CAUSE" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#e65100', color: 'white', fontWeight: 'bold' }} />
-                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                                          {cause.narration} <span style={{ color: '#666', fontWeight: 400 }}>({cause.function})</span>
-                                        </Typography>
-                                      </Stack>
-                                    ))}
-                                  </Stack>
-                                </Box>
-                              )}
-                            </Box>
-                          );
-                        })}
-                      </Stack>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
+        ))}
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap", mb: 2 }}>
+          <Chip label={`${controls.length} Control Plan lines`} />
+          <Chip
+            label={`${contexts.reduce((total, context) => total + context.rows.length, 0)} PFMEA rows`}
+          />
+          <Chip label={cpLabel} />
         </Stack>
+        {!documents.some((doc) => doc.type === "PFMEA") && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This project has no PFMEA document. PFD and Control Plan references
+            are shown independently.
+          </Alert>
+        )}
+        <Stack spacing={3}>
+          {contexts.map((context) => (
+            <Box key={context.revisionId}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                {context.label}
+                {baselineIds.includes(context.revisionId)
+                  ? " · Selected source baseline"
+                  : ""}
+              </Typography>
+              <Stack spacing={2}>
+                {context.steps.map((step) => {
+                  const stepRows = context.rows.filter(
+                      (row) => row.processStepId === step.id,
+                    ),
+                    stepControls = controls.filter(
+                      (control) =>
+                        controlOperationKey(control, contexts, baselineIds) ===
+                        `${context.revisionId}:${step.id}`,
+                    );
+                  return (
+                    <Card
+                      key={step.id}
+                      sx={{
+                        border: "1px solid #e3e4db",
+                        borderRadius: 3,
+                        boxShadow: "none",
+                        bgcolor: "#fafafa",
+                      }}
+                    >
+                      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          sx={{ alignItems: "center", mb: 2 }}
+                        >
+                          <PfdIcon fontSize="small" />
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 700 }}
+                          >
+                            Step {step.stepNumber}: {step.name}
+                          </Typography>
+                        </Stack>
+                        <Divider sx={{ mb: 2 }} />
+                        <Stack spacing={2}>
+                          {stepRows.map(renderRow)}
+                          {context.type === "PFMEA" && !stepRows.length && (
+                            <Typography variant="body2" color="text.secondary">
+                              No authored PFMEA row references this operation
+                              ID.
+                            </Typography>
+                          )}
+                          {stepControls.length > 0 && (
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                Control Plan — {stepControls.length}{" "}
+                                {stepControls.length === 1 ? "line" : "lines"}
+                              </Typography>
+                              <Stack spacing={1}>
+                                {renderControls(stepControls)}
+                              </Stack>
+                            </Box>
+                          )}
+                          {context.type === "PFD" && !stepControls.length && (
+                            <Typography variant="body2" color="text.secondary">
+                              No Control Plan line explicitly references this
+                              operation in this revision.
+                            </Typography>
+                          )}
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {context.rows
+                  .filter(
+                    (row) =>
+                      !context.steps.some(
+                        (step) => step.id === row.processStepId,
+                      ),
+                  )
+                  .map(renderRow)}
+                {!context.steps.length && !context.rows.length && (
+                  <Typography variant="body2" color="text.secondary">
+                    No operations or analysis rows in this revision.
+                  </Typography>
+                )}
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+        {!!unassigned.length && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              Control Plan lines requiring source mapping ({unassigned.length})
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              No unambiguous operation reference was found in the selected
+              revision context. These lines remain visible without inferred
+              links.
+            </Typography>
+            <Stack spacing={1}>{renderControls(unassigned)}</Stack>
+          </Box>
+        )}
+        {!contexts.length && !controls.length && !errors.length && (
+          <Typography variant="body2">
+            No PFD, PFMEA or Control Plan records are available yet.
+          </Typography>
+        )}
       </Paper>
     </Box>
   );
 };
-
 export default LinkageMap;

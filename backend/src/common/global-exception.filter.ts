@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -21,7 +22,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message = 'Internal server error';
     let error = 'Internal Server Error';
 
-    if (exception instanceof HttpException) {
+    if (exception instanceof Prisma.PrismaClientKnownRequestError && ['P2002','P2034'].includes(exception.code)) {
+      status=HttpStatus.CONFLICT;
+      message='The record changed in another session. Reload and review before saving.';
+      error='Conflict';
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
@@ -32,9 +37,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exception.message;
         error = exception.name;
       }
-    } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
     }
 
     const requestId = (request as any).requestId || request.headers['x-request-id'];

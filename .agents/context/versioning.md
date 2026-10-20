@@ -14,6 +14,8 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 ## Index (leading entries)
 | Version | Date | Summary |
 |---------|------|---------|
+| v0.11.0 | 2026-10-20 | Controlled DFMEA/Control Plan workflows, reviewed synchronization, protected history and complete exports |
+| v0.10.1 | 2026-10-19 | PFD fallback and archived project visibility |
 | v0.10.0 | 2026-10-19 | Complete public identity, permanent trial handles, explicit PFD graph and native exports, visual repository, review readiness |
 | v0.0.0 | 2026-08-12 | Init scaffold |
 | v0.1.0 | 2026-08-20 | Replication + project CRUD |

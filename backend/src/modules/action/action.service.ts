@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { R2Service } from './r2.service';
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
+import {
+  assertEngineeringRevisionAccess,
+  assertEngineeringProjectAccess,
+} from '../../common/engineering-access';
 import { calculateAP } from '../pfmea/ap-calculator';
 
 @Injectable()
@@ -44,10 +54,7 @@ export class ActionService {
     const actions = await this.prisma.action.findMany({
       where: {
         tenantId,
-        OR: [
-          { ownerId: userId },
-          { createdById: userId },
-        ],
+        OR: [{ ownerId: userId }, { createdById: userId }],
       },
       include: {
         owner: { select: { id: true, name: true, email: true } },
@@ -138,7 +145,9 @@ export class ActionService {
       where: { id: dto.ownerId, tenantId },
     });
     if (!owner) {
-      throw new BadRequestException('Action owner not found in this tenant context');
+      throw new BadRequestException(
+        'Action owner not found in this tenant context',
+      );
     }
 
     // Verify FMEA row exists
@@ -150,6 +159,15 @@ export class ActionService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const revision = await assertEngineeringRevisionAccess(
+        tx,
+        { tenantId, userId },
+        fmeaRow.revisionId,
+        undefined,
+        true,
+      );
+      if (revision.document.projectId !== dto.projectId)
+        throw new BadRequestException('Analysis belongs to another project');
       // 1. Create the action
       const action = await tx.action.create({
         data: {
@@ -187,7 +205,12 @@ export class ActionService {
     });
   }
 
-  async updateAction(tenantId: string, userId: string, actionId: string, dto: UpdateActionDto) {
+  async updateAction(
+    tenantId: string,
+    userId: string,
+    actionId: string,
+    dto: UpdateActionDto,
+  ) {
     const action = await this.verifyActionAccess(tenantId, actionId);
 
     if (dto.ownerId) {
@@ -199,63 +222,129 @@ export class ActionService {
       }
     }
 
-    // Fetch linked FMEA row info
-    const fmeaLink = await this.prisma.actionFmeaLink.findFirst({
-      where: { actionId },
-    });
-
     return this.prisma.$transaction(async (tx) => {
-      // 1. Update ratings in FmeaLink if provided
+      const locked=await tx.action.updateMany({where:{id:actionId,tenantId,status:{notIn:['closed','cancelled']}},data:{updatedAt:new Date()}});
+      if(locked.count!==1)throw new BadRequestException('Action is protected or no longer editable');
+      const current = await tx.action.findFirstOrThrow({
+        where: { id: actionId, tenantId },
+      });
+      await assertEngineeringProjectAccess(
+        tx,
+        { tenantId, userId },
+        current.projectId,
+        true,
+      );
+      const links = await tx.actionFmeaLink.findMany({
+        where: { actionId },
+        include: { pfmeaRow: true },
+      });
+      for (const link of links)
+        await assertEngineeringRevisionAccess(
+          tx,
+          { tenantId, userId },
+          link.pfmeaRow.revisionId,
+          undefined,
+          true,
+        );
+      const next = dto.status ?? current.status;
+      const allowed: Record<string, string[]> = {
+        open: ['in_progress', 'cancelled'],
+        in_progress: ['completed', 'cancelled'],
+        completed: ['in_progress', 'verified', 'cancelled'],
+        verified: ['closed'],
+        closed: [],
+        cancelled: [],
+      };
+      if (next !== current.status && !allowed[current.status]?.includes(next))
+        throw new BadRequestException(
+          `Invalid action transition ${current.status} to ${next}`,
+        );
+      if (['closed', 'cancelled'].includes(current.status))
+        throw new BadRequestException(
+          'Closed or cancelled action history is protected',
+        );
+      if(current.status==='verified'&&(next!=='closed'||['description','ownerId','dueDate','priority','afterSeverity','afterOccurrence','afterDetection'].some(key=>(dto as any)[key]!==undefined)))throw new BadRequestException('Verified action contents are protected; only closure may be recorded');
+      const notes = dto.completionNotes ?? current.completionNotes;
       if (
-        fmeaLink &&
-        (dto.afterSeverity !== undefined ||
-          dto.afterOccurrence !== undefined ||
-          dto.afterDetection !== undefined)
-      ) {
-        const S = dto.afterSeverity !== undefined ? dto.afterSeverity : fmeaLink.afterSeverity;
-        const O = dto.afterOccurrence !== undefined ? dto.afterOccurrence : fmeaLink.afterOccurrence;
-        const D = dto.afterDetection !== undefined ? dto.afterDetection : fmeaLink.afterDetection;
-        const calculatedAp = calculateAP(S, O, D);
-
+        ['completed', 'verified', 'closed', 'cancelled'].includes(next) &&
+        !notes?.trim()
+      )
+        throw new BadRequestException(
+          'Record completion/effectiveness or cancellation justification',
+        );
+      if (next === 'verified' && userId === current.ownerId)
+        throw new ForbiddenException(
+          'Action owner cannot verify their own effectiveness (product policy)',
+        );
+      if (
+        ['verified', 'closed'].includes(next) &&
+        !(await tx.actionEvidence.count({ where: { actionId } }))
+      )
+        throw new BadRequestException(
+          'Verification requires retained implementation/effectiveness evidence',
+        );
+      for (const link of links) {
+        const S =
+          dto.afterSeverity !== undefined
+            ? dto.afterSeverity
+            : link.afterSeverity;
+        const O =
+          dto.afterOccurrence !== undefined
+            ? dto.afterOccurrence
+            : link.afterOccurrence;
+        const D =
+          dto.afterDetection !== undefined
+            ? dto.afterDetection
+            : link.afterDetection;
+        if (
+          ['verified', 'closed'].includes(next) &&
+          [S, O, D].some((v) => !Number.isInteger(v) || v! < 1 || v! > 10)
+        )
+          throw new BadRequestException(
+            'Verification requires justified integer after ratings',
+          );
         await tx.actionFmeaLink.update({
-          where: { id: fmeaLink.id },
+          where: { id: link.id },
           data: {
             afterSeverity: S,
             afterOccurrence: O,
             afterDetection: D,
-            afterAp: calculatedAp,
+            afterAp: calculateAP(S, O, D),
           },
         });
-
-        // 2. Sync "After" ratings back to the actual FMEA Row if action is marked verified/closed
-        const targetStatus = dto.status || action.status;
-        if (['verified', 'closed'].includes(targetStatus) && S && O && D) {
+        // Preserve initial ratings and protected history. Reassessment is separate.
+        if (['verified', 'closed'].includes(next))
           await tx.pfmeaRow.update({
-            where: { id: fmeaLink.fmeaRowId },
+            where: { id: link.fmeaRowId },
             data: {
-              severity: S,
-              occurrence: O,
-              detection: D,
-              ap: calculatedAp,
+              revisedSeverity: S,
+              revisedOccurrence: O,
+              revisedDetection: D,
+              revisedAp: calculateAP(S, O, D),
             },
           });
-        }
       }
-
       // 3. Update main Action attributes
       const updatedAction = await tx.action.update({
         where: { id: actionId },
         data: {
-          description: dto.description !== undefined ? dto.description : action.description,
-          ownerId: dto.ownerId !== undefined ? dto.ownerId : action.ownerId,
-          dueDate: dto.dueDate !== undefined ? new Date(dto.dueDate) : action.dueDate,
-          status: dto.status !== undefined ? dto.status : action.status,
-          priority: dto.priority !== undefined ? dto.priority : action.priority,
-          completionNotes: dto.completionNotes !== undefined ? dto.completionNotes : action.completionNotes,
+          description:
+            dto.description !== undefined
+              ? dto.description
+              : current.description,
+          ownerId: dto.ownerId !== undefined ? dto.ownerId : current.ownerId,
+          dueDate:
+            dto.dueDate !== undefined ? new Date(dto.dueDate) : current.dueDate,
+          status: dto.status !== undefined ? dto.status : current.status,
+          priority: dto.priority !== undefined ? dto.priority : current.priority,
+          completionNotes:
+            dto.completionNotes !== undefined
+              ? dto.completionNotes
+              : current.completionNotes,
           closedAt:
             dto.status && ['closed', 'cancelled'].includes(dto.status)
               ? new Date()
-              : action.closedAt,
+              : current.closedAt,
         },
       });
 
@@ -273,12 +362,41 @@ export class ActionService {
     fileSize: number,
     description?: string,
   ) {
-    await this.verifyActionAccess(tenantId, actionId);
+    const action = await this.verifyActionAccess(tenantId, actionId);
+    await assertEngineeringProjectAccess(
+      this.prisma,
+      { tenantId, userId },
+      action.projectId,
+      true,
+    );
+    if (['verified', 'closed', 'cancelled'].includes(action.status))
+      throw new BadRequestException('Verified action evidence is protected');
+    const links = await this.prisma.actionFmeaLink.findMany({
+      where: { actionId },
+      include: { pfmeaRow: true },
+    });
+    for (const link of links)
+      await assertEngineeringRevisionAccess(
+        this.prisma,
+        { tenantId, userId },
+        link.pfmeaRow.revisionId,
+        undefined,
+        true,
+      );
 
     // Upload to Cloudflare R2 (or local mock folder)
-    const { fileUrl, fileKey } = await this.r2Service.uploadFile(fileBuffer, fileName, fileType);
+    const { fileUrl, fileKey } = await this.r2Service.uploadFile(
+      fileBuffer,
+      fileName,
+      fileType,
+    );
 
-    const evidence = await this.prisma.actionEvidence.create({
+    let evidence;
+    try{evidence=await this.prisma.$transaction(async tx=>{
+      const locked=await tx.action.updateMany({where:{id:actionId,tenantId,status:{notIn:['verified','closed','cancelled']}},data:{updatedAt:new Date()}});
+      if(locked.count!==1)throw new BadRequestException('Verified action evidence is protected');
+      for(const link of links)await assertEngineeringRevisionAccess(tx,{tenantId,userId},link.pfmeaRow.revisionId,undefined,true);
+    return tx.actionEvidence.create({
       data: {
         actionId,
         fileUrl: fileKey, // Store the R2 key in DB
@@ -289,6 +407,7 @@ export class ActionService {
         uploadedById: userId,
       },
     });
+    });}catch(error){await this.r2Service.deleteFile(fileKey).catch(()=>this.logger.warn('Could not clean up a rejected evidence upload'));throw error;}
 
     // Return the response with presigned URL
     return {
@@ -297,7 +416,7 @@ export class ActionService {
     };
   }
 
-  async removeEvidence(tenantId: string, evidenceId: string) {
+  async removeEvidence(tenantId: string, evidenceId: string, userId?: string) {
     const evidence = await this.prisma.actionEvidence.findUnique({
       where: { id: evidenceId },
       include: {
@@ -310,16 +429,40 @@ export class ActionService {
     }
 
     if (evidence.action.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have access to this action evidence');
+      throw new ForbiddenException(
+        'You do not have access to this action evidence',
+      );
     }
 
-    // Delete file from R2
-    await this.r2Service.deleteFile(evidence.fileUrl);
-
-    // Delete from DB
-    return this.prisma.actionEvidence.delete({
-      where: { id: evidenceId },
+    if (!userId) throw new ForbiddenException('Actor required');
+    await assertEngineeringProjectAccess(
+      this.prisma,
+      { tenantId, userId },
+      evidence.action.projectId,
+      true,
+    );
+    if (['verified', 'closed', 'cancelled'].includes(evidence.action.status))
+      throw new BadRequestException('Verified action evidence is protected');
+    const links = await this.prisma.actionFmeaLink.findMany({
+      where: { actionId: evidence.actionId },
+      include: { pfmeaRow: true },
     });
+    for (const link of links)
+      await assertEngineeringRevisionAccess(
+        this.prisma,
+        { tenantId, userId },
+        link.pfmeaRow.revisionId,
+        undefined,
+        true,
+      );
+    const deleted=await this.prisma.$transaction(async tx=>{
+      const locked=await tx.action.updateMany({where:{id:evidence.actionId,tenantId,status:{notIn:['verified','closed','cancelled']}},data:{updatedAt:new Date()}});
+      if(locked.count!==1)throw new BadRequestException('Verified action evidence is protected');
+      for(const link of links)await assertEngineeringRevisionAccess(tx,{tenantId,userId},link.pfmeaRow.revisionId,undefined,true);
+      return tx.actionEvidence.delete({where:{id:evidenceId}});
+    });
+    await this.r2Service.deleteFile(evidence.fileUrl);
+    return deleted;
   }
 
   async getEvidencePresignedUrl(tenantId: string, evidenceId: string) {
@@ -335,7 +478,9 @@ export class ActionService {
     }
 
     if (evidence.action.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have access to this action evidence');
+      throw new ForbiddenException(
+        'You do not have access to this action evidence',
+      );
     }
 
     const url = await this.r2Service.getPresignedUrl(evidence.fileUrl);

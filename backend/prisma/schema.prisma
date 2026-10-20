@@ -215,11 +215,41 @@ model DocumentRevision {
   processSteps      ProcessStep[]
   pfmeaRows         PfmeaRow[]
   controlPlanRows   ControlPlanRow[]
+  dfmeaDocument     DfmeaDocument?
+  controlPlanDocument ControlPlanDocument?
 
   @@unique([documentId, revisionNumber])
   @@index([documentId])
   @@index([status])
   @@map("document_revision")
+}
+
+// Canonical revision-owned aggregates; nested identities are validated by the module.
+// Legacy rows remain intact and require explicit engineering mapping.
+model DfmeaDocument {
+  id String @id @default(uuid()) @db.Uuid
+  revisionId String @unique @map("revision_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  version Int @default(0)
+  data Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  revision DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  @@index([tenantId])
+  @@map("dfmea_document")
+}
+
+model ControlPlanDocument {
+  id String @id @default(uuid()) @db.Uuid
+  revisionId String @unique @map("revision_id") @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  version Int @default(0)
+  data Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  revision DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  @@index([tenantId])
+  @@map("control_plan_document")
 }
 
 model Approval {

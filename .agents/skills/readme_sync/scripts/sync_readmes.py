@@ -11,6 +11,29 @@ TARGET_DIRS = [
 
 # File description catalog
 FILE_CATALOG = {
+    "project-history.spec.ts": "Transactional protected history, deletion dependencies, activation and rollback regression tests.",
+    "dfmea-failure-references.ts": "Explicit failure identity links, snapshot change proposals and reviewed relationship integrity.",
+    "FailureReferenceReview.tsx": "Individual failure-reference snapshot review without automatic propagation.",
+    "linkageData.ts": "Canonical source-aware lineage normalization and strict revision/row/operation identity joins.",
+    "linkageData.test.mjs": "Complete lineage, no-PFMEA and historical or unresolved source regression checks.",
+    "engineering-access.ts": "Transactional tenant/project/document/trial access and revision protection for controlled engineering mutations.",
+    "engineering-access.spec.ts": "Isolation, type, protected revision and trial access regression checks.",
+    "engineering-export.spec.ts": "Real XLSX long-Unicode/model round trip and complete printable document adapter tests.",
+    "dfmea-document.ts": "Canonical dedicated design hierarchy, failure chains, criteria provenance and readiness validation.",
+    "dfmea.service.ts": "Revision-owned DFMEA save, legacy mapping, permission-aware cloning and audit service.",
+    "dfmea.controller.ts": "Independent dfmea permissions on canonical design document APIs.",
+    "dfmea-action-policy.ts": "Protect verified action evidence and require explicit ordered lifecycle decisions.",
+    "control-plan-document.ts": "Controlled phase-specific plan model, source provenance and readiness validation.",
+    "control-plan-document.service.ts": "Revision-safe plan authoring and reviewed non-destructive source synchronization.",
+    "control-plan-document.controller.ts": "Canonical Control Plan save, preview/apply and phase fork API permissions.",
+    "ControlLineEditor.tsx": "Focused operation, characteristic, sampling, control and reaction editing.",
+    "SourceChangeReview.tsx": "Per-field source decisions, reasoned exclusions and safe synchronization preview.",
+    "DesignContextDiagrams.tsx": "Accessible boundary/interface and parameter diagrams rendered only from authored context.",
+    "DesignResultsSummary.tsx": "Derived coverage, evaluation and action-effectiveness results with exact-record navigation.",
+    "dfmeaDocument.ts": "Typed canonical design model, structural import validation and readiness helpers.",
+    "controlPlanDocument.ts": "Typed controlled plan fields, source-aware workbook import and validation helpers.",
+    "engineeringDocumentExport.ts": "Complete revision XLSX/model and printable/PDF HTML adapter with long-text and Unicode support.",
+
     # backend/prisma
     "schema.prisma": "The database schema definition containing all Prisma models for the multi-tenant FMEA platform (Tenant, User, Role, Permission, Project, Document, ProcessStep, PfmeaRow, Action, etc.).",
     
@@ -65,8 +88,8 @@ FILE_CATALOG = {
     "request-with-user.interface.ts": "Extension of Express request interface containing authenticated user context.",
     
     # backend/src/modules/control-plan
-    "control-plan-row.controller.ts": "Controller managing API endpoints for Control Plan rows.",
-    "control-plan-row.service.ts": "Service logic managing control plan characteristics, methods, and reaction plans.",
+    "control-plan-row.controller.ts": "Legacy Control Plan row reads; destructive and row mutation routes retired explicitly.",
+    "control-plan-row.service.ts": "Preserved legacy Control Plan reads and explicit retirement of destructive generation.",
     "control-plan.module.ts": "NestJS module registering control plan controller and service.",
     
     # backend/src/modules/control-plan/dto
@@ -138,7 +161,7 @@ FILE_CATALOG = {
     "ControlPlanWorkspace.tsx": "Workspace component displaying the Control Plan grid with special characteristics, method of controls, and reaction plans.",
     
     # frontend/src/features/dfmea
-    "DfmeaWorkspace.tsx": "Workspace component for Design FMEA grids.",
+    "DfmeaWorkspace.tsx": "Canonical DFMEA hierarchy, seven iterative activities, failure chains, optimization, results and controlled revision workspace.",
     
     # frontend/src/features/dfmea/components
     "DfmeaStructureTree.tsx": "Visual structure tree of DFMEA functions and elements.",

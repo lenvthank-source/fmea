@@ -276,56 +276,9 @@ export const PfmeaRowEditor: React.FC<PfmeaRowEditorProps> = ({
   };
 
   const handleTriggerAiCopilot = () => {
-    setAiLoading(true);
+    setAiLoading(false);
     setAiSuccess(false);
-    setError(null);
-
-    // Simulate AI Copilot generation delay (RAG retrieval representation)
-    setTimeout(() => {
-      setAiLoading(false);
-      setAiSuccess(true);
-
-      const stepNameLower = currentStep?.name.toLowerCase() || '';
-
-      if (stepNameLower.includes('drill') || stepNameLower.includes('hole')) {
-        setFunctions(['Drill through hole to specs', 'Provide mating point for assembly']);
-        setRequirements(['Hole diameter: 10.0mm +/- 0.1mm', 'Position tolerance within 0.05mm']);
-        setFailureModes(['Hole diameter too large (oversize)', 'Hole location off-center']);
-        setEffects(['Bolt cannot be secured, loose joint', 'Assembly interference in next station']);
-        setCauses(['Drill bit wear/dulled tip', 'Spindle runout or loose fixture clamp']);
-        setControls([
-          { name: 'Drill bit lifetime cycle tracking counter', type: 'prevention' },
-          { name: 'Automatic dial gauge caliper sample check', type: 'detection', detectionMethod: '100% laser scanner' },
-        ]);
-        setCharacteristics([
-          { name: 'Hole diameter dimension', classification: 'special', unitOfMeasure: 'mm' },
-        ]);
-      } else if (stepNameLower.includes('weld') || stepNameLower.includes('join')) {
-        setFunctions(['Join metal sheets structurally', 'Seal weld joint from moisture']);
-        setRequirements(['Weld penetration depth >= 2.5mm', 'Zero visual pinholes or cracks']);
-        setFailureModes(['Insufficient weld penetration depth', 'Surface weld porosities']);
-        setEffects(['Underload fatigue failure of frame', 'Water ingress causing internal corrosion']);
-        setCauses(['Fluctuating current setting', 'Inadequate shielding gas flow rate']);
-        setControls([
-          { name: 'Automated weld voltage log tracking', type: 'prevention' },
-          { name: 'Ultrasonic weld integrity scan', type: 'detection', detectionMethod: 'ultrasonic' },
-        ]);
-        setCharacteristics([
-          { name: 'Penetration depth', classification: 'critical', unitOfMeasure: 'mm' },
-        ]);
-      } else {
-        // Fallback generic suggestion
-        setFunctions([`Perform operation ${currentStep?.name || ''}`]);
-        setRequirements(['Process parameter tolerances met']);
-        setFailureModes(['Process parameter deviation']);
-        setEffects(['Degradation of primary product function']);
-        setCauses(['Operator error or machine tool misalignment']);
-        setControls([
-          { name: 'Standard operating procedure validation', type: 'prevention' },
-          { name: 'End of line visual check', type: 'detection' },
-        ]);
-      }
-    }, 1500);
+    setError('Source-backed engineering suggestions are not configured. Enter and review actual engineering information; no generated content has been inserted.');
   };
 
   const handleSave = async () => {

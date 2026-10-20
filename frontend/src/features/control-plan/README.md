@@ -4,11 +4,15 @@ Purpose: Module folder managing control-plan logic and assets.
 
 ## Directory Metadata
 - **Path**: `frontend/src/features/control-plan`
-- **Files Count**: 1
+- **Files Count**: 5
 - **Subdirectories Count**: 0
 
 ## File Map
 
 | File | Purpose / Responsibility |
 | :--- | :--- |
+| [`ControlLineEditor.tsx`](./ControlLineEditor.tsx) | Focused operation, characteristic, sampling, control and reaction editing. |
 | [`ControlPlanWorkspace.tsx`](./ControlPlanWorkspace.tsx) | Workspace component displaying the Control Plan grid with special characteristics, method of controls, and reaction plans. |
+| [`SourceChangeReview.tsx`](./SourceChangeReview.tsx) | Per-field source decisions, reasoned exclusions and safe synchronization preview. |
+| [`controlPlanDocument.test.mjs`](./controlPlanDocument.test.mjs) | Source code component implementing controlPlanDocument.test functionality. |
+| [`controlPlanDocument.ts`](./controlPlanDocument.ts) | Typed controlled plan fields, source-aware workbook import and validation helpers. |

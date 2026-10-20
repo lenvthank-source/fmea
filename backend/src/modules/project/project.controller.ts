@@ -1,9 +1,27 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import type { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
+
+const actor = (req: RequestWithUser) => ({
+  tenantId: req.user.tenantId,
+  userId: req.user.sub,
+  isGuest: req.user.isGuest,
+});
 
 @Controller('projects')
 export class ProjectController {
@@ -23,14 +41,28 @@ export class ProjectController {
     const isGuest = !!req.user.isGuest;
     const isAdmin = req.user.roles?.includes('Admin') || false;
     const userId = req.user.sub;
-    return this.projectService.findAll(req.user.tenantId, status, page, limit, userId, search, isGuest, isAdmin);
+    return this.projectService.findAll(
+      req.user.tenantId,
+      status,
+      page,
+      limit,
+      userId,
+      search,
+      isGuest,
+      isAdmin,
+    );
   }
 
   @Post()
   @Permissions('project.create')
   async create(@Request() req: RequestWithUser, @Body() dto: CreateProjectDto) {
     const isGuest = !!req.user.isGuest;
-    return this.projectService.create(req.user.tenantId, req.user.sub, dto, isGuest);
+    return this.projectService.create(
+      req.user.tenantId,
+      req.user.sub,
+      dto,
+      isGuest,
+    );
   }
 
   @Post(':id/replicate')
@@ -38,13 +70,19 @@ export class ProjectController {
   async replicate(
     @Request() req: RequestWithUser,
     @Param('id') id: string,
-    @Body() dto: {
+    @Body()
+    dto: {
       name: string;
       qualityHeaderOverrides: Partial<CreateProjectDto>;
       includeTypes: ('PFD' | 'PFMEA' | 'DFMEA' | 'CONTROL_PLAN')[];
     },
   ) {
-    return this.projectService.replicate(req.user.tenantId, req.user.sub, id, dto);
+    return this.projectService.replicate(
+      req.user.tenantId,
+      req.user.sub,
+      id,
+      dto,
+    );
   }
 
   @Get('admin/revisions')
@@ -59,7 +97,11 @@ export class ProjectController {
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
   ) {
-    return this.projectService.adminDeleteRevision(req.user.tenantId, req.user.sub, revisionId);
+    return this.projectService.adminDeleteRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+    );
   }
 
   @Patch('revisions/:revisionId')
@@ -67,7 +109,8 @@ export class ProjectController {
   async updateRevision(
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
-    @Body() dto: {
+    @Body()
+    dto: {
       revisionNumber?: string;
       summary?: string;
       changeDescription?: string;
@@ -75,7 +118,12 @@ export class ProjectController {
       effectiveTo?: string;
     },
   ) {
-    return this.projectService.updateRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+    return this.projectService.updateRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+      dto,
+    );
   }
 
   @Delete('revisions/:revisionId')
@@ -84,7 +132,11 @@ export class ProjectController {
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
   ) {
-    return this.projectService.deleteRevision(req.user.tenantId, req.user.sub, revisionId);
+    return this.projectService.deleteRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+    );
   }
 
   @Post('revisions/:revisionId/activate')
@@ -93,7 +145,11 @@ export class ProjectController {
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
   ) {
-    return this.projectService.switchActiveRevision(req.user.tenantId, req.user.sub, revisionId);
+    return this.projectService.switchActiveRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+    );
   }
 
   // --- Parameterized :id Routes ---
@@ -101,6 +157,7 @@ export class ProjectController {
   @Get(':id')
   @Permissions('project.view')
   async findOne(@Request() req: RequestWithUser, @Param('id') id: string) {
+    await this.projectService.assertActorProjectAccess(actor(req), id);
     const isAdmin = req.user.roles?.includes('Admin') || false;
     return this.projectService.findOne(req.user.tenantId, id, true, isAdmin);
   }
@@ -112,6 +169,7 @@ export class ProjectController {
     @Param('id') id: string,
     @Body() dto: UpdateProjectDto,
   ) {
+    await this.projectService.assertActorProjectAccess(actor(req), id, true);
     return this.projectService.update(req.user.tenantId, id, dto);
   }
 
@@ -119,12 +177,21 @@ export class ProjectController {
   @Permissions('project.delete')
   async remove(@Request() req: RequestWithUser, @Param('id') id: string) {
     const isAdmin = req.user.roles?.includes('Admin') || false;
-    return this.projectService.remove(req.user.tenantId, id, isAdmin);
+    return this.projectService.remove(
+      req.user.tenantId,
+      id,
+      isAdmin,
+      req.user.sub,
+    );
   }
 
   @Get(':id/documents')
   @Permissions('project.view')
-  async findDocuments(@Request() req: RequestWithUser, @Param('id') id: string) {
+  async findDocuments(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    await this.projectService.assertActorProjectAccess(actor(req), id);
     const isAdmin = req.user.roles?.includes('Admin') || false;
     return this.projectService.findDocuments(req.user.tenantId, id, isAdmin);
   }
@@ -134,7 +201,8 @@ export class ProjectController {
   async createRevision(
     @Request() req: RequestWithUser,
     @Param('id') id: string,
-    @Body() body: {
+    @Body()
+    body: {
       changeDesc: string;
       revisionNumber?: string;
       summary?: string;
@@ -158,10 +226,8 @@ export class ProjectController {
 
   @Get(':id/revisions')
   @Permissions('project.view')
-  async getRevisions(
-    @Request() req: RequestWithUser,
-    @Param('id') id: string,
-  ) {
+  async getRevisions(@Request() req: RequestWithUser, @Param('id') id: string) {
+    await this.projectService.assertActorProjectAccess(actor(req), id);
     const isAdmin = req.user.roles?.includes('Admin') || false;
     return this.projectService.getRevisions(req.user.tenantId, id, isAdmin);
   }
@@ -171,14 +237,33 @@ export class ProjectController {
   async getRevisionDetail(
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
+    @Param('id') projectId: string,
   ) {
+    await this.projectService.assertActorRevisionAccess(
+      actor(req),
+      revisionId,
+      projectId,
+    );
     return this.projectService.getRevisionDetail(req.user.tenantId, revisionId);
   }
 
   @Get(':id/revisions/:revisionId/readiness')
   @Permissions('project.view')
-  getReadiness(@Request() req: RequestWithUser, @Param('revisionId') revisionId: string) {
-    return this.projectService.getRevisionReadiness(req.user.tenantId, revisionId);
+  async getReadiness(
+    @Request() req: RequestWithUser,
+    @Param('revisionId') revisionId: string,
+    @Param('id') projectId: string,
+  ) {
+    await this.projectService.assertActorRevisionAccess(
+      actor(req),
+      revisionId,
+      projectId,
+    );
+    return this.projectService.getRevisionReadiness(
+      req.user.tenantId,
+      revisionId,
+      req.user.sub,
+    );
   }
 
   @Post(':id/revisions/:revisionId/submit')
@@ -186,8 +271,18 @@ export class ProjectController {
   async submitRevision(
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
+    @Param('id') projectId: string,
   ) {
-    return this.projectService.submitRevision(req.user.tenantId, req.user.sub, revisionId);
+    await this.projectService.assertActorRevisionAccess(
+      actor(req),
+      revisionId,
+      projectId,
+    );
+    return this.projectService.submitRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+    );
   }
 
   @Post(':id/revisions/:revisionId/approve')
@@ -195,9 +290,20 @@ export class ProjectController {
   async approveRevision(
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
+    @Param('id') projectId: string,
     @Body() dto: { password: string; comment: string },
   ) {
-    return this.projectService.approveRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+    await this.projectService.assertActorRevisionAccess(
+      actor(req),
+      revisionId,
+      projectId,
+    );
+    return this.projectService.approveRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+      dto,
+    );
   }
 
   @Post(':id/revisions/:revisionId/reject')
@@ -205,8 +311,19 @@ export class ProjectController {
   async rejectRevision(
     @Request() req: RequestWithUser,
     @Param('revisionId') revisionId: string,
+    @Param('id') projectId: string,
     @Body() dto: { comment: string },
   ) {
-    return this.projectService.rejectRevision(req.user.tenantId, req.user.sub, revisionId, dto);
+    await this.projectService.assertActorRevisionAccess(
+      actor(req),
+      revisionId,
+      projectId,
+    );
+    return this.projectService.rejectRevision(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+      dto,
+    );
   }
 }

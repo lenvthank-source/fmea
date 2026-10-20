@@ -1,768 +1,1348 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
+  Alert,
   Box,
-  Typography,
   Button,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  MenuItem,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Alert,
-  CircularProgress,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stack,
-  Input,
-  Grid,
-  Divider,
-  TablePagination,
-} from '@mui/material';
+  Typography,
+} from "@mui/material";
+import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from "../../config";
+import { parseApiError } from "../../lib/api";
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Sync as SyncIcon,
-} from '@mui/icons-material';
-import { useAuth } from '../auth/AuthContext';
-import { API_BASE_URL } from '../../config';
-import { dialogSelectProps } from '../../theme/muiSelectConfig';
-import { DocumentHeader } from '../../components/DocumentHeader';
-import { ReportExporter } from '../reports/ReportExporter';
-import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
-import { parseApiError } from '../../lib/api';
-import { unwrapPaginated } from '../../lib/pagination';
+  exportEngineeringXlsx,
+  parseEngineeringXlsx,
+  printEngineeringDocument,
+} from "../shared/engineeringDocumentExport";
+import type { EngineeringDocument } from "../shared/engineeringDocumentExport";
+import {
+  blankLine,
+  lineFields,
+  validateImport,
+  importControlRows,
+} from "./controlPlanDocument";
+import { ControlLineEditor } from "./ControlLineEditor";
+import { SourceChangeReview } from "./SourceChangeReview";
+import type {
+  CpDocument,
+  CpEnvelope,
+  CpLine,
+  SyncPreview,
+} from "./controlPlanDocument";
 
-interface ProcessStep {
+interface Revision {
   id: string;
-  stepNumber: string;
-  name: string;
-  isOrphaned?: boolean;
+  revisionNumber: string;
+  status: string;
+  document?: { type: string };
+  documentType?: string;
+  documentId?: string;
 }
-
-interface Characteristic {
+interface DocumentContext {
   id: string;
-  name: string;
-  classification: string;
+  type: string;
+  currentRevisionId: string;
 }
-
-interface ControlPlanRow {
-  id: string;
-  processStepId: string;
-  characteristicId: string | null;
-  rowNumber: number;
-  specTolerance: string | null;
-  measurementMethod: string | null;
-  sampleSize: string | null;
-  frequency: string | null;
-  controlType: string;
-  controlMethod: string | null;
-  reactionPlan: string | null;
-  responsible: string | null;
-  notes: string | null;
-  processStep: ProcessStep;
-  characteristic: Characteristic | null;
-  linkedPfmeaRows?: any[];
-}
-
+const panel = {
+  p: 2,
+  border: "1px solid #e3e4db",
+  borderRadius: 2,
+  boxShadow: "none",
+};
 export const ControlPlanWorkspace: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>();
-  const { token } = useAuth();
-  const { showToast } = useToast();
+  const { projectId } = useParams();
+  const { token, hasPermission } = useAuth();
+  const [project, setProject] = useState<Record<string, unknown>>({});
+  const [documents, setDocuments] = useState<DocumentContext[]>([]);
+  const [revisions, setRevisions] = useState<Revision[]>([]);
+  const [revisionId, setRevisionId] = useState("");
+  const [envelope, setEnvelope] = useState<CpEnvelope | null>(null);
+  const [document, setDocument] = useState<CpDocument | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [editing, setEditing] = useState<CpLine | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [sourceRevisionId, setSourceRevisionId] = useState("");
+  const [preview, setPreview] = useState<SyncPreview | null>(null);
+  const [decisions, setDecisions] = useState<Record<string, string>>({});
+  const [exclusionReasons, setExclusionReasons] = useState<
+    Record<string, string>
+  >({});
+  const [resolutions, setResolutions] = useState<
+    Record<string, Record<string, string>>
+  >({});
+  const [importDocument, setImportDocument] = useState<CpDocument | null>(null);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
+  const [readiness, setReadiness] = useState<{
+    ready: boolean;
+    errors: string[];
+    warnings: string[];
+  } | null>(null);
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [comment, setComment] = useState("");
+  const [forkOpen, setForkOpen] = useState(false);
+  const [forkNumber, setForkNumber] = useState("");
+  const [forkPhase, setForkPhase] = useState("prototype");
+  const [operations, setOperations] = useState<
+    { id: string; stepNumber: string; name: string }[]
+  >([]);
 
-  // Project Document Revisions
-  const [cpRevisionId, setCpRevisionId] = useState<string | null>(null);
-  const [projectName, setProjectName] = useState<string>('');
-
-  // Data states
-  const [rows, setRows] = useState<ControlPlanRow[]>([]);
-  const [steps, setSteps] = useState<ProcessStep[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(25);
-  const [total, setTotal] = useState(0);
-
-  // FMEA reference states for split screen
-  const [showSplitScreen, setShowSplitScreen] = useState(false);
-  const [pfmeaRows, setPfmeaRows] = useState<any[]>([]);
-
-  // Dialog state
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [selectedStepId, setSelectedStepId] = useState('');
-  const [selectedCharId, setSelectedCharId] = useState('');
-  const [controlType, setControlType] = useState('detection');
-  const [controlMethod, setControlMethod] = useState('');
-
-  // Exporter Dialog state
-  const [exporterOpen, setExporterOpen] = useState(false);
-
-  // Load project Control Plan revision
+  const editable = !!envelope?.writable && hasPermission("cp.edit") && !busy;
+  const request = async (path: string, options: RequestInit = {}) => {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+    if (!response.ok)
+      throw new Error(await parseApiError(response, "The request failed."));
+    return response.json();
+  };
   useEffect(() => {
-    const resolveContext = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const projResponse = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (projResponse.ok) {
-          const projData = await projResponse.json();
-          setProjectName(projData.name);
-        }
-
-        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) {
-          const msg = await parseApiError(response, 'Failed to resolve project document context.');
-          throw new Error(msg);
-        }
-        const documents = await response.json();
-
-        const cpDoc = documents.find((doc: any) => doc.type === 'CONTROL_PLAN');
-
-        if (!cpDoc || !cpDoc.currentRevisionId) {
-          throw new Error('Control Plan document context not initialized.');
-        }
-
-        setCpRevisionId(cpDoc.currentRevisionId);
-      } catch (err: any) {
-        const msg = err.message || 'An error occurred while loading project context.';
-        setError(msg);
-        showToast(msg, getToastSeverity(msg));
-        setLoading(false);
+    if (!token || !documents.length) return;
+    let active = true;
+    const baselineIds =
+      document?.sourceBaselines
+        .filter((source) => source.type === "PFD")
+        .map((source) => source.revisionId) ?? [];
+    const sources = baselineIds.length
+      ? baselineIds.map((id) => ({ currentRevisionId: id }))
+      : documents.filter((d) => d.type === "PFD" && d.currentRevisionId);
+    void Promise.all(
+      sources.map((d) =>
+        request(`/revisions/${d.currentRevisionId}/pfd-steps`),
+      ),
+    )
+      .then((values) => {
+        if (active) setOperations(values.flat());
+      })
+      .catch(fail);
+    return () => {
+      active = false;
+    };
+  }, [documents, token, JSON.stringify(document?.sourceBaselines ?? [])]);
+  useEffect(() => {
+    const listener = (event: BeforeUnloadEvent) => {
+      if (dirty) {
+        event.preventDefault();
+        event.returnValue = "";
       }
     };
-
-    if (projectId && token) {
-      resolveContext();
-    }
-  }, [projectId, token]);
-
-  const fetchData = async () => {
-    if (!cpRevisionId) return;
+    window.addEventListener("beforeunload", listener);
+    return () => window.removeEventListener("beforeunload", listener);
+  }, [dirty]);
+  const fork = async () => {
+    setBusy(true);
     try {
-      // 1. Fetch Control Plan rows
-      const rowsResponse = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows?page=${page}&limit=${limit}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!rowsResponse.ok) {
-        const msg = await parseApiError(rowsResponse, 'Failed to load Control Plan rows');
-        throw new Error(msg);
-      }
-      const payload = await rowsResponse.json();
-      const { data, total: t } = unwrapPaginated<ControlPlanRow>(payload);
-      setRows(data);
-      setTotal(t);
-
-      // 2. Fetch Process Steps and FMEA Rows
-      const docsResponse = await fetch(`${API_BASE_URL}/projects/${projectId}/documents`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const docs = await docsResponse.json();
-      
-      const pfdDoc = docs.find((d: any) => d.type === 'PFD');
-      if (pfdDoc && pfdDoc.currentRevisionId) {
-        const stepsResponse = await fetch(`${API_BASE_URL}/revisions/${pfdDoc.currentRevisionId}/pfd-steps`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (stepsResponse.ok) {
-          const stepsData = await stepsResponse.json();
-          setSteps(stepsData);
-        }
-      }
-
-      const pfmeaDoc = docs.find((d: any) => d.type === 'PFMEA');
-      if (pfmeaDoc && pfmeaDoc.currentRevisionId) {
-        const pfmeaResponse = await fetch(`${API_BASE_URL}/revisions/${pfmeaDoc.currentRevisionId}/pfmea-rows?limit=100`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (pfmeaResponse.ok) {
-          const pfmeaPayload = await pfmeaResponse.json();
-          const { data } = unwrapPaginated<any>(pfmeaPayload);
-          setPfmeaRows(data);
-        }
-      }
-    } catch (err: any) {
-      const msg = err.message || 'Could not load Control Plan workspace.';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
+      const result = await request(
+        `/revisions/${revisionId}/control-plan-document/fork`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            revisionNumber: forkNumber,
+            phase: forkPhase,
+            summary: `${forkPhase} Control Plan`,
+          }),
+        },
+      );
+      setRevisions(await request(`/projects/${projectId}/revisions`));
+      setRevisionId(result.revisionId);
+      setForkOpen(false);
+    } catch (reason) {
+      fail(reason);
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
-
+  const fail = (reason: unknown) =>
+    setError(reason instanceof Error ? reason.message : String(reason));
+  const accept = (value: CpEnvelope) => {
+    setEnvelope(value);
+    setDocument(value.document);
+    setDirty(false);
+  };
+  const load = async (id: string) => {
+    setBusy(true);
+    setError("");
+    try {
+      accept(await request(`/revisions/${id}/control-plan-document`));
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setBusy(false);
+    }
+  };
   useEffect(() => {
-    if (cpRevisionId) {
-      fetchData();
-    }
-  }, [cpRevisionId, page, limit]);
-
-  useEffect(() => { setPage(1); }, [cpRevisionId]);
-
-  // Trigger FMEA synchronization
-  const handleSyncFromFmea = async () => {
-    if (!cpRevisionId) return;
-    setSyncing(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows/sync`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const msg = await parseApiError(response, 'Synchronization failed.');
-        throw new Error(msg);
+    if (!token || !projectId) return;
+    let active = true;
+    (async () => {
+      setBusy(true);
+      try {
+        const [projectValue, docs, revs] = await Promise.all([
+          request(`/projects/${projectId}`),
+          request(`/projects/${projectId}/documents`),
+          request(`/projects/${projectId}/revisions`),
+        ]);
+        if (!active) return;
+        setProject(projectValue);
+        setDocuments(docs);
+        setRevisions(Array.isArray(revs) ? revs : (revs.data ?? []));
+        setRevisionId(
+          docs.find((item: DocumentContext) => item.type === "CONTROL_PLAN")
+            ?.currentRevisionId ?? "",
+        );
+      } catch (reason) {
+        if (active) fail(reason);
+      } finally {
+        if (active) setBusy(false);
       }
-
-      const result = await response.json();
-      setSuccess(result.message || 'Successfully synchronized Control Plan with FMEA.');
-      await fetchData();
-    } catch (err: any) {
-      const msg = err.message || 'FMEA Control Plan synchronization failed.';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-    } finally {
-      setSyncing(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [projectId, token]);
+  useEffect(() => {
+    if (revisionId && token) {
+      setReadiness(null);
+      setEnvelope(null);
+      setDocument(null);
+      void load(revisionId);
     }
+  }, [revisionId, token]);
+  const update = (value: CpDocument) => {
+    setDocument(value);
+    setDirty(true);
+    setNotice("");
   };
-
-  const handleSyncFromPfd = async () => {
-    if (!cpRevisionId) return;
-    setSyncing(true);
-    setError(null);
-    setSuccess(null);
+  const save = async () => {
+    if (!document || !envelope) return;
+    setBusy(true);
+    setError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows/sync-pfd`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const msg = await parseApiError(response, 'Synchronization failed.');
-        throw new Error(msg);
-      }
-
-      const result = await response.json();
-      setSuccess(result.message || 'Successfully synchronized Control Plan with PFD.');
-      await fetchData();
-    } catch (err: any) {
-      const msg = err.message || 'PFD Control Plan synchronization failed.';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  // Add a manual row
-  const handleAddRow = async () => {
-    if (!selectedStepId || !cpRevisionId) return;
-    setError(null);
-    setSuccess(null);
-    setAddDialogOpen(false);
-    try {
-      const nextRowNumber = rows.length > 0 ? Math.max(...rows.map((r) => r.rowNumber)) + 1 : 1;
-
-      const response = await fetch(`${API_BASE_URL}/revisions/${cpRevisionId}/control-plan-rows`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          processStepId: selectedStepId,
-          characteristicId: selectedCharId || undefined,
-          rowNumber: nextRowNumber,
-          controlType,
-          controlMethod: controlMethod || 'Visual Inspection',
+      accept(
+        await request(`/revisions/${revisionId}/control-plan-document`, {
+          method: "PUT",
+          body: JSON.stringify({ expectedVersion: envelope.version, document }),
         }),
-      });
-
-      if (!response.ok) {
-        const msg = await parseApiError(response, 'Failed to create Control Plan row.');
-        throw new Error(msg);
-      }
-
-      await fetchData();
-      setSelectedStepId('');
-      setSelectedCharId('');
-      setControlMethod('');
-    } catch (err: any) {
-      const msg = err.message || 'Error occurred while adding Control Plan row.';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
+      );
+      setNotice("Revision saved.");
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setBusy(false);
     }
   };
-
-  // Update a field inline
-  const handleFieldChange = async (rowId: string, field: string, value: string) => {
-    setError(null);
-    setSuccess(null);
-    
-    // Update local state first for instantaneous visual updates
-    setRows((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, [field]: value } : r))
+  const cpDoc = documents.find((item) => item.type === "CONTROL_PLAN");
+  const cpRevisions = revisions.filter(
+    (item) =>
+      item.document?.type === "CONTROL_PLAN" ||
+      item.documentType === "CONTROL_PLAN" ||
+      item.documentId === cpDoc?.id,
+  );
+  const sourceRevisions = revisions.filter((item) =>
+    ["PFD", "PFMEA"].includes(
+      item.document?.type ??
+        item.documentType ??
+        documents.find((doc) => doc.id === item.documentId)?.type ??
+        "",
+    ),
+  );
+  const groups = useMemo(() => {
+    const result = new Map<string, CpLine[]>();
+    document?.lines.forEach((line) => {
+      const key = [
+        line.operationId,
+        line.operationNumber,
+        line.operationName,
+      ].join("|");
+      result.set(key, [...(result.get(key) ?? []), line]);
+    });
+    return [...result.values()];
+  }, [document]);
+  const selectedRevision = revisions.find((item) => item.id === revisionId);
+  const exportDocument = (): EngineeringDocument => ({
+    canonicalModel: document,
+    printIdentityKeys: ["operationNumber", "characteristicNumber", "id"],
+    title: `Control Plan — ${String(project.name ?? "")}`,
+    fileName: `control-plan-${selectedRevision?.revisionNumber ?? revisionId}`,
+    metadata: {
+      ...document!.header,
+      Revision: selectedRevision?.revisionNumber ?? revisionId,
+      Status: selectedRevision?.status ?? "",
+      Phase: document!.config.phase,
+      "Standard profile": document!.config.standardProfile,
+      "Customer requirements": document!.config.customerRequirements,
+      "Source exception justification":
+        document!.config.sourceExceptionJustification,
+      "Source baselines": JSON.stringify(document!.sourceBaselines),
+      "Reviewed exclusions": JSON.stringify(document!.sourceExclusions ?? []),
+      "Safe launch": JSON.stringify(document!.config.safeLaunch),
+      Verification:
+        "Handbook criteria require authorized independent verification.",
+    },
+    columns: [
+      { key: "id", label: "Line ID" },
+      ...lineFields.map(([key, label]) => ({ key, label })),
+      { key: "source", label: "Source provenance" },
+      { key: "sourceState", label: "Source review state" },
+    ],
+    rows: document!.lines.map((line) => ({
+      ...line,
+      source: line.source ? JSON.stringify(line.source) : "",
+    })),
+  });
+  const downloadJson = () => {
+    const link = window.document.createElement("a");
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(document, null, 2)], {
+        type: "application/json",
+      }),
     );
-
+    link.href = url;
+    link.download = `control-plan-${revisionId}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  const beginImport = async (file: File) => {
+    setImportOpen(true);
+    setImportErrors([]);
+    setImportDocument(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/control-plan-rows/${rowId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      let value: unknown;
+      if (file.name.endsWith(".json")) value = JSON.parse(await file.text());
+      else {
+        const sheet = await parseEngineeringXlsx(file);
+        const missing = lineFields
+          .map(([, label]) => label)
+          .filter((label) => !sheet.headers.includes(label));
+        if (missing.length)
+          throw new Error(
+            `Missing columns: ${missing.join(", ")}. Use an exported workbook as the template.`,
+          );
+        value =
+          !sheet.worksheetChanged && sheet.model
+            ? sheet.model
+            : {
+                ...((sheet.model as CpDocument) ?? document),
+                lines: importControlRows(sheet.rows),
+              };
+      }
+      const errors = validateImport(value);
+      setImportErrors(errors);
+      if (!errors.length) setImportDocument(value as CpDocument);
+    } catch (reason) {
+      setImportErrors([
+        reason instanceof Error ? reason.message : String(reason),
+      ]);
+    }
+  };
+  const previewSync = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const value: SyncPreview = await request(
+        `/revisions/${revisionId}/control-plan-document/sync-preview`,
+        { method: "POST", body: JSON.stringify({ sourceRevisionId }) },
+      );
+      setPreview(value);
+      setExclusionReasons({});
+      setResolutions({});
+      setDecisions(
+        Object.fromEntries(value.changes.map((change) => [change.key, "keep"])),
+      );
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const applySync = async () => {
+    if (!preview) return;
+    setBusy(true);
+    setError("");
+    try {
+      accept(
+        await request(
+          `/revisions/${revisionId}/control-plan-document/sync-apply`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              expectedVersion: preview.expectedVersion,
+              sourceRevisionId: preview.sourceRevisionId,
+              sourceFingerprint: preview.sourceFingerprint,
+              decisions: Object.entries(decisions).map(([key, action]) => ({
+                key,
+                action,
+                ...(action === "exclude"
+                  ? { reason: exclusionReasons[key] }
+                  : {}),
+                ...(action === "update"
+                  ? { resolutions: resolutions[key] ?? {} }
+                  : {}),
+              })),
+            }),
+          },
+        ),
+      );
+      setPreview(null);
+      setNotice("Reviewed source changes applied.");
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const transition = async (action: "submit" | "approve" | "reject") => {
+    setBusy(true);
+    setError("");
+    try {
+      await request(
+        `/projects/${projectId}/revisions/${revisionId}/${action}`,
+        {
+          method: "POST",
+          body: JSON.stringify(
+            action === "approve"
+              ? { password, comment }
+              : action === "reject"
+                ? { comment }
+                : {},
+          ),
         },
-        body: JSON.stringify({ [field]: value }),
-      });
-
-      if (!response.ok) {
-        const msg = await parseApiError(response, 'Failed to save cell update.');
-        throw new Error(msg);
-      }
-    } catch (err: any) {
-      const msg = err.message || 'Failed to update field. Reverting...';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-      fetchData(); // Rollback to server state
+      );
+      setApprovalOpen(false);
+      setPassword("");
+      await load(revisionId);
+      setRevisions(await request(`/projects/${projectId}/revisions`));
+      setNotice(
+        `Revision ${action === "submit" ? "submitted" : action === "approve" ? "approved" : "returned to draft"}.`,
+      );
+    } catch (reason) {
+      fail(reason);
+    } finally {
+      setBusy(false);
     }
   };
-
-  // Delete a row
-  const handleDeleteRow = async (rowId: string) => {
-    if (!window.confirm('Are you sure you want to delete this Control Plan row?')) return;
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/control-plan-rows/${rowId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const msg = await parseApiError(response, 'Failed to delete row.');
-        throw new Error(msg);
-      }
-
-      await fetchData();
-    } catch (err: any) {
-      const msg = err.message || 'Could not delete Control Plan row.';
-      setError(msg);
-      showToast(msg, getToastSeverity(msg));
-    }
-  };
-
-  if (loading && !cpRevisionId) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Box>
-      {/* Title Header */}
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="outlined"
-            startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
-            onClick={handleSyncFromPfd}
-            disabled={syncing}
+    <Box sx={{ minWidth: 0, pb: 3 }}>
+      <Stack
+        direction="row"
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "start",
+          gap: 2,
+          flexWrap: "wrap",
+          mb: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              letterSpacing: "-.03em",
+              fontSize: { xs: 24, sm: 30 },
+            }}
           >
-            {syncing ? 'Syncing...' : 'Sync from PFD'}
+            Control Plan
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {String(project.name ?? "")} · Controls, characteristics and
+            reviewed source traceability.
+          </Typography>
+        </Box>
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+          <Button onClick={() => setConfigOpen(true)} disabled={!document}>
+            Plan details
+          </Button>
+          {hasPermission("cp.edit") && (
+            <Button
+              disabled={!envelope?.forkable || !document || dirty || busy}
+              onClick={() => setForkOpen(true)}
+            >
+              New phase / revision
+            </Button>
+          )}
+          <Button
+            disabled={!document || busy}
+            onClick={() => {
+              void exportEngineeringXlsx(exportDocument()).catch(fail);
+            }}
+          >
+            XLSX
           </Button>
           <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
-            onClick={handleSyncFromFmea}
-            disabled={syncing}
+            disabled={!document}
+            onClick={() => {
+              try {
+                printEngineeringDocument(exportDocument());
+              } catch (reason) {
+                fail(reason);
+              }
+            }}
           >
-            {syncing ? 'Syncing...' : 'Sync from FMEA'}
+            Print / PDF
+          </Button>
+          <Button disabled={!document} onClick={downloadJson}>
+            JSON
+          </Button>
+          <Button component="label" disabled={!editable || busy}>
+            Import
+            <input
+              type="file"
+              hidden
+              accept=".json,.xlsx"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void beginImport(file);
+                event.target.value = "";
+              }}
+            />
           </Button>
           <Button
-            variant="outlined"
-            onClick={() => setShowSplitScreen(!showSplitScreen)}
-            color={showSplitScreen ? 'primary' : 'inherit'}
+            variant="contained"
+            disabled={!editable || !dirty || busy}
+            onClick={save}
           >
-            {showSplitScreen ? 'Hide FMEA Linkage' : 'Show FMEA Linkage'}
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => setExporterOpen(true)}
-            color="primary"
-          >
-            Export Document
-          </Button>
-          <Button data-tour="control-plan-workflow" variant="contained" startIcon={<AddIcon />} onClick={() => setAddDialogOpen(true)}>
-            Add Control Row
+            {busy ? "Working…" : "Save changes"}
           </Button>
         </Stack>
-      </Box>
-
-      <DocumentHeader projectId={projectId!} docType="CONTROL_PLAN" />
-
+      </Stack>
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+          {error}{" "}
+          {dirty &&
+            "Your unsaved edits are retained. Save a JSON copy before reloading a conflicting revision."}
         </Alert>
       )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-          {success}
+      {notice && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {notice}
         </Alert>
       )}
-
-      {/* Main Grid Wrapper */}
-      <Grid container spacing={2.5} sx={{ mt: 1 }}>
-        {showSplitScreen && (
-          <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
-            <Paper sx={{ p: 2, border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, boxShadow: 'none', bgcolor: 'background.paper' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                PFMEA Risk Controls Reference
-              </Typography>
-              <Stack spacing={2} sx={{ maxHeight: 600, overflowY: 'auto', pr: 1 }}>
-                {pfmeaRows.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No active PFMEA rows found. Create rows in PFMEA to see them here.
-                  </Typography>
-                ) : (
-                  pfmeaRows.map((fmeaRow: any) => (
-                    <Paper 
-                      key={fmeaRow.id} 
-                      sx={{ 
-                        p: 1.5, 
-                        border: '1px solid rgba(40, 37, 29, 0.08)', 
-                        bgcolor: '#F7F6F2', 
-                        borderRadius: 2,
-                        boxShadow: 'none'
-                      }}
-                    >
-                      <Stack direction="row" sx={{ mb: 1, alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography variant="caption" sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'primary.contrastText', px: 1, py: 0.25, borderRadius: 1 }}>
-                          Step {fmeaRow.processStep?.stepNumber}
-                        </Typography>
-                        {fmeaRow.ap && (
-                          <Chip 
-                            label={`AP: ${fmeaRow.ap}`} 
-                            size="small" 
-                            color={fmeaRow.ap === 'H' ? 'error' : fmeaRow.ap === 'M' ? 'warning' : 'success'} 
-                            sx={{ height: 18, fontSize: '0.65rem', fontWeight: 'bold' }}
-                          />
-                        )}
-                      </Stack>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {fmeaRow.processStep?.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                        Failure Mode: {fmeaRow.failureModes?.[0]?.name || '—'}
-                      </Typography>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
-                        Controls (Prevention / Detection):
-                      </Typography>
-                      <Stack spacing={0.5}>
-                        {fmeaRow.controls?.map((ctrl: any, idx: number) => (
-                          <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'background.paper', p: 0.75, borderRadius: 1, border: '1px solid rgba(40, 37, 29, 0.04)' }}>
-                            <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                              {ctrl.control?.name}
-                            </Typography>
-                            <Chip 
-                              label={ctrl.control?.type?.toUpperCase()} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ height: 14, fontSize: '0.55rem', px: 0.5 }} 
-                            />
-                          </Box>
-                        ))}
-                        {(!fmeaRow.controls || fmeaRow.controls.length === 0) && (
-                          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            No controls defined
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Paper>
-                  ))
-                )}
-              </Stack>
-            </Paper>
-          </Grid>
-        )}
-        <Grid size={{ xs: 12, md: showSplitScreen ? 8 : 12, lg: showSplitScreen ? 8.5 : 12 }}>
-          <>
-          <TableContainer component={Paper} sx={{ border: '1px solid rgba(40, 37, 29, 0.1)', borderRadius: 3, bgcolor: 'background.paper', overflowX: 'auto', boxShadow: 'none' }}>
-        <Table aria-label="Control Plan grid" size="small">
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#F7F6F2' }}>
-              <TableCell sx={{ minWidth: 40, fontWeight: 'bold' }}>#</TableCell>
-              <TableCell sx={{ minWidth: 150, fontWeight: 'bold' }}>Process Step</TableCell>
-              <TableCell sx={{ minWidth: 140, fontWeight: 'bold' }}>Characteristic</TableCell>
-              <TableCell sx={{ minWidth: 120, fontWeight: 'bold' }}>Class</TableCell>
-              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Specification / Tolerance</TableCell>
-              <TableCell sx={{ minWidth: 160, fontWeight: 'bold' }}>Measurement Method</TableCell>
-              <TableCell sx={{ minWidth: 100, fontWeight: 'bold' }}>Sample Size</TableCell>
-              <TableCell sx={{ minWidth: 110, fontWeight: 'bold' }}>Frequency</TableCell>
-              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Control Method</TableCell>
-              <TableCell sx={{ minWidth: 180, fontWeight: 'bold' }}>Reaction Plan</TableCell>
-              <TableCell sx={{ minWidth: 130, fontWeight: 'bold' }}>Responsible</TableCell>
-              <TableCell sx={{ minWidth: 60, fontWeight: 'bold', textAlign: 'center' }}>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={12} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                  No Control Plan rows active. Click "Sync from FMEA" to pull controls from FMEA analysis, or click "Add Control Row" to add manually.
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id} sx={{ '&:hover': { bgcolor: 'rgba(40, 37, 29, 0.01)' } }}>
-                  {/* Row Number */}
-                  <TableCell sx={{ fontWeight: 'bold' }}>{row.rowNumber}</TableCell>
-
-                  {/* Process Step */}
-                  <TableCell>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {row.processStep?.stepNumber}
-                      </Typography>
-                      {row.linkedPfmeaRows && row.linkedPfmeaRows.length > 0 ? (
-                        <Chip
-                          label="FMEA"
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
-                        />
-                      ) : (
-                        <Chip
-                          label="PFD"
-                          size="small"
-                          color="success"
-                          variant="outlined"
-                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5 }}
-                        />
-                      )}
-                      {row.processStep?.isOrphaned && (
-                        <Chip
-                          label="PFD Detached"
-                          size="small"
-                          color="error"
-                          variant="outlined"
-                          sx={{ height: 16, fontSize: '0.6rem', px: 0.5, fontWeight: 700 }}
-                        />
-                      )}
-                    </Stack>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {row.processStep?.name}
-                    </Typography>
-                  </TableCell>
-
-                  {/* Characteristic */}
-                  <TableCell>
-                    {row.characteristic ? row.characteristic.name : '—'}
-                  </TableCell>
-
-                  {/* Characteristic Classification */}
-                  <TableCell>
-                    {row.characteristic && row.characteristic.classification !== 'standard' ? (
-                      <Chip
-                        label={row.characteristic.classification.toUpperCase()}
-                        size="small"
-                        color="secondary"
-                        sx={{ fontWeight: 'bold', height: 20 }}
-                      />
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">Standard</Typography>
-                    )}
-                  </TableCell>
-
-                  {/* Spec / Tolerance */}
-                  <TableCell sx={{ minWidth: 180 }}>
-                    <Input
-                      value={row.specTolerance || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'specTolerance', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      fullWidth
-                      multiline
-                      minRows={1}
-                      maxRows={4}
-                      sx={{ fontSize: '0.8125rem' }}
-                    />
-                  </TableCell>
-
-                  {/* Measurement Method */}
-                  <TableCell>
-                    <Input
-                      value={row.measurementMethod || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'measurementMethod', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      fullWidth
-                    />
-                  </TableCell>
-
-                  {/* Sample Size */}
-                  <TableCell>
-                    <Input
-                      value={row.sampleSize || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'sampleSize', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      fullWidth
-                    />
-                  </TableCell>
-
-                  {/* Frequency */}
-                  <TableCell>
-                    <Input
-                      value={row.frequency || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'frequency', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      fullWidth
-                    />
-                  </TableCell>
-
-                  {/* Control Method */}
-                  <TableCell>
-                    <Typography variant="body2">{row.controlMethod || '—'}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Type: {row.controlType}
-                    </Typography>
-                  </TableCell>
-
-                  {/* Reaction Plan */}
-                  <TableCell>
-                    <Input
-                      value={row.reactionPlan || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'reactionPlan', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      multiline
-                      fullWidth
-                    />
-                  </TableCell>
-
-                  {/* Responsible */}
-                  <TableCell>
-                    <Input
-                      value={row.responsible || ''}
-                      onChange={(e) => handleFieldChange(row.id, 'responsible', e.target.value)}
-                      size="small"
-                      disableUnderline
-                      fullWidth
-                    />
-                  </TableCell>
-
-                  {/* Delete Button */}
-                  <TableCell align="center">
-                    <IconButton size="small" color="error" onClick={() => handleDeleteRow(row.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page-1}
-          onPageChange={(_,newPage)=> setPage(newPage+1)}
-          rowsPerPage={limit}
-          onRowsPerPageChange={e=> { setLimit(parseInt(e.target.value,10)); setPage(1); }}
-          rowsPerPageOptions={[10,25,50]}
-        />
-        </>
-        </Grid>
-      </Grid>
-
-      {/* Add Row Dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Add Control Plan Row</DialogTitle>
-        <DialogContent sx={{ minWidth: 400, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Process Step</InputLabel>
-              <Select
-                {...dialogSelectProps}
-                value={selectedStepId}
-                label="Process Step"
-                onChange={(e) => setSelectedStepId(e.target.value)}
+      <Paper sx={{ ...panel, mb: 2 }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}
+        >
+          <TextField
+            size="small"
+            select
+            label="Revision"
+            disabled={busy}
+            value={revisionId}
+            sx={{ minWidth: 200 }}
+            onChange={(event) => {
+              if (
+                !dirty ||
+                window.confirm(
+                  "Discard unsaved edits and open another revision?",
+                )
+              )
+                setRevisionId(event.target.value);
+            }}
+          >
+            {(cpRevisions.length
+              ? cpRevisions
+              : [{ id: revisionId, revisionNumber: "Current", status: "" }]
+            )
+              .filter((item) => item.id)
+              .map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.revisionNumber} {item.status}
+                </MenuItem>
+              ))}
+          </TextField>
+          <Chip
+            size="small"
+            label={
+              dirty
+                ? "Unsaved changes"
+                : `Saved version ${envelope?.version ?? "—"}`
+            }
+            color={dirty ? "warning" : "default"}
+          />
+          <Chip size="small" label={editable ? "Draft editing" : "Read only"} />
+          <Typography variant="body2">
+            {document?.lines.length ?? 0} control lines · {groups.length}{" "}
+            operations
+          </Typography>
+          <Button
+            disabled={busy || !revisionId}
+            onClick={() => {
+              if (!dirty || window.confirm("Discard unsaved edits and reload?"))
+                void load(revisionId);
+            }}
+          >
+            Reload
+          </Button>
+          <Button
+            disabled={busy || dirty || !revisionId}
+            onClick={async () => {
+              try {
+                setReadiness(
+                  await request(
+                    `/projects/${projectId}/revisions/${revisionId}/readiness`,
+                  ),
+                );
+              } catch (reason) {
+                fail(reason);
+              }
+            }}
+          >
+            Check readiness
+          </Button>
+          {editable && hasPermission("revision.submit") && (
+            <Button
+              disabled={busy || dirty}
+              onClick={() => void transition("submit")}
+            >
+              Submit for review
+            </Button>
+          )}
+          {revisions.find((item) => item.id === revisionId)?.status === "in_review" &&
+            (hasPermission("revision.approve") || hasPermission("revision.review")) && (
+            <Button
+              disabled={busy || dirty}
+              onClick={() => setApprovalOpen(true)}
+            >
+              Review decision
+            </Button>
+          )}
+        </Stack>
+      </Paper>
+      {busy && !document && <CircularProgress size={24} />}
+      {document && (
+        <>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Automotive baseline. Customer requirements must be configured
+            explicitly. Complete handbook conformity has not been independently
+            verified.
+          </Alert>
+          {envelope?.legacyReviewRequired && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Legacy content is preserved for review. Verify source mappings and
+              engineering decisions before release; opening this page does not
+              approve or migrate the original records.
+            </Alert>
+          )}
+          <Paper sx={{ ...panel, mb: 2 }}>
+            <Stack
+              direction="row"
+              sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
+            >
+              <Typography variant="subtitle2">Source review</Typography>
+              <TextField
+                size="small"
+                select
+                label="Source revision"
+                value={sourceRevisionId}
+                sx={{ minWidth: 0, width: { xs: "100%", sm: 240 }, maxWidth: "100%" }}
+                onChange={(event) => setSourceRevisionId(event.target.value)}
               >
-                {steps.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.stepNumber} - {s.name}
+                {sourceRevisions.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.document?.type ??
+                      item.documentType ??
+                      documents.find((doc) => doc.id === item.documentId)
+                        ?.type}{" "}
+                    · {item.revisionNumber} · {item.status}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth size="small">
-              <InputLabel>Control Type</InputLabel>
-              <Select
-                {...dialogSelectProps}
-                value={controlType}
-                label="Control Type"
-                onChange={(e) => setControlType(e.target.value)}
+              </TextField>
+              <Button
+                disabled={!editable || dirty || busy || !sourceRevisionId}
+                onClick={previewSync}
               >
-                <MenuItem value="prevention">Prevention Control</MenuItem>
-                <MenuItem value="detection">Detection Control</MenuItem>
-              </Select>
-            </FormControl>
-
+                Preview changes
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                Save first. Changes require explicit review and preserve your
+                execution decisions.
+              </Typography>
+            </Stack>
+            <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
+              Baselines:{" "}
+              {document.sourceBaselines
+                .map((source) => `${source.type}: ${source.revisionId}`)
+                .join("; ") || "None selected"}
+            </Typography>
+          </Paper>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 1,
+              mb: 1,
+            }}
+          >
+            <Typography variant="h6">Operation controls</Typography>
+            <Button
+              data-tour="control-plan-workflow"
+              variant="outlined"
+              disabled={!editable}
+              onClick={() => setEditing(blankLine())}
+            >
+              Add control line
+            </Button>
+          </Stack>
+          {groups.length === 0 ? (
+            <Paper sx={panel}>
+              <Typography>
+                No control lines yet. Add a line or preview an explicit
+                PFD/PFMEA source revision.
+              </Typography>
+            </Paper>
+          ) : (
+            groups.map((lines, index) => (
+              <Paper
+                key={lines[0].id}
+                sx={{ ...panel, p: 0, mb: 1.5, overflow: "hidden" }}
+              >
+                <Box sx={{ px: 2, py: 1, bgcolor: "#eff2e8" }}>
+                  <Typography variant="subtitle2">
+                    {lines[0].operationNumber || `Operation ${index + 1}`} ·{" "}
+                    {lines[0].operationName || "Name not specified"}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {lines[0].equipment || "Equipment not specified"}
+                  </Typography>
+                </Box>
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table
+                    size="small"
+                    aria-label={`Controls for ${lines[0].operationName || index + 1}`}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          "Characteristic",
+                          "Specification",
+                          "Evaluation / sampling",
+                          "Control / reaction",
+                          "Source",
+                          "",
+                        ].map((heading, i) => (
+                          <TableCell key={i}>{heading}</TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lines.map((line) => (
+                        <TableRow key={line.id} hover>
+                          <TableCell
+                            sx={{ minWidth: 140, overflowWrap: "anywhere" }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {line.characteristicNumber}{" "}
+                              {line.characteristicName || "Not defined"}
+                            </Typography>
+                            <Typography variant="caption">
+                              {line.characteristicKind} ·{" "}
+                              {line.classification || "Unclassified"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              minWidth: 140,
+                              whiteSpace: "pre-wrap",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {line.specification || "—"} {line.tolerance}{" "}
+                            {line.unit}
+                          </TableCell>
+                          <TableCell
+                            sx={{ minWidth: 160, whiteSpace: "pre-wrap" }}
+                          >
+                            {line.evaluationMethod || "—"}
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block" }}
+                            >
+                              {[line.sampleSize, line.frequency]
+                                .filter(Boolean)
+                                .join(" / ") || "Sampling not specified"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            sx={{ minWidth: 180, whiteSpace: "pre-wrap" }}
+                          >
+                            {line.controlMethod || "—"}
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block" }}
+                            >
+                              {line.reactionPlan ||
+                                line.reactionProcedure ||
+                                "Reaction not specified"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              variant="outlined"
+                              label={
+                                line.sourceState ??
+                                (line.source ? "Linked" : "Manual")
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => setEditing(structuredClone(line))}
+                            >
+                              {editable ? "Edit" : "View"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            ))
+          )}
+        </>
+      )}
+      <ControlLineEditor
+        line={editing}
+        editable={editable}
+        existing={!!document?.lines.some((line) => line.id === editing?.id)}
+        operations={operations}
+        sourceRevisionLabel={
+          revisions.find(
+            (revision) => revision.id === editing?.source?.revisionId,
+          )?.revisionNumber ??
+          editing?.source?.revisionId ??
+          ""
+        }
+        onChange={setEditing}
+        onClose={() => setEditing(null)}
+        onKeep={() => {
+          if (!editing || !document) return;
+          update({
+            ...document,
+            lines: document.lines.some((line) => line.id === editing.id)
+              ? document.lines.map((line) =>
+                  line.id === editing.id ? editing : line,
+                )
+              : [...document.lines, editing],
+          });
+          setEditing(null);
+        }}
+        onRemove={() => {
+          if (
+            !editing ||
+            !document ||
+            !window.confirm("Remove this control line from this draft?")
+          )
+            return;
+          update({
+            ...document,
+            lines: document.lines.filter((line) => line.id !== editing.id),
+          });
+          setEditing(null);
+        }}
+      />
+      <Dialog
+        open={forkOpen}
+        onClose={() => setForkOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Create controlled plan revision</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography variant="body2">
+              Copies this plan into an independent draft. Existing approved
+              phase plans remain unchanged.
+            </Typography>
             <TextField
-              label="Control / Inspection Method"
-              value={controlMethod}
-              onChange={(e) => setControlMethod(e.target.value)}
               size="small"
-              fullWidth
-              placeholder="e.g. Vernier Caliper check"
+              label="Revision number (X.Y)"
+              value={forkNumber}
+              onChange={(e) => setForkNumber(e.target.value)}
             />
+            <TextField
+              select
+              size="small"
+              label="Plan phase"
+              value={forkPhase}
+              onChange={(e) => setForkPhase(e.target.value)}
+            >
+              {["prototype", "pre-launch", "production"].map((p) => (
+                <MenuItem key={p} value={p}>
+                  {p}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleAddRow} variant="contained" disabled={!selectedStepId || !controlMethod}>
-            Add Row
+          <Button onClick={() => setForkOpen(false)}>Cancel</Button>
+          <Button
+            disabled={busy || !/^\d+\.\d+$/.test(forkNumber)}
+            onClick={() => void fork()}
+          >
+            Create draft
           </Button>
         </DialogActions>
       </Dialog>
-
-      <ReportExporter
-        open={exporterOpen}
-        onClose={() => setExporterOpen(false)}
-        docType="CONTROL_PLAN"
-        projectName={projectName}
-        data={rows}
-        steps={steps}
+      <Dialog
+        open={configOpen && !!document}
+        onClose={() => setConfigOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Plan details and phase</DialogTitle>
+        <DialogContent dividers>
+          {document && (
+            <Stack spacing={2.5} sx={{ pt: 1 }}>
+              <TextField
+                size="small"
+                select
+                disabled={!editable}
+                label="Phase"
+                value={document.config.phase}
+                onChange={(event) =>
+                  update({
+                    ...document,
+                    config: { ...document.config, phase: event.target.value },
+                  })
+                }
+              >
+                {["unspecified", "prototype", "pre-launch", "production"].map(
+                  (value) => (
+                    <MenuItem key={value} value={value}>
+                      {value}
+                    </MenuItem>
+                  ),
+                )}
+              </TextField>
+              {(
+                [
+                  "standardProfile",
+                  "customerRequirements",
+                  "sourceExceptionJustification",
+                ] as const
+              ).map((key) => (
+                <TextField
+                  key={key}
+                  size="small"
+                  multiline
+                  disabled={!editable}
+                  label={
+                    key === "standardProfile"
+                      ? "Standard profile and edition"
+                      : key === "customerRequirements"
+                        ? "Applicable customer requirements"
+                        : "Source baseline exception justification"
+                  }
+                  value={document.config[key]}
+                  onChange={(event) =>
+                    update({
+                      ...document,
+                      config: { ...document.config, [key]: event.target.value },
+                    })
+                  }
+                />
+              ))}
+              <Typography variant="subtitle2">
+                Source baseline selection
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Select the exact revisions covered by this plan. Source review
+                previews remain separate; selecting a baseline does not generate
+                control lines.
+              </Typography>
+              {sourceRevisions.map((source) => {
+                const type =
+                  source.document?.type ??
+                  source.documentType ??
+                  documents.find((entry) => entry.id === source.documentId)
+                    ?.type ??
+                  "";
+                return (
+                  <FormControlLabel
+                    key={source.id}
+                    label={`${type} ${source.revisionNumber} · ${source.status}`}
+                    control={
+                      <Checkbox
+                        disabled={!editable}
+                        checked={document.sourceBaselines.some(
+                          (baseline) => baseline.revisionId === source.id,
+                        )}
+                        onChange={(event) =>
+                          update({
+                            ...document,
+                            sourceBaselines: event.target.checked
+                              ? [
+                                  ...document.sourceBaselines,
+                                  { revisionId: source.id, type },
+                                ]
+                              : document.sourceBaselines.filter(
+                                  (baseline) =>
+                                    baseline.revisionId !== source.id,
+                                ),
+                          })
+                        }
+                      />
+                    }
+                  />
+                );
+              })}
+              <Typography variant="subtitle2">
+                Reviewed source exclusions
+              </Typography>
+              {!document.sourceExclusions?.length && (
+                <Typography variant="body2" color="text.secondary">
+                  No source candidates have been excluded.
+                </Typography>
+              )}
+              {document.sourceExclusions?.map((exclusion) => (
+                <Paper key={exclusion.key} variant="outlined" sx={{ p: 1.5 }}>
+                  <Typography variant="body2">{exclusion.reason}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: "block", overflowWrap: "anywhere" }}
+                  >
+                    Source revision:{" "}
+                    {revisions.find(
+                      (revision) => revision.id === exclusion.revisionId,
+                    )?.revisionNumber ?? exclusion.revisionId}
+                  </Typography>
+                  {editable && (
+                    <Button
+                      onClick={() =>
+                        update({
+                          ...document,
+                          sourceExclusions: document.sourceExclusions?.filter(
+                            (entry) => entry.key !== exclusion.key,
+                          ),
+                        })
+                      }
+                    >
+                      Remove exclusion for another review
+                    </Button>
+                  )}
+                </Paper>
+              ))}
+              <Typography variant="subtitle2">Revision-owned header</Typography>
+              {[
+                "controlPlanNumber",
+                "issueDate",
+                "customer",
+                "organisationName",
+                "organisationPlant",
+                "partName",
+                "engineeringChangeLevel",
+                "keyContact",
+                "orgPartNumber",
+                "commonPlanDesignation",
+              ]
+                .filter((key) => !(key in document.header))
+                .map((key) => (
+                  <TextField
+                    key={key}
+                    size="small"
+                    disabled={!editable}
+                    label={key}
+                    value=""
+                    onChange={(event) =>
+                      update({
+                        ...document,
+                        header: {
+                          ...document.header,
+                          [key]: event.target.value,
+                        },
+                      })
+                    }
+                  />
+                ))}
+              {Object.entries(document.header).map(([key, value]) => (
+                <TextField
+                  key={key}
+                  size="small"
+                  disabled={!editable}
+                  label={key}
+                  value={value}
+                  onChange={(event) =>
+                    update({
+                      ...document,
+                      header: { ...document.header, [key]: event.target.value },
+                    })
+                  }
+                />
+              ))}
+              {editable && (
+                <Button
+                  onClick={() => {
+                    const key = window.prompt("Header field name");
+                    if (key?.trim())
+                      update({
+                        ...document,
+                        header: { ...document.header, [key.trim()]: "" },
+                      });
+                  }}
+                >
+                  Add header field
+                </Button>
+              )}
+              <FormControlLabel
+                label="Safe-launch controls apply"
+                control={
+                  <Checkbox
+                    checked={document.config.safeLaunch.enabled}
+                    disabled={!editable}
+                    onChange={(event) =>
+                      update({
+                        ...document,
+                        config: {
+                          ...document.config,
+                          safeLaunch: {
+                            ...document.config.safeLaunch,
+                            enabled: event.target.checked,
+                          },
+                        },
+                      })
+                    }
+                  />
+                }
+              />
+              {(
+                ["entryCriteria", "exitCriteria", "additionalControls"] as const
+              ).map((key) => (
+                <TextField
+                  key={key}
+                  size="small"
+                  multiline
+                  disabled={!editable}
+                  label={
+                    key === "entryCriteria"
+                      ? "Safe-launch entry criteria"
+                      : key === "exitCriteria"
+                        ? "Safe-launch exit criteria"
+                        : "Additional safe-launch controls"
+                  }
+                  value={document.config.safeLaunch[key]}
+                  onChange={(event) =>
+                    update({
+                      ...document,
+                      config: {
+                        ...document.config,
+                        safeLaunch: {
+                          ...document.config.safeLaunch,
+                          [key]: event.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfigOpen(false)}>Done</Button>
+        </DialogActions>
+      </Dialog>
+      <SourceChangeReview
+        preview={preview}
+        document={document}
+        decisions={decisions}
+        reasons={exclusionReasons}
+        resolutions={resolutions}
+        busy={busy}
+        onDecision={(key, action) =>
+          setDecisions({ ...decisions, [key]: action })
+        }
+        onReason={(key, value) =>
+          setExclusionReasons({ ...exclusionReasons, [key]: value })
+        }
+        onResolution={(key, field, value) =>
+          setResolutions({
+            ...resolutions,
+            [key]: { ...resolutions[key], [field]: value },
+          })
+        }
+        onClose={() => setPreview(null)}
+        onApply={applySync}
       />
+      <Dialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Import preview</DialogTitle>
+        <DialogContent dividers>
+          {importErrors.length ? (
+            importErrors.map((message, index) => (
+              <Alert key={index} severity="error">
+                {message}
+              </Alert>
+            ))
+          ) : (
+            <>
+              <Typography>
+                {importDocument?.lines.length ?? 0} control lines passed
+                structural validation.
+              </Typography>
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                This replaces the current draft in memory. Review every field
+                before saving. Native workbooks preserve the complete model,
+                configuration and provenance. Worksheet-only files use the
+                current plan configuration and require source review.
+              </Alert>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setImportOpen(false)}>Cancel</Button>
+          <Button
+            disabled={!importDocument || !!importErrors.length}
+            onClick={() => {
+              if (importDocument) {
+                update(importDocument);
+                setImportOpen(false);
+              }
+            }}
+          >
+            Use imported draft
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={!!readiness}
+        onClose={() => setReadiness(null)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Revision readiness</DialogTitle>
+        <DialogContent dividers>
+          <Alert
+            severity={readiness?.ready ? "success" : "warning"}
+            sx={{ mb: 2 }}
+          >
+            {readiness?.ready
+              ? "Application completeness checks passed. Engineering approval remains separate."
+              : `${readiness?.errors.length ?? 0} review findings`}
+          </Alert>
+          <Stack spacing={1}>
+            {readiness?.errors.map((finding, index) => {
+              const lineNumber = /Control line (\d+)/.exec(finding);
+              return (
+                <Button
+                  key={index}
+                  sx={{ justifyContent: "flex-start", textAlign: "left" }}
+                  onClick={() => {
+                    setReadiness(null);
+                    if (
+                      lineNumber &&
+                      document?.lines[Number(lineNumber[1]) - 1]
+                    )
+                      setEditing(
+                        structuredClone(
+                          document.lines[Number(lineNumber[1]) - 1],
+                        ),
+                      );
+                    else setConfigOpen(true);
+                  }}
+                >
+                  {finding}
+                </Button>
+              );
+            })}
+            {readiness?.warnings.map((warning, index) => (
+              <Typography key={index} variant="caption" color="text.secondary">
+                {warning}
+              </Typography>
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReadiness(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={approvalOpen}
+        onClose={() => setApprovalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Revision review decision</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 1 }}>
+            <TextField
+              size="small"
+              label="Decision comment"
+              multiline
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+            />
+            {hasPermission("revision.approve") && <TextField
+              size="small"
+              type="password"
+              label="Confirm password for approval"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+            />}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setApprovalOpen(false)}>Cancel</Button>
+          {hasPermission("revision.review") && (
+            <Button
+              disabled={busy || !comment.trim()}
+              onClick={() => void transition("reject")}
+            >
+              Return to draft
+            </Button>
+          )}
+          {hasPermission("revision.approve") && (
+            <Button
+              variant="contained"
+              disabled={busy || !password || !comment.trim()}
+              onClick={() => void transition("approve")}
+            >
+              Approve revision
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
-
 export default ControlPlanWorkspace;

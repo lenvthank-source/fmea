@@ -39,6 +39,7 @@ AppModule
 ├── ProjectModule → AuditLogModule, PrismaModule
 ├── PfdModule → PrismaModule
 ├── PfmeaModule → PrismaModule
+├── DfmeaModule → PrismaModule (dedicated design aggregate)
 ├── ControlPlanModule → PrismaModule
 ├── ActionModule → PrismaModule (includes R2Service)
 ├── StructureLinkageModule → PrismaModule
@@ -56,7 +57,7 @@ Step 1: Planning           → Project creation (ProjectModule)
  Step 4: Failure Analysis   → Structure failures + links (StructureLinkageModule)
  Step 5: Risk Analysis      → PFMEA rows with S/O/D + AP (PfmeaModule)
  Step 6: Optimization       → Corrective actions (ActionModule)
- Step 7: Documentation      → Revision lock + audit (ProjectModule)
+ Step 7: Documentation      → Results/coverage/action evidence + controlled review (not merely a lock)
 ```
 
 ## Key Data Relationships
@@ -131,3 +132,8 @@ Source: [router.tsx](file:///f:/proj-fmea/frontend/src/app/router.tsx)
 
 ## 2026-10-19 correction authority
 The [engineering rule register](engineering-rule-register.md) supersedes historical strict draft sequencing, guessed route diagrams and unverified automatic reverse-sync claims. Revision-owned pfdGraph/pfdGraphVersion stores physical topology; PFMEA structure remains analytical hierarchy. Global immutable public-handle reservations intentionally have no tenant/user cascade. Public pages share their own scoped layout/style system; app styling is separate. Repository graphs are views derived from actual package JSON, not new failure relationships.
+
+
+## Controlled engineering implementation (2026-10-20, unreleased)
+
+`DfmeaModule` owns revision-scoped design aggregates; PFMEA mutation routes reject DFMEA. `ControlPlanModule` owns canonical phase-specific plan documents and reviewed source synchronization. Both share actual-actor access, transaction-held revision row locks and optimistic content versions (`backend/src/common/engineering-access.ts:1`). Additive Prisma document tables include protected-content triggers. Frontend canonical editors share one typed native XLSX/model and printable-output adapter. Legacy analyses remain preserved review inputs; no reverse propagation. Evidence and reference limitations: `docs/specs/controlled-engineering-delivery.md`.

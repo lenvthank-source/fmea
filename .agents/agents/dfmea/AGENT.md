@@ -25,13 +25,13 @@ DFMEA owner: structure `System→Subsystem→Component`, functions, failures, S/
 
 ## Must Enforce
 
-- Same 7-step gating, S/O/D [1,10], AP lookup, severity inheritance as PFMEA.
-- BOM-driven structure; boundary/P-diagrams linkage.
+- Iterative seven activities; dedicated revision-owned design model and dfmea authority. Integer S/O/D, explicit effect links, calculated identified AP profile (numerical handbook verification pending).
+- Explicit system/subsystem/component structure and interfaces; support authored boundary/parameter representations as applicable. Never mandate both diagrams or infer structure from manufacturing equipment.
 - Tenant isolation, RBAC `dfmea.create/dfmea.edit`.
 
 ## Key Files
 
-- `frontend/src/features/dfmea/**`, future `backend/src/modules/dfmea/*`
+- `frontend/src/features/dfmea/**`, `backend/src/modules/dfmea/*`
 - `skills/fmea-authoring/SKILL.md:10` structure analysis DFMEA path.
 
 ## Bus

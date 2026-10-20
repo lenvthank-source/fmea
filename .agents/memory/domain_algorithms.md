@@ -15,4 +15,4 @@ Allow incomplete drafts and revisiting seven activities. Enforce isolation, perm
 PFD stores explicit nodes/edges; PFMEA structure is analytical decomposition. Position, table numbering, equipment lists and variation sources must not silently define routes. Preserve operation identity and deliberate rework loops.
 
 ## Known gaps
-CP edits do not automatically propagate backwards. Current ActionService does not enforce the complete evidence/state-machine contract from historical specifications. Consult source and rule register before claiming these features.
+CP edits do not automatically propagate backwards. Canonical CP uses reviewed source changes, explicit conflicts and fingerprinted exclusions. ActionService now enforces ordered transitions, evidence and linked-revision safeguards; reassessment is separate from baseline. Exact full handbook numerical AP validation and production RLS remain unverified. Consult actual service tests and the rule register.

@@ -82,7 +82,7 @@ describe('PFD service graph and protected downstream integration', () => {
   });
   it('invalidates a reviewed graph after creating an operation without inventing new edges', async () => {
     const { service, prisma } = fixture();
-    await service.createStep('tenant', 'revision', { name: 'Pack', stepNumber: 'OP20' });
+    await service.createStep('tenant', 'revision', { name: 'Pack', stepNumber: 'OP20', stepType: 'operation' });
     expect(prisma.processStep.create).toHaveBeenCalled();
     const changed = prisma.documentRevision.updateMany.mock.calls[0][0].data;
     expect(changed.pfdGraph.reviewStatus).toBe('draft');
@@ -92,12 +92,12 @@ describe('PFD service graph and protected downstream integration', () => {
   it('increments topology version even when the legacy graph is null', async () => {
     const { service, prisma, revision } = fixture();
     prisma.documentRevision.findFirst.mockResolvedValue({ ...revision, pfdGraph: null });
-    await service.createStep('tenant', 'revision', { name: 'Pack' });
+    await service.createStep('tenant', 'revision', { name: 'Pack', stepType: 'operation' });
     expect(prisma.documentRevision.updateMany.mock.calls[0][0].data).toEqual({ pfdGraphVersion: { increment: 1 } });
   });
   it('invalidates once for a batch of operations', async () => {
     const { service, prisma } = fixture();
-    await service.createStepsBatch('tenant', 'revision', [{ name: 'Pack' }, { name: 'Ship' }]);
+    await service.createStepsBatch('tenant', 'revision', [{ name: 'Pack', stepType: 'operation' }, { name: 'Ship', stepType: 'operation' }]);
     expect(prisma.processStep.create).toHaveBeenCalledTimes(2);
     expect(prisma.documentRevision.updateMany).toHaveBeenCalledTimes(1);
   });
@@ -108,7 +108,7 @@ describe('PFD service graph and protected downstream integration', () => {
       revision.pfdGraphVersion++;
       return {count:1};
     });
-    await service.createStepsBatch('tenant','revision',[{name:'Pack'},{name:'Ship'}]);
+    await service.createStepsBatch('tenant','revision',[{name:'Pack',stepType:'operation'},{name:'Ship',stepType:'operation'}]);
     await service.updateStep('tenant','step',{name:'Inspect after pressing'});
     prisma.processStep.findMany.mockResolvedValue([{id:'step',stepType:'inspection'}]);
     await expect(service.saveGraph('tenant','revision',{version:7,graph:{...graph(),reviewStatus:'draft'}})).resolves.toMatchObject({version:8});

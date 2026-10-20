@@ -109,3 +109,16 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 > OpenAI Codex → all: User confirmed 0.10.0 and authorized push to origin/main. Full implementation and migrations verified; use Git remote for delivery state and ACTIVE_STATE for limitations. Runtime logs and credential text are excluded from the release.
 
 > OpenAI Codex → all: Release 0.10.0 pushed successfully to origin/main at 8318235; remote SHA verified. README indexes/handoff/Graphify synchronized and 74 tests passed. Production deployment verification is the next task, not another release push.
+
+
+## 2026-10-20 — Controlled DFMEA / Control Plan implementation — OpenAI Codex — APPROVED / in_progress — priority:1
+- owns: shared schema/access/revision/action foundations, module integration, verification and documentation
+- artifacts: [docs/specs/controlled-engineering-delivery.md]
+- depends_on: []
+> user -> orchestrator: Explicitly approved the full implementation plan and requested resuming interrupted specialists.
+> orchestrator: granting allow_shared to dfmea_audit for new backend/src/modules/dfmea/** and frontend/src/features/dfmea/**; to control_plan_audit for backend/src/modules/control-plan/**; to cp_workspace for frontend/src/features/control-plan/** and frontend/src/features/shared/engineeringDocumentExport.ts. Parent owns schema, shared policy, project/action/PFMEA integration and docs. These scoped grants are session-specific.
+> OpenAI Codex -> all: All three interrupted agents resumed successfully. Real DB workflow verification runs only in an isolated rolled-back transaction. Canonical additive migration applied; no legacy engineering records rewritten. Numerical handbook verification remains external and must not be claimed complete.
+
+> orchestrator: granting allow_shared to cp_workspace for frontend/src/features/linkage/** and its tests/README: integrate canonical Control Plan and explicit identity-based lineage after replacing legacy storage; no backend edits.
+
+> orchestrator: granting allow_shared to control_plan_audit for backend/src/modules/project/project.service.ts, project.controller.ts and new scoped regression tests: close deletion/activation bypasses of approved-history and trial/reference protections; preserve parent readiness/cloning changes.

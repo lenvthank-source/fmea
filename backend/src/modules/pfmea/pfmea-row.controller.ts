@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { PfmeaRowService } from './pfmea-row.service';
 import { CreatePfmeaRowDto } from './dto/create-pfmea-row.dto';
 import { UpdatePfmeaRowDto } from './dto/update-pfmea-row.dto';
@@ -18,7 +30,13 @@ export class PfmeaRowController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(25), ParseIntPipe) limit?: number,
   ) {
-    return this.pfmeaRowService.findAllRows(req.user.tenantId, revisionId, page, limit);
+    return this.pfmeaRowService.findAllRows(
+      req.user.tenantId,
+      revisionId,
+      page,
+      limit,
+      req.user.sub,
+    );
   }
 
   @Post('revisions/:id/pfmea-rows')
@@ -28,7 +46,12 @@ export class PfmeaRowController {
     @Param('id') revisionId: string,
     @Body() dto: CreatePfmeaRowDto,
   ) {
-    return this.pfmeaRowService.createRow(req.user.tenantId, req.user.sub, revisionId, dto);
+    return this.pfmeaRowService.createRow(
+      req.user.tenantId,
+      req.user.sub,
+      revisionId,
+      dto,
+    );
   }
 
   @Post('revisions/:id/pfmea-rows/batch-import')
@@ -54,18 +77,37 @@ export class PfmeaRowController {
     @Param('rowId') rowId: string,
     @Body() dto: UpdatePfmeaRowDto,
   ) {
-    return this.pfmeaRowService.updateRow(req.user.tenantId, rowId, dto);
+    return this.pfmeaRowService.updateRow(
+      req.user.tenantId,
+      rowId,
+      dto,
+      req.user.sub,
+    );
   }
 
   @Delete('pfmea-rows/:rowId')
   @Permissions('pfmea.edit')
-  async removeRow(@Request() req: RequestWithUser, @Param('rowId') rowId: string) {
-    return this.pfmeaRowService.removeRow(req.user.tenantId, rowId);
+  async removeRow(
+    @Request() req: RequestWithUser,
+    @Param('rowId') rowId: string,
+  ) {
+    return this.pfmeaRowService.removeRow(
+      req.user.tenantId,
+      rowId,
+      req.user.sub,
+    );
   }
 
   @Post('revisions/:id/sync-from-tree')
   @Permissions('pfmea.edit')
-  async syncFromTree(@Request() req: RequestWithUser, @Param('id') revisionId: string) {
-    return this.pfmeaRowService.syncFromTree(req.user.tenantId, revisionId);
+  async syncFromTree(
+    @Request() req: RequestWithUser,
+    @Param('id') revisionId: string,
+  ) {
+    return this.pfmeaRowService.syncFromTree(
+      req.user.tenantId,
+      revisionId,
+      req.user.sub,
+    );
   }
 }

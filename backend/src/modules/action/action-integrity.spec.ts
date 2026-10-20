@@ -1,0 +1,14 @@
+import { ActionService } from './action.service';
+function fixture(status='completed'){
+ const action={id:'a',tenantId:'t',projectId:'p',ownerId:'author',createdById:'author',status,completionNotes:'Implementation and effectiveness notes'};
+ const project={id:'p',tenantId:'t',status:'active',createdById:'author',createdAt:new Date(),uiSettings:{}};
+ const db:any={action:{findUnique:jest.fn().mockResolvedValue(action),findFirstOrThrow:jest.fn().mockResolvedValue(action),updateMany:jest.fn().mockResolvedValue({count:1}),update:jest.fn().mockResolvedValue(action)},project:{findFirst:jest.fn().mockResolvedValue(project)},user:{findFirst:jest.fn().mockResolvedValue({status:'active',isGuest:false})},documentRevision:{findFirst:jest.fn().mockResolvedValue({status:'draft',lockedAt:null,document:{type:'PFMEA',project}}),updateMany:jest.fn().mockResolvedValue({count:1})},actionFmeaLink:{findMany:jest.fn().mockResolvedValue([{id:'link',fmeaRowId:'r',afterSeverity:7,afterOccurrence:2,afterDetection:3,pfmeaRow:{revisionId:'rev'}}]),update:jest.fn()},actionEvidence:{count:jest.fn().mockResolvedValue(1)},pfmeaRow:{update:jest.fn()}};
+ db.$transaction=async(fn:any)=>fn(db);return{db,service:new ActionService(db,{} as any)};
+}
+describe('action and reassessment integrity',()=>{
+ it('uses retained after ratings for status-only verification without overwriting initial ratings',async()=>{const {db,service}=fixture();await service.updateAction('t','reviewer','a',{status:'verified'});expect(db.pfmeaRow.update.mock.calls[0][0].data).toMatchObject({revisedSeverity:7,revisedOccurrence:2,revisedDetection:3});expect(db.pfmeaRow.update.mock.calls[0][0].data).not.toHaveProperty('severity');});
+ it('requires implementation evidence for verification',async()=>{const {db,service}=fixture();db.actionEvidence.count.mockResolvedValue(0);await expect(service.updateAction('t','reviewer','a',{status:'verified'})).rejects.toThrow('evidence');expect(db.pfmeaRow.update).not.toHaveBeenCalled();});
+ it('requires separate owner and verifier',async()=>{const {service}=fixture();await expect(service.updateAction('t','author','a',{status:'verified'})).rejects.toThrow('own effectiveness');});
+ it('rejects skipped lifecycle stages and edits to verified results',async()=>{const first=fixture('open');await expect(first.service.updateAction('t','reviewer','a',{status:'verified'})).rejects.toThrow('Invalid action transition');const verified=fixture('verified');await expect(verified.service.updateAction('t','reviewer','a',{description:'Changed result'})).rejects.toThrow('protected');});
+ it('checks linked source draft inside the action transaction',async()=>{const {db,service}=fixture();db.documentRevision.updateMany.mockResolvedValue({count:0});await expect(service.updateAction('t','reviewer','a',{status:'verified'})).rejects.toThrow('protected');expect(db.action.update).not.toHaveBeenCalled();});
+});

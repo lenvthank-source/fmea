@@ -14,7 +14,7 @@ This document compiles the core architectural rules, compliance guidelines, and 
 - **Iterative Drafts / Review Completeness**: Permit incomplete drafts and revisiting activities. Enforce references, permissions, isolation, integer inputs and locks immediately; completeness before review/release.
 - **Rating Ranges**: All risk evaluations (Severity, Occurrence, Detection) must strictly occupy the integer range [1, 10].
 - **Action Priority (AP)**: AP (High, Medium, Low) is a lookup-based read-only field derived from the configured executable AP profile; numerical handbook conformity remains pending independent verification and cannot be overridden manually.
-- **Severity Inheritance**: FMEA row severity is inherited from the highest severity value of its associated failure effects.
+- **Severity Inheritance**: Derive severity from explicitly linked effects. Never propagate by matching narration across rows/projects/tenants or mutate approved baselines.
 
 ### 1.3 Role-Based Access Control (RBAC)
 Enforce granular permissions matching the active JWT user payload. The 5 roles and their permission scopes are:
@@ -38,15 +38,15 @@ The [engineering rule register](context/engineering-rule-register.md) distinguis
 ### 2.1 PFD ↔ PFMEA Bidirectional Linking
 - **Verification Rule**: A PFMEA row cannot reference a process step that is missing from the Process Flow Diagram (PFD).
 - **Orphan Flagging**: Flag manufacturing activities lacking analysis; connectors require no invented FMEA rows. Record justified exclusions.
-- **Special Characteristics Flow-Down**: Special/critical characteristics identified in the DFMEA must flow down to the PFMEA as mandatory coverage items.
+- **Special Characteristics Flow-Down**: Track explicit reviewed DFMEA-to-PFMEA characteristic references and applicability/exclusion decisions; never infer severity or manufacturing controls from text matching.
 
 ### 2.2 Control Plan (CP) Synchronization
-- **Bidirectional Mapping**: Current CP sync is explicitly triggered from PFMEA/PFD; CP PATCH updates CP only. Automatic reverse propagation is not implemented. Future sync must protect approved revisions and expose conflicts.
+- **Reviewed Mapping**: Canonical Control Plan sync is preview -> resolve -> apply over explicit baselines, with reasoned coverage exclusions and source fingerprints. Old destructive generation is retired. No automatic reverse propagation.
 - **Control Integrity**: Prevention and detection measures must be categorized distinctly to prevent calculation overlap.
 
 ### 2.3 Corrective Actions & Life Cycle
 - **High AP Review**: Document team review/action-or-justification under applicable customer/company policy. Do not universally mandate a new action from every High label.
-- **Closure Policy / Gap**: Review evidence and justified after ratings. Current ActionService does not enforce a complete evidence/state-machine contract; upload size/type validation remains.
+- **Closure Policy**: Enforce ordered actions, evidence/effectiveness prerequisites, separate reassessment and linked project/revision protection. Independent owner/verifier is product policy. Preserve baseline ratings and verified evidence.
 - **Junction Tracking**: Track and store before/after ratings in `action_fmea_link` junction rows.
 - **Action States**: Enforce transition flow: `Open` → `InProgress` → `Completed` → `Verified` → `Closed` / `Cancelled`.
 

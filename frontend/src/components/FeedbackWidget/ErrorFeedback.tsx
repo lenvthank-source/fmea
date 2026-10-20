@@ -110,7 +110,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
               <BugIcon />
             </Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Something went wrong</Typography>
+            <Typography component="span" variant="h6" sx={{ fontWeight: 700 }}>Something went wrong</Typography>
           </DialogTitle>
 
           <DialogContent sx={{ pb: 1 }}>

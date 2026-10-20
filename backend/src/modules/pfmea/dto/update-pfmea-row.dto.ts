@@ -1,4 +1,14 @@
-import { IsOptional, IsUUID, IsInt, Min, Max, IsString, IsIn, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsOptional,
+  IsUUID,
+  IsInt,
+  Min,
+  Max,
+  IsString,
+  IsIn,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ControlDto {
@@ -26,6 +36,10 @@ class CharacteristicDto {
 }
 
 export class UpdatePfmeaRowDto {
+  @IsString()
+  @IsOptional()
+  expectedUpdatedAt?: string;
+
   @IsInt()
   @Min(1)
   @Max(10)
@@ -98,7 +112,22 @@ export class UpdatePfmeaRowDto {
   @IsOptional()
   revisedDetection?: number | null;
 
-  @IsIn(['draft', 'reviewed', 'approved', 'archived', 'Open', 'In Progress', 'Completed', 'Verified', 'Closed', 'open', 'in_progress', 'completed', 'verified', 'closed'])
+  @IsIn([
+    'draft',
+    'reviewed',
+    'approved',
+    'archived',
+    'Open',
+    'In Progress',
+    'Completed',
+    'Verified',
+    'Closed',
+    'open',
+    'in_progress',
+    'completed',
+    'verified',
+    'closed',
+  ])
   @IsOptional()
   status?: string;
 

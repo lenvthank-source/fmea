@@ -8,6 +8,6 @@ Run `graphify query "<question>"` before source discovery. Use scoped query/path
 
 Backend checks: `npx tsc --noEmit`, `npm run build`, `npm test -- --runInBand`. Frontend: `npx tsc -b`, `npm run build`. Follow canonical release/version confirmation rules before committing or publishing.
 
-The approved public identity, explicit PFD graph/import/export, permanent trial handles, compact program cards and visual repository are complete locally. The delivery checklist and active state record actual validation, applied migrations, remaining external verification and release status.
+The controlled DFMEA and phase-specific Control Plan rebuild is implemented in the working tree. Read `docs/specs/controlled-engineering-delivery.md` and ACTIVE_STATE for tests, migration, source limitations and remaining acceptance gates. Exact numerical standards conformity remains unverified; preserve the explicit profile warning. Prior public/PFD work remains recorded in its historical delivery checklist.
 
-Release 0.10.0 was explicitly confirmed for publication. Source indexes are tracked under backend/src, backend/prisma and frontend/src; keep README sync and Graphify current. Never stage local runtime logs, credentials or temporary graph locks.
+Release version is 0.11.0, explicitly confirmed by the user for commit and push on 2026-10-20. The release ledger is versions/v0.11.0.md; verify publication against Git origin/main. Future releases need their own version confirmation. Source indexes are tracked under backend/src, backend/prisma and frontend/src; keep README sync and Graphify current. Never stage local runtime logs, credentials or temporary graph locks.

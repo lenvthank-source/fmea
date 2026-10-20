@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { PermissionGuard } from './modules/auth/guards/permission.guard';
 import { ProjectModule } from './modules/project/project.module';
 import { PfdModule } from './modules/pfd/pfd.module';
+import { DfmeaModule } from './modules/dfmea/dfmea.module';
 import { PfmeaModule } from './modules/pfmea/pfmea.module';
 import { ActionModule } from './modules/action/action.module';
 import { StructureLinkageModule } from './modules/structure-linkage/structure-linkage.module';
@@ -34,6 +35,7 @@ import { RequestIdMiddleware } from './common/request-id.middleware';
     ProjectModule,
     PfdModule,
     PfmeaModule,
+    DfmeaModule,
     ControlPlanModule,
     ActionModule,
     StructureLinkageModule,

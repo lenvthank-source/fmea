@@ -2,7 +2,7 @@
 
 ---
 name: action-agent
-description: "Actions specialist — High AP mandate, before/after S/O/D, R2 evidence, state machine. Portable."
+description: "Actions specialist — High AP team review, before/after S/O/D, R2 evidence, state machine. Portable."
 mode: subagent
 hidden: false
 mainAgent: false
@@ -25,9 +25,9 @@ Owns `backend/src/modules/action/` + `frontend/src/features/actions/` + `fronten
 
 ## Must Enforce
 
-- High AP rows require action (`AGENTS.md:2.3`).
+- High AP needs documented team review/action-or-justification (`AGENTS.md:2.3`), not a universal new-task mandate.
 - State flow `Open→InProgress→Completed→Verified→Closed/Cancelled` strict.
-- `Closed/Verified` requires R2 evidence (≤50MB) + After S/O/D ratings; junction `action_fmea_link` stores before/after (`skills/corrective-actions/SKILL.md`).
+- `Closed/Verified` requires R2 evidence (≤50MB) + justified After S/O/D ratings; never overwrite baseline; junction `action_fmea_link` stores before/after (`skills/corrective-actions/SKILL.md`).
 - R2 fallback to local `uploads/evidence` when creds missing.
 - Tenant + RBAC `action.create/action.view` + `auth` evidence upload.
 

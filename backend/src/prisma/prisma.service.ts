@@ -11,17 +11,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       url = `${url}${separator}connect_timeout=30`;
     }
 
-    super(
-      url
-        ? {
-            datasources: {
-              db: {
-                url,
-              },
-            },
-          }
-        : undefined,
-    );
+    super({
+      ...(url ? { datasources: { db: { url } } } : {}),
+      // Remote engineering validation/cloning can exceed Prisma's 5s default.
+      // Keep a finite bound while preserving rollback and revision row locks.
+      transactionOptions: { maxWait: 10000, timeout: 30000 },
+    });
   }
 
   async onModuleInit() {

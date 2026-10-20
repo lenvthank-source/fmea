@@ -149,3 +149,11 @@ Release: Not yet versioned/published; append a new versions ledger only after us
 
 ## 2026-10-19 — Publish connected quality release 0.10.0
 User explicitly confirmed the minor version and authorized origin/main publication. See [v0.10.0](../../versions/v0.10.0.md) for immutable release scope, migrations and verification. Release commit 8318235 was pushed and remote SHA verified. Preserve baseline-backed migration history and permanent username reservations; production deployment completion and external handbook verification are separate checks. The current focused handoff is ACTIVE_STATE.md.
+
+
+## 2026-10-20 — Controlled engineering aggregates (unreleased)
+
+Adopt dedicated revision-owned DFMEA and phase-specific Control Plan aggregates with transaction-held parent revision protection and optimistic versions. Preserve legacy records as explicit review/mapping inputs. Replace destructive generation with fingerprinted preview/resolve/apply and retain manual execution decisions. Independent AP numerical validation is not available from complete authorized sources; keep unverified provenance visible. Source-approval/coverage defaults and independent action verification are product policies. Evidence: `docs/specs/controlled-engineering-delivery.md`, `backend/src/common/engineering-access.ts:1`, `backend/src/modules/dfmea/dfmea.service.ts:1`, `backend/src/modules/control-plan/control-plan-document.service.ts:1`. No new version ledger created: existing published version remains 0.10.1; commit/publication requires a new confirmed version.
+
+## 2026-10-20 — User-confirmed v0.11.0 publication
+The user requested Git push, README sync and handoff and explicitly confirmed minor version0.11.0. Release ledger: versions/v0.11.0.md:1. Synchronize all manifests/lockfiles and commit controlled engineering implementation with its tests, additive migration, evidence limits and Graphify output. Numerical standards verification and11 legacy sampling decisions remain open; publication does not certify conformity.

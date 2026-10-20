@@ -1,17 +1,17 @@
-# Workflow: iterative FMEA authoring and review
+# Workflow: iterative design and process FMEA
 
-Rule authority: [.agents/context/engineering-rule-register.md](../../.agents/context/engineering-rule-register.md).
+Authority: [engineering rule register](../../.agents/context/engineering-rule-register.md).
 
-1. Establish scope, planning context, team and applicable customer/profile requirements.
-2. Model structure: design system/subsystem/component or process item/step/work element. Keep PFD routing distinct from analytical hierarchy.
-3. Add measurable functions and actual requirements.
-4. Build effect/mode/cause relationships across levels.
-5. Assign justified integer S/O/D and calculate read-only AP with the configured profile.
-6. Record optimization decisions, owners, evidence and reassessment.
-7. Document results, unresolved issues and applicable approvals.
+DFMEA uses a dedicated revision-owned model, not manufacturing operations or equipment strings. GET/PUT `/api/v1/revisions/:id/dfmea-document`; POST `/fork` creates a new draft without changing the prior approved baseline. PFMEA continues its explicit `/pfmea-rows` APIs.
 
-Revisit activities as knowledge changes. Incomplete drafts are permitted; valid references, permissions, tenant boundaries, integer inputs and protected revisions remain immediate constraints. Before review/release, report completeness findings without automatically inserting placeholder analysis. Graphical connectors are not manufacturing activities.
+1. Define scope, boundary, team, milestones and applicable criteria. Record actual parameter context; diagrams show only authored information.
+2. Build stable system/subsystem/component identities and interfaces. Move/delete with referential checks. A boundary diagram or structure tree can establish the boundary; parameter representations apply as appropriate, not as a universal stage prerequisite.
+3. Add functions, measurable requirements and function relationships.
+4. Model focus functions, modes, higher-level effects and lower-level causes explicitly. Assign controls and O/D at each cause, severity from linked effects.
+5. Evaluate integer ratings. AP is calculated read-only from the identified configured profile; its numerical handbook conformity remains independently unverified. High AP requires documented team review/action-or-justification under the selected policy.
+6. Track actions, ownership, dates, evidence and effectiveness. Initial ratings remain intact; verified reassessment is separate. Detection improvement alone never lowers effect severity.
+7. Document results, limitations, communication and reviewed downstream characteristic mappings or justified exclusions. Readiness links lead to affected records/activities. Submit separately from engineering approval.
 
-Current numerical AP mapping is preserved and browser/backend parity is tested over 1,000 valid combinations. Licensed-reference numerical conformity remains pending. Do not equate documentation with locking, Low AP with risk acceptance, or action completion with effectiveness.
+Revisit activities freely; incomplete drafts are valid. Enforce permissions, valid relationships, locks and expected versions immediately. Legacy bags are preserved read-only and may be mapped only through explicit user-selected chains; source IDs and the audit actor are retained. No silent splitting or generated example failures.
 
-Implemented row APIs use `/api/v1/revisions/:id/pfmea-rows` and `/pfmea-rows/:rowId`; verify controller/DTO contracts. Earlier blanket stage-edit rejection and mandatory configuration-table claims were not accurate universal implementation descriptions.
+Exports include every analysis, initial and reassessed information, actions and provenance. Native complete-model imports are structurally validated and previewed. Edited narrative DFMEA worksheets cannot safely reconstruct many-to-many relationships and are rejected with a mapping explanation instead of ignoring edits or guessing.

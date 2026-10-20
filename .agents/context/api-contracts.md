@@ -27,11 +27,11 @@ Pagination: `{data:[T], total, page, limit}` → `frontend/src/lib/pagination.ts
 - `PATCH /projects/revisions/:revId {revisionNumber?, summary?, changeDescription?, effectiveFrom?, effectiveTo?}` — only if `!lockedAt && status==draft` & `effectiveTo>=effectiveFrom`
 - `DELETE /projects/revisions/:revId` (admin: also bypass) — blocks if `active||locked||last` except admin route
 - `POST /projects/revisions/:revId/activate` → pointer swap `document.currentRevisionId=revId`, `project.revisionNumber=rev.revisionNumber`, audit `activate` (direct rollback; clone-on-activate backlog)
-- `POST /projects/revisions/:revId/submit` `draft→in_review` sets `submittedAt`
-- `POST /projects/revisions/:revId/approve {password,comment}` segregation `createdById!=userId`, `bcrypt.compare`, sets `approvedAt+lockedAt`, creates `Approval approved`, audit `approve`
-- `POST /projects/revisions/:revId/reject {comment}` segregation → `rejected`, `Approval rejected`
+- `POST /projects/:id/revisions/:revId/submit` `draft→in_review` sets `submittedAt`
+- `POST /projects/:id/revisions/:revId/approve {password,comment}` segregation `createdById!=userId`, `bcrypt.compare`, sets `approvedAt+lockedAt`, creates `Approval approved`, audit `approve`
+- `POST /projects/:id/revisions/:revId/reject {comment}` segregation → editable `draft`, `Approval changes_requested`
 - Guard: `RevisionGuard` + `assertRevisionWritable` (`project.service:1631`) block writes when `lockedAt!=null || status!='draft'` — applied to all `pfd.service`, `pfmea-row`, `control-plan-row` mutations.
-- `GET /revisions/:revId/audit-logs` & `GET /audit-logs?entityType&entityId` — `audit_log` partitioned append-only.
+- `GET /revisions/:revId/audit-logs` & `GET /audit-logs?entityType&entityId` — recorded audit events; a partitioned immutable database guarantee is not established.
 
 ## PFD
 - `GET /revisions/:id/pfd-steps` → `[ProcessStep]` ordered `sequenceOrder`
@@ -47,8 +47,11 @@ Pagination: `{data:[T], total, page, limit}` → `frontend/src/lib/pagination.ts
 - `PATCH /pfmea-rows/:rowId` & `DELETE /pfmea-rows/:rowId` cascade junctions + links
 - `POST /revisions/:id/sync-from-tree` derives rows from `structureFunction/Failure` tree.
 
-## Control Plan
-- `GET/POST /revisions/:id/control-plan-rows`, `PATCH/DELETE /control-plan-rows/:rowId`, `POST /revisions/:id/sync` + `sync-pfd` — bidirectional field mapping `detection→measurement_method`.
+## Canonical DFMEA and Control Plan (2026-10-20 working tree)
+- GET/PUT `/revisions/:id/dfmea-document` uses `{expectedVersion,data}` and returns version, canonical design, configured-profile evaluations, legacy sources, downstream targets and readiness. POST `/fork {revisionNumber,summary}` creates a new draft.
+- GET/PUT `/revisions/:id/control-plan-document` uses `{expectedVersion,document}`. POST `/sync-preview {sourceRevisionId}` returns fingerprinted candidates; `/sync-apply` requires expectedVersion/sourceFingerprint and explicit decisions, conflict resolutions and exclusion reasons. POST `/fork {revisionNumber,phase,summary}` creates an independent plan revision.
+- cp.* and dfmea.* authority; same-project/trial/type checks and transaction-held revision locks. Legacy CP row reads remain; writes/generators are retired with explicit errors. No reverse propagation.
+- Request JSON bound 8MB. Full documents use native structured XLSX/JSON and all-row print adapters. Source exclusions invalidate on source changes; drafts may be incomplete, release findings are product policy.
 
 ## Structure linkage (PFMEA tree ↔ grid)
 - `POST /structure-functions` `{projectId,parentType,parentId,narration,location}` + `DELETE /structure-functions/:id` cascade failures→links→actions
@@ -80,7 +83,7 @@ Pagination: `{data:[T], total, page, limit}` → `frontend/src/lib/pagination.ts
 ## 2026-10-19 additive contracts
 - Auth user/session and access-token claims add nullable `publicHandle`; `/auth/me` returns it. Refresh keeps the stored handle. Legacy names/emails and registered chosen names are preserved. Generated handles are never reused; frontend does not allocate identity.
 - PFD: `GET /revisions/:id/pfd-graph` reads revision topology/version; `PUT` accepts `{version, graph}` with optimistic concurrency. Graph schema version 1 contains manufacturing notation, review status, nodes and explicit edges. Existing step CRUD and table order remain compatible. Source: `backend/src/modules/pfd/pfd.controller.ts:1`.
-- CP current interfaces are `/control-plan-rows` and explicit `/sync`, `/sync-pfd`; PATCH CP does not automatically update PFMEA. Historical generic generation endpoints/reverse listeners are not implemented.
+- Canonical CP interfaces supersede destructive row generation. See canonical DFMEA/Control Plan section above; no reverse listeners are implemented.
 - Repository graph is a normalized view of package JSON; approval does not imply structural completeness or validated ratings. Preserve server-side package visibility and authorized import/review flows.
 
 ## PFD/release integration contract

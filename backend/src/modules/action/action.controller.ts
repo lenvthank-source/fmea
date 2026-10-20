@@ -1,6 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import {
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+} from '@nestjs/common';
 import { ActionService } from './action.service';
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
@@ -20,14 +35,24 @@ export class ActionController {
 
   @Get('projects/:projectId/actions')
   @Permissions('pfmea.view')
-  async findProjectActions(@Request() req: RequestWithUser, @Param('projectId') projectId: string) {
+  async findProjectActions(
+    @Request() req: RequestWithUser,
+    @Param('projectId') projectId: string,
+  ) {
     return this.actionService.findProjectActions(req.user.tenantId, projectId);
   }
 
   @Post('actions')
   @Permissions('pfmea.edit')
-  async createAction(@Request() req: RequestWithUser, @Body() dto: CreateActionDto) {
-    return this.actionService.createAction(req.user.tenantId, req.user.sub, dto);
+  async createAction(
+    @Request() req: RequestWithUser,
+    @Body() dto: CreateActionDto,
+  ) {
+    return this.actionService.createAction(
+      req.user.tenantId,
+      req.user.sub,
+      dto,
+    );
   }
 
   @Patch('actions/:actionId')
@@ -37,7 +62,12 @@ export class ActionController {
     @Param('actionId') actionId: string,
     @Body() dto: UpdateActionDto,
   ) {
-    return this.actionService.updateAction(req.user.tenantId, req.user.sub, actionId, dto);
+    return this.actionService.updateAction(
+      req.user.tenantId,
+      req.user.sub,
+      actionId,
+      dto,
+    );
   }
 
   @Post('actions/:actionId/evidence')
@@ -71,13 +101,26 @@ export class ActionController {
 
   @Delete('evidence/:evidenceId')
   @Permissions('pfmea.edit')
-  async removeEvidence(@Request() req: RequestWithUser, @Param('evidenceId') evidenceId: string) {
-    return this.actionService.removeEvidence(req.user.tenantId, evidenceId);
+  async removeEvidence(
+    @Request() req: RequestWithUser,
+    @Param('evidenceId') evidenceId: string,
+  ) {
+    return this.actionService.removeEvidence(
+      req.user.tenantId,
+      evidenceId,
+      req.user.sub,
+    );
   }
 
   @Get('actions/evidence/:evidenceId/url')
   @Permissions('pfmea.view')
-  async getEvidencePresignedUrl(@Request() req: RequestWithUser, @Param('evidenceId') evidenceId: string) {
-    return this.actionService.getEvidencePresignedUrl(req.user.tenantId, evidenceId);
+  async getEvidencePresignedUrl(
+    @Request() req: RequestWithUser,
+    @Param('evidenceId') evidenceId: string,
+  ) {
+    return this.actionService.getEvidencePresignedUrl(
+      req.user.tenantId,
+      evidenceId,
+    );
   }
 }

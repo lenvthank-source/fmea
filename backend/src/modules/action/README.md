@@ -4,13 +4,14 @@ Purpose: Module folder managing action logic and assets.
 
 ## Directory Metadata
 - **Path**: `backend/src/modules/action`
-- **Files Count**: 4
+- **Files Count**: 5
 - **Subdirectories Count**: 1
 
 ## File Map
 
 | File | Purpose / Responsibility |
 | :--- | :--- |
+| [`action-integrity.spec.ts`](./action-integrity.spec.ts) | Source code component implementing action-integrity.spec functionality. |
 | [`action.controller.ts`](./action.controller.ts) | Controller defining API endpoints for actions and evidence uploads (CRUD, evidence attachment). |
 | [`action.module.ts`](./action.module.ts) | NestJS module registering action routes, services, and cloud storage providers. |
 | [`action.service.ts`](./action.service.ts) | Core service logic for actions management, evidence storage in R2, and status updates. |

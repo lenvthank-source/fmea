@@ -23,6 +23,7 @@ export const Login: React.FC = () => {
   const { isBackendReady } = useBackendReady();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [workspace, setWorkspace] = useState("guest-tenant");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +44,7 @@ export const Login: React.FC = () => {
     setError("");
     setSignInLoading(true);
     try {
-      await login(email.trim(), password, "guest-tenant");
+      await login(email.trim(), password, workspace.trim());
       sessionStorage.removeItem("logged_out");
       navigate("/app/projects");
     } catch (err) {
@@ -174,6 +175,18 @@ export const Login: React.FC = () => {
                     <span>{error}</span>
                   </div>
                 )}
+                <label htmlFor="sign-in-workspace">Workspace</label>
+                <input
+                  id="sign-in-workspace"
+                  name="workspace"
+                  autoComplete="organization"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  value={workspace}
+                  onChange={(event) => setWorkspace(event.target.value)}
+                  placeholder="Your workspace identifier"
+                />
                 <label htmlFor="sign-in-email">Work email</label>
                 <input
                   id="sign-in-email"
