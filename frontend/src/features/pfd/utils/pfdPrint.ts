@@ -1,9 +1,12 @@
 import type { ProcessStep } from "../PfdWorkspace";
 import {
   graphBounds,
+  edgePoints,
+  wrapPfdText,
   graphLabel,
   listValue,
   nodeHeight,
+  nodeWidth,
   pfdSvg,
   type PfdGraph,
 } from "./pfdGraph";
@@ -22,32 +25,43 @@ export function pfdPrintPages(graph: PfdGraph, steps: ProcessStep[]) {
   while (y < bounds.height) {
     let end = Math.min(bounds.height, y + 700);
     const crossing = graph.nodes.filter(
-      (n) => n.y < end && n.y + nodeHeight(n, steps) > end,
+      (n) => n.y < end && n.y + nodeHeight(n, steps,graph.layoutDirection) > end,
     );
     if (crossing.length) {
       const before = Math.min(...crossing.map((n) => n.y)) - 16;
       end =
         before > y + 180
           ? before
-          : Math.max(...crossing.map((n) => n.y + nodeHeight(n, steps))) + 20;
+          : Math.max(...crossing.map((n) => n.y + nodeHeight(n, steps,graph.layoutDirection))) + 20;
     }
     let x = 0;
     while (x < bounds.width) {
       let right = Math.min(bounds.width, x + 1000);
-      const cut = graph.nodes.filter((n) => n.x < right && n.x + 260 > right);
+      const cut = graph.nodes.filter((n) => n.x < right && n.x + nodeWidth(n,graph.layoutDirection) > right);
       if (cut.length) {
         const before = Math.min(...cut.map((n) => n.x)) - 16;
         right =
           before > x + 300
             ? before
-            : Math.max(...cut.map((n) => n.x + 260)) + 20;
+            : Math.max(...cut.map((n) => n.x + nodeWidth(n,graph.layoutDirection))) + 20;
       }
       pages.push({ x, y, width: right - x, height: end - y });
       x = right;
     }
     y = end;
   }
-  return pages;
+  const intersects=(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number})=>a.x+a.width>b.x&&a.x<b.x+b.width&&a.y+a.height>b.y&&a.y<b.y+b.height;
+  const routes=graph.edges.map(edge=>({edge,points:edgePoints(graph,edge,steps)}));
+  const occupied=pages.filter(page=>{
+    if(graph.nodes.some(node=>intersects({x:node.x,y:node.y,width:nodeWidth(node,graph.layoutDirection),height:nodeHeight(node,steps,graph.layoutDirection)},page)))return true;
+    return routes.some(({edge,points})=>{
+      for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];if(intersects({x:Math.min(a.x,b.x)-3,y:Math.min(a.y,b.y)-3,width:Math.abs(a.x-b.x)+6,height:Math.abs(a.y-b.y)+6},page))return true;}
+      if(edge.junctions?.some(p=>intersects({x:p.x-4,y:p.y-4,width:8,height:8},page)))return true;
+      const label=edge.label||(edge.kind!=='normal'?edge.kind:'');if(!label||!points.length)return false;
+      const middle=points[Math.floor(points.length/2)],p=edge.labelPosition||{x:middle.x+8,y:middle.y-8};return intersects({x:p.x,y:p.y-12,width:200,height:wrapPfdText(label,27).length*15+3},page);
+    });
+  });
+  return occupied.length?occupied:pages.slice(0,1);
 }
 /** Open a self-contained paginated print document; the user can save it as PDF. */
 export function openPfdPrint(
@@ -62,7 +76,6 @@ export function openPfdPrint(
   const title = String(
     project.partName || project.name || "Manufacturing process",
   );
-  const fullSvg = pfdSvg(graph, steps, title);
   const pageForNode = (id: string) => {
     const node = graph.nodes.find((n) => n.id === id);
     return node
@@ -77,7 +90,7 @@ export function openPfdPrint(
   };
   const sections = pages
     .map((page, index) => {
-      const svg = fullSvg.replace(
+      const svg = pfdSvg(graph,steps,title,'',page).replaceAll('pfd-arrow', `pfd-arrow-page-${index}`).replace(
         /width="[^"]+" height="[^"]+" viewBox="[^"]+"/,
         `width="100%" height="100%" viewBox="${page.x} ${page.y} ${page.width} ${page.height}"`,
       );
@@ -86,7 +99,7 @@ export function openPfdPrint(
           pageForNode(e.source) !== pageForNode(e.target) &&
           [pageForNode(e.source), pageForNode(e.target)].includes(index + 1),
       );
-      return `<section class="sheet">${project.watermark ? `<div class="watermark">${escape(project.watermark)}</div>` : ''}<header><h1>${escape(title)} — Process Flow Diagram</h1><p>Part ${escape(project.orgPartNumber || "—")} · Revision ${escape(project.revisionNumber || "—")} · Customer ${escape(project.customer || "—")} · ${escape(graph.reviewStatus)}</p></header><div class="drawing">${svg}</div><footer><p>Legend: ○ Operation · □ Inspection · ▣ Combined · ◇ Decision · ▽ Storage · → Transport · D Delay · RW Rework · RP Repair · H Hold · X Scrap</p><p>Page ${index + 1} of ${pages.length} diagram sheets · Manufacturing notation v1</p>${continuations
+      return `<section class="sheet">${project.watermark ? `<div class="watermark">${escape(project.watermark)}</div>` : ''}<header><h1>${escape(title)} — Process Flow Diagram</h1><p>Part ${escape(project.orgPartNumber || "—")} · Revision ${escape(project.revisionNumber || "—")} · Customer ${escape(project.customer || "—")} · ${escape(graph.reviewStatus)}</p></header><div class="drawing">${svg}</div><footer><p>Legend: ○ Operation · □ Inspection · ▣ Combined · ◇ Decision · ▽ Storage · → Transport · D Delay · RW Rework · RP Repair · H Hold · X Scrap</p><p>Page ${index + 1} of ${pages.length} diagram sheets · ${escape(graph.displayMode||'manufacturing')} symbols</p>${continuations
         .slice(0, 3)
         .map(
           (e) =>

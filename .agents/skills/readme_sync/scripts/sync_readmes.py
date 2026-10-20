@@ -11,6 +11,11 @@ TARGET_DIRS = [
 
 # File description catalog
 FILE_CATALOG = {
+    "pfd-symbols.json": "Generated original symbol registry with stable IDs, categories, SVG geometry, ports and provenance; keep frontend/backend hashes identical.",
+    "pfdSymbols.ts": "Explicit manufacturing/equipment selection, compatibility and read-only legacy findings without name inference.",
+    "pfdLayout.ts": "Local ELK worker protocol, route-preserving previews, junction handling, timeout and cancellation.",
+    "pfdLayout.worker.ts": "Locally bundled ELK engine dispatcher; never sends project content to a remote service.",
+    "BrowseShapesDialog.tsx": "Responsive searchable symbol libraries and explicit accessible selection with no activity mutation.",
     "project-history.spec.ts": "Transactional protected history, deletion dependencies, activation and rollback regression tests.",
     "dfmea-failure-references.ts": "Explicit failure identity links, snapshot change proposals and reviewed relationship integrity.",
     "FailureReferenceReview.tsx": "Individual failure-reference snapshot review without automatic propagation.",

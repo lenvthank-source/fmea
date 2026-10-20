@@ -1,4 +1,10 @@
-import { IsIn, IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsObject,
+} from 'class-validator';
 
 export class CreateStepDto {
   @IsString()
@@ -10,7 +16,20 @@ export class CreateStepDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'repair', 'decision', 'combined', 'hold', 'scrap', 'return'])
+  @IsIn([
+    'operation',
+    'inspection',
+    'transport',
+    'storage',
+    'delay',
+    'rework',
+    'repair',
+    'decision',
+    'combined',
+    'hold',
+    'scrap',
+    'return',
+  ])
   stepType: string;
 
   @IsString()
@@ -39,6 +58,14 @@ export class CreateStepDto {
   @IsObject()
   @IsOptional()
   flowIcons?: any;
+
+  @IsString()
+  @IsOptional()
+  manufacturingSymbolId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  engineeringSymbolId?: string | null;
 
   @IsOptional()
   machinesEquipmentDocs?: any;

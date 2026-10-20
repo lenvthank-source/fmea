@@ -1,0 +1,2572 @@
+{
+  "source": "https://creately.com/guides/pfd-symbols/",
+  "retrievedOn": "2026-10-20",
+  "sourceEntryCount": 366,
+  "registeredSymbolCount": 408,
+  "catalogSha256": "d13ad3c8492e51a41359d6f2d08eef7e257e24e8d05afe2f1fce906377bb799d",
+  "status": "All public names mapped; original application geometry, NOT independently standards-verified",
+  "entries": [
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Agitator",
+      "symbolId": "engineering.agitator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Centrifugal pump",
+      "symbolId": "engineering.centrifugal-pump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Clarifier",
+      "symbolId": "engineering.clarifier",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Evaporator",
+      "symbolId": "engineering.evaporator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Filter",
+      "symbolId": "engineering.filter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Screen",
+      "symbolId": "engineering.screen",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Tower",
+      "symbolId": "engineering.tower",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Vapor",
+      "symbolId": "engineering.vapor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Vapor 2",
+      "symbolId": "engineering.vapor-2",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Blower",
+      "symbolId": "engineering.blower",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Cooling tower",
+      "symbolId": "engineering.cooling-tower",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Fan",
+      "symbolId": "engineering.fan",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Flash drum",
+      "symbolId": "engineering.flash-drum",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Instrument",
+      "symbolId": "engineering.instrument",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Kettle",
+      "symbolId": "engineering.kettle",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Motor valve",
+      "symbolId": "engineering.motor-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Propeller",
+      "symbolId": "engineering.propeller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Pump mixer",
+      "symbolId": "engineering.pump-mixer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Roll press",
+      "symbolId": "engineering.roll-press",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Tank car",
+      "symbolId": "engineering.tank-car",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Tank truck",
+      "symbolId": "engineering.tank-truck",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Valve",
+      "symbolId": "engineering.valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Chemical and process engineering symbols",
+      "label": "Venturi",
+      "symbolId": "engineering.venturi",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Air blown cooler",
+      "symbolId": "engineering.air-blown-cooler",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Air cooling evaporator",
+      "symbolId": "engineering.air-cooling-evaporator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave anchor",
+      "symbolId": "engineering.autoclave-anchor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave helical",
+      "symbolId": "engineering.autoclave-helical",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave propeller",
+      "symbolId": "engineering.autoclave-propeller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave with motor anchor",
+      "symbolId": "engineering.autoclave-with-motor-anchor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave with motor helical",
+      "symbolId": "engineering.autoclave-with-motor-helical",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Autoclave with motor propeller",
+      "symbolId": "engineering.autoclave-with-motor-propeller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Boiler",
+      "symbolId": "engineering.boiler",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Condenser air cooled",
+      "symbolId": "engineering.condenser-air-cooled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Condenser",
+      "symbolId": "engineering.condenser",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Cooling tower",
+      "symbolId": "engineering.cooling-tower",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Cooling tower 2",
+      "symbolId": "engineering.cooling-tower-2",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Cooling tower 3",
+      "symbolId": "engineering.cooling-tower-3",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Extractor hood open",
+      "symbolId": "engineering.extractor-hood-open",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Extractor hood slot",
+      "symbolId": "engineering.extractor-hood-slot",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Fan blades horizontal",
+      "symbolId": "engineering.fan-blades-horizontal",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Fan blades vertical",
+      "symbolId": "engineering.fan-blades-vertical",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Fan blades",
+      "symbolId": "engineering.fan-blades",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Fired heater",
+      "symbolId": "engineering.fired-heater",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Heat exchanger",
+      "symbolId": "engineering.heat-exchanger",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Heat exchanger 2",
+      "symbolId": "engineering.heat-exchanger-2",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Heat exchanger 3",
+      "symbolId": "engineering.heat-exchanger-3",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Heater",
+      "symbolId": "engineering.heater",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Kettle reboiler",
+      "symbolId": "engineering.kettle-reboiler",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Oil separator",
+      "symbolId": "engineering.oil-separator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Shell tube",
+      "symbolId": "engineering.shell-tube",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Triple fan blades",
+      "symbolId": "engineering.triple-fan-blades",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Tube bundle floating head",
+      "symbolId": "engineering.tube-bundle-floating-head",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Tube bundle heat exchanger",
+      "symbolId": "engineering.tube-bundle-heat-exchanger",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "U-tube bundle",
+      "symbolId": "engineering.u-tube-bundle",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Automatic stoker",
+      "symbolId": "engineering.automatic-stoker",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Oil burner",
+      "symbolId": "engineering.oil-burner",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Plate-type heat exchanger",
+      "symbolId": "engineering.plate-type-heat-exchanger",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Chilling evaporator",
+      "symbolId": "engineering.chilling-evaporator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Condenser (duplicate)",
+      "symbolId": "engineering.condenser",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Direct refrigerator",
+      "symbolId": "engineering.direct-refrigerator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Double pipe type heat exchanger",
+      "symbolId": "engineering.double-pipe-type-heat-exchanger",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Evaporative condenser",
+      "symbolId": "engineering.evaporative-condenser",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Finned tube heat exchanger",
+      "symbolId": "engineering.finned-tube-heat-exchanger",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Indirect refrigerator",
+      "symbolId": "engineering.indirect-refrigerator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Heating equipment symbols",
+      "label": "Refrigerator",
+      "symbolId": "engineering.refrigerator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Ball mill",
+      "symbolId": "engineering.ball-mill",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Batch tray dryer",
+      "symbolId": "engineering.batch-tray-dryer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Blender",
+      "symbolId": "engineering.blender",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Breaker",
+      "symbolId": "engineering.breaker",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Briquetting machine (standard)",
+      "symbolId": "engineering.briquetting-machine-standard",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Briquetting machine",
+      "symbolId": "engineering.briquetting-machine",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Centrifuge (general)",
+      "symbolId": "engineering.centrifuge-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Centrifuge (submersion)",
+      "symbolId": "engineering.centrifuge-submersion",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Centrifuge",
+      "symbolId": "engineering.centrifuge",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Conveyor (1 circle, 2 lines)",
+      "symbolId": "engineering.conveyor-1-circle-2-lines",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Conveyor (2 circles, 1 line)",
+      "symbolId": "engineering.conveyor-2-circles-1-line",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Conveyor (2 circles, 2 lines)",
+      "symbolId": "engineering.conveyor-2-circles-2-lines",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Conveyor wheel",
+      "symbolId": "engineering.conveyor-wheel",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Conveyor",
+      "symbolId": "engineering.conveyor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (coarse)",
+      "symbolId": "engineering.crusher-coarse",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (cone)",
+      "symbolId": "engineering.crusher-cone",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (fine)",
+      "symbolId": "engineering.crusher-fine",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (general)",
+      "symbolId": "engineering.crusher-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (hammer)",
+      "symbolId": "engineering.crusher-hammer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (high-speed roller)",
+      "symbolId": "engineering.crusher-high-speed-roller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (impact)",
+      "symbolId": "engineering.crusher-impact",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (jaw)",
+      "symbolId": "engineering.crusher-jaw",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (medium)",
+      "symbolId": "engineering.crusher-medium",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher (single load)",
+      "symbolId": "engineering.crusher-single-load",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Cyclone and hydroclone",
+      "symbolId": "engineering.cyclone-and-hydroclone",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Cyclone",
+      "symbolId": "engineering.cyclone",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Double blender",
+      "symbolId": "engineering.double-blender",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Electric motor",
+      "symbolId": "engineering.electric-motor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Electromagnet",
+      "symbolId": "engineering.electromagnet",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (centrifugal)",
+      "symbolId": "engineering.fluid-separator-centrifugal",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (dry)",
+      "symbolId": "engineering.fluid-separator-dry",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (general)",
+      "symbolId": "engineering.fluid-separator-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (gravitation)",
+      "symbolId": "engineering.fluid-separator-gravitation",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (inertial)",
+      "symbolId": "engineering.fluid-separator-inertial",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Fluid separator (wet)",
+      "symbolId": "engineering.fluid-separator-wet",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Hammer crusher",
+      "symbolId": "engineering.hammer-crusher",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Hoist with grab",
+      "symbolId": "engineering.hoist-with-grab",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Hoist",
+      "symbolId": "engineering.hoist",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Boom loader",
+      "symbolId": "engineering.boom-loader",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Centrifuge dehydrator",
+      "symbolId": "engineering.centrifuge-dehydrator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher jaw",
+      "symbolId": "engineering.crusher-jaw",
+      "mapping": "punctuation-equivalent alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher roller",
+      "symbolId": "engineering.crusher-roller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Crusher",
+      "symbolId": "engineering.crusher",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Filter",
+      "symbolId": "engineering.filter",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Hoist with hook",
+      "symbolId": "engineering.hoist-with-hook",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mixer (general)",
+      "symbolId": "engineering.mixer-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Screen",
+      "symbolId": "engineering.screen",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Tank car",
+      "symbolId": "engineering.tank-car",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Tank truck",
+      "symbolId": "engineering.tank-truck",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Kneader ball",
+      "symbolId": "engineering.kneader-ball",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Kneader blade",
+      "symbolId": "engineering.kneader-blade",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Kneader (general)",
+      "symbolId": "engineering.kneader-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Kneader rolling",
+      "symbolId": "engineering.kneader-rolling",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Kneader wheel",
+      "symbolId": "engineering.kneader-wheel",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (general)",
+      "symbolId": "engineering.mill-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (hammer)",
+      "symbolId": "engineering.mill-hammer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (impact)",
+      "symbolId": "engineering.mill-impact",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (jet)",
+      "symbolId": "engineering.mill-jet",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (roller)",
+      "symbolId": "engineering.mill-roller",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mill (vibrator)",
+      "symbolId": "engineering.mill-vibrator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mixer can",
+      "symbolId": "engineering.mixer-can",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mixer fluidized",
+      "symbolId": "engineering.mixer-fluidized",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mixer rotary",
+      "symbolId": "engineering.mixer-rotary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Mixer",
+      "symbolId": "engineering.mixer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Overhead conveyor with buckets",
+      "symbolId": "engineering.overhead-conveyor-with-buckets",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Overhead conveyor with hooks",
+      "symbolId": "engineering.overhead-conveyor-with-hooks",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Overhead conveyor",
+      "symbolId": "engineering.overhead-conveyor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Prill tower",
+      "symbolId": "engineering.prill-tower",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Roll crusher",
+      "symbolId": "engineering.roll-crusher",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Rotary filter",
+      "symbolId": "engineering.rotary-filter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Scraper conveyor",
+      "symbolId": "engineering.scraper-conveyor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Screw conveyor",
+      "symbolId": "engineering.screw-conveyor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Simple batch filter",
+      "symbolId": "engineering.simple-batch-filter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Industrial equipment symbols",
+      "label": "Skip hoist",
+      "symbolId": "engineering.skip-hoist",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator local",
+      "symbolId": "engineering.indicator-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator remote",
+      "symbolId": "engineering.indicator-remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator auxiliary",
+      "symbolId": "engineering.indicator-auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator remote (dashed)",
+      "symbolId": "engineering.indicator-remote-dashed",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator auxiliary (dashed)",
+      "symbolId": "engineering.indicator-auxiliary-dashed",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator analog",
+      "symbolId": "engineering.indicator-analog",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator digital",
+      "symbolId": "engineering.indicator-digital",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Indicator general",
+      "symbolId": "engineering.indicator-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Recorder analog",
+      "symbolId": "engineering.recorder-analog",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Recorder digital",
+      "symbolId": "engineering.recorder-digital",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Recorder general",
+      "symbolId": "engineering.recorder-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Converter",
+      "symbolId": "engineering.converter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Converter (1st half filled)",
+      "symbolId": "engineering.converter-1st-half-filled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Converter (2nd half filled)",
+      "symbolId": "engineering.converter-2nd-half-filled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Operator box",
+      "symbolId": "engineering.operator-box",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Operator box (1st half filled)",
+      "symbolId": "engineering.operator-box-1st-half-filled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Operator box (2nd half filled)",
+      "symbolId": "engineering.operator-box-2nd-half-filled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "CRT (shared display) local",
+      "symbolId": "engineering.crt-shared-display-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "CRT remote",
+      "symbolId": "engineering.crt-remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "CRT auxiliary",
+      "symbolId": "engineering.crt-auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "PLC (programmable logic control)",
+      "symbolId": "engineering.plc-programmable-logic-control",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Computer local",
+      "symbolId": "engineering.computer-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Light local",
+      "symbolId": "engineering.light-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Light remote",
+      "symbolId": "engineering.light-remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Light auxiliary",
+      "symbolId": "engineering.light-auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Steam traced local",
+      "symbolId": "engineering.steam-traced-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Steam traced remote",
+      "symbolId": "engineering.steam-traced-remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Steam traced auxiliary",
+      "symbolId": "engineering.steam-traced-auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter local",
+      "symbolId": "engineering.level-meter-local",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter remote",
+      "symbolId": "engineering.level-meter-remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter auxiliary",
+      "symbolId": "engineering.level-meter-auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter capacitive",
+      "symbolId": "engineering.level-meter-capacitive",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter float",
+      "symbolId": "engineering.level-meter-float",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter general",
+      "symbolId": "engineering.level-meter-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter sonic",
+      "symbolId": "engineering.level-meter-sonic",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter displacer",
+      "symbolId": "engineering.level-meter-displacer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Level meter conductive",
+      "symbolId": "engineering.level-meter-conductive",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer bi-metallic",
+      "symbolId": "engineering.thermometer-bi-metallic",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer gas",
+      "symbolId": "engineering.thermometer-gas",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer general",
+      "symbolId": "engineering.thermometer-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer glass",
+      "symbolId": "engineering.thermometer-glass",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer liquid",
+      "symbolId": "engineering.thermometer-liquid",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer resistance",
+      "symbolId": "engineering.thermometer-resistance",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Thermometer thermocouple",
+      "symbolId": "engineering.thermometer-thermocouple",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter electromagnetic",
+      "symbolId": "engineering.flowmeter-electromagnetic",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter general",
+      "symbolId": "engineering.flowmeter-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter nozzle",
+      "symbolId": "engineering.flowmeter-nozzle",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter orifice",
+      "symbolId": "engineering.flowmeter-orifice",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter positive displacement",
+      "symbolId": "engineering.flowmeter-positive-displacement",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter turbine",
+      "symbolId": "engineering.flowmeter-turbine",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter variable area",
+      "symbolId": "engineering.flowmeter-variable-area",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter venturi",
+      "symbolId": "engineering.flowmeter-venturi",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Flowmeter",
+      "symbolId": "engineering.flowmeter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Rotameter",
+      "symbolId": "engineering.rotameter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Vortex sensor",
+      "symbolId": "engineering.vortex-sensor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Propeller meter",
+      "symbolId": "engineering.propeller-meter",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Pressure gauge",
+      "symbolId": "engineering.pressure-gauge",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Pressure gauge diaphragm",
+      "symbolId": "engineering.pressure-gauge-diaphragm",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Pressure gauge liquid filled",
+      "symbolId": "engineering.pressure-gauge-liquid-filled",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Strain gauge",
+      "symbolId": "engineering.strain-gauge",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Venturi or flow nozzle",
+      "symbolId": "engineering.venturi-or-flow-nozzle",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Venturi (pressure taps)",
+      "symbolId": "engineering.venturi-pressure-taps",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Generic utility",
+      "symbolId": "engineering.generic-utility",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "AND gate",
+      "symbolId": "engineering.and-gate",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "OR gate",
+      "symbolId": "engineering.or-gate",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "NOT gate",
+      "symbolId": "engineering.not-gate",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Correcting element",
+      "symbolId": "engineering.correcting-element",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Diamond",
+      "symbolId": "engineering.diamond",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Auxiliary",
+      "symbolId": "engineering.auxiliary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Instrument symbols",
+      "label": "Remote",
+      "symbolId": "engineering.remote",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "In-line pump",
+      "symbolId": "engineering.in-line-pump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Positive displacement pump",
+      "symbolId": "engineering.positive-displacement-pump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Centrifugal pump",
+      "symbolId": "engineering.centrifugal-pump",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Rotary pump, compressor, or fan",
+      "symbolId": "engineering.rotary-pump-compressor-or-fan",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Rotary pump",
+      "symbolId": "engineering.rotary-pump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Proportioning pump",
+      "symbolId": "engineering.proportioning-pump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Fan blades",
+      "symbolId": "engineering.fan-blades",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump vacuum",
+      "symbolId": "engineering.pump-vacuum",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump liquid ring",
+      "symbolId": "engineering.pump-liquid-ring",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump piston",
+      "symbolId": "engineering.pump-piston",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump oil-sealed rotary (single/multi)",
+      "symbolId": "engineering.pump-oil-sealed-rotary-single-multi",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump Roots",
+      "symbolId": "engineering.pump-roots",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump gas ballast",
+      "symbolId": "engineering.pump-gas-ballast",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump turbo molecular",
+      "symbolId": "engineering.pump-turbo-molecular",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Spray / Shower",
+      "symbolId": "engineering.spray-shower",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump gear",
+      "symbolId": "engineering.pump-gear",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump screw",
+      "symbolId": "engineering.pump-screw",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump helical rotor",
+      "symbolId": "engineering.pump-helical-rotor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump reciprocating",
+      "symbolId": "engineering.pump-reciprocating",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump diaphragm",
+      "symbolId": "engineering.pump-diaphragm",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump general",
+      "symbolId": "engineering.pump-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Pump liquid jet",
+      "symbolId": "engineering.pump-liquid-jet",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor general",
+      "symbolId": "engineering.compressor-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor container",
+      "symbolId": "engineering.compressor-container",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor rotary",
+      "symbolId": "engineering.compressor-rotary",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor screw",
+      "symbolId": "engineering.compressor-screw",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor reciprocating",
+      "symbolId": "engineering.compressor-reciprocating",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor ejector",
+      "symbolId": "engineering.compressor-ejector",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor liquid ring",
+      "symbolId": "engineering.compressor-liquid-ring",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor positive displacement",
+      "symbolId": "engineering.compressor-positive-displacement",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor diaphragm",
+      "symbolId": "engineering.compressor-diaphragm",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor roller vane",
+      "symbolId": "engineering.compressor-roller-vane",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor turbo",
+      "symbolId": "engineering.compressor-turbo",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Rotary compressor",
+      "symbolId": "engineering.rotary-compressor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Compressor (center line)",
+      "symbolId": "engineering.compressor-center-line",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Turbine",
+      "symbolId": "engineering.turbine",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Turbine (center line)",
+      "symbolId": "engineering.turbine-center-line",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Motor-driven turbine",
+      "symbolId": "engineering.motor-driven-turbine",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Reciprocating pump/compressor",
+      "symbolId": "engineering.reciprocating-pump-compressor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Fan general",
+      "symbolId": "engineering.fan-general",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Fan radial",
+      "symbolId": "engineering.fan-radial",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Fan axial",
+      "symbolId": "engineering.fan-axial",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Centrifugal fan",
+      "symbolId": "engineering.centrifugal-fan",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Centrifugal fan (center circle)",
+      "symbolId": "engineering.centrifugal-fan-center-circle",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Axial flow fan (supply)",
+      "symbolId": "engineering.axial-flow-fan-supply",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Axial flow fan (exhaust)",
+      "symbolId": "engineering.axial-flow-fan-exhaust",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Axial flow fan (supply wall-type)",
+      "symbolId": "engineering.axial-flow-fan-supply-wall-type",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Axial flow fan (exhaust wall-type)",
+      "symbolId": "engineering.axial-flow-fan-exhaust-wall-type",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Pump symbols",
+      "label": "Ejector / Injector",
+      "symbolId": "engineering.ejector-injector",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Gate Valve",
+      "symbolId": "engineering.gate-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Screw-down Valve",
+      "symbolId": "engineering.screw-down-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Lock-shield Valve",
+      "symbolId": "engineering.lock-shield-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Reel Valve",
+      "symbolId": "engineering.reel-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Check Valve",
+      "symbolId": "engineering.check-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Screw-down Check Valve",
+      "symbolId": "engineering.screw-down-check-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Stop Check Valve",
+      "symbolId": "engineering.stop-check-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Diaphragm Valve",
+      "symbolId": "engineering.diaphragm-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Powered Valve",
+      "symbolId": "engineering.powered-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Needle Valve",
+      "symbolId": "engineering.needle-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Relief Valve",
+      "symbolId": "engineering.relief-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Angle Valve",
+      "symbolId": "engineering.angle-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Float Operated Valve",
+      "symbolId": "engineering.float-operated-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Flanged Valve",
+      "symbolId": "engineering.flanged-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Butterfly Valve",
+      "symbolId": "engineering.butterfly-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Wedge Gate Valve",
+      "symbolId": "engineering.wedge-gate-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Parallel Slide Valve",
+      "symbolId": "engineering.parallel-slide-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Swivel Joint",
+      "symbolId": "engineering.swivel-joint",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Relief Angle Valve (Vacuum)",
+      "symbolId": "engineering.relief-angle-valve-vacuum",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Relief Angle Valve (Pressure)",
+      "symbolId": "engineering.relief-angle-valve-pressure",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Ball Valve",
+      "symbolId": "engineering.ball-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Reducing Valve",
+      "symbolId": "engineering.reducing-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Plug Valve 3 Way",
+      "symbolId": "engineering.plug-valve-3-way",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Plug Valve L Way",
+      "symbolId": "engineering.plug-valve-l-way",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Plug Valve",
+      "symbolId": "engineering.plug-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Plug Valve Straight Through",
+      "symbolId": "engineering.plug-valve-straight-through",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Plug Valve T Point",
+      "symbolId": "engineering.plug-valve-t-point",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "3 Way Plug Valve",
+      "symbolId": "engineering.3-way-plug-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Mixing Valve",
+      "symbolId": "engineering.mixing-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Characterized Port Valve",
+      "symbolId": "engineering.characterized-port-valve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Valve Manifold",
+      "symbolId": "engineering.valve-manifold",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Reducer",
+      "symbolId": "engineering.reducer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "General Joint",
+      "symbolId": "engineering.general-joint",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Butt Weld",
+      "symbolId": "engineering.butt-weld",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Flanged/Bolted",
+      "symbolId": "engineering.flanged-bolted",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Soldered/Solvent",
+      "symbolId": "engineering.soldered-solvent",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Screwed Joint",
+      "symbolId": "engineering.screwed-joint",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Socket and Spigot",
+      "symbolId": "engineering.socket-and-spigot",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Sleeve",
+      "symbolId": "engineering.sleeve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Screwed Sleeve",
+      "symbolId": "engineering.screwed-sleeve",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Socket Weld",
+      "symbolId": "engineering.socket-weld",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap",
+      "symbolId": "engineering.end-cap",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Butt Welded",
+      "symbolId": "engineering.end-cap-butt-welded",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Screwed",
+      "symbolId": "engineering.end-cap-screwed",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Socket and Spigot",
+      "symbolId": "engineering.end-cap-socket-and-spigot",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Fillet Welded",
+      "symbolId": "engineering.end-cap-fillet-welded",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Screwed and Plugged",
+      "symbolId": "engineering.end-cap-screwed-and-plugged",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Quick Release",
+      "symbolId": "engineering.end-cap-quick-release",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "End Cap Flanged and Bolted",
+      "symbolId": "engineering.end-cap-flanged-and-bolted",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Electrically Bonded",
+      "symbolId": "engineering.electrically-bonded",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Electrically Insulated",
+      "symbolId": "engineering.electrically-insulated",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Bursting Disc",
+      "symbolId": "engineering.bursting-disc",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Flame Arrester",
+      "symbolId": "engineering.flame-arrester",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Strainer",
+      "symbolId": "engineering.strainer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Separator",
+      "symbolId": "engineering.separator",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Exhaust Silencer",
+      "symbolId": "engineering.exhaust-silencer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Tundish",
+      "symbolId": "engineering.tundish",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Bell Mouth",
+      "symbolId": "engineering.bell-mouth",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Exhaust Head",
+      "symbolId": "engineering.exhaust-head",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Open Vent",
+      "symbolId": "engineering.open-vent",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Syphon Drain",
+      "symbolId": "engineering.syphon-drain",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Hydrant",
+      "symbolId": "engineering.hydrant",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Drain Silencer",
+      "symbolId": "engineering.drain-silencer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Liquid Seal Open/Closed",
+      "symbolId": "engineering.liquid-seal-open-closed",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Valve and fitting symbols",
+      "label": "Y Strainer",
+      "symbolId": "engineering.y-strainer",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Vessel (flat ends)",
+      "symbolId": "engineering.vessel-flat-ends",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Vessel (curved ends)",
+      "symbolId": "engineering.vessel-curved-ends",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Vessel (angled ends)",
+      "symbolId": "engineering.vessel-angled-ends",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Column",
+      "symbolId": "engineering.column",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Column (seam)",
+      "symbolId": "engineering.column-seam",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Tray column",
+      "symbolId": "engineering.tray-column",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Fluid contacting",
+      "symbolId": "engineering.fluid-contacting",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Reaction vessel",
+      "symbolId": "engineering.reaction-vessel",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Open tank",
+      "symbolId": "engineering.open-tank",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Open tank with lip",
+      "symbolId": "engineering.open-tank-with-lip",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Clarifier",
+      "symbolId": "engineering.clarifier",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Closed tank",
+      "symbolId": "engineering.closed-tank",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Closed tank (peaked roof)",
+      "symbolId": "engineering.closed-tank-peaked-roof",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Closed tank (sump)",
+      "symbolId": "engineering.closed-tank-sump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Closed tank (sump, peaked roof)",
+      "symbolId": "engineering.closed-tank-sump-peaked-roof",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Covered tank (fixed roof)",
+      "symbolId": "engineering.covered-tank-fixed-roof",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Covered tank (floating roof)",
+      "symbolId": "engineering.covered-tank-floating-roof",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Covered tank (fixed roof, sump)",
+      "symbolId": "engineering.covered-tank-fixed-roof-sump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Covered tank (floating roof, sump)",
+      "symbolId": "engineering.covered-tank-floating-roof-sump",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Gas holder",
+      "symbolId": "engineering.gas-holder",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Storage sphere",
+      "symbolId": "engineering.storage-sphere",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave anchor",
+      "symbolId": "engineering.autoclave-anchor",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave anchor (motor)",
+      "symbolId": "engineering.autoclave-anchor-motor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave helical",
+      "symbolId": "engineering.autoclave-helical",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave helical (motor)",
+      "symbolId": "engineering.autoclave-helical-motor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave propeller",
+      "symbolId": "engineering.autoclave-propeller",
+      "mapping": "duplicate-name alias",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Autoclave propeller (motor)",
+      "symbolId": "engineering.autoclave-propeller-motor",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Barrel",
+      "symbolId": "engineering.barrel",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Gas cylinder",
+      "symbolId": "engineering.gas-cylinder",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Carrying vessel",
+      "symbolId": "engineering.carrying-vessel",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Carrying vessel (moveable)",
+      "symbolId": "engineering.carrying-vessel-moveable",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Carrying vessel (cargo)",
+      "symbolId": "engineering.carrying-vessel-cargo",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Tank",
+      "symbolId": "engineering.tank",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Tray (dashed)",
+      "symbolId": "engineering.tray-dashed",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Tray (solid)",
+      "symbolId": "engineering.tray-solid",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Water surface",
+      "symbolId": "engineering.water-surface",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Branch fitting",
+      "symbolId": "engineering.branch-fitting",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Access point",
+      "symbolId": "engineering.access-point",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Vessel symbols",
+      "label": "Flanged access point",
+      "symbolId": "engineering.flanged-access-point",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Process annotation symbols",
+      "label": "Interface points",
+      "symbolId": "annotation.interface-points",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Process annotation symbols",
+      "label": "Slope",
+      "symbolId": "annotation.slope",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Process annotation symbols",
+      "label": "Off-sheet labels",
+      "symbolId": "annotation.off-sheet-labels",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    },
+    {
+      "category": "Process annotation symbols",
+      "label": "Callouts",
+      "symbolId": "annotation.callouts",
+      "mapping": "original application glyph",
+      "verificationStatus": "application-notation-unverified"
+    }
+  ]
+}

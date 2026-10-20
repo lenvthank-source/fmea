@@ -322,6 +322,8 @@ model ProcessStep {
   incomingVariation      Json?    @map("incoming_variation")
   specialCharacteristics String?  @map("special_characteristics") @db.VarChar(100)
   flowIcons              Json?    @map("flow_icons")
+  manufacturingSymbolId  String?  @map("manufacturing_symbol_id") @db.VarChar(120)
+  engineeringSymbolId    String?  @map("engineering_symbol_id") @db.VarChar(120)
   machinesEquipmentDocs  Json?    @map("machines_equipment_documents")
   desiredOutcome         String?  @map("desired_outcome") @db.Text
   processCharacteristics String?  @map("process_characteristics") @db.Text

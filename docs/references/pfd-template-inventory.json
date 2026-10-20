@@ -1,0 +1,577 @@
+{
+  "retrievedOn": "2026-10-20",
+  "scope": "Public guide, symbol guide, usage collection and catalog searches; dynamic UI pagination requires separate review",
+  "limitations": [
+    "HTML snapshots and image previews are not editable template exports.",
+    "No account creation, payment, proprietary asset reuse or hidden endpoint enumeration."
+  ],
+  "archiveLocation": "C:\\Users\\Palak\\.codex\\visualizations\\2026\\10\\18\\01a15026-af67-7522-87fc-f43cefdb4e2b\\pfd-reference-archive",
+  "publicCatalogUiCheck": "2026-10-20: process flow catalog search exposed12results; scrolling exposed no pagination/load-more control. Related engineering template links followed until no new IDs.",
+  "templates": [
+    {
+      "templateId": "ZhTMt6QoGsH",
+      "title": "Process Flow Diagram Engineering",
+      "industry": "General process engineering",
+      "sourceUrl": "https://creately.com/diagram/example/ZhTMt6QoGsH",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/ZhTMt6QoGsH",
+          "finalUrl": "https://svg.template.creately.com/ZhTMt6QoGsH",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "ZhTMt6QoGsH-preview-0.svg",
+          "sha256": "f8a26978dcfcf16776f80555bcd2c008d567be5b915c98d82802ce96b91a705c",
+          "bytes": 35585,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/guides/pfd-symbols/",
+        "https://creately.com/usage/process-flow-diagram-template/",
+        "https://creately.com/diagram-community/popular?term=process%20flow",
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "oFMtNihEG8e",
+      "title": "LNG Process Flow Diagram",
+      "industry": "LNG",
+      "sourceUrl": "https://creately.com/diagram/example/oFMtNihEG8e",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/oFMtNihEG8e",
+          "finalUrl": "https://svg.template.creately.com/oFMtNihEG8e",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "oFMtNihEG8e-preview-0.svg",
+          "sha256": "df7416cf8b26f4063173a1aebf99e5c9602465fe48231d9c51976e3d4af2d5ac",
+          "bytes": 22073,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "5Et4icBZvE3",
+      "title": "ETP Process Flow Diagram",
+      "industry": "Effluent treatment",
+      "sourceUrl": "https://creately.com/diagram/example/5Et4icBZvE3",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/5Et4icBZvE3",
+          "finalUrl": "https://svg.template.creately.com/5Et4icBZvE3",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "5Et4icBZvE3-preview-0.svg",
+          "sha256": "26a4e2e28b969940a43ac1c5a3f0cb2a83b8063732e152ffd46a873d54838b38",
+          "bytes": 33717,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "RNYTPzy5dvC",
+      "title": "Process Flow Diagram of Ethanol Production",
+      "industry": "Ethanol production",
+      "sourceUrl": "https://creately.com/diagram/example/RNYTPzy5dvC",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/RNYTPzy5dvC",
+          "finalUrl": "https://svg.template.creately.com/RNYTPzy5dvC",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "RNYTPzy5dvC-preview-0.svg",
+          "sha256": "4ded0fdcaa58dfc856caa03b012f56253e064e5e617e1a93897861b8b1c915af",
+          "bytes": 57599,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "8YKDMgCHJT0",
+      "title": "Cement Production Process Flow Diagram",
+      "industry": "Cement production",
+      "sourceUrl": "https://creately.com/diagram/example/8YKDMgCHJT0",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/8YKDMgCHJT0",
+          "finalUrl": "https://svg.template.creately.com/8YKDMgCHJT0",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "8YKDMgCHJT0-preview-0.svg",
+          "sha256": "b1c5a20b13411cc1345cef7880a9b514e039925d975e182d588ad1c1ec61dab7",
+          "bytes": 48261,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/guides/pfd-symbols/",
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "vtoJgcpmwWl",
+      "title": "Process Flow Diagram Chemical Engineering",
+      "industry": "Chemical engineering",
+      "sourceUrl": "https://creately.com/diagram/example/vtoJgcpmwWl",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/vtoJgcpmwWl",
+          "finalUrl": "https://svg.template.creately.com/vtoJgcpmwWl",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "vtoJgcpmwWl-preview-0.svg",
+          "sha256": "904daa1cba97daf9316fab4f72078e017c6e51511bb98dfee596ffd673c40ec8",
+          "bytes": 50590,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/what-is-a-process-flow-diagram/",
+        "https://creately.com/guides/pfd-symbols/",
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "EA1cAhBebvQ",
+      "title": "Water treatment process flow diagram",
+      "industry": "Water treatment",
+      "sourceUrl": "https://creately.com/diagram/example/EA1cAhBebvQ",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/EA1cAhBebvQ",
+          "finalUrl": "https://svg.template.creately.com/EA1cAhBebvQ",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "EA1cAhBebvQ-preview-0.svg",
+          "sha256": "88321c92c10967c0b0bb46e326b9420bd717d6ace6fbe957d7c7b2f9dd6345fd",
+          "bytes": 53618,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/pfd-symbols/",
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "S2GIMzifFez",
+      "title": "Sewage treatment process flow diagram",
+      "industry": "Sewage treatment",
+      "sourceUrl": "https://creately.com/diagram/example/S2GIMzifFez",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/S2GIMzifFez",
+          "finalUrl": "https://svg.template.creately.com/S2GIMzifFez",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "S2GIMzifFez-preview-0.svg",
+          "sha256": "cb74c5b789fdbd5efb52bd3204fb63cdda6e9eae3d81d635c399026fe772f31a",
+          "bytes": 18887,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/guides/pfd-symbols/",
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "BHrpxaEfmC8",
+      "title": "Refinery Process Flow Diagram",
+      "industry": "Refining",
+      "sourceUrl": "https://creately.com/diagram/example/BHrpxaEfmC8",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/BHrpxaEfmC8",
+          "finalUrl": "https://svg.template.creately.com/BHrpxaEfmC8",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "BHrpxaEfmC8-preview-0.svg",
+          "sha256": "7d9282a1f767e765399909e2f355a2467ed508b487a98624103a05a7a796e862",
+          "bytes": 33903,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "cKcDdjYMQ2d",
+      "title": "Crude Oil Refinery Process Flow Diagram",
+      "industry": "Refining",
+      "sourceUrl": "https://creately.com/diagram/example/cKcDdjYMQ2d",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/cKcDdjYMQ2d",
+          "finalUrl": "https://svg.template.creately.com/cKcDdjYMQ2d",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "cKcDdjYMQ2d-preview-0.svg",
+          "sha256": "da5358ecb46c5c4ef077ac9b9dd84206f0c6e43ca50b50fac54b875473392ac9",
+          "bytes": 53416,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/usage/process-flow-diagram-template/"
+      ]
+    },
+    {
+      "templateId": "4Ga9pmcgoJb",
+      "title": "Logistics Process Flow Chart",
+      "industry": "Logistics",
+      "sourceUrl": "https://creately.com/diagram/example/4Ga9pmcgoJb",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/4Ga9pmcgoJb",
+          "finalUrl": "https://svg.template.creately.com/4Ga9pmcgoJb",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "4Ga9pmcgoJb-preview-0.svg",
+          "sha256": "98810f8d71d7cb07c020f4b3c391cc09567274017cf67ff2b8f8e70801524236",
+          "bytes": 589213,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "TtaXhjJ6sNx",
+      "title": "Business Process Flow Template",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/TtaXhjJ6sNx",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "iarhlq0o1",
+      "title": "Procure to Pay Process Flow",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/iarhlq0o1",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "9ouMSqaxrJn",
+      "title": "Logistics Process Flow Chart",
+      "industry": "Logistics",
+      "sourceUrl": "https://creately.com/diagram/example/9ouMSqaxrJn",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/9ouMSqaxrJn",
+          "finalUrl": "https://svg.template.creately.com/9ouMSqaxrJn",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "9ouMSqaxrJn-preview-0.svg",
+          "sha256": "23eb04b739ae500adfc5e3c269718d2d84a1b380f38ba66db9a9233d2e64b32a",
+          "bytes": 31410,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "jpdvcx351",
+      "title": "Vendor Management Process Flow",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/jpdvcx351",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "x7IsjhzZA76",
+      "title": "Employee Background Check Process Flow",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/x7IsjhzZA76",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "CLEFUXCC2gh",
+      "title": "Purchase Order Process Flow",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/CLEFUXCC2gh",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "DDcd9czHG8c",
+      "title": "Change Management High-Level Process Flow Template",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/DDcd9czHG8c",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "zQVhqQl4v95",
+      "title": "Process Flow",
+      "industry": "General process engineering",
+      "sourceUrl": "https://creately.com/diagram/example/zQVhqQl4v95",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/zQVhqQl4v95",
+          "status": "unavailable",
+          "reason": "HTTP Error 403: Forbidden"
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=process%20flow"
+      ]
+    },
+    {
+      "templateId": "idu2ddbd2",
+      "title": "Note Pad App Mockup Template",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/idu2ddbd2",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "injsddx92",
+      "title": "Online Shopping Cart - Level 1 DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/injsddx92",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "jje7wqx11",
+      "title": "DFD- Ai",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/jje7wqx11",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "kgCfGtog7aa",
+      "title": "PRD Template",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/kgCfGtog7aa",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "aRAqyMvUM9u",
+      "title": "DFD Diagram for Book Inventory Management",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/aRAqyMvUM9u",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "ivl0fl561",
+      "title": "Physical DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/ivl0fl561",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "GOJu2EedyvQ",
+      "title": "Hotel Reservation System DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/GOJu2EedyvQ",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "iukm7rfc1",
+      "title": "Hotel Reservation System DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/iukm7rfc1",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "iov76mso3",
+      "title": "Communication System - Data Flow",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/iov76mso3",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "ingwfn843",
+      "title": "Library Management System - Level 1 DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/ingwfn843",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "inl5hu5f1",
+      "title": "Inventory Management System - Level 1 DFD",
+      "industry": "Unrelated catalog result",
+      "sourceUrl": "https://creately.com/diagram/example/inl5hu5f1",
+      "classification": "excluded-unrelated-business-or-data-flow",
+      "downloadStatus": "public-preview; editable export not exposed on public page",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [],
+      "discoveredFrom": [
+        "https://creately.com/diagram-community/popular?term=pfd"
+      ]
+    },
+    {
+      "templateId": "AgNqxdp0p6E",
+      "title": "Crude Oil Refinery Process Flow Diagram",
+      "industry": "Refining",
+      "sourceUrl": "https://creately.com/diagram/example/AgNqxdp0p6E/crude-oil-refinery-process-flow-diagram",
+      "classification": "engineering-layout-reference",
+      "downloadStatus": "downloaded-public-SVG-preview; native editable template unavailable",
+      "nativeTemplateStatus": "No unauthenticated editable template download exposed; editor/account access not exercised",
+      "exports": [
+        {
+          "url": "https://svg.template.creately.com/AgNqxdp0p6E",
+          "finalUrl": "https://svg.template.creately.com/AgNqxdp0p6E",
+          "format": "SVG",
+          "status": "downloaded-public-vector-preview",
+          "file": "AgNqxdp0p6E-preview-0.svg",
+          "sha256": "ef551a26c502594990a139b808ab7aa18fcd6ef1044d0cb049998d5219e58a08",
+          "bytes": 15939,
+          "nativeEditableTemplate": false
+        }
+      ],
+      "discoveredFrom": [
+        "https://creately.com/diagram/example/BHrpxaEfmC8"
+      ]
+    }
+  ]
+}

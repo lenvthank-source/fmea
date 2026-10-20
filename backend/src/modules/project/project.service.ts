@@ -159,7 +159,7 @@ export class ProjectService {
       select: { pfdGraph: true },
     });
     const graph = source?.pfdGraph as unknown as PfdGraph | null;
-    if (!graph || graph.schemaVersion !== 1) return;
+    if (!graph || ![1, 2].includes(graph.schemaVersion)) return;
     const nodes = graph.nodes
       .filter((n) => n.kind !== 'step' || (n.stepId && stepIds.has(n.stepId)))
       .map((n) => ({
@@ -563,6 +563,8 @@ export class ProjectService {
                   incomingVariation: step.incomingVariation || undefined,
                   specialCharacteristics: step.specialCharacteristics,
                   flowIcons: step.flowIcons || undefined,
+                  manufacturingSymbolId: step.manufacturingSymbolId,
+                  engineeringSymbolId: step.engineeringSymbolId,
                   machinesEquipmentDocs:
                     step.machinesEquipmentDocs || undefined,
                   desiredOutcome: step.desiredOutcome,
@@ -935,6 +937,8 @@ export class ProjectService {
                 incomingVariation: step.incomingVariation || undefined,
                 specialCharacteristics: step.specialCharacteristics,
                 flowIcons: step.flowIcons || undefined,
+                  manufacturingSymbolId: step.manufacturingSymbolId,
+                  engineeringSymbolId: step.engineeringSymbolId,
                 machinesEquipmentDocs: step.machinesEquipmentDocs || undefined,
                 desiredOutcome: step.desiredOutcome,
                 processCharacteristics: step.processCharacteristics,
@@ -1438,6 +1442,8 @@ export class ProjectService {
                   incomingVariation: step.incomingVariation || undefined,
                   specialCharacteristics: step.specialCharacteristics,
                   flowIcons: step.flowIcons || undefined,
+                  manufacturingSymbolId: step.manufacturingSymbolId,
+                  engineeringSymbolId: step.engineeringSymbolId,
                   machinesEquipmentDocs:
                     step.machinesEquipmentDocs || undefined,
                   desiredOutcome: step.desiredOutcome,

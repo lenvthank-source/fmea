@@ -52,3 +52,6 @@ DFMEA stores explicit hierarchy/functions/requirements/interfaces/parameter cont
 Trial identities require a non-null reserved handle via `guest_public_handle_required`. During rolling upgrades, run `backend/scripts/backfill-public-handles.cjs` after building if an older API admitted missing handles, before validating the constraint. Applied migration and drift evidence is recorded in ACTIVE_STATE.
 
 Migration `20261019133000_legacy_trial_handle_compatibility` assigns and reserves a missing trial handle at the database boundary for older APIs during rollout. Existing non-null handles and registered names remain untouched. This retains the required-handle invariant without breaking old trial-login requests.
+
+## PFD symbol selections (2026-10-20)
+ProcessStep adds nullable VARCHAR120 manufacturingSymbolId and engineeringSymbolId via additive migration20261020190000_pfd_selected_symbols. No legacy icon/approved graph rewrite. Revision pfdGraph JSON supports v1/v2with explicit routes/geometry/annotations, version checked. Catalog identities are static application references validated in services, not equipment-name guesses. Seven migrations applied on configured database.

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import { PfdStepSymbolFields } from './BrowseShapesDialog';
 import { dialogSelectMenuProps } from '../../../theme/muiSelectConfig';
 
 interface StepFormDialogProps {
@@ -17,6 +18,7 @@ const STEP_TYPES = [
   { value: 'storage', label: 'Storage (▽)' },
   { value: 'delay', label: 'Delay (D)' },
   { value: 'rework', label: 'Rework (R)' },
+  ...['combined', 'repair', 'hold', 'scrap', 'return'].map(value => ({ value, label: value === 'combined' ? 'Operation + inspection' : value[0].toUpperCase() + value.slice(1) })),
   { value: 'decision', label: 'Decision (◇)' },
 ];
 
@@ -27,9 +29,13 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
   const [inputs, setInputs] = useState('');
   const [outputs, setOutputs] = useState('');
   const [resources, setResources] = useState('');
+  const [manufacturingSymbolId, setManufacturingSymbolId] = useState<string | null>(null);
+  const [engineeringSymbolId, setEngineeringSymbolId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setManufacturingSymbolId(stepToEdit?.manufacturingSymbolId || null);
+    setEngineeringSymbolId(stepToEdit?.engineeringSymbolId || null);
     if (stepToEdit) {
       setStepNumber(stepToEdit.stepNumber);
       setName(stepToEdit.name);
@@ -55,6 +61,8 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
         stepNumber,
         name,
         stepType,
+        manufacturingSymbolId,
+        engineeringSymbolId,
         inputs: inputs || null,
         outputs: outputs || null,
         resources: resources || null,
@@ -115,7 +123,7 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
             select
             label="Step Type"
             value={stepType}
-            onChange={(e) => setStepType(e.target.value)}
+            onChange={(e) => { setStepType(e.target.value); setManufacturingSymbolId(null); }}
             variant="outlined"
             margin="normal"
             required
@@ -127,6 +135,8 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
               </MenuItem>
             ))}
           </TextField>
+
+          <PfdStepSymbolFields disabled={loading} step={{ stepType, manufacturingSymbolId, engineeringSymbolId, flowIcons: stepToEdit?.flowIcons }} onChange={(field, value) => field === 'engineeringSymbolId' ? setEngineeringSymbolId(value) : setManufacturingSymbolId(value)} />
 
           <TextField
             fullWidth

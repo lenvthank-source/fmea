@@ -5,7 +5,7 @@ Purpose: Module folder managing pfd logic and assets.
 ## Directory Metadata
 - **Path**: `frontend/src/features/pfd`
 - **Files Count**: 1
-- **Subdirectories Count**: 2
+- **Subdirectories Count**: 3
 
 ## File Map
 
@@ -16,4 +16,5 @@ Purpose: Module folder managing pfd logic and assets.
 ## Subdirectories
 
 - [components](./components/README.md) - Subdirectory folder containing localized modules.
+- [symbols](./symbols/README.md) - Subdirectory folder containing localized modules.
 - [utils](./utils/README.md) - Subdirectory folder containing localized modules.

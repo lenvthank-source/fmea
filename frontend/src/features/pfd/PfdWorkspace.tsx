@@ -1,4 +1,4 @@
-import { pfdActivityFromSymbols } from './utils/pfdGraph';
+import { PfdStepSymbolFields } from './components/BrowseShapesDialog';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -19,7 +19,6 @@ import {
   Upload as UploadIcon,
   Check as CheckIcon,
   Edit as EditIcon,
-  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthContext';
 import { WorkspaceSkeleton } from '../../components/Layout/WorkspaceSkeleton';
@@ -27,7 +26,6 @@ import { API_BASE_URL } from '../../config';
 import { DocumentHeader } from '../../components/DocumentHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ReportExporter } from '../reports/ReportExporter';
-import { getPfdIconMeta } from './utils/pfdIconMap';
 import { PfdEngineeringCanvas } from './components/PfdEngineeringCanvas';
 import { useToast, getToastSeverity } from '../../components/Toast/ToastProvider';
 import { parseApiError } from '../../lib/api';
@@ -49,6 +47,8 @@ export interface ProcessStep {
   incomingVariation?: string[];
   specialCharacteristics?: string;
   flowIcons?: any;
+  manufacturingSymbolId?: string | null;
+  engineeringSymbolId?: string | null;
   machinesEquipmentDocs?: string[];
   desiredOutcome?: string | string[];
   processCharacteristics?: string | string[];
@@ -179,8 +179,6 @@ export const PfdWorkspace: React.FC = () => {
   const [projectData, setProjectData] = useState<any>(null);
   const [dragAllowedIndex, setDragAllowedIndex] = useState<number | null>(null);
   const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
-  const [editingFlowSymbolsStepId, setEditingFlowSymbolsStepId] = useState<string | null>(null);
-  const [tempIcons, setTempIcons] = useState<Record<string, boolean>>({});
 
   const renderCollapsedPreview = (val: any) => {
     if (!val) return '—';
@@ -230,6 +228,8 @@ export const PfdWorkspace: React.FC = () => {
   const [addStepNumber, setAddStepNumber] = useState('');
   const [addName, setAddName] = useState('');
   const [addStepType, setAddStepType] = useState('operation');
+  const [addManufacturingSymbolId, setAddManufacturingSymbolId] = useState<string | null>(null);
+  const [addEngineeringSymbolId, setAddEngineeringSymbolId] = useState<string | null>(null);
   const [addIncomingVariation, setAddIncomingVariation] = useState('');
   const [addMachinesEquipmentDocs, setAddMachinesEquipmentDocs] = useState('');
   const [addSpecialCharacteristics, setAddSpecialCharacteristics] = useState('');
@@ -588,35 +588,18 @@ export const PfdWorkspace: React.FC = () => {
 
 
 
-  const handleSaveFlowIcons = async (stepId: string) => {
-    if (!canEdit) { showToast('This revision is read-only. Create your own trial project to edit.', 'info'); return; }
-    const step = steps.find(s => s.id === stepId);
-    if (!step) return;
-
-    const stepType = pfdActivityFromSymbols(tempIcons) || step.stepType;
-    // Mixed activities, WIP, and rejection require explicit classification; preserve the declared type.
-
-    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, flowIcons: tempIcons, stepType } : s));
-    setEditingFlowSymbolsStepId(null);
-
+  const handleSymbolChange = async (step: ProcessStep, field: 'manufacturingSymbolId' | 'engineeringSymbolId', value: string | null) => {
+    if (!canEdit) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/pfd-steps/${stepId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ flowIcons: tempIcons, stepType })
+      const res = await fetch(`${API_BASE_URL}/pfd-steps/${step.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ [field]: value }),
       });
-      if (!res.ok) {
-        const msg = await parseApiError(res, 'Failed to update flow icons');
-        throw new Error(msg);
-      }
-    } catch (err: any) {
-      const msg = err.message || 'Failed to update flow icons';
-      showToast(msg, getToastSeverity(msg));
-      fetchSteps(); // rollback
-    }
+      if (!res.ok) throw new Error(await parseApiError(res, 'Could not save the selected symbol'));
+      setSteps(previous => previous.map(item => item.id === step.id ? { ...item, [field]: value } : item));
+      setSelectedStep(previous => previous?.id === step.id ? { ...previous, [field]: value } : previous);
+      setGraphReloadKey(previous => previous + 1);
+    } catch (err: any) { showToast(err.message || 'Could not save the selected symbol', 'error'); }
   };
 
   // Add Step Drawer Handlers
@@ -627,6 +610,8 @@ export const PfdWorkspace: React.FC = () => {
     setAddStepNumber(`OP${nextSequence * 10}`);
     setAddName('');
     setAddStepType('operation');
+    setAddManufacturingSymbolId(null);
+    setAddEngineeringSymbolId(null);
     setAddIncomingVariation('');
     setAddMachinesEquipmentDocs('');
     setAddSpecialCharacteristics('');
@@ -664,6 +649,8 @@ export const PfdWorkspace: React.FC = () => {
           stepNumber: addStepNumber,
           name: addName,
           stepType: addStepType,
+          manufacturingSymbolId: addManufacturingSymbolId,
+          engineeringSymbolId: addEngineeringSymbolId,
           incomingVariation: variationList,
           machinesEquipmentDocs: machinesList,
           specialCharacteristics: addSpecialCharacteristics || null,
@@ -707,6 +694,8 @@ export const PfdWorkspace: React.FC = () => {
           incomingVariation: step.incomingVariation,
           specialCharacteristics: step.specialCharacteristics,
           flowIcons: step.flowIcons,
+          manufacturingSymbolId: step.manufacturingSymbolId,
+          engineeringSymbolId: step.engineeringSymbolId,
           machinesEquipmentDocs: step.machinesEquipmentDocs,
           desiredOutcome: step.desiredOutcome,
           processCharacteristics: step.processCharacteristics,
@@ -819,11 +808,14 @@ export const PfdWorkspace: React.FC = () => {
       {/* Space-Optimized Shadcn Top Toolbar */}
       <Box sx={{ mb: 2.5, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 1.5, alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between' }}>
         {/* Segmented Pill Switcher */}
-        <Box sx={{ display: 'inline-flex', p: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
+        <Box role="group" aria-label="PFD view" sx={{ display: 'inline-flex', flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' }, minWidth: 0, maxWidth: '100%', p: '3px', gap: '3px', bgcolor: '#f4f4f5', borderRadius: '8px', border: '1px solid #e4e4e7' }}>
           <Box
+            component="button" type="button" aria-pressed={activeTab === 'table'}
             onClick={() => setActiveTab('table')}
             sx={{
-              px: 2,
+              px: { xs: 1, sm: 2 },
+              minWidth: 0, maxWidth: '100%', border: 0, fontFamily: 'inherit', justifyContent: 'center', flexWrap: 'wrap',
+              '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 1 },
               py: 0.75,
               borderRadius: '6px',
               cursor: 'pointer',
@@ -846,9 +838,12 @@ export const PfdWorkspace: React.FC = () => {
             />
           </Box>
           <Box
+            component="button" type="button" aria-pressed={activeTab === 'diagram'}
             onClick={() => setActiveTab('diagram')}
             sx={{
-              px: 2,
+              px: { xs: 1, sm: 2 },
+              minWidth: 0, maxWidth: '100%', border: 0, fontFamily: 'inherit', justifyContent: 'center', flexWrap: 'wrap',
+              '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 1 },
               py: 0.75,
               borderRadius: '6px',
               cursor: 'pointer',
@@ -1027,7 +1022,6 @@ export const PfdWorkspace: React.FC = () => {
                 </TableRow>
               ) : (
                 steps.map((step, index) => {
-                  const icons = step.flowIcons || {};
                   const isCollapsed = collapsedSteps.has(step.id);
                   return (
                     <TableRow
@@ -1164,139 +1158,9 @@ export const PfdWorkspace: React.FC = () => {
                         </PfdCellWrapper>
                       </TableCell>
 
-                      {/* Flow Symbols */}
-                      <TableCell sx={{ position: 'relative', minWidth: 130, p: 0.5, bgcolor: 'rgba(1, 105, 111, 0.02)', borderLeft: '1px solid rgba(1, 105, 111, 0.06)', borderRight: '1px solid rgba(1, 105, 111, 0.06)' }} onClick={(e) => e.stopPropagation()}>
-                        <PfdCellWrapper
-                          textToCopy=""
-                          showEditOnly
-                          onEdit={() => {
-                            setTempIcons(step.flowIcons || {});
-                            setEditingFlowSymbolsStepId(step.id);
-                          }}
-                        >
-                          {editingFlowSymbolsStepId === step.id ? (
-                            <Box
-                              sx={{
-                                position: 'absolute',
-                                left: '50%',
-                                top: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.75,
-                                bgcolor: 'rgba(255,255,255,0.99)',
-                                border: '1px solid rgba(40, 37, 29, 0.15)',
-                                borderRadius: 3,
-                                px: 1.5,
-                                py: 0.75,
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
-                                zIndex: 100,
-                                animation: 'fadeInScale 0.15s ease-in-out',
-                                '@keyframes fadeInScale': {
-                                  from: { opacity: 0, transform: 'translate(-50%, -50%) scale(0.9)' },
-                                  to: { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
-                                }
-                              }}
-                            >
-                              {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
-                                const isActive = !!tempIcons[key];
-                                const iconMeta = FLOW_ICON_COLUMNS[key];
-                                const iconData = getPfdIconMeta(key);
-                                return (
-                                  <Tooltip key={key} title={iconMeta.name}>
-                                    <Box
-                                      onClick={(e) => { e.stopPropagation(); setTempIcons(prev => ({ ...prev, [key]: !isActive })); }}
-                                      sx={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        cursor: 'pointer',
-                                        bgcolor: '#ffffff',
-                                        border: isActive ? '2.5px solid #0f172a' : '1.5px solid rgba(203, 213, 225, 0.8)',
-                                        transition: 'all 0.12s ease-in-out',
-                                        boxShadow: isActive ? '0 3px 8px rgba(15, 23, 42, 0.16)' : 'none',
-                                        '&:hover': {
-                                          transform: 'scale(1.15)',
-                                          border: '2.5px solid #0f172a',
-                                        }
-                                      }}
-                                    >
-                                      <Box
-                                        component="img"
-                                        src={iconData.iconPath}
-                                        alt={iconMeta.name}
-                                        sx={{
-                                          width: 20,
-                                          height: 20,
-                                          filter: isActive ? 'none' : 'opacity(0.35)',
-                                          pointerEvents: 'none'
-                                        }}
-                                      />
-                                    </Box>
-                                  </Tooltip>
-                                );
-                              })}
-                              
-                              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-
-                              <Tooltip title="Save Selection" arrow>
-                                <IconButton
-                                  size="small"
-                                  disabled={!canEdit} onClick={(e) => { e.stopPropagation(); handleSaveFlowIcons(step.id); }}
-                                  color="success"
-                                  sx={{ p: 0.25 }}
-                                >
-                                  <CheckCircleIcon sx={{ fontSize: '1.4rem' }} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          ) : (
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }}>
-                              {Object.keys(FLOW_ICON_COLUMNS).map((key) => {
-                                const isActive = !!icons[key];
-                                if (!isActive) return null;
-                                const iconMeta = FLOW_ICON_COLUMNS[key];
-                                const iconData = getPfdIconMeta(key);
-                                return (
-                                  <Tooltip key={key} title={iconMeta.name} arrow>
-                                    <Stack spacing={0.25} sx={{ alignItems: 'center' }}>
-                                      <Box
-                                        sx={{
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          width: 32,
-                                          height: 32,
-                                          borderRadius: '50%',
-                                          bgcolor: '#ffffff',
-                                          border: '2px solid #0f172a',
-                                          boxShadow: '0 2px 5px rgba(15, 23, 42, 0.08)'
-                                        }}
-                                      >
-                                        <Box
-                                          component="img"
-                                          src={iconData.iconPath}
-                                          alt={iconMeta.name}
-                                          sx={{
-                                            width: 20,
-                                            height: 20,
-                                            userSelect: 'none'
-                                          }}
-                                        />
-                                      </Box>
-                                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
-                                        {iconMeta.short}
-                                      </Typography>
-                                    </Stack>
-                                  </Tooltip>
-                                );
-                              })}
-                            </Box>
-                          )}
-                        </PfdCellWrapper>
+                      {/* Explicit symbols never change the manufacturing activity. */}
+                      <TableCell sx={{ minWidth: 190, maxWidth: 280, p: 1 }} onClick={event => event.stopPropagation()}>
+                        <PfdStepSymbolFields step={step} disabled={!canEdit} compact onChange={(field, value) => handleSymbolChange(step, field, value)} />
                       </TableCell>
 
                       {/* Machines / Machinery / Docs */}
@@ -1550,21 +1414,16 @@ export const PfdWorkspace: React.FC = () => {
                         notched
                         onChange={(e: any) => {
                           const val = e.target.value;
-                          handleFieldChange(selectedStep.id, 'stepType', val);
-                          
-                          // Also sync selected flow icon
-                          const newIcons: Record<string, boolean> = {};
-                          if (val === 'combined') {newIcons.oper = true;newIcons.insp = true;}
-                          else if (val === 'operation') newIcons.oper = true;
-                          else if (val === 'inspection') newIcons.insp = true;
-                          else if (val === 'transport') newIcons.trans = true;
-                          else if (val === 'storage') newIcons.store = true;
-                          else if (val === 'delay') newIcons.wip = true;
-                          else if (val === 'rework') newIcons.rework = true;
-                          else if (val === 'decision') newIcons.decs = true;
-                          
-                          handleFieldChange(selectedStep.id, 'flowIcons', newIcons as any);
-                          setSelectedStep({ ...selectedStep, stepType: val, flowIcons: newIcons });
+                          if (!canEdit) return;
+                          fetch(`${API_BASE_URL}/pfd-steps/${selectedStep.id}`, {
+                            method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ stepType: val, manufacturingSymbolId: null }),
+                          }).then(async response => {
+                            if (!response.ok) throw new Error(await parseApiError(response, 'Could not change activity type'));
+                            setSelectedStep({ ...selectedStep, stepType: val, manufacturingSymbolId: null });
+                            setSteps(previous => previous.map(step => step.id === selectedStep.id ? { ...step, stepType: val, manufacturingSymbolId: null } : step));
+                            setGraphReloadKey(previous => previous + 1);
+                          }).catch(error => showToast(error.message, 'error'));
                         }}
                       >
                         <MenuItem value="operation">Operation (◯)</MenuItem>
@@ -1581,6 +1440,7 @@ export const PfdWorkspace: React.FC = () => {
                         <MenuItem value="decision">Decision (◇)</MenuItem>
                       </Select>
                     </FormControl>
+                    <PfdStepSymbolFields step={selectedStep} disabled={!canEdit} onChange={(field, value) => handleSymbolChange(selectedStep, field, value)} />
                     <TextFieldAny
                       fullWidth
                       label="Special Characteristics Code"
@@ -1744,7 +1604,7 @@ export const PfdWorkspace: React.FC = () => {
                       value={addStepType}
                       label="Step Type"
                       notched
-                      onChange={(e: any) => setAddStepType(e.target.value)}
+                      onChange={(e: any) => { setAddStepType(e.target.value); setAddManufacturingSymbolId(null); }}
                     >
                       <MenuItem value="operation">Operation (◯)</MenuItem>
                       <MenuItem value="inspection">Inspection (□)</MenuItem>
@@ -1760,6 +1620,7 @@ export const PfdWorkspace: React.FC = () => {
                       <MenuItem value="decision">Decision (◇)</MenuItem>
                     </Select>
                   </FormControl>
+                  <PfdStepSymbolFields step={{ stepType: addStepType, manufacturingSymbolId: addManufacturingSymbolId, engineeringSymbolId: addEngineeringSymbolId }} onChange={(field, value) => field === 'engineeringSymbolId' ? setAddEngineeringSymbolId(value) : setAddManufacturingSymbolId(value)} />
                   <TextFieldAny
                     fullWidth
                     label="Special Characteristics Code"
@@ -1850,16 +1711,3 @@ export const PfdWorkspace: React.FC = () => {
 };
 
 export default PfdWorkspace;
-
-// Flow Icons column definitions
-const FLOW_ICON_COLUMNS: Record<string, { label: string; short: string; sym: string; name: string }> = {
-  trans: { label: 'TRANS.', short: 'TRNS', sym: '⇨', name: 'Transport' },
-  recArea: { label: 'Rec. Area', short: 'REC', sym: '📥', name: 'Receiving Area' },
-  store: { label: 'STORE', short: 'STR', sym: '▽', name: 'Storage (Main)' },
-  wip: { label: 'WIP @ Line', short: 'WIP', sym: '☉', name: 'Work in Progress' },
-  oper: { label: 'OPER.', short: 'OPER', sym: '◯', name: 'Operation' },
-  insp: { label: 'INSP.', short: 'INSP', sym: '□', name: 'Inspection' },
-  decs: { label: 'DECS.', short: 'DEC', sym: '◇', name: 'Decision' },
-  rework: { label: 'REWORK', short: 'REW', sym: 'Ⓡ', name: 'Rework' },
-  reject: { label: 'REJECT', short: 'REJ', sym: '✕', name: 'Reject' },
-};

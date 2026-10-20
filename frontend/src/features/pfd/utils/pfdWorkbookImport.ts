@@ -1,3 +1,4 @@
+import {getPfdSymbol} from './pfdSymbols.ts';
 import type { PfdGraph } from "./pfdGraph";
 export interface WorkbookTopology {
   graph: PfdGraph;
@@ -8,7 +9,7 @@ export function parseWorkbookTopology(
   rows: unknown[][],
 ): WorkbookTopology | null {
   if (!rows.length || rows[0]?.[0] !== "FMEApex process graph") return null;
-  if (rows[0]?.[1] !== "schemaVersion=1")
+  if (!["schemaVersion=1","schemaVersion=2"].includes(String(rows[0]?.[1])))
     throw new Error("Unsupported FMEApex graph version");
   const end = rows.findIndex((row) => row[0] === "END GRAPH");
   if (end < 2) throw new Error("Incomplete graph metadata");
@@ -19,14 +20,16 @@ export function parseWorkbookTopology(
       .join(""),
   ) as PfdGraph;
   if (
-    graph.schemaVersion !== 1 ||
-    graph.notation !== "manufacturing-v1" ||
+    ![1,2].includes(graph.schemaVersion) ||
+    !["manufacturing-v1","engineering-v1"].includes(graph.notation) ||
     !Array.isArray(graph.nodes) ||
     !Array.isArray(graph.edges)
   )
     throw new Error("Invalid graph metadata");
   if (graph.nodes.length > 5000 || graph.edges.length > 15000)
     throw new Error("Process graph exceeds supported size");
+  if(graph.schemaVersion===2 && (!['manufacturing','engineering'].includes(graph.displayMode||'') || !['horizontal','vertical'].includes(graph.layoutDirection||''))) throw new Error('Invalid diagram display settings');
+  const coordinate=(p:unknown)=>{const v=p as {x:number;y:number};return v&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&Math.abs(v.x)<=100000&&Math.abs(v.y)<=100000;};
   const ids = new Set<string>();
   for (const node of graph.nodes) {
     if (
@@ -42,6 +45,7 @@ export function parseWorkbookTopology(
         "hold",
         "scrap",
         "return",
+        "annotation",
       ].includes(node.kind) ||
       !Number.isFinite(node.x) ||
       !Number.isFinite(node.y)
@@ -51,6 +55,8 @@ export function parseWorkbookTopology(
       throw new Error("Invalid or repeated graph node");
     if (node.kind === "step" && typeof node.stepId !== "string")
       throw new Error("Operation graph node has no reference");
+    if((node.width!==undefined&&(!Number.isFinite(node.width)||node.width<20||node.width>3000))||(node.height!==undefined&&(!Number.isFinite(node.height)||node.height<20||node.height>3000)))throw new Error('Invalid node size');
+    if(node.symbolId!==undefined&&(typeof node.symbolId!=='string'||node.symbolId.length>150||!getPfdSymbol(node.symbolId)))throw new Error('Invalid symbol reference');
     ids.add(node.id);
   }
   const edgeIds = new Set<string>();
@@ -73,6 +79,10 @@ export function parseWorkbookTopology(
       typeof edge.label !== "string" || edge.label.length > 500 || edge.source === edge.target
     )
       throw new Error("Invalid graph connection");
+    if([edge.sourcePort,edge.targetPort].some(p=>p!==undefined&&!['north','east','south','west'].includes(p)))throw new Error('Invalid connection port');
+    if([edge.points,edge.junctions].some(points=>points!==undefined&&(!Array.isArray(points)||points.length>1000||!points.every(coordinate))))throw new Error('Invalid connection geometry');
+    if(edge.labelPosition!==undefined&&!coordinate(edge.labelPosition))throw new Error('Invalid connection label geometry');
+    if(graph.nodes.some(n=>n.kind==='annotation'&&(n.id===edge.source||n.id===edge.target)))throw new Error('Annotations cannot serve as process connections');
     edgeIds.add(edge.id);
   }
   if (rows[end + 1]?.[0] !== "operation-id")

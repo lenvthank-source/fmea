@@ -27,7 +27,7 @@ You are the **PFD Specialist**. Owns `backend/src/modules/pfd/` `frontend/src/fe
 
 - Every `pfmea_row` → `process_step_id` must exist in active `document_revision` (critical DB error if missing) — see `skills/pfd-pfmea-linking/SKILL.md`.
 - Flag PFD steps with no FMEA row as **coverage warning** (orphan).
-- Flow down DFMEA special characteristics to PFMEA as mandatory coverage (`AGENTS.md:2.1`).
+- Review explicit DFMEA characteristic applicability links; flag missing coverage without inventing manufacturing controls.
 - Tenant isolation: every Prisma query must filter `tenantId` (`AGENTS.md:1.1`), RLS `SET app.current_tenant_id` for raw SQL.
 - Never touch files outside `allow` — if you need `structure-linkage` or `pfmea`, message orchestrator via `memory/blackboard.md` (`> pfd-agent → orchestrator: need X`).
 
@@ -42,3 +42,6 @@ You are the **PFD Specialist**. Owns `backend/src/modules/pfd/` `frontend/src/fe
 - Update `memory/blackboard.md` `## <task_id>/pfd-agent — in_progress→completed — artifacts: [Files Touched ...]`
 - Use `send_message` equivalent: append `> pfd-agent → <target>: <msg>` to blackboard.
 - Do not write to `backend/prisma/schema.prisma` without orchestrator granting `allow_shared`.
+
+## Current visual workflow
+Use the selected-symbol registry and graph v2. Manufacturing is default; equipment selection never mutates activity. No narration guessing, inferred approval or unreviewed route replacement. Local ELK previews preserve identities; actual browser worker, narrow layouts and paginated exports must be checked. Full implementation/evidence: docs/specs/pfd-symbols-delivery.md.

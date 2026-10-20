@@ -48,6 +48,7 @@ import {
   remapWorkbookTopology,
   type WorkbookTopology,
 } from "../utils/pfdWorkbookImport";
+import { getPfdSymbol, isEngineeringSymbol, isManufacturingSymbolCompatible } from "../utils/pfdSymbols";
 import { API_BASE_URL } from "../../../config";
 import { getPfdIconMeta } from "../utils/pfdIconMap";
 import { dialogSelectMenuProps } from "../../../theme/muiSelectConfig";
@@ -57,6 +58,8 @@ interface ProcessStep {
   stepNumber: string;
   name: string;
   stepType: string;
+  manufacturingSymbolId?: string | null;
+  engineeringSymbolId?: string | null;
   incomingVariation?: string[];
   specialCharacteristics?: string;
   flowIcons?: Record<string, boolean>;
@@ -66,6 +69,8 @@ interface ProcessStep {
 }
 
 type PfdFieldKey =
+  | "manufacturingSymbolId"
+  | "engineeringSymbolId"
   | "stepType"
   | "stepNumber"
   | "stepName"
@@ -95,6 +100,8 @@ interface ParsedRow {
 
 interface DraftStep {
   stepType: string;
+  manufacturingSymbolId?: string | null;
+  engineeringSymbolId?: string | null;
   include: boolean;
   stepNumber: string;
   name: string;
@@ -116,6 +123,8 @@ interface DiffResult {
 
 const FIELD_OPTIONS: { value: PfdFieldKey | "ignore"; label: string }[] = [
   { value: "stepType", label: "Activity type" },
+  { value: "manufacturingSymbolId", label: "Manufacturing symbol ID" },
+  { value: "engineeringSymbolId", label: "Engineering symbol ID" },
   { value: "stepNumberName", label: "Step # & Name (combined split)" },
   { value: "stepNumber", label: "Step # / OP #" },
   { value: "stepName", label: "Process Description / Name" },
@@ -138,6 +147,8 @@ const FIELD_OPTIONS: { value: PfdFieldKey | "ignore"; label: string }[] = [
 
 const EXACT_HEADER_SYNONYMS: Record<PfdFieldKey, string[]> = {
   stepType: ["activity type", "step type"],
+  manufacturingSymbolId: ["manufacturing symbol id", "manufacturingsymbolid"],
+  engineeringSymbolId: ["engineering symbol id", "engineeringsymbolid"],
   stepNumber: [
     "step #",
     "step no",
@@ -290,6 +301,10 @@ function splitMultiline(str: string): string[] {
 
 function getFieldValue(step: DraftStep, field: PfdFieldKey): string {
   switch (field) {
+    case "manufacturingSymbolId":
+      return step.manufacturingSymbolId || "";
+    case "engineeringSymbolId":
+      return step.engineeringSymbolId || "";
     case "stepType":
       return step.stepType;
     case "stepNumber":
@@ -325,6 +340,11 @@ function stepsEqual(a: DraftStep, b: ProcessStep, field: PfdFieldKey): boolean {
   const aVal = getFieldValue(a, field).toLowerCase();
   let bVal: string;
   switch (field) {
+    case "manufacturingSymbolId":
+    case "engineeringSymbolId":
+      if (a[field] === undefined) return true;
+      bVal = b[field] || "";
+      break;
     case "stepType":
       bVal = (b.stepType || "").toLowerCase();
       break;
@@ -610,6 +630,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       const step: DraftStep = {
         include: true,
         stepType: "operation",
+        manufacturingSymbolId: headers.some(header => columnMapping[header] === "manufacturingSymbolId") ? null : undefined,
+        engineeringSymbolId: headers.some(header => columnMapping[header] === "engineeringSymbolId") ? null : undefined,
         stepNumber,
         name,
         incomingVariation: "",
@@ -636,6 +658,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         const val = row[h] || "";
         if (!val) continue;
         switch (target) {
+          case "manufacturingSymbolId":
+          case "engineeringSymbolId":
+            step[target] = val.trim();
+            break;
           case "stepType":
             step.stepType = val.toLowerCase().trim();
             break;
@@ -743,6 +769,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         const fields: PfdFieldKey[] = [
           "stepNumberName",
           "stepType",
+          "manufacturingSymbolId",
+          "engineeringSymbolId",
           "incomingVariation",
           "specialCharacteristics",
           "machinesEquipmentDocs",
@@ -799,6 +827,10 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     field: PfdFieldKey,
   ): string {
     switch (field) {
+      case "manufacturingSymbolId":
+        return step.manufacturingSymbolId || "";
+      case "engineeringSymbolId":
+        return step.engineeringSymbolId || "";
       case "stepType":
         return step.stepType;
       case "stepNumberName":
@@ -891,6 +923,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         "return",
         "combined",
       ];
+      if (toImport.some(step => !isManufacturingSymbolCompatible(step.manufacturingSymbolId, step.stepType) || !isEngineeringSymbol(step.engineeringSymbolId)))
+        throw new Error("A symbol ID is unknown or incompatible with the declared manufacturing activity. Correct it before importing.");
       if (toImport.some((step) => !allowedTypes.includes(step.stepType)))
         throw new Error(
           "An activity type is unsupported. Correct the source workbook before importing.",
@@ -946,6 +980,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               : [],
             specialCharacteristics: s.specialCharacteristics || null,
             flowIcons: s.flowIcons,
+            manufacturingSymbolId: s.manufacturingSymbolId,
+            engineeringSymbolId: s.engineeringSymbolId,
             machinesEquipmentDocs: s.machinesEquipmentDocs
               ? splitMultiline(s.machinesEquipmentDocs)
               : [],
@@ -1015,6 +1051,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               : [],
             specialCharacteristics: s.specialCharacteristics || null,
             flowIcons: s.flowIcons,
+            manufacturingSymbolId: s.manufacturingSymbolId,
+            engineeringSymbolId: s.engineeringSymbolId,
             machinesEquipmentDocs: s.machinesEquipmentDocs
               ? splitMultiline(s.machinesEquipmentDocs)
               : [],
@@ -1064,6 +1102,8 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               : [],
             specialCharacteristics: s.draftStep!.specialCharacteristics || null,
             flowIcons: s.draftStep!.flowIcons,
+            manufacturingSymbolId: s.draftStep!.manufacturingSymbolId,
+            engineeringSymbolId: s.draftStep!.engineeringSymbolId,
             machinesEquipmentDocs: s.draftStep!.machinesEquipmentDocs
               ? splitMultiline(s.draftStep!.machinesEquipmentDocs)
               : [],
@@ -1159,6 +1199,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
     }
   };
 
+  const invalidSymbolRows = draftSteps.filter((step, index) => selectedRows.has(index) &&
+    (!isManufacturingSymbolCompatible(step.manufacturingSymbolId, step.stepType) || !isEngineeringSymbol(step.engineeringSymbolId)));
+
   const downloadTemplate = async () => {
     try {
       const ExcelJS = await import("exceljs");
@@ -1181,6 +1224,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         "Machine(s) / Equipment(s) used/ Documents",
         "Desired outcome / Product characteristics",
         "Process characteristics",
+        "Activity type",
+        "Manufacturing symbol ID",
+        "Engineering symbol ID",
       ];
 
       ws.addRow(headers);
@@ -1222,6 +1268,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
         "CNC Drilling Machine D-01\nDrill Bit Ø10mm",
         "Hole diameter Ø10.0 ± 0.1mm\nSurface finish Ra 3.2",
         "Spindle speed 1200 RPM\nFeed rate 0.15 mm/rev",
+        "combined",
+        "manufacturing.combined",
+        "",
       ]);
 
       // Style data rows
@@ -1791,6 +1840,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
                       >
                         {symbolsText}
                       </Typography>
+                      <Typography variant="caption" sx={{ display: "block" }}>Activity: {step.stepType}</Typography>
+                      <Typography variant="caption" sx={{ display: "block" }}>{step.manufacturingSymbolId ? getPfdSymbol(step.manufacturingSymbolId)?.label || step.manufacturingSymbolId : 'Manufacturing default'}</Typography>
+                      <Typography variant="caption" sx={{ display: "block" }}>{step.engineeringSymbolId ? getPfdSymbol(step.engineeringSymbolId)?.label || step.engineeringSymbolId : 'Equipment not selected'}</Typography>
                     </TableCell>
                     <TableCell
                       sx={{
@@ -2577,6 +2629,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
             {error}
           </Alert>
         )}
+        {activeStep >= 2 && invalidSymbolRows.length > 0 && <Alert severity="error" sx={{ m: 1.5 }}>
+          Unsupported or incompatible symbols in operations: {invalidSymbolRows.map(step => step.stepNumber).join(', ')}. Go back to column mapping or correct the workbook. No rows will be imported until these are resolved.
+        </Alert>}
         {report && (
           <Alert severity="success" sx={{ m: 1.5 }}>
             {report}
@@ -2696,6 +2751,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
               size="large"
               startIcon={<SaveIcon />}
               onClick={handleImport}
+              disabled={invalidSymbolRows.length > 0}
               sx={{ fontWeight: 700 }}
             >
               {completed
@@ -2716,9 +2772,9 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({
       case 1:
         return parsedData !== null;
       case 2:
-        return draftSteps.length > 0 && selectedRows.size > 0;
+        return draftSteps.length > 0 && selectedRows.size > 0 && invalidSymbolRows.length === 0;
       case 3:
-        return selectedRows.size > 0;
+        return selectedRows.size > 0 && invalidSymbolRows.length === 0;
       default:
         return true;
     }

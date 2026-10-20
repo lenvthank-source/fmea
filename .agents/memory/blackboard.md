@@ -122,3 +122,13 @@ Shared by all agents and the head orchestrator in any IDE/model. Append-only; pr
 > orchestrator: granting allow_shared to cp_workspace for frontend/src/features/linkage/** and its tests/README: integrate canonical Control Plan and explicit identity-based lineage after replacing legacy storage; no backend edits.
 
 > orchestrator: granting allow_shared to control_plan_audit for backend/src/modules/project/project.service.ts, project.controller.ts and new scoped regression tests: close deletion/activation bypasses of approved-history and trial/reference protections; preserve parent readiness/cloning changes.
+
+## 2026-10-20 — PFD symbols and automatic diagrams — APPROVED / in_progress
+> user -> orchestrator: Implement full approved PFD symbol/library/layout/reference plan. No version bump or push.
+> orchestrator: granting allow_shared to pfd_backend for backend/src/modules/pfd/**, backend/prisma/schema.prisma, new additive migration, and narrowly scoped project.service.ts clone symbol/graph preservation. Parent owns registry JSON files in backend/src/modules/pfd/pfd-symbols.json and frontend/src/features/pfd/symbols/pfd-symbols.json.
+> orchestrator: granting allow_shared to pfd_canvas for frontend/src/features/pfd/components/PfdEngineeringCanvas.tsx, pfd-engineering.css, frontend/src/features/pfd/utils/pfdGraph.ts, pfdPrint.ts, pfdWorkbookImport.ts and related tests; new layout worker/helper; frontend/package.json and package-lock.json for elkjs only.
+> orchestrator: granting allow_shared to pfd_table for frontend/src/features/pfd/PfdWorkspace.tsx, StepFormDialog.tsx, ExcelImportWizard.tsx, new BrowseShapesDialog and symbol helper/tests. Registry JSON authored by parent, table agent owns helper code under symbols/ except JSON.
+> orchestrator: parent owns source inventory/reference downloads, original SVG registry generation, final integration/builds/QA/docs. Agents must use graphify query before source search/read and preserve concurrent files. Max4 active agents including parent. Run scoped tests, avoid simultaneous full production builds/graph rebuilds until parent final.
+
+> orchestrator: granting allow_shared to pfd_backend for backend/tsconfig.json resolveJsonModule required to bundle the validated symbol registry; parent owns responsive DocumentHeader integration and generated catalog copies.
+> orchestrator -> all: PFD slices completed;174backendtests,43frontendchecks, builds and realbrowser/database/PDFacceptance passed. Sameagents resumed successfully after quota interruptions. See ACTIVE_STATE and docs/specs/pfd-symbols-delivery.md for current unpublished state and public native-export/standards limitations.

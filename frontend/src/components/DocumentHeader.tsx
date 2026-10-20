@@ -148,6 +148,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
       borderRadius: '12px', 
       bgcolor: '#ffffff', 
       overflow: 'hidden',
+      minWidth: 0,
       position: 'sticky',
       top: 0,
       zIndex: 1350, /* Placed above modal backdrops (1300) so it is never dimmed or blurred when adding functions/failures/steps */
@@ -164,7 +165,11 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
         borderBottom: '1px solid #e2e8f0',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 1,
+        '& > *': { minWidth: 0, maxWidth: '100%' },
+        '& .MuiTypography-root': { overflowWrap: 'anywhere' }
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.95rem' }}>
@@ -186,7 +191,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
         </Box>
         <Box 
           onClick={() => setExpanded(!expanded)}
-          sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', userSelect: 'none' }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', cursor: 'pointer', userSelect: 'none' }}
         >
           <Chip
             label={statusProps.label}
@@ -199,6 +204,8 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
           </Typography>
           <IconButton 
             size="small"
+            aria-label={expanded ? 'Hide document header details' : 'Show full document header'}
+            aria-expanded={expanded}
             sx={{ border: '1px solid #e4e4e7', borderRadius: '6px', p: 0.25 }}
           >
             {expanded ? <ExpandLessIcon sx={{ fontSize: '0.9rem' }} /> : <ExpandMoreIcon sx={{ fontSize: '0.9rem' }} />}

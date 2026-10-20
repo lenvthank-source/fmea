@@ -16,3 +16,10 @@ test('malformed metadata and ambiguous destination operation numbers reject',()=
  const bad={...graph,edges:[{id:'bad',source:'missing',target:'a',kind:'normal',label:''}]};assert.throws(()=>parseWorkbookTopology([rows[0],[JSON.stringify(bad)],...rows.slice(2)]),/connection/);
  assert.equal(parseWorkbookTopology([['Regular Excel file']]),null);
 });
+
+test('v2 round trip preserves explicit symbol, ports, annotation, geometry and reviewed routes as draft',()=>{
+ const v2={...graph,schemaVersion:2,notation:'engineering-v1',displayMode:'engineering',layoutDirection:'horizontal',nodes:[...graph.nodes,{id:'note',kind:'annotation',symbolId:'arrow.right',x:700,y:20,width:260,height:174}],edges:graph.edges.map(e=>({...e,sourcePort:'east',targetPort:'west',points:[{x:80,y:20},{x:300,y:20}],labelPosition:{x:120,y:10}}))};
+ const result=remapWorkbookTopology(parseWorkbookTopology([['FMEApex process graph','schemaVersion=2'],[JSON.stringify(v2)],...rows.slice(2)]),[{id:'new-a',stepNumber:'10'},{id:'new-b',stepNumber:'20'}],['10','20']);
+ assert.equal(result.graph.schemaVersion,2);assert.equal(result.graph.displayMode,'engineering');assert.equal(result.graph.nodes.at(-1).symbolId,'arrow.right');assert.deepEqual(result.graph.edges[0].points,v2.edges[0].points);assert.equal(result.graph.reviewStatus,'draft');
+ const invalid={...v2,edges:[{...v2.edges[0],points:[{x:Infinity,y:5}]}]};assert.throws(()=>parseWorkbookTopology([['FMEApex process graph','schemaVersion=2'],[JSON.stringify(invalid)],...rows.slice(2)]),/geometry/);
+});

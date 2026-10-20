@@ -22,6 +22,10 @@ Native XLSX and printable documents cover the entire selected revision. Native w
 
 Verification and remaining methodology limits: [controlled engineering delivery](docs/specs/controlled-engineering-delivery.md). Start agent work from [.agents/ACTIVE_STATE.md](.agents/ACTIVE_STATE.md). Release [v0.11.0](versions/v0.11.0.md) records the user-approved controlled-engineering implementation, validation and remaining reference gates.
 
+## PFD symbol and layout upgrade (working changes)
+
+Manufacturing notation remains the default, with optional explicit engineering symbols, a searchable original shape library and reviewable automatic layout. Selected equipment does not change operation meaning. Existing routing and downstream identities remain protected. See the [PFD delivery checklist](docs/specs/pfd-symbols-delivery.md) and [reference inventory](docs/references/README.md) for implementation, verification and source limitations. These changes are not yet committed or published.
+
 ## Project Structure
 
 - [backend/](file:///f:/proj-fmea/backend/) - NestJS API Service & Prisma ORM database layer

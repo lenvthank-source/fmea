@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.12.0.md` — Explicit PFD symbols, reviewed automatic diagrams, protected graph v2, complete diagram exports and reference inventory.
 - `v0.11.0.md` — Controlled DFMEA and phase-specific Control Plan workflows, reviewed source synchronization, protected revision history, complete engineering exports and verified handoff.
 - `v0.10.1.md` — Resilient PFD graph fallback, token-guarded step fetching, non-fatal Excel export, and admin archived project visibility.
 - `v0.10.0.md` — Complete public identity, permanent trial usernames, compact workspace cards, visual package repository, explicit PFD routing/import/export and review-readiness policy.

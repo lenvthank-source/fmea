@@ -10,3 +10,6 @@ Run from backend with configured environment using `node scripts/backfill-public
 - `render-engineering-print-fixtures.cjs [output-directory]`: generates synthetic full-revision HTML using the actual frontend print adapter for independent PDF layout inspection. No browser automation or real data access.
 
 Database scripts use `node --env-file=.env scripts/<name>.cjs`. Never print environment secrets or synthetic credential manifests into logs. Fixture approval means QA workflow verification only, not a production engineering approval or a standards-conformity claim.
+
+- `verify-pfd-symbols.cjs`: `verify` runs105-operation/symbol/v2/concurrency/trial/approval/clone checks in an always-rolled-back transaction. `seed`, `activate-large <manifest>` and `cleanup <manifest>` manage a marker-verified isolated normal-login browser fixture with tenant-local non-admin roles; never print its temporary credentials.
+- `render-pfd-print-fixture.mjs <output-directory>`: actual shared renderer produces105-operation SVG/PDF-print HTML in both modes for offline pagination inspection; no browser automation or real project access.

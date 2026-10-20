@@ -95,3 +95,5 @@ graphify-out/.rebuild.lock
 !/backend/scripts/README.md
 !/backend/test/README.md
 !/frontend/src/**/README.md
+!/scripts/README.md
+!/docs/references/README.md

@@ -11,7 +11,20 @@ export class UpdateStepDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['operation', 'inspection', 'transport', 'storage', 'delay', 'rework', 'repair', 'decision', 'combined', 'hold', 'scrap', 'return'])
+  @IsIn([
+    'operation',
+    'inspection',
+    'transport',
+    'storage',
+    'delay',
+    'rework',
+    'repair',
+    'decision',
+    'combined',
+    'hold',
+    'scrap',
+    'return',
+  ])
   stepType?: string;
 
   @IsString()
@@ -36,6 +49,14 @@ export class UpdateStepDto {
   @IsObject()
   @IsOptional()
   flowIcons?: any;
+
+  @IsString()
+  @IsOptional()
+  manufacturingSymbolId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  engineeringSymbolId?: string | null;
 
   @IsOptional()
   machinesEquipmentDocs?: any;

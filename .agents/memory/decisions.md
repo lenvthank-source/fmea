@@ -157,3 +157,6 @@ Adopt dedicated revision-owned DFMEA and phase-specific Control Plan aggregates 
 
 ## 2026-10-20 — User-confirmed v0.11.0 publication
 The user requested Git push, README sync and handoff and explicitly confirmed minor version0.11.0. Release ledger: versions/v0.11.0.md:1. Synchronize all manifests/lockfiles and commit controlled engineering implementation with its tests, additive migration, evidence limits and Graphify output. Numerical standards verification and11 legacy sampling decisions remain open; publication does not certify conformity.
+
+##2026-10-20 — PFD symbol and routing presentation (unreleased)
+User approved dual modes with Manufacturing default, explicit table symbols, reviewed sequence generation and whole publicly discoverable reference inventory. Introduced graphv2 and additive symbol columns; renderer/export geometry shared. No route/equipment guessing, sourceSVGshipping or exact-standard glyph claims. Public editable native exports remain unavailable; vector previews archived separately. Runtime/browser/PDF acceptance recorded in docs/specs/pfd-symbols-delivery.md. No release version or Git publication authorized.
