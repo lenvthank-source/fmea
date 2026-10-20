@@ -167,3 +167,6 @@ User requested `handoff_plan` in personal `~/.agents/skills` for compatible harn
 
 ## 2026-10-21 — Classic manufacturing symbols restoration (v0.12.1)
 User confirmed patch version bump to 0.12.1 and requested git push. Restored authentic classic manufacturing outlines (Operation = circle, Inspection = square, Transport = arrow, Storage = inverted triangle, Decision = diamond, Rework = pentagon outline, Combined = circle-in-square) and route markers (marker.wip, marker.reject) across 417 catalog symbols. Added compact PFD table cell, single primary activity selection, and atomic step patching. Full release ledger: `versions/v0.12.1.md`.
+
+## 2026-10-21 — PFD multi-flow symbols restoration & architectural invariants (v0.12.2)
+User confirmed patch version bump to 0.12.2 and requested git push. Restored multi-flow symbol support in PFD tables per AIAG-VDA 2019 / ASME process chart standards, eliminating the artificial single-symbol restriction caused by conflating flowchart node geometry with table attributes. Codified Rule 2.1.1 in `.agents/AGENTS.md` §2.1 and hard invariant in `.agents/agents/pfd/AGENT.md`. Added side-by-side SVG badges in table cells, non-destructive multi-select toggling in BrowseShapesDialog and Step Form Drawers, and formatted multi-activity Excel export. Full release ledger: `versions/v0.12.2.md`.

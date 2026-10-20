@@ -1,5 +1,5 @@
 import type { ProcessStep } from '../PfdWorkspace';
-import { getPfdSymbol, resolveStepSymbol } from './pfdSymbols.ts';
+import { getPfdSymbol, resolveStepSymbol, FLOW_SYMBOL_DEFINITIONS } from './pfdSymbols.ts';
 
 export interface PfdNode {
   id: string;
@@ -44,6 +44,14 @@ export function pfdActivityFromSymbols(icons: Partial<Record<string, boolean>> =
 }
 export function pfdActivityType(step?: ProcessStep): string {
   if (!step) return '';
+  return step.stepType;
+}
+export function pfdFormattedActivities(step?: ProcessStep): string {
+  if (!step) return '';
+  if (step.flowIcons && typeof step.flowIcons === 'object') {
+    const active = FLOW_SYMBOL_DEFINITIONS.filter(d => !!step.flowIcons?.[d.key]).map(d => d.name);
+    if (active.length > 0) return active.join(', ');
+  }
   return step.stepType;
 }
 export function derivePfdGraph(steps: ProcessStep[]): PfdGraph {
@@ -171,7 +179,7 @@ export async function exportPfdWorkbook(graph: PfdGraph, steps: ProcessStep[], p
   sheet.mergeCells('A2:J2'); sheet.getCell('A2').value = `Part: ${project.orgPartNumber || '—'} | Revision: ${project.revisionNumber || '—'} | Customer: ${project.customer || '—'}`;
   sheet.mergeCells('A3:J3'); sheet.getCell('A3').value = `Topology: ${graph.reviewStatus} | ${graph.displayMode || 'manufacturing'} | Draft/example data requires engineering review`;
   sheet.addRow(['Operation', 'Process description', 'Variation sources', 'Special characteristics', 'Activity type', 'Equipment / documents', 'Desired outcome', 'Process characteristics', 'Manufacturing symbol ID', 'Engineering symbol ID']);
-  steps.forEach(s => sheet.addRow([s.stepNumber, s.name, listValue(s.incomingVariation), s.specialCharacteristics || '', pfdActivityType(s),
+  steps.forEach(s => sheet.addRow([s.stepNumber, s.name, listValue(s.incomingVariation), s.specialCharacteristics || '', pfdFormattedActivities(s),
     listValue(s.machinesEquipmentDocs), listValue(s.desiredOutcome), listValue(s.processCharacteristics), s.manufacturingSymbolId || '', s.engineeringSymbolId || '']));
   sheet.views = [{ state: 'frozen', ySplit: 4 }];
   sheet.autoFilter = { from: 'A4', to: `J${Math.max(4, sheet.rowCount)}` };

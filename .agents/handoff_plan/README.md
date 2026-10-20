@@ -4,6 +4,7 @@ Canonical location: `.agents/handoff_plan/<plan-slug>/PLAN.md`. Keep evidence an
 
 ## Plan index
 
+- [Restore multi-flow symbols in PFD tables](pfd-multi-flow-symbols/PLAN.md) — `pfd-multi-flow-symbols`, revision 1. Status: `completed` (2026-10-21). Root-cause analysis of single-symbol restriction, hard PFD engineering rules codification, table multi-symbol display and multi-toggle popover, and step drawer multi-select. 28/28 frontend tests and 174/174 backend tests pass.
 - [Restore original manufacturing symbols](pfd-classic-manufacturing-symbols/PLAN.md) — `pfd-classic-manufacturing-symbols`, revision 1. Status: `completed` (2026-10-21). Original manufacturing palette restored as default, authentic outlines, compact table cell with Needs review indicator, atomic PATCH step updates. All 174 backend tests & 27 frontend tests pass.
 
 Existing historical delivery reports remain in `docs/specs/`; they have not been reclassified as pending plans.

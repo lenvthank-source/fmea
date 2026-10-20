@@ -31,11 +31,13 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
   const [resources, setResources] = useState('');
   const [manufacturingSymbolId, setManufacturingSymbolId] = useState<string | null>(null);
   const [engineeringSymbolId, setEngineeringSymbolId] = useState<string | null>(null);
+  const [flowIcons, setFlowIcons] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setManufacturingSymbolId(stepToEdit?.manufacturingSymbolId || null);
     setEngineeringSymbolId(stepToEdit?.engineeringSymbolId || null);
+    setFlowIcons(stepToEdit?.flowIcons || {});
     if (stepToEdit) {
       setStepNumber(stepToEdit.stepNumber);
       setName(stepToEdit.name);
@@ -63,6 +65,7 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
         stepType,
         manufacturingSymbolId,
         engineeringSymbolId,
+        flowIcons,
         inputs: inputs || null,
         outputs: outputs || null,
         resources: resources || null,
@@ -136,7 +139,17 @@ export const StepFormDialog: React.FC<StepFormDialogProps> = ({ open, onClose, o
             ))}
           </TextField>
 
-          <PfdStepSymbolFields disabled={loading} step={{ stepType, manufacturingSymbolId, engineeringSymbolId, flowIcons: stepToEdit?.flowIcons }} onChange={(field, value) => field === 'engineeringSymbolId' ? setEngineeringSymbolId(value) : setManufacturingSymbolId(value)} />
+          <PfdStepSymbolFields
+            disabled={loading}
+            step={{ stepType, manufacturingSymbolId, engineeringSymbolId, flowIcons }}
+            onChange={(field, value) => field === 'engineeringSymbolId' ? setEngineeringSymbolId(value) : setManufacturingSymbolId(value)}
+            onAtomicChange={(updates) => {
+              if (updates.stepType) setStepType(updates.stepType);
+              if (updates.manufacturingSymbolId !== undefined) setManufacturingSymbolId(updates.manufacturingSymbolId);
+              if (updates.engineeringSymbolId !== undefined) setEngineeringSymbolId(updates.engineeringSymbolId);
+              if (updates.flowIcons) setFlowIcons(updates.flowIcons);
+            }}
+          />
 
           <TextField
             fullWidth

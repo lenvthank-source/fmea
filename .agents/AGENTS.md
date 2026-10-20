@@ -46,10 +46,11 @@ The [engineering rule register](context/engineering-rule-register.md) distinguis
 
 ## 2. Process-Specific Customization Rules
 
-### 2.1 PFD ↔ PFMEA Bidirectional Linking
+### 2.1 PFD ↔ PFMEA Bidirectional Linking & Flow Symbol Multiplicity
 - **Verification Rule**: A PFMEA row cannot reference a process step that is missing from the Process Flow Diagram (PFD).
 - **Orphan Flagging**: Flag manufacturing activities lacking analysis; connectors require no invented FMEA rows. Record justified exclusions.
 - **Special Characteristics Flow-Down**: Track explicit reviewed DFMEA-to-PFMEA characteristic references and applicability/exclusion decisions; never infer severity or manufacturing controls from text matching.
+- **Flow Symbol Multiplicity**: In standard manufacturing process charts (AIAG-VDA 2019, ASME Standard for Process Charts, ISO 9001), a single process step frequently encompasses multiple simultaneous flow activities (e.g. Operation + In-Process Inspection, Receiving + Incoming Inspection, Conveyor Transport + Wash, In-Line Inspection + Reject Routing). Restricting a PFD table row to a single flow symbol is an engineering domain violation. The PFD table "Flow Symbols" column must support multi-selection and render all active symbols side-by-side (`flowIcons`). Diagram canvas flowchart nodes derive their primary geometry hierarchically from active symbols (e.g. Operation + Inspection = Combined circle-in-square) or explicit equipment selection, while preserving the complete multi-symbol set.
 
 ### 2.2 Control Plan (CP) Synchronization
 - **Reviewed Mapping**: Canonical Control Plan sync is preview -> resolve -> apply over explicit baselines, with reasoned coverage exclusions and source fingerprints. Old destructive generation is retired. No automatic reverse propagation.

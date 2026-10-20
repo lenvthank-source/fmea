@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PFD_SYMBOLS, getPfdSymbol, isEngineeringSymbol, isManufacturingSymbolCompatible, legacyManufacturingSymbol, resolveStepSymbol, escapePfdSymbolLabel, CLASSIC_MANUFACTURING_IDS, getClassicManufacturingSymbol, getMarkerSymbol } from './pfdSymbols.ts';
+import { PFD_SYMBOLS, getPfdSymbol, isEngineeringSymbol, isManufacturingSymbolCompatible, legacyManufacturingSymbol, resolveStepSymbol, escapePfdSymbolLabel, CLASSIC_MANUFACTURING_IDS, getClassicManufacturingSymbol, getMarkerSymbol, FLOW_SYMBOL_DEFINITIONS, getActiveFlowSymbols, derivePrimaryStepType, toggleFlowIcon } from './pfdSymbols.ts';
 
 test('every catalog entry has unique stable identity, accessible label, bounded ports and safe geometry', () => {
   assert.equal(new Set(PFD_SYMBOLS.map(symbol => symbol.id)).size, PFD_SYMBOLS.length);
@@ -70,4 +70,30 @@ test('classic manufacturing symbols and markers maintain authentic outlines', ()
 test('export label escaping preserves Unicode and rejects active markup as text', () => {
   assert.equal(escapePfdSymbolLabel('<script>"\'&日本'), '&lt;script&gt;&quot;&apos;&amp;日本');
   assert.equal(getPfdSymbol('missing'), undefined);
+});
+
+test('multi-flow symbols support multiple concurrent activities per PFD standards', () => {
+  assert.equal(FLOW_SYMBOL_DEFINITIONS.length, 9);
+  
+  // Test multiple active symbols co-existing
+  const multi = { oper: true, insp: true, trans: true, wip: true };
+  const active = getActiveFlowSymbols(multi);
+  assert.equal(active.length, 4);
+  assert.deepEqual(active.map(a => a.key), ['oper', 'insp', 'trans', 'wip']);
+
+  // Test primary derivation
+  assert.equal(derivePrimaryStepType({ oper: true, insp: true }), 'combined');
+  assert.equal(derivePrimaryStepType({ oper: true, trans: true }), 'operation');
+  assert.equal(derivePrimaryStepType({ insp: true }), 'inspection');
+  assert.equal(derivePrimaryStepType({ trans: true }), 'transport');
+  assert.equal(derivePrimaryStepType({ store: true }), 'storage');
+
+  // Test independent toggling without clearing others
+  let icons = { oper: true };
+  icons = toggleFlowIcon(icons, 'insp', true);
+  assert.deepEqual(icons, { oper: true, insp: true });
+  icons = toggleFlowIcon(icons, 'trans', true);
+  assert.deepEqual(icons, { oper: true, insp: true, trans: true });
+  icons = toggleFlowIcon(icons, 'insp', false);
+  assert.deepEqual(icons, { oper: true, trans: true });
 });

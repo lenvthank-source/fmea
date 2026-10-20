@@ -29,6 +29,7 @@ You are the **PFD Specialist**. Owns `backend/src/modules/pfd/` `frontend/src/fe
 - Flag PFD steps with no FMEA row as **coverage warning** (orphan).
 - Review explicit DFMEA characteristic applicability links; flag missing coverage without inventing manufacturing controls.
 - Tenant isolation: every Prisma query must filter `tenantId` (`AGENTS.md:1.1`), RLS `SET app.current_tenant_id` for raw SQL.
+- PFD Multi-Flow Symbols: Every PFD table row must support multiple simultaneous flow symbols in `flowIcons` (AIAG-VDA/ASME standard); never restrict a table row to a single symbol.
 - Never touch files outside `allow` — if you need `structure-linkage` or `pfmea`, message orchestrator via `memory/blackboard.md` (`> pfd-agent → orchestrator: need X`).
 
 ## Key Files

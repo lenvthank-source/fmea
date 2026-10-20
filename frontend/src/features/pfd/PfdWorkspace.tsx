@@ -235,6 +235,7 @@ export const PfdWorkspace: React.FC = () => {
   const [addSpecialCharacteristics, setAddSpecialCharacteristics] = useState('');
   const [addDesiredOutcome, setAddDesiredOutcome] = useState('');
   const [addProcessCharacteristics, setAddProcessCharacteristics] = useState('');
+  const [addFlowIcons, setAddFlowIcons] = useState<Record<string, boolean>>({ oper: true });
 
   // Drag and Drop States
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -643,6 +644,7 @@ export const PfdWorkspace: React.FC = () => {
     setAddSpecialCharacteristics('');
     setAddDesiredOutcome('');
     setAddProcessCharacteristics('');
+    setAddFlowIcons({ oper: true });
     setAddOpen(true);
   };
 
@@ -655,15 +657,11 @@ export const PfdWorkspace: React.FC = () => {
       const desiredOutcomeStr = addDesiredOutcome.split('\n').map(d => d.trim()).filter(Boolean).join('\n');
       const processCharStr = addProcessCharacteristics.split('\n').map(p => p.trim()).filter(Boolean).join('\n');
 
-      const flowIcons: Record<string, boolean> = {};
-      if (addStepType === 'combined') {flowIcons.oper = true;flowIcons.insp = true;}
-      else if (addStepType === 'operation') flowIcons.oper = true;
-      else if (addStepType === 'inspection') flowIcons.insp = true;
-      else if (addStepType === 'transport') flowIcons.trans = true;
-      else if (addStepType === 'storage') flowIcons.store = true;
-      else if (addStepType === 'delay') flowIcons.wip = true;
-      else if (addStepType === 'rework') flowIcons.rework = true;
-      else if (addStepType === 'decision') flowIcons.decs = true;
+      const flowIcons: Record<string, boolean> = Object.keys(addFlowIcons).length > 0 ? { ...addFlowIcons } : { oper: true };
+      if (!Object.keys(flowIcons).length) {
+        if (addStepType === 'combined') { flowIcons.oper = true; flowIcons.insp = true; }
+        else { flowIcons[addStepType] = true; }
+      }
 
       const response = await fetch(`${API_BASE_URL}/revisions/${revisionId}/pfd-steps`, {
         method: 'POST',
@@ -1021,7 +1019,7 @@ export const PfdWorkspace: React.FC = () => {
                 <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Description</TableCell>
                 <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Incoming Source of Variation</TableCell>
                 <TableCell sx={{ minWidth: 100, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Spec. Class</TableCell>
-                <TableCell sx={{ minWidth: 130, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a', textAlign: 'center' }}>Flow Symbols</TableCell>
+                <TableCell sx={{ minWidth: 160, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Flow Symbols</TableCell>
                 <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Machines/Equipment/Docs</TableCell>
                 <TableCell sx={{ minWidth: 200, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Desired Outcome</TableCell>
                 <TableCell sx={{ minWidth: 180, fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#71717a' }}>Process Characteristics</TableCell>
@@ -1646,7 +1644,7 @@ export const PfdWorkspace: React.FC = () => {
                       <MenuItem value="decision">Decision (◇)</MenuItem>
                     </Select>
                   </FormControl>
-                  <PfdStepSymbolFields step={{ stepType: addStepType, manufacturingSymbolId: addManufacturingSymbolId, engineeringSymbolId: addEngineeringSymbolId }} onChange={(field, value) => field === 'engineeringSymbolId' ? setAddEngineeringSymbolId(value) : setAddManufacturingSymbolId(value)} onAtomicChange={(updates) => { if (updates.stepType) setAddStepType(updates.stepType); if (updates.manufacturingSymbolId !== undefined) setAddManufacturingSymbolId(updates.manufacturingSymbolId); if (updates.engineeringSymbolId !== undefined) setAddEngineeringSymbolId(updates.engineeringSymbolId); }} />
+                  <PfdStepSymbolFields step={{ stepType: addStepType, manufacturingSymbolId: addManufacturingSymbolId, engineeringSymbolId: addEngineeringSymbolId, flowIcons: addFlowIcons }} onChange={(field, value) => field === 'engineeringSymbolId' ? setAddEngineeringSymbolId(value) : setAddManufacturingSymbolId(value)} onAtomicChange={(updates) => { if (updates.stepType) setAddStepType(updates.stepType); if (updates.manufacturingSymbolId !== undefined) setAddManufacturingSymbolId(updates.manufacturingSymbolId); if (updates.engineeringSymbolId !== undefined) setAddEngineeringSymbolId(updates.engineeringSymbolId); if (updates.flowIcons) setAddFlowIcons(updates.flowIcons); }} />
                   <TextFieldAny
                     fullWidth
                     label="Special Characteristics Code"

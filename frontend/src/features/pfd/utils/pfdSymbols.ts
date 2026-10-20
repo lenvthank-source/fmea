@@ -18,6 +18,61 @@ export const CLASSIC_MANUFACTURING_IDS = [
   'manufacturing.classic.combined',
 ] as const;
 
+export interface FlowSymbolItem {
+  key: string;
+  name: string;
+  short: string;
+  symbolChar: string;
+  symbolId: string;
+  category: 'activity' | 'marker';
+}
+
+/** Standard manufacturing flow symbols per AIAG-VDA and ASME process chart guidelines. */
+export const FLOW_SYMBOL_DEFINITIONS: FlowSymbolItem[] = [
+  { key: 'oper', name: 'Operation', short: 'OPER', symbolChar: '◯', symbolId: 'manufacturing.classic.operation', category: 'activity' },
+  { key: 'insp', name: 'Inspection', short: 'INSP', symbolChar: '□', symbolId: 'manufacturing.classic.inspection', category: 'activity' },
+  { key: 'trans', name: 'Transport', short: 'TRANS', symbolChar: '⇨', symbolId: 'manufacturing.classic.transport', category: 'activity' },
+  { key: 'store', name: 'Storage', short: 'STR', symbolChar: '▽', symbolId: 'manufacturing.classic.storage', category: 'activity' },
+  { key: 'recArea', name: 'Receiving Area', short: 'REC', symbolChar: '📥', symbolId: 'manufacturing.classic.storage', category: 'activity' },
+  { key: 'wip', name: 'WIP / Delay', short: 'WIP', symbolChar: '☉', symbolId: 'marker.wip', category: 'marker' },
+  { key: 'decs', name: 'Decision', short: 'DEC', symbolChar: '◇', symbolId: 'manufacturing.classic.decision', category: 'activity' },
+  { key: 'rework', name: 'Rework', short: 'REW', symbolChar: '⬠', symbolId: 'manufacturing.classic.rework', category: 'activity' },
+  { key: 'reject', name: 'Reject / Scrap', short: 'REJ', symbolChar: '✕', symbolId: 'marker.reject', category: 'marker' },
+];
+
+export function getActiveFlowSymbols(icons: Record<string, boolean> = {}): FlowSymbolItem[] {
+  return FLOW_SYMBOL_DEFINITIONS.filter(def => !!icons[def.key]);
+}
+
+/** Derives the primary diagram node stepType from active multi-flow symbols. */
+export function derivePrimaryStepType(icons: Record<string, boolean> = {}, fallback: string = 'operation'): string {
+  if (icons.oper && icons.insp) return 'combined';
+  if (icons.oper) return 'operation';
+  if (icons.insp) return 'inspection';
+  if (icons.trans) return 'transport';
+  if (icons.store || icons.recArea) return 'storage';
+  if (icons.decs) return 'decision';
+  if (icons.rework) return 'rework';
+  if (icons.wip) return 'delay';
+  if (icons.reject) return 'scrap';
+  return fallback;
+}
+
+export function toggleFlowIcon(
+  existing: Record<string, boolean> = {},
+  key: string,
+  forceValue?: boolean
+): Record<string, boolean> {
+  const next = { ...existing };
+  const target = forceValue !== undefined ? forceValue : !next[key];
+  if (target) {
+    next[key] = true;
+  } else {
+    delete next[key];
+  }
+  return next;
+}
+
 export function getClassicManufacturingSymbol(stepType: string): PfdSymbol | undefined {
   return getPfdSymbol(`manufacturing.classic.${stepType}`) || getPfdSymbol(`manufacturing.${stepType}`);
 }
@@ -52,7 +107,7 @@ export function legacyManufacturingSymbol(icons: Record<string, boolean> = {}) {
     annotations: ['wip', 'reject'].filter(key => icons[key]) };
 }
 
-/** Synchronizes flowIcons boolean flags upon an explicit engineering edit. */
+/** Synchronizes flowIcons boolean flags upon an explicit single activity choice. */
 export function syncFlowIcons(
   existing: Record<string, boolean> = {},
   stepType: string,

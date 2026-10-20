@@ -18,7 +18,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Close, EditOutlined, WarningAmber } from '@mui/icons-material';
+import { Close, EditOutlined } from '@mui/icons-material';
 import {
   getPfdSymbol,
   isEngineeringSymbol,
@@ -27,6 +27,10 @@ import {
   resolveStepSymbol,
   syncFlowIcons,
   type PfdSymbol,
+  FLOW_SYMBOL_DEFINITIONS,
+  getActiveFlowSymbols,
+  derivePrimaryStepType,
+  getClassicManufacturingSymbol,
 } from '../utils/pfdSymbols';
 
 /** Registry-owned SVG only. Labels are React text, never interpreted as markup. */
@@ -61,7 +65,12 @@ export const CLASSIC_ACTIVITIES = [
 export interface BrowseShapesDialogProps {
   open: boolean;
   onClose: () => void;
-  onApply: (id: string | null, newStepType?: string, newMarkers?: { wip: boolean; reject: boolean }) => void;
+  onApply: (
+    id: string | null,
+    newStepType?: string,
+    newMarkers?: { wip: boolean; reject: boolean },
+    updatedFlowIcons?: Record<string, boolean>
+  ) => void;
   selectedId?: string | null;
   engineeringSymbolId?: string | null;
   onApplyEngineering?: (id: string | null) => void;
@@ -85,8 +94,7 @@ export function BrowseShapesDialog({
   const [currentStepType, setCurrentStepType] = useState<string>(stepType);
   const [mfgSelection, setMfgSelection] = useState<string | null>(selectedId || null);
   const [engSelection, setEngSelection] = useState<string | null>(engineeringSymbolId || null);
-  const [wipChecked, setWipChecked] = useState<boolean>(Boolean(flowIcons?.wip));
-  const [rejectChecked, setRejectChecked] = useState<boolean>(Boolean(flowIcons?.reject));
+  const [activeIcons, setActiveIcons] = useState<Record<string, boolean>>({});
 
   const [search, setSearch] = useState('');
   const available = useMemo(
@@ -109,12 +117,48 @@ export function BrowseShapesDialog({
       setCurrentStepType(stepType);
       setMfgSelection(selectedId || null);
       setEngSelection(engineeringSymbolId || null);
-      setWipChecked(Boolean(flowIcons?.wip));
-      setRejectChecked(Boolean(flowIcons?.reject));
       setSearch('');
       setEnabled(categories);
+
+      // Seed active icons from step flowIcons or stepType
+      const initial: Record<string, boolean> = { ...(flowIcons || {}) };
+      if (!Object.values(initial).some(Boolean)) {
+        if (stepType === 'combined') {
+          initial.oper = true;
+          initial.insp = true;
+        } else if (stepType === 'inspection') {
+          initial.insp = true;
+        } else if (stepType === 'transport') {
+          initial.trans = true;
+        } else if (stepType === 'storage') {
+          initial.store = true;
+        } else if (stepType === 'decision') {
+          initial.decs = true;
+        } else if (stepType === 'rework') {
+          initial.rework = true;
+        } else if (stepType === 'delay') {
+          initial.wip = true;
+        } else if (stepType === 'scrap') {
+          initial.reject = true;
+        } else {
+          initial.oper = true;
+        }
+      }
+      setActiveIcons(initial);
     }
   }, [open, selectedId, engineeringSymbolId, stepType, flowIcons, kind, categories]);
+
+  const handleToggleIcon = (key: string) => {
+    setActiveIcons((prev) => {
+      const next = { ...prev };
+      if (next[key]) {
+        delete next[key];
+      } else {
+        next[key] = true;
+      }
+      return next;
+    });
+  };
 
   const visible = available.filter(
     (symbol) =>
@@ -122,10 +166,20 @@ export function BrowseShapesDialog({
       [symbol.label, symbol.category, ...symbol.aliases].join(' ').toLowerCase().includes(search.toLowerCase().trim()),
   );
 
-  const selectedSymbol = getPfdSymbol(activeTab === 'palette' ? mfgSelection : kind === 'engineering' ? engSelection : mfgSelection);
+  const selectedCount = Object.values(activeIcons).filter(Boolean).length;
+  const activeDefLabels = FLOW_SYMBOL_DEFINITIONS.filter((d) => activeIcons[d.key])
+    .map((d) => d.name)
+    .join(', ');
 
   const handleApply = () => {
-    onApply(mfgSelection, currentStepType, { wip: wipChecked, reject: rejectChecked });
+    const derivedType = derivePrimaryStepType(activeIcons, currentStepType);
+    const primarySymbol = getClassicManufacturingSymbol(derivedType);
+    onApply(
+      primarySymbol?.id || mfgSelection,
+      derivedType,
+      { wip: !!activeIcons.wip, reject: !!activeIcons.reject },
+      activeIcons,
+    );
     if (onApplyEngineering) {
       onApplyEngineering(engSelection);
     }
@@ -133,7 +187,9 @@ export function BrowseShapesDialog({
   };
 
   const handleClear = () => {
-    onApply(null, currentStepType, { wip: false, reject: false });
+    const emptyIcons: Record<string, boolean> = {};
+    setActiveIcons(emptyIcons);
+    onApply(null, 'operation', { wip: false, reject: false }, emptyIcons);
     if (onApplyEngineering) {
       onApplyEngineering(null);
     }
@@ -165,7 +221,7 @@ export function BrowseShapesDialog({
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
-            {kind === 'engineering' ? 'Select Equipment Shape' : 'Manufacturing Activity Symbols'}
+            {kind === 'engineering' ? 'Select Equipment Shape' : 'Process Flow Symbols (Multi-Select)'}
           </Typography>
         </Box>
         <IconButton aria-label="Close shape browser" onClick={onClose} size="small">
@@ -180,7 +236,7 @@ export function BrowseShapesDialog({
             onChange={(_, val) => setActiveTab(val)}
             sx={{ minHeight: 40 }}
           >
-            <Tab value="palette" label="Manufacturing Symbols" sx={{ minHeight: 40, py: 1, textTransform: 'none', fontWeight: 600 }} />
+            <Tab value="palette" label="Flow Symbols Palette" sx={{ minHeight: 40, py: 1, textTransform: 'none', fontWeight: 600 }} />
             <Tab value="library" label="More Symbols & Libraries" sx={{ minHeight: 40, py: 1, textTransform: 'none', fontWeight: 600 }} />
           </Tabs>
         </Box>
@@ -190,93 +246,95 @@ export function BrowseShapesDialog({
         {activeTab === 'palette' && kind === 'manufacturing' ? (
           <Stack spacing={2.5}>
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                Primary Activity Symbol
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Process Flow Symbols (AIAG-VDA & ASME Process Chart Standard)
+                </Typography>
+                <Chip
+                  size="small"
+                  label="Multi-Select Allowed"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ height: 20, fontSize: '0.6875rem', fontWeight: 700 }}
+                />
+              </Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Select the primary manufacturing classification for this step.
+                Click to toggle one or more symbols representing all activities occurring in this step (e.g. Operation + Inspection).
               </Typography>
               <Box
-                role="radiogroup"
-                aria-label="Classic manufacturing activities"
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(auto-fill, minmax(140px, 1fr))' },
+                  gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
                   gap: 1.25,
                 }}
               >
-                {CLASSIC_ACTIVITIES.map((act) => {
-                  const symbol = getPfdSymbol(act.symbolId) || getPfdSymbol(`manufacturing.${act.type}`);
-                  const isSelected = currentStepType === act.type;
+                {FLOW_SYMBOL_DEFINITIONS.map((act) => {
+                  const symbol = getPfdSymbol(act.symbolId);
+                  const isSelected = !!activeIcons[act.key];
                   return (
                     <Button
-                      key={act.type}
+                      key={act.key}
                       variant="outlined"
-                      onClick={() => {
-                        setCurrentStepType(act.type);
-                        setMfgSelection(act.symbolId);
-                      }}
+                      onClick={() => handleToggleIcon(act.key)}
                       sx={{
                         p: 1.25,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        gap: 0.75,
+                        gap: 0.5,
                         textTransform: 'none',
                         textAlign: 'center',
+                        position: 'relative',
                         borderColor: isSelected ? 'primary.main' : 'divider',
                         bgcolor: isSelected ? 'action.selected' : 'background.paper',
                         borderWidth: isSelected ? 2 : 1,
                         color: 'text.primary',
                         borderRadius: 1.5,
+                        transition: 'all 0.12s ease-in-out',
                         '&:hover': {
                           borderColor: isSelected ? 'primary.main' : 'text.secondary',
                           bgcolor: isSelected ? 'action.selected' : 'action.hover',
+                          transform: 'translateY(-1px)',
                         },
                       }}
                     >
-                      <PfdSymbolPreview symbol={symbol} size={44} />
+                      <PfdSymbolPreview symbol={symbol} size={40} />
                       <Typography variant="body2" sx={{ fontWeight: isSelected ? 700 : 500, fontSize: '0.8125rem' }}>
-                        {act.label}
+                        {act.name}
                       </Typography>
+                      <Typography variant="caption" sx={{ color: isSelected ? 'primary.main' : 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                        {act.short} {act.symbolChar}
+                      </Typography>
+                      {isSelected && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 6,
+                            right: 6,
+                            width: 18,
+                            height: 18,
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.65rem',
+                            fontWeight: 900,
+                          }}
+                        >
+                          ✓
+                        </Box>
+                      )}
                     </Button>
                   );
                 })}
               </Box>
             </Box>
 
-            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1.5, border: 1, borderColor: 'divider' }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                Optional Route Markers
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                Separate markers indicating inventory staging or nonconformance routing without modifying process classification.
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <FormControlLabel
-                  control={<Checkbox size="small" checked={wipChecked} onChange={(e) => setWipChecked(e.target.checked)} />}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <PfdSymbolPreview symbol={getPfdSymbol('marker.wip')} size={20} />
-                      <Typography variant="body2">WIP (Work In Progress)</Typography>
-                    </Box>
-                  }
-                />
-                <FormControlLabel
-                  control={<Checkbox size="small" checked={rejectChecked} onChange={(e) => setRejectChecked(e.target.checked)} />}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                      <PfdSymbolPreview symbol={getPfdSymbol('marker.reject')} size={20} />
-                      <Typography variant="body2">Reject Marker</Typography>
-                    </Box>
-                  }
-                />
-              </Stack>
-            </Box>
-
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button size="small" onClick={() => setActiveTab('library')} sx={{ textTransform: 'none' }}>
-                More symbols & equipment libraries →
+                Need specific machinery or equipment shapes? View library →
               </Button>
             </Box>
           </Stack>
@@ -293,7 +351,7 @@ export function BrowseShapesDialog({
             />
             {kind === 'manufacturing' && (
               <Alert severity="info" sx={{ mb: 2, py: 0.5 }}>
-                Showing symbols compatible with <strong>{currentStepType}</strong>. Switch to the palette tab to change the primary activity.
+                Showing symbols compatible with <strong>{currentStepType}</strong>. Switch to the palette tab to toggle process flow symbols.
               </Alert>
             )}
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '190px minmax(0, 1fr)' }, gap: 2 }}>
@@ -378,11 +436,11 @@ export function BrowseShapesDialog({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="caption" sx={{ mr: 'auto', maxWidth: '100%', overflowWrap: 'anywhere' }}>
-          {selectedSymbol ? `Selected: ${selectedSymbol.label}` : 'Default classic symbol active'}
+        <Typography variant="caption" sx={{ mr: 'auto', maxWidth: '100%', overflowWrap: 'anywhere', fontWeight: 600 }}>
+          {selectedCount > 0 ? `Selected (${selectedCount}): ${activeDefLabels}` : 'No flow symbols selected'}
         </Typography>
         <Button onClick={handleClear} color="inherit">
-          Reset to Default
+          Reset / Clear
         </Button>
         <Button onClick={onClose} color="inherit">
           Cancel
@@ -419,64 +477,70 @@ export function PfdStepSymbolFields({
   compact?: boolean;
 }) {
   const [openDialog, setOpenDialog] = useState(false);
+  const activeSymbols = getActiveFlowSymbols(step.flowIcons || {});
   const manufacturing = resolveStepSymbol(step, 'manufacturing');
-  const equipment = getPfdSymbol(step.engineeringSymbolId);
-  void equipment;
 
   if (compact) {
     return (
-      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
         <Button
           disabled={disabled}
           size="small"
           variant="outlined"
           onClick={() => setOpenDialog(true)}
-          aria-label={`Change activity symbol: currently ${manufacturing.symbol.label}`}
+          aria-label="Edit process flow symbols"
           sx={{
-            gap: 1,
+            gap: 0.75,
             px: 1,
-            py: 0.5,
-            minHeight: 34,
+            py: 0.4,
+            minHeight: 32,
             textTransform: 'none',
             borderColor: 'divider',
             color: 'text.primary',
             borderRadius: 1.5,
+            bgcolor: '#ffffff',
             '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' },
           }}
         >
-          <PfdSymbolPreview symbol={manufacturing.symbol} size={26} />
-          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
-            {manufacturing.symbol.label}
-          </Typography>
-          {manufacturing.annotations.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              {manufacturing.annotations.map((a) => (
-                <Chip
-                  key={a}
-                  size="small"
-                  label={a.toUpperCase()}
-                  color={a === 'wip' ? 'warning' : 'error'}
-                  variant="outlined"
-                  sx={{ height: 18, fontSize: '0.625rem', px: 0.5, fontWeight: 700 }}
-                />
-              ))}
+          {activeSymbols.length > 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 0.6 }}>
+              {activeSymbols.map((item) => {
+                const sym = getPfdSymbol(item.symbolId);
+                const isMarker = item.category === 'marker';
+                return (
+                  <Tooltip key={item.key} title={item.name} arrow>
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.4,
+                        px: 0.6,
+                        py: 0.2,
+                        bgcolor: isMarker ? (item.key === 'wip' ? '#fef3c7' : '#fee2e2') : '#f8fafc',
+                        border: '1px solid',
+                        borderColor: isMarker ? (item.key === 'wip' ? '#f59e0b' : '#ef4444') : '#cbd5e1',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <PfdSymbolPreview symbol={sym} size={16} />
+                      <Typography sx={{ fontSize: '0.725rem', fontWeight: 700, color: '#0f172a' }}>
+                        {item.short}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                );
+              })}
+            </Box>
+          ) : (
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+              <PfdSymbolPreview symbol={manufacturing.symbol} size={20} />
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+                {manufacturing.symbol.label}
+              </Typography>
             </Box>
           )}
           <EditOutlined sx={{ fontSize: 13, color: 'text.secondary', ml: 0.25 }} />
         </Button>
-
-        {manufacturing.findings.length > 0 && (
-          <Tooltip title={manufacturing.findings.join(' · ')} arrow>
-            <Chip
-              size="small"
-              icon={<WarningAmber sx={{ fontSize: '13px !important' }} />}
-              label="Needs review"
-              color="warning"
-              sx={{ height: 20, fontSize: '0.6875rem', cursor: 'pointer', fontWeight: 600 }}
-              onClick={() => setOpenDialog(true)}
-            />
-          </Tooltip>
-        )}
 
         <BrowseShapesDialog
           open={openDialog}
@@ -486,13 +550,13 @@ export function PfdStepSymbolFields({
           engineeringSymbolId={step.engineeringSymbolId}
           flowIcons={step.flowIcons}
           onClose={() => setOpenDialog(false)}
-          onApply={(symbolId, newStepType, newMarkers) => {
+          onApply={(symbolId, newStepType, newMarkers, updatedFlowIcons) => {
+            const finalIcons = updatedFlowIcons || syncFlowIcons(step.flowIcons || {}, newStepType || step.stepType, newMarkers);
             if (onAtomicChange) {
-              const flowIcons = syncFlowIcons(step.flowIcons || {}, newStepType || step.stepType, newMarkers);
               onAtomicChange({
                 stepType: newStepType || step.stepType,
                 manufacturingSymbolId: symbolId,
-                flowIcons,
+                flowIcons: finalIcons,
               });
             } else if (onChange) {
               onChange('manufacturingSymbolId', symbolId);
@@ -512,42 +576,62 @@ export function PfdStepSymbolFields({
 
   return (
     <Stack spacing={1}>
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
         <Button
           disabled={disabled}
           size="small"
           variant="outlined"
           onClick={() => setOpenDialog(true)}
-          aria-label="Choose manufacturing activity symbol"
+          aria-label="Choose manufacturing activity symbols"
           sx={{ gap: 1, px: 1.25, py: 0.75, minWidth: 0, textTransform: 'none', borderRadius: 1.5 }}
         >
-          <PfdSymbolPreview symbol={manufacturing.symbol} size={32} />
-          <Box sx={{ textAlign: 'left' }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {manufacturing.symbol.label}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Manufacturing activity
-            </Typography>
-          </Box>
+          {activeSymbols.length > 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
+              {activeSymbols.map((item) => {
+                const sym = getPfdSymbol(item.symbolId);
+                return (
+                  <Box
+                    key={item.key}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 0.75,
+                      py: 0.25,
+                      bgcolor: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <PfdSymbolPreview symbol={sym} size={18} />
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                      {item.name}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          ) : (
+            <>
+              <PfdSymbolPreview symbol={manufacturing.symbol} size={32} />
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {manufacturing.symbol.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Manufacturing activity
+                </Typography>
+              </Box>
+            </>
+          )}
           <EditOutlined sx={{ fontSize: 14, color: 'text.secondary', ml: 0.5 }} />
         </Button>
       </Box>
 
-      {manufacturing.annotations.length > 0 && (
+      {activeSymbols.length > 0 && (
         <Typography variant="caption" color="text.secondary">
-          Route markers: {manufacturing.annotations.map((v) => (v === 'wip' ? 'WIP' : 'Reject')).join(', ')}.
+          Active flow activities: {activeSymbols.map((s) => s.name).join(', ')}.
         </Typography>
-      )}
-
-      {manufacturing.findings.length > 0 && (
-        <Stack spacing={0.25}>
-          {manufacturing.findings.map((f) => (
-            <Typography key={f} variant="caption" color="warning.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <WarningAmber sx={{ fontSize: 13 }} /> {f}
-            </Typography>
-          ))}
-        </Stack>
       )}
 
       <BrowseShapesDialog
@@ -558,13 +642,13 @@ export function PfdStepSymbolFields({
         engineeringSymbolId={step.engineeringSymbolId}
         flowIcons={step.flowIcons}
         onClose={() => setOpenDialog(false)}
-        onApply={(symbolId, newStepType, newMarkers) => {
+        onApply={(symbolId, newStepType, newMarkers, updatedFlowIcons) => {
+          const finalIcons = updatedFlowIcons || syncFlowIcons(step.flowIcons || {}, newStepType || step.stepType, newMarkers);
           if (onAtomicChange) {
-            const flowIcons = syncFlowIcons(step.flowIcons || {}, newStepType || step.stepType, newMarkers);
             onAtomicChange({
               stepType: newStepType || step.stepType,
               manufacturingSymbolId: symbolId,
-              flowIcons,
+              flowIcons: finalIcons,
             });
           } else if (onChange) {
             onChange('manufacturingSymbolId', symbolId);

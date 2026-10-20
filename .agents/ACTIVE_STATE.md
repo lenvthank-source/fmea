@@ -1,8 +1,25 @@
 # FMEApex — active handoff
 
-Updated 2026-10-21. Workspace F:/proj-fmea. Published **v0.12.1** (0.12.1), origin/main to be verified after push. PFD release ledger: versions/v0.12.1.md. Completed classic manufacturing symbols restoration and high-density PFD table ergonomics.
+Updated 2026-10-21. Workspace F:/proj-fmea. Published **v0.12.2** (0.12.2), origin/main to be verified after push. PFD release ledger: versions/v0.12.2.md. Completed PFD multi-flow symbols restoration and architectural governance invariants.
 
-## Latest request — restore original manufacturing symbols (completed)
+## Latest request — restore PFD multi-flow symbols & governance rules (completed)
+
+Completed implementation plan `.agents/handoff_plan/pfd-multi-flow-symbols/PLAN.md` (status: completed, 2026-10-21).
+Root Cause & Governance Analysis:
+- Conflation in v0.12.0 of flowchart diagram single geometric shapes with PFD worksheet multi-activity flow symbols led to an artificial single-symbol restriction.
+- Added Rule 2.1.1 (PFD Flow Symbol Multiplicity per AIAG-VDA 2019 / ASME process chart standards) in `.agents/AGENTS.md` §2.1.
+- Added hard invariant in `.agents/agents/pfd/AGENT.md` forbidding single-symbol restrictions in PFD tables.
+- Added multi-symbol contract in `.agents/skills/pfd-pfmea-linking/SKILL.md`.
+
+Delivered:
+- Multi-Flow Symbol Resolution (`pfdSymbols.ts`): added 9 standard activity definitions (`oper`, `insp`, `trans`, `store`, `recArea`, `wip`, `decs`, `rework`, `reject`), non-destructive `toggleFlowIcon`, and intelligent fallback to primary diagram geometry (`derivePrimaryStepType`).
+- High-Density Flow Symbols Cell (`BrowseShapesDialog.tsx`, `PfdWorkspace.tsx`): renders all active flow symbols side-by-side with authentic SVG outlines, tooltips, and "+ Add symbols" affordance.
+- Multi-Select Shape Browser Dialog (`BrowseShapesDialog.tsx`): upgraded palette into a multi-select toggle grid with active selection indicators and badge count.
+- Step Creation & Edit Drawers (`PfdWorkspace.tsx`, `StepFormDialog.tsx`): added interactive multi-symbol toggle affordance and atomic `patchStep` calls.
+- Excel Export Parity (`pfdGraph.ts`): outputs all active symbols comma-separated (`pfdFormattedActivities`) while preserving singular canvas node geometry.
+- Verification: 28/28 frontend PFD tests PASS; 174/174 backend tests (20 suites) PASS; frontend production build PASS; backend build PASS; Graphify update complete (4,065 nodes, 7,051 edges, 320 communities).
+
+## Prior request — restore original manufacturing symbols (completed)
 
 Completed implementation plan .agents/handoff_plan/pfd-classic-manufacturing-symbols/PLAN.md (status: completed, 2026-10-21).
 Delivered:
