@@ -76,6 +76,12 @@ interface Project {
   uiSettings?: any;
   creator?: { id: string; name: string; email: string; isGuest?: boolean };
   documentTypes?: string[];
+  presentation?: {
+    phase: 'Prototype' | 'Pre-Launch' | 'Production' | null;
+    safeLaunch: boolean;
+    phaseReviewRequired: boolean;
+    guestOrigin: boolean | null;
+  };
   organisationName?: string;
   organisationCode?: string;
   orgPartNumber?: string;
@@ -103,6 +109,34 @@ interface Project {
   revisionNumber?: string;
   updatedAt: string;
 }
+
+
+const getProjectPhase = (p: Project): 'Prototype' | 'Pre-Launch' | 'Production' | null => {
+  if (p.presentation?.phase !== undefined) return p.presentation.phase;
+  const docTypes = Array.isArray(p.documentTypes) ? p.documentTypes : [];
+  const recognized = ['Production', 'Pre-Launch', 'Prototype'] as const;
+  const found = docTypes.filter((t): t is 'Prototype' | 'Pre-Launch' | 'Production' => (recognized as readonly string[]).includes(t));
+  return found.length === 1 ? found[0] : null;
+};
+
+const hasProjectSafeLaunch = (p: Project): boolean => {
+  if (p.presentation?.safeLaunch !== undefined) return p.presentation.safeLaunch;
+  const docTypes = Array.isArray(p.documentTypes) ? p.documentTypes : [];
+  return docTypes.some((t) => typeof t === 'string' && t.trim().toLowerCase() === 'safe launch');
+};
+
+const isProjectGuestOrigin = (p: Project): boolean => {
+  const isDemoProj = Boolean(
+    p.uiSettings?.isDemo ||
+    p.id === 'c439cfbe-548a-4e25-a37c-0194652b8526' ||
+    (typeof p.name === 'string' && p.name.toLowerCase().includes('reference demo'))
+  );
+  if (isDemoProj) return false;
+  if (p.presentation?.guestOrigin !== undefined && p.presentation.guestOrigin !== null) {
+    return p.presentation.guestOrigin;
+  }
+  return Boolean(p.creator?.isGuest || p.uiSettings?.isGuestProject);
+};
 
 export const ProjectList: React.FC = () => {
   const { token, user } = useAuth();
@@ -989,7 +1023,7 @@ export const ProjectList: React.FC = () => {
           <strong>
             {loading
               ? "—"
-              : projects.filter((p) => p.documentTypes?.includes("Production"))
+              : projects.filter((p) => getProjectPhase(p) === "Production")
                   .length}
           </strong>{" "}
           production on this page
@@ -998,11 +1032,10 @@ export const ProjectList: React.FC = () => {
           <strong>
             {loading
               ? "—"
-              : projects.filter((p) =>
-                  p.documentTypes?.some((type) =>
-                    ["Prototype", "Pre-Launch", "Safe Launch"].includes(type),
-                  ),
-                ).length}
+              : projects.filter((p) => {
+                  const ph = getProjectPhase(p);
+                  return ph === "Prototype" || ph === "Pre-Launch" || hasProjectSafeLaunch(p);
+                }).length}
           </strong>{" "}
           prototype &amp; launch on this page
         </span>
@@ -1043,7 +1076,9 @@ export const ProjectList: React.FC = () => {
         const filteredProjects =
           phaseFilter === "All"
             ? projects
-            : projects.filter((p) => p.documentTypes?.includes(phaseFilter));
+            : phaseFilter === "Safe Launch"
+            ? projects.filter(hasProjectSafeLaunch)
+            : projects.filter((p) => getProjectPhase(p) === phaseFilter);
 
         return (
           <Grid container spacing={2}>
@@ -1282,29 +1317,41 @@ export const ProjectList: React.FC = () => {
                       }}
                     >
                       {filteredProjects.map((project) => {
-                        const docType =
-                          project.documentTypes?.[0] || "Prototype";
+                        const basePhase = getProjectPhase(project);
+                        const isSafeLaunch = hasProjectSafeLaunch(project);
+                        const isDemoProj = Boolean(
+                          project.uiSettings?.isDemo ||
+                          project.id === "c439cfbe-548a-4e25-a37c-0194652b8526" ||
+                          (typeof project.name === "string" && project.name.toLowerCase().includes("reference demo"))
+                        );
+                        const isGuestOrigin = isProjectGuestOrigin(project);
+
                         let docBadgeBg = "#fef3c7";
                         let docBadgeColor = "#b45309";
                         let docBorder = "#fde68a";
-                        if (docType === "Production") {
+                        let phaseLabel: string = basePhase || "Phase not set";
+
+                        if (basePhase === "Production") {
                           docBadgeBg = "#ecfdf5";
                           docBadgeColor = "#047857";
                           docBorder = "#a7f3d0";
-                        } else if (docType === "Safe Launch") {
-                          docBadgeBg = "#f3e8ff";
-                          docBadgeColor = "#6b21a8";
-                          docBorder = "#d8b4fe";
-                        } else if (docType === "Pre-Launch") {
+                        } else if (basePhase === "Pre-Launch") {
                           docBadgeBg = "#eff6ff";
                           docBadgeColor = "#1d4ed8";
                           docBorder = "#bfdbfe";
+                        } else if (basePhase === "Prototype") {
+                          docBadgeBg = "#fef3c7";
+                          docBadgeColor = "#b45309";
+                          docBorder = "#fde68a";
+                        } else {
+                          docBadgeBg = "#f4f4f5";
+                          docBadgeColor = "#71717a";
+                          docBorder = "#e4e4e7";
                         }
 
-                        const isDemoProj =
-                          project.uiSettings?.isDemo ||
-                          project.id === "c439cfbe-548a-4e25-a37c-0194652b8526";
-                        const isGuestProj = project.uiSettings?.isGuestProject;
+                        if (isSafeLaunch && basePhase) {
+                          phaseLabel = `${basePhase} (Safe Launch)`;
+                        }
 
                         return (
                           <Box key={project.id} sx={{ minWidth: 0 }}>
@@ -1316,16 +1363,20 @@ export const ProjectList: React.FC = () => {
                                 borderRadius: "10px",
                                 border: isDemoProj
                                   ? "1.5px solid #b3c59c"
+                                  : isGuestOrigin
+                                  ? "1.5px solid #e7d69c"
                                   : "1px solid #e3e4db",
                                 boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                                 transition:
                                   "border-color 0.2s, box-shadow 0.2s",
-                                bgcolor: "#ffffff",
+                                bgcolor: isGuestOrigin ? "#fffdf0" : "#ffffff",
                                 "&:hover": {
                                   transform: "none",
                                   boxShadow: "0 6px 18px -4px rgba(0,0,0,0.1)",
                                   borderColor: isDemoProj
                                     ? "#829c69"
+                                    : isGuestOrigin
+                                    ? "#d4bc78"
                                     : "#b9c5aa",
                                 },
                               }}
@@ -1359,6 +1410,7 @@ export const ProjectList: React.FC = () => {
                                     }}
                                   >
                                     <span
+                                      title={!basePhase ? "Legacy document type or unrecognized phase — review phase in settings" : undefined}
                                       style={{
                                         padding: "2px 7px",
                                         borderRadius: "9999px",
@@ -1370,7 +1422,7 @@ export const ProjectList: React.FC = () => {
                                         border: `1px solid ${docBorder}`,
                                       }}
                                     >
-                                      {docType}
+                                      {phaseLabel}
                                     </span>
 
                                     {isDemoProj && (
@@ -1384,21 +1436,6 @@ export const ProjectList: React.FC = () => {
                                           bgcolor: "#eff3e8",
                                           color: "#5d7545",
                                           border: "1px solid #d7e1c9",
-                                        }}
-                                      />
-                                    )}
-
-                                    {isGuestProj && (
-                                      <Chip
-                                        label="24h trial"
-                                        size="small"
-                                        sx={{
-                                          height: 18,
-                                          fontSize: "0.625rem",
-                                          fontWeight: 800,
-                                          bgcolor: "#fef3c7",
-                                          color: "#b45309",
-                                          border: "1px solid #fde68a",
                                         }}
                                       />
                                     )}
@@ -1763,11 +1800,41 @@ export const ProjectList: React.FC = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {filteredProjects.map((project) => (
+                          {filteredProjects.map((project) => {
+                            const isGuestOrigin = isProjectGuestOrigin(project);
+                            const basePhase = getProjectPhase(project);
+                            const isSafeLaunch = hasProjectSafeLaunch(project);
+                            let listPhaseLabel = basePhase || "Phase not set";
+                            if (isSafeLaunch && basePhase) {
+                              listPhaseLabel = `${basePhase} (Safe Launch)`;
+                            }
+
+                            let listBadgeBg = "#fef3c7";
+                            let listBadgeColor = "#b45309";
+                            let listBorder = "#fde68a";
+                            if (basePhase === "Production") {
+                              listBadgeBg = "#ecfdf5";
+                              listBadgeColor = "#047857";
+                              listBorder = "#a7f3d0";
+                            } else if (basePhase === "Pre-Launch") {
+                              listBadgeBg = "#eff6ff";
+                              listBadgeColor = "#1d4ed8";
+                              listBorder = "#bfdbfe";
+                            } else if (!basePhase) {
+                              listBadgeBg = "#f4f4f5";
+                              listBadgeColor = "#71717a";
+                              listBorder = "#e4e4e7";
+                            }
+
+                            return (
                             <TableRow
                               key={project.id}
                               hover
                               sx={{
+                                bgcolor: isGuestOrigin ? "#fffdf0" : "inherit",
+                                "&:hover": {
+                                  bgcolor: isGuestOrigin ? "#fff9db" : undefined,
+                                },
                                 "&:last-child td, &:last-child th": {
                                   border: 0,
                                 },
@@ -1811,25 +1878,15 @@ export const ProjectList: React.FC = () => {
                               </TableCell>
                               <TableCell>
                                 <Chip
-                                  label={(() => {
-                                    const docTypes =
-                                      project.documentTypes || [];
-                                    const isSafe =
-                                      docTypes.includes("Safe Launch");
-                                    const base = docTypes.includes("Production")
-                                      ? "Production"
-                                      : docTypes.includes("Pre-Launch")
-                                        ? "Pre-Launch"
-                                        : "Prototype";
-                                    return isSafe
-                                      ? `${base} (Safe Launch)`
-                                      : base;
-                                  })()}
+                                  label={listPhaseLabel}
                                   size="small"
                                   sx={{
                                     fontWeight: 650,
                                     fontSize: "0.7rem",
                                     height: 22,
+                                    bgcolor: listBadgeBg,
+                                    color: listBadgeColor,
+                                    border: `1px solid ${listBorder}`,
                                   }}
                                 />
                               </TableCell>
@@ -1872,7 +1929,8 @@ export const ProjectList: React.FC = () => {
                                 </IconButton>
                               </TableCell>
                             </TableRow>
-                          ))}
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </TableContainer>

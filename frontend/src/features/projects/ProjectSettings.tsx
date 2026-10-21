@@ -571,7 +571,9 @@ export const ProjectSettings: React.FC = () => {
                         ? 'Production'
                         : documentTypes.includes('Pre-Launch') || documentTypes.includes('Safe Launch')
                         ? 'Pre-Launch'
-                        : 'Prototype'
+                        : documentTypes.includes('Prototype')
+                        ? 'Prototype'
+                        : ''
                     }
                     onChange={(e) => {
                       const val = e.target.value;

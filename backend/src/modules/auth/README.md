@@ -4,7 +4,7 @@ Purpose: Module folder managing auth logic and assets.
 
 ## Directory Metadata
 - **Path**: `backend/src/modules/auth`
-- **Files Count**: 8
+- **Files Count**: 10
 - **Subdirectories Count**: 4
 
 ## File Map
@@ -19,6 +19,8 @@ Purpose: Module folder managing auth logic and assets.
 | [`jwt.strategy.ts`](./jwt.strategy.ts) | Passport strategy for decoding and verifying JWT tokens. |
 | [`public-handle.spec.ts`](./public-handle.spec.ts) | Handle collision, concurrent allocation, reservation retention and finite-pool tests. |
 | [`public-handle.ts`](./public-handle.ts) | Transactional permanent noun-pair public handle allocation with secure random start and collision retry. |
+| [`session-activity.spec.ts`](./session-activity.spec.ts) | Source code component implementing session-activity.spec functionality. |
+| [`session-activity.ts`](./session-activity.ts) | Monotonically records session establishment (lastLoginAt & lastActivityAt). An older event completing later will not regress a newer timestamp. |
 
 ## Subdirectories
 

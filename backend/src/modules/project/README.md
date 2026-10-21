@@ -4,7 +4,7 @@ Purpose: Module folder managing project logic and assets.
 
 ## Directory Metadata
 - **Path**: `backend/src/modules/project`
-- **Files Count**: 6
+- **Files Count**: 8
 - **Subdirectories Count**: 1
 
 ## File Map
@@ -12,6 +12,8 @@ Purpose: Module folder managing project logic and assets.
 | File | Purpose / Responsibility |
 | :--- | :--- |
 | [`project-history.spec.ts`](./project-history.spec.ts) | Transactional protected history, deletion dependencies, activation and rollback regression tests. |
+| [`project-presentation.spec.ts`](./project-presentation.spec.ts) | Source code component implementing project-presentation.spec functionality. |
+| [`project-presentation.ts`](./project-presentation.ts) | Source code component implementing project-presentation functionality. |
 | [`project.controller.ts`](./project.controller.ts) | Controller defining endpoints for FMEA projects. |
 | [`project.module.ts`](./project.module.ts) | NestJS module registering project components. |
 | [`project.service.ts`](./project.service.ts) | Service implementing project CRUD operations, team leads, and quality header metadata. |

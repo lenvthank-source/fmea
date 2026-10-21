@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -8,6 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { reservePublicHandle } from './public-handle';
 import { randomUUID } from 'node:crypto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { recordUserSession, recordUserActivity } from './session-activity';
 
 // Default permissions definition
 const PERMISSIONS = [
@@ -45,6 +46,7 @@ const PERMISSIONS = [
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -71,6 +73,7 @@ export class AuthService {
 
       // Create new user inside existing tenant and make them Admin
       return this.prisma.$transaction(async (tx) => {
+        const sessionDate = new Date();
         const passwordHash = await bcrypt.hash(dto.password, 12);
         const user = await tx.user.create({
           data: {
@@ -79,6 +82,8 @@ export class AuthService {
             name: dto.name,
             passwordHash,
             status: 'active',
+            lastLoginAt: sessionDate,
+            lastActivityAt: sessionDate,
           },
         });
 
@@ -153,6 +158,7 @@ export class AuthService {
       });
 
       // Hash password
+      const sessionDate = new Date();
       const passwordHash = await bcrypt.hash(dto.password, 12);
 
       // Create User
@@ -163,6 +169,8 @@ export class AuthService {
           name: dto.name,
           passwordHash,
           status: 'active',
+          lastLoginAt: sessionDate,
+          lastActivityAt: sessionDate,
         },
       });
 
@@ -364,11 +372,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Update last login/activity — fire-and-forget to not block login
-    void this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date(), lastActivityAt: new Date() },
-    }).catch(() => {});
+    // Update last login/activity monotonically and await session recording
+    try {
+      await recordUserSession(this.prisma, {
+        userId: user.id,
+        tenantId: tenant.id,
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to record login session for user ${user.id} in tenant ${tenant.id}: ${err?.message}`);
+      throw new InternalServerErrorException('Failed to complete sign-in recording');
+    }
 
     // 4. Extract roles and permissions
     const roles = user.userRoles.map((ur) => ur.role.name);
@@ -476,11 +489,15 @@ export class AuthService {
         }
       }
 
-      // Bump lastActivityAt (fire-and-forget, throttled at caller; here refresh always bumps)
-      void this.prisma.user.update({
-        where: { id: user.id },
-        data: { lastActivityAt: new Date() },
-      }).catch(() => {});
+      // Bump lastActivityAt monotonically on successful refresh (never changes lastLoginAt)
+      try {
+        await recordUserActivity(this.prisma, {
+          userId: user.id,
+          tenantId: user.tenantId,
+        });
+      } catch (err: any) {
+        this.logger.warn(`Failed to update activity on token refresh for user ${user.id}: ${err?.message}`);
+      }
 
       const roles = user.userRoles.map((ur) => ur.role.name);
       const permissionCodesSet = new Set<string>();
@@ -551,6 +568,7 @@ export class AuthService {
 
     return this.prisma.$transaction(async (tx) => {
       const publicHandle = await reservePublicHandle(tx);
+      const sessionDate = new Date();
       const user = await tx.user.create({
         data: {
           tenantId: tenant.id,
@@ -561,6 +579,8 @@ export class AuthService {
           status: 'active',
           isGuest: true,
           guestExpiresAt: expiresAt,
+          lastLoginAt: sessionDate,
+          lastActivityAt: sessionDate,
         },
       });
 
@@ -662,7 +682,8 @@ export class AuthService {
     }
     if (!user) {
       const anonEmail = `try-${Math.random().toString(36).slice(2,7)}@public-try.local`;
-      user = await this.prisma.user.create({ data: { tenantId: tenant.id, email: anonEmail, name: 'Preview User', passwordHash: null, status: 'active', isGuest: false } });
+      const sessionDate = new Date();
+      user = await this.prisma.user.create({ data: { tenantId: tenant.id, email: anonEmail, name: 'Preview User', passwordHash: null, status: 'active', isGuest: false, lastLoginAt: sessionDate, lastActivityAt: sessionDate } });
       await this.prisma.userRole.create({ data: { userId: user.id, roleId: adminRole.id } });
     } else {
       // ensure role assigned
@@ -671,6 +692,14 @@ export class AuthService {
     }
     const roleWithPerms = await this.prisma.role.findUnique({ where: { id: adminRole.id }, include: { rolePermissions: { include: { permission: true } } } });
     const permissions = roleWithPerms?.rolePermissions.map(rp=>rp.permission.code) || (await this.prisma.permission.findMany()).map(p=>p.code);
+    try {
+      await recordUserSession(this.prisma, {
+        userId: user.id,
+        tenantId: tenant.id,
+      });
+    } catch (err: any) {
+      this.logger.warn(`Failed to update session for try user ${user.id}: ${err?.message}`);
+    }
     const tokens = await this.generateTokens({ sub: user.id, email: user.email, tenantId: tenant.id, roles: ['Admin'], permissions, isGuest: false });
     return { user: { id: user.id, email: user.email, name: user.name, publicHandle: user.publicHandle }, tenant: { id: tenant.id, subdomain: tenant.subdomain }, ...tokens, isGuest: false };
   }
@@ -736,13 +765,15 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // Throttled bump of lastActivityAt (>5min) — fire-and-forget
+    // Throttled bump of lastActivityAt (>5min) — observable and monotonic
     const lastActive = (user as any).lastActivityAt as Date | null;
     if (!lastActive || Date.now() - new Date(lastActive).getTime() > 5 * 60 * 1000) {
-      void this.prisma.user.update({
-        where: { id: user.id },
-        data: { lastActivityAt: new Date() },
-      }).catch(() => {});
+      recordUserActivity(this.prisma, {
+        userId: user.id,
+        tenantId: user.tenantId,
+      }).catch((err: any) => {
+        this.logger.warn(`Failed to update activity on getMe for user ${user.id}: ${err?.message}`);
+      });
     }
 
     const roles = user.userRoles.map((ur) => ur.role.name);

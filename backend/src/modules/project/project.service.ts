@@ -21,6 +21,7 @@ import {
 import { dfmeaReadiness, DfmeaData } from '../dfmea/dfmea-document';
 import { ControlPlanDocumentService } from '../control-plan/control-plan-document.service';
 import { Prisma } from '@prisma/client';
+import { resolveProjectPresentation } from './project-presentation';
 
 @Injectable()
 export class ProjectService {
@@ -310,7 +311,15 @@ export class ProjectService {
         where,
       }),
     ]);
-    return { data, total, page: page || 1, limit: limit || total };
+    return {
+      data: data.map((p) => ({
+        ...p,
+        presentation: resolveProjectPresentation(p),
+      })),
+      total,
+      page: page || 1,
+      limit: limit || total,
+    };
   }
 
   async findOne(
@@ -838,7 +847,11 @@ export class ProjectService {
           originationDate: new Date(),
           supplierApprovalDate: null,
           otherApprovalDate: null,
-          documentTypes: dto.includeTypes,
+          documentTypes:
+            dto.qualityHeaderOverrides.documentTypes &&
+            dto.qualityHeaderOverrides.documentTypes.length > 0
+              ? dto.qualityHeaderOverrides.documentTypes
+              : sourceProject.documentTypes || ['Prototype'],
           cftMembers:
             dto.qualityHeaderOverrides.cftMembers ?? sourceProject.cftMembers,
           customerEngApprover:

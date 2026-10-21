@@ -4,6 +4,12 @@ Canonical location: `.agents/handoff_plan/<plan-slug>/PLAN.md`. Keep evidence an
 
 ## Plan index
 
+- [Project identity and yellow guest-project boxes](project-card-badges/PLAN.md) — `project-card-badges`, revision 2, status `completed` (2026-10-21). Guest origin identified purely by subtle yellow card/row box; eliminated erroneous PFMEA and 24h trial badges; added backend presentation resolver and fixed replication phase assignment. 187 backend tests and 28 frontend tests pass.
+
+- [Correct guest sign-in history and inactivity interpretation](guest-login-activity/PLAN.md) — `guest-login-activity`, revision 1, status `completed` (2026-10-21). Fixed missing guest and session login timestamps, truthful admin display, and activity-aware archival. 180 backend tests and 28 frontend tests pass.
+
+- [Contact enquiry email notifications](contact-email-notifications/PLAN.md) — `contact-email-notifications`, revision1, status `ready` (2026-10-21). Resend Free comparison, confirmed support mailbox, independent owner/customer messages, durable retries and production setup gates. Research complete; implementation not requested.
+
 - [Restore multi-flow symbols in PFD tables](pfd-multi-flow-symbols/PLAN.md) — `pfd-multi-flow-symbols`, revision 1. Status: `completed` (2026-10-21). Root-cause analysis of single-symbol restriction, hard PFD engineering rules codification, table multi-symbol display and multi-toggle popover, and step drawer multi-select. 28/28 frontend tests and 174/174 backend tests pass.
 - [Restore original manufacturing symbols](pfd-classic-manufacturing-symbols/PLAN.md) — `pfd-classic-manufacturing-symbols`, revision 1. Status: `completed` (2026-10-21). Original manufacturing palette restored as default, authentic outlines, compact table cell with Needs review indicator, atomic PATCH step updates. All 174 backend tests & 27 frontend tests pass.
 

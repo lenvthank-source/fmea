@@ -1,6 +1,40 @@
 # FMEApex — active handoff
 
-Updated 2026-10-21. Workspace F:/proj-fmea. Release **v0.12.3** (0.12.3), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Homepage ledger: `versions/v0.12.3.md`. Hosted deployment completion is separate.
+Updated 2026-10-21. Workspace F:/proj-fmea. Release **v0.12.4** (0.12.4), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.12.4.md`. Hosted deployment completion is separate.
+
+## Latest request — project phase / guest yellow box & badges (completed)
+
+2026-10-21. User requested execution of `.agents/handoff_plan/project-card-badges/PLAN.md` (completed, revision 2).
+Delivered:
+- Created `backend/src/modules/project/project-presentation.ts` (`resolveProjectPresentation`) and attached it to `ProjectService.findAll`.
+- Fixed project replication bug in `ProjectService.replicate` line 841: replaced document family override (`dto.includeTypes`) with explicit phase selection or source phase fallback.
+- Overhauled `frontend/src/features/projects/ProjectList.tsx`:
+  - Removed erroneous "PFMEA" identity phase badge: displays recognized base phases (`Prototype`, `Pre-Launch`, `Production`) or `Phase not set` with review guidance.
+  - Removed fixed "24h trial" chip completely from project cards and list rows.
+  - Implemented subtle pale yellow background (`#fffdf0` / `#fff9db` on hover) and border (`#e7d69c` / `#d4bc78` on hover) for guest-created projects, with no distinguishing text badges or icons.
+  - Aligned summary metric counts and phase filters to use the resolved phase projection.
+- Updated `ProjectSettings.tsx` radio group to avoid implicitly overwriting legacy or unknown phases with `Prototype` on unrelated edits.
+- Verification: 187/187 backend tests PASS across 23 test suites; 28/28 frontend PFD tests PASS; frontend Vite build PASS; backend Nest build PASS.
+
+## Latest request — guest sign-in history & activity archival (completed)
+
+2026-10-21. User requested execution of `.agents/handoff_plan/guest-login-activity/PLAN.md` (completed, revision 1).
+Delivered:
+- Monotonic session & activity recording in `backend/src/modules/auth/session-activity.ts` (`recordUserSession`, `recordUserActivity`).
+- Fixed `AuthService.createGuestUser`, `signup` (both branches), and `createTryToken` to transactionally initialize both `lastLoginAt` and `lastActivityAt`.
+- Replaced fire-and-forget login timestamp update with awaited, tenant/active-scoped monotonic write with sanitized error logging.
+- Fixed `UserService.checkAndArchiveInactiveUsers`: users are only archived if ALL known signals (`createdAt`, `lastLoginAt`, and `lastActivityAt`) are strictly older than the 15-day cutoff.
+- Added `lastActivityAt` to `UserService.findAll` selection.
+- Overhauled `AdminPanel.tsx`: renamed column to "Last Sign-in", replaced misleading "Never logged in" with truthful tiered display ("Sign-in not recorded" with recorded activity timestamp fallback, or "Not recorded" when both null), and clarified archival alert text.
+- Verification: 180/180 backend tests PASS across 22 suites; 28/28 frontend PFD tests PASS; frontend Vite build PASS; backend Nest build PASS.
+
+## Latest request — contact-form email plan (research complete, not implemented)
+
+2026-10-21. User asked for free500–1,000/month options and an implementation plan, then supplied Resend pricing.md. Confirmed quality@fmeapex.online is active/monitored. Canonical plan: `.agents/handoff_plan/contact-email-notifications/PLAN.md` (revision1, ready, execution not requested); official source register and source hashes alongside in SOURCES.md.
+
+Source audit: homepage already POSTs to auth/contact, AuthService persists ContactInquiry and the admin inbox reads it; mail delivery is absent. Public contact uses an inline body type, no active contact throttle guard was found, and existing BullMQ becomes inert without Redis. Recommend Resend Free HTTPS (3,000/month,100/day), two independent messages/enquiry, preserved support mailbox, additive transactional outbox, verified challenge/idempotency and a free hourly Cloudflare retry helper. Marketing contacts/inboxes are not needed. Preserve original enquiry and successful delivery on partial mail failure; do not claim provider acceptance is inbox delivery.
+
+No product code, schema, actual email, account, DNS or deployment changed. No new build/domain test run; planning verification is source inspection, official pricing/technical research and synthetic failure walkthrough only. Implementation needs user authorization; production activation additionally needs provider key/domain verification, challenge/proxy configuration, scheduler setup and a controlled customer-test mailbox. Existing central-inbox authorization needs separate assessment; do not expand it with delivery/resend access. No commit, version bump or push requested for this planning task. README index and graph refresh accompany handoff. Prior v0.12.3 publication was verified against origin/main at4781f8b45e12a1db3c6e9402e324dd1a8e97582d.
 
 ## Latest request — demonstration-led homepage (completed)
 

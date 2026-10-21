@@ -24,6 +24,7 @@ interface UserItem {
   status: string;
   createdAt: string;
   lastLoginAt: string | null;
+  lastActivityAt?: string | null;
   isGuest?: boolean;
   guestExpiresAt?: string | null;
   userRoles: Array<{
@@ -437,7 +438,7 @@ export const AdminPanel: React.FC = () => {
       {/* ── Tab 0: Users ────────────────────────────────────── */}
       <TabPanel value={activeTab} index={0}>
         <Alert severity="info" sx={{ mb: 3, borderRadius: 3 }}>
-          💡 <strong>Archival Rule:</strong> Users who are inactive (no login) for more than 15 days are automatically flagged as <strong>Inactive (Archived)</strong>. Only system administrators can permanently delete these archived accounts.
+          💡 <strong>Archival Rule:</strong> Users with no recorded sign-in or activity for more than 15 days are automatically flagged as <strong>Inactive (Archived)</strong>. Only system administrators can permanently delete these archived accounts.
         </Alert>
 
         {usersError && (
@@ -463,7 +464,7 @@ export const AdminPanel: React.FC = () => {
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Last Login</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Last Sign-in</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Created At</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 600, width: 140 }}>Actions</TableCell>
                 </TableRow>
@@ -506,9 +507,43 @@ export const AdminPanel: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {item.lastLoginAt ? new Date(item.lastLoginAt).toLocaleString() : 'Never logged in'}
+                        {(() => {
+                          const formatSafeDateTime = (value: string | null | undefined): string | null => {
+                            if (!value) return null;
+                            const d = new Date(value);
+                            return isNaN(d.getTime()) ? null : d.toLocaleString();
+                          };
+
+                          const loginStr = formatSafeDateTime(item.lastLoginAt);
+                          const activityStr = formatSafeDateTime(item.lastActivityAt);
+
+                          if (loginStr) {
+                            return (
+                              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                                {loginStr}
+                              </Typography>
+                            );
+                          }
+                          if (activityStr) {
+                            return (
+                              <Box>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                                  Sign-in not recorded
+                                </Typography>
+                                <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
+                                  Activity recorded: {activityStr}
+                                </Typography>
+                              </Box>
+                            );
+                          }
+                          return (
+                            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                              Not recorded
+                            </Typography>
+                          );
+                        })()}
                         {item.isGuest && item.guestExpiresAt && (
-                          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 0.5 }}>
                             Expires: {new Date(item.guestExpiresAt).toLocaleDateString()}
                           </Typography>
                         )}

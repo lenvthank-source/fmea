@@ -1,0 +1,34 @@
+# Source register — contact-email-notifications
+
+Retrieved 2026-10-21. Primary/official sources only. Provider pricing and account capabilities must be rechecked when activating. This register is evidence for the plan, not permission to change external accounts.
+
+| ID | Source, section and verified use | Access / limitation |
+| --- | --- | --- |
+| S01 | [Resend pricing Markdown](https://resend.com/pricing.md), Transactional Email, Feature Highlights and FAQ; [HTML pricing](https://resend.com/pricing). Free transactional quota is3,000/month,100/day. Pro50,000/month is$20. Transactional quota differs from marketing contacts, and Resend inbox traffic uses transactional allowance. | Exact user-supplied Markdown URL read via Python HTTPS because the web reader rejected text/markdown. HTML also read. Limits are published offers, not verification of a particular account's approval. No need for inbox/marketing/AI features in this integration. |
+| S02 | [Brevo free-plan limits](https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan), daily sending and transactional queue; [plan overview](https://help.brevo.com/hc/en-us/articles/208589409-About-Brevo-s-pricing-plans), Free.300 daily sends, no rollover; transactional mail included. | Brevo's JavaScript pricing page exposed no useful main content to the web reader; official help documentation supplied the quota. Daily allowance is not an independently banked monthly quota. |
+| S03 | [MailerSend pricing](https://www.mailersend.com/pricing), Free and FAQ.500 emails/month, API/SMTP included; card requested for abuse prevention; post-trial transfer to Free described. | Read current pricing page; do not reuse older claims of3,000 free/month. |
+| S04 | [Resend verified domains](https://resend.com/docs/dashboard/domains/introduction), Verified domains/Subdomains; [domain setup](https://resend.com/docs/add-a-domain), DNS verification. Owned verified sending domain/subdomain and provider-generated DKIM/SPF records required. | Existing mailbox ownership/route supplied only by user confirmation; actual sender DNS has not been inspected. Never replace current inbound root MX as a shortcut. |
+| S05 | [Resend idempotency keys](https://resend.com/docs/dashboard/emails/idempotency-keys), How it works/How to use. Duplicate requests with a stable key can be retried within a24-hour retention window. | Does not establish permanent exactly-once delivery; plan adds durable outbox/submission state and an ambiguity cutoff. |
+| S06 | [Send Email API](https://resend.com/docs/api-reference/emails/send-email); [Usage Limits](https://resend.com/docs/api-reference/rate-limit), response headers/email quotas; [Errors](https://resend.com/docs/api-reference/errors),429 subtypes. HTTPS send API and provider ID, rate/reset/retry-after headers, daily UTC reset, separate monthly/rate failures. | Actual account monthly reset must be checked; no assumption that it is the first calendar day. Current documented default rate is10 requests/sec/team; code should respect account headers rather than rely on a historical default. First guessed usage-limits URL was inaccessible; followed official API navigation to the correct rate-limit URL. |
+| S07 | [Render Free](https://render.com/docs/free), Free web services/Spinning down/Other limitations. Common outbound SMTP ports blocked; idle services suspend after15 minutes. | Published free-service constraints, not proof of the current production instance plan. Supports selecting HTTPS and durable retry rather than SMTP or a timer-only design. |
+| S08 | [Cloudflare Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/); [Workers limits](https://developers.cloudflare.com/workers/platform/limits/), Free table and wall-time section. Free scheduling available within account limits;5 triggers/account,100,000 requests/day and10ms CPU; scheduled invocation wall-time up to15 minutes. | Fetch-only hourly helper must be measured against CPU allowance; outbound waiting differs from CPU. No Worker was created or schedule activated. |
+| S09 | [Turnstile plans](https://developers.cloudflare.com/turnstile/plans/); [server token validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/), Siteverify parameters/token characteristics. Free tier supports challenges; tokens last5 minutes, are single-use and require server verification; validation supports an idempotency UUID. | Widget alone is insufficient. No real challenge was solved and no production secret was read. |
+| S10 | [Resend webhook verification](https://resend.com/docs/webhooks/verify-webhooks-requests); [event types](https://resend.com/docs/webhooks/event-types). Raw-body signature verification required; delivered means accepted by the recipient mail server, not read by a human. | Optional follow-up only in v1 plan. Do not label provider submission as delivered when no verified delivery event exists. |
+| S11 | [Resend test emails](https://resend.com/docs/dashboard/emails/send-test-emails), test delivery/bounce/complaint scenarios. Official synthetic targets available for integration tests. | Mocks/off mode first; real controlled inbox sends require activation authorization and an approved customer-test address. |
+| S12 | [Render Cron Jobs](https://render.com/docs/cronjobs), Compute plans and billing. Minimum$1/month/service. | Considered but excluded from the selected free scheduler architecture. |
+
+## Repository evidence (read, not live-submission reproduction)
+
+Baseline main@4781f8b45e12a1db3c6e9402e324dd1a8e97582d, root version0.12.3. `git status --short` was empty at research start. Graphify baseline4,105 nodes. Exact current source locations and causal findings are in PLAN.md F01–F08.
+
+| Path | SHA256 at research baseline |
+| --- | --- |
+| frontend/src/features/landing/LandingPage.tsx | 1f2c74f3fa732427168a4f74c558fdacdc5764e2598b70841a870182a5873fe7 |
+| backend/src/modules/auth/auth.controller.ts | f9f58e9d86f120cea53ce77dfc0ccea5a0bedd364bb321ae363688c8d831e184 |
+| backend/src/modules/auth/auth.service.ts | c2ef5fb779eeb29bdcaf04a6d2eae16c0e574b8a94472069e5c777cd11c7c9dd |
+| backend/prisma/schema.prisma | 616c2aa5c694d361375867595157f4eba82472fadc5adae77beaba1f9de1914e |
+| backend/src/app.module.ts | 282ef9fa0a6633305267db1b6a067563f18496f67ec97e5d19a960d093f2e2bf |
+| backend/src/main.ts | dc02cfebaef9992d3c8a8feb100e83bb4e4c29085704b8c518ff79e8d1a2385f |
+| backend/src/queues/queues.module.ts | 90f111fbbf8fc3337144277adf320a1012403d34d9a3cdbe21d091973bfc3cd7 |
+
+No environment secrets, production contact rows, personal customer details or downloaded copyrighted template archives were added to this plan. Only the confirmed business mailbox and public provider guidance are used. Product tests remain future implementation work.

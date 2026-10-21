@@ -7,11 +7,11 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async checkAndArchiveInactiveUsers(tenantId: string) {
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    const INACTIVITY_MS = 15 * 24 * 60 * 60 * 1000;
+    const cutoff = new Date(Date.now() - INACTIVITY_MS);
 
-    // Update status to 'archived' for users who haven't logged in for 15 days,
-    // or who signed up 15 days ago and never logged in, excluding Admins.
+    // Update status to 'archived' for non-Admin users whose all known signals
+    // (creation, last sign-in, and last activity) are strictly older than the 15-day cutoff.
     await this.prisma.user.updateMany({
       where: {
         tenantId,
@@ -21,11 +21,19 @@ export class UserService {
             role: { name: 'Admin' }
           }
         },
-        OR: [
-          { lastLoginAt: { lt: fifteenDaysAgo } },
+        createdAt: { lt: cutoff },
+        AND: [
           {
-            lastLoginAt: null,
-            createdAt: { lt: fifteenDaysAgo }
+            OR: [
+              { lastLoginAt: null },
+              { lastLoginAt: { lt: cutoff } }
+            ]
+          },
+          {
+            OR: [
+              { lastActivityAt: null },
+              { lastActivityAt: { lt: cutoff } }
+            ]
           }
         ]
       },
@@ -46,6 +54,7 @@ export class UserService {
         status: true,
         createdAt: true,
         lastLoginAt: true,
+        lastActivityAt: true,
         isGuest: true,
         guestExpiresAt: true,
         userRoles: {
