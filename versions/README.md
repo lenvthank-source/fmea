@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.12.3.md` — Demonstration-led homepage, explicit reviewed-control preview, responsive engineering thread and unified direct trial entry.
 - `v0.12.2.md` — Restored multi-flow symbol support in PFD tables per AIAG-VDA / ASME process chart standards, non-destructive multi-select editing, side-by-side SVG badges, and formal architectural invariants.
 - `v0.12.1.md` — Restored classic manufacturing symbols (clean circle, square, arrow, inverted triangle, diamond, pentagon rework, combined), compact PFD table cell, atomic step patching, and 417 identical catalog symbols.
 - `v0.12.0.md` — Explicit PFD symbols, reviewed automatic diagrams, protected graph v2, complete diagram exports and reference inventory.

@@ -2,6 +2,8 @@
 
 This directory contains architectural blueprints, technical design documents, deployment procedures, user guides, functional specifications, and design assets for the FMEA Quality Platform.
 
+Latest public homepage delivery: [demonstration-led story and verification](specs/homepage-story-delivery.md).
+
 ## Directory Structure
 
 ```

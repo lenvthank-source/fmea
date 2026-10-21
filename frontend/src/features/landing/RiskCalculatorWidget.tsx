@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { TrialButton } from '../../components/site/TrialButton';
 import { calculateAP } from '../pfmea/utils/apCalculator';
-import { useAuth } from '../auth/AuthContext';
 import {
   Sparkles,
   RotateCcw,
   FileSpreadsheet,
   AlertTriangle,
-  ArrowRight,
   ShieldAlert,
   ShieldCheck
 } from 'lucide-react';
@@ -81,32 +79,11 @@ const PRESETS: PresetScenario[] = [
 ];
 
 export const RiskCalculatorWidget: React.FC = () => {
-  const navigate = useNavigate();
-  const { token, guestLogin } = useAuth();
-  const [launching, setLaunching] = useState(false);
-
   const [activePresetIndex, setActivePresetIndex] = useState(0);
   const [severity, setSeverity] = useState(9);
   const [occurrence, setOccurrence] = useState(4);
   const [detection, setDetection] = useState(4);
   const [showAiOptimized, setShowAiOptimized] = useState(false);
-
-  const handleLaunch = async () => {
-    if (token) {
-      navigate('/app/projects');
-      return;
-    }
-    setLaunching(true);
-    try {
-      await guestLogin();
-      navigate('/app/projects');
-    } catch (err) {
-      console.error('Launch failed:', err);
-      navigate('/login');
-    } finally {
-      setLaunching(false);
-    }
-  };
 
   const ap = calculateAP(severity, occurrence, detection) || 'L';
   const rpn = severity * occurrence * detection;
@@ -505,14 +482,7 @@ export const RiskCalculatorWidget: React.FC = () => {
           </div>
 
           {/* Launch Action Button */}
-          <button
-            onClick={handleLaunch}
-            disabled={launching}
-            className="w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 group"
-          >
-            <span>{launching ? 'Opening Workspace...' : 'Try FMEApex'}</span>
-            <ArrowRight className="w-4 h-4 text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          <TrialButton label="Try FMEApex" />
         </div>
       </div>
     </div>

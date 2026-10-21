@@ -2,6 +2,10 @@
 
 FMEApex is an interactive engineering workspace designed for quality risk management and analysis. The platform connects design and process risk analysis, manufacturing routing, controls, revisions and documented mitigation decisions. Applicable methodology verification is recorded separately from software completeness.
 
+## v0.12.3 homepage story
+
+The homepage follows one engineering decision through DFMEA, PFD, PFMEA, the Control Plan and action evidence. Visitors can propose a control change, review it, keep the existing value or apply it to a local preview. Shared trial entry, contact forms and public identity remain intact. See the [delivery and verification report](docs/specs/homepage-story-delivery.md) and [release ledger](versions/v0.12.3.md).
+
 ## Core Features
 
 - **Seven-activity authoring:** Iterative drafts with integrity checks and review/release completeness. Applicable requirement verification is tracked explicitly.
@@ -22,9 +26,9 @@ Native XLSX and printable documents cover the entire selected revision. Native w
 
 Verification and remaining methodology limits: [controlled engineering delivery](docs/specs/controlled-engineering-delivery.md). Start agent work from [.agents/ACTIVE_STATE.md](.agents/ACTIVE_STATE.md). Release [v0.11.0](versions/v0.11.0.md) records the user-approved controlled-engineering implementation, validation and remaining reference gates.
 
-## PFD symbol and layout upgrade (working changes)
+## PFD symbol and layout upgrade (v0.12.0–v0.12.2)
 
-Manufacturing notation remains the default, with optional explicit engineering symbols, a searchable original shape library and reviewable automatic layout. Selected equipment does not change operation meaning. Existing routing and downstream identities remain protected. See the [PFD delivery checklist](docs/specs/pfd-symbols-delivery.md) and [reference inventory](docs/references/README.md) for implementation, verification and source limitations. These changes are not yet committed or published.
+Manufacturing notation remains the default, with optional explicit engineering symbols, a searchable original shape library and reviewable automatic layout. Selected equipment does not change operation meaning. Existing routing and downstream identities remain protected. See the [PFD delivery checklist](docs/specs/pfd-symbols-delivery.md) and [reference inventory](docs/references/README.md) for implementation, verification and source limitations. These changes were delivered in the preceding PFD releases; see the version ledger for their individual changes.
 
 ## Project Structure
 

@@ -11,6 +11,10 @@ TARGET_DIRS = [
 
 # File description catalog
 FILE_CATALOG = {
+    "LandingPage.tsx": "Demonstration-led homepage, revisitable method, lazy calculator and compatible trial/contact flows.",
+    "EngineeringStory.tsx": "Local engineering-thread views and explicit propose/review/apply/reset control-change demonstration.",
+    "home-story-content.ts": "Typed illustrative engineering story and seven revisitable FMEA activities.",
+    "home-story.css": "Homepage-only responsive story styles and reduced-motion behavior inside the components layer.",
     "pfd-symbols.json": "Generated original symbol registry with stable IDs, categories, SVG geometry, ports and provenance; keep frontend/backend hashes identical.",
     "pfdSymbols.ts": "Explicit manufacturing/equipment selection, compatibility and read-only legacy findings without name inference.",
     "pfdLayout.ts": "Local ELK worker protocol, route-preserving previews, junction handling, timeout and cancellation.",

@@ -9,7 +9,7 @@ Explain what a quality engineer can follow through the product: structure and fu
 
 ## Project context
 
-Follow the repository AGENTS.md graph-first navigation rule. The homepage entry is `frontend/src/features/landing/LandingPage.tsx`; its local interactive model is `ConnectedProduct.tsx`, and scoped styles live in `landing-story.css`. All public pages, including the homepage, share `components/site/SiteHeader.tsx` and `SiteFooter.tsx`. `PublicLayout.tsx` owns inner-page semantics, warmup, and metadata. `public-content.ts` is the typed catalog for all 17 resource/article destinations; `public-site.css` extends the homepage identity without altering application tokens. Check callers before changing shared components.
+Follow the repository AGENTS.md graph-first navigation rule. The homepage entry is `frontend/src/features/landing/LandingPage.tsx`; its homepage interactions are `EngineeringStory.tsx` with typed content in `home-story-content.ts` and homepage-only styles in `home-story.css`. `ConnectedProduct.tsx` remains the separate local preview used by the platform page; shared brand styles stay in `landing-story.css`. All public pages, including the homepage, share `components/site/SiteHeader.tsx` and `SiteFooter.tsx`. `PublicLayout.tsx` owns inner-page semantics, warmup, and metadata. `public-content.ts` is the typed catalog for all 17 resource/article destinations; `public-site.css` extends the homepage identity without altering application tokens. Check callers before changing shared components.
 
 The homepage tells this sequence:
 - Disconnected files create handoff and version problems.
@@ -24,13 +24,13 @@ Distinguish design-to-process characteristic flow-down from the bidirectional PF
 
 Use the public palette in `.agents/rules/ui-theme.md`: ivory, graphite, orange, and restrained contextual green for connected engineering data. Keep marketing styles scoped under `.fmea-story` and inside a CSS layer. Leave workspace tokens and dense engineering screens alone unless requested.
 
-Use the engineering relationship itself as the memorable visual. Prefer interactive components and semantic SVG/CSS diagrams over generic dashboard screenshots, stock manufacturing images, floating badges, or endless decorative motion. The current scroll story uses one sticky relationship diagram and four readable chapters. Smaller screens keep all chapter content in normal flow.
+Use the engineering relationship itself as the memorable visual. Prefer interactive components and semantic SVG/CSS diagrams over generic dashboard screenshots, stock manufacturing images, floating badges, or endless decorative motion. The current homepage uses a hero thread, five selectable engineering views and a deliberate propose → review → apply demonstration. Its closing sections cover revisitable method activities, evidence and trial/contact. Smaller screens stack the views in normal flow. Delivery and approved story: `docs/specs/homepage-story-delivery.md`.
 
 Motion should make a change understandable: selecting a component, switching a document, moving through a chapter. Respect reduced motion, retain content without entrance animations, and provide keyboard-operable alternatives to scrolling or pointer gestures. Avoid autoplay loops unless the user can pause them.
 
 ## Demonstration integrity
 
-Label local illustrative data as a preview. Keep preview interactions local; never write analysis rows or create live projects to make a marketing animation work. Show the actual changed control in both preview views when demonstrating linked updates. Reuse the production AP calculator for interactive risk examples; do not invent AP mappings or imply that marking a task complete automatically reduces risk.
+Label local illustrative data as a preview. Keep preview interactions local; never write analysis rows or create live projects to make a marketing animation work. Show the actual changed control in both preview views only after explicit review/application. Proposing must preserve the thread baseline; keep/reset must restore it. Preserve keyboard focus when an action replaces its button. Never imply silent automatic Control Plan synchronization. Reuse the production AP calculator for interactive risk examples; do not invent AP mappings or imply that marking a task complete automatically reduces risk.
 
 Use `TrialButton` for public trial actions: anonymous visitors go through `/app/initializing`; signed-in visitors open `/app/projects`. Use Try it out or Try FMEApex, never sandbox copy. Preserve authenticated workspace routing, backend warmup states, contact payload compatibility, and existing incoming section links. Quote links use `/?offer=<label>#contact` and prefill the existing message field. Contact forms need associated labels, native validation, pending/error/success feedback, and no fabricated response-time promise.
 

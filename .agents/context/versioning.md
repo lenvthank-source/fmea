@@ -14,6 +14,7 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 ## Index (leading entries)
 | Version | Date | Summary |
 |---------|------|---------|
+| v0.12.3 | 2026-10-21 | Demonstration-led homepage, explicit reviewed control preview, responsive layouts and shared trial entry |
 | v0.11.0 | 2026-10-20 | Controlled DFMEA/Control Plan workflows, reviewed synchronization, protected history and complete exports |
 | v0.10.1 | 2026-10-19 | PFD fallback and archived project visibility |
 | v0.10.0 | 2026-10-19 | Complete public identity, permanent trial handles, explicit PFD graph and native exports, visual repository, review readiness |
@@ -45,5 +46,8 @@ Single source: root `package.json#version` (now `F:\proj-fmea\package.json:3`, `
 - `ControlPlanRow` `stepIdMap` remap completeness (`project.service:948`)
 
 
-## Latest release: v0.9.0 (2026-10-19)
+## Historical release: v0.9.0 (2026-10-19)
 User-confirmed minor release for connected product storytelling, cohesive auth/dashboard, contextual workflow guidance, viewer-scoped audit activity, and portable agent/Graphify continuity. Ledger: `versions/v0.9.0.md`. Database sync verified already aligned; no schema migration or data change.
+
+## Current release: v0.12.3 (2026-10-21)
+User explicitly requested Git publication and confirmed patch version 0.12.3 after the homepage was implemented and verified. Root/backend/frontend manifests and both package-lock root versions are aligned without dependency changes. Ledger: `versions/v0.12.3.md`. Delivery/browser evidence: `docs/specs/homepage-story-delivery.md`. No schema migration or data synchronization is required. Target `origin/main`; remote SHA verification and hosted deployment completion are distinct checks.

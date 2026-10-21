@@ -1,6 +1,18 @@
 # FMEApex — active handoff
 
-Updated 2026-10-21. Workspace F:/proj-fmea. Published **v0.12.2** (0.12.2), origin/main to be verified after push. PFD release ledger: versions/v0.12.2.md. Completed PFD multi-flow symbols restoration and architectural governance invariants.
+Updated 2026-10-21. Workspace F:/proj-fmea. Release **v0.12.3** (0.12.3), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Homepage ledger: `versions/v0.12.3.md`. Hosted deployment completion is separate.
+
+## Latest request — demonstration-led homepage (completed)
+
+2026-10-21, Codex. User invoked brand-story-landing-page, selected existing React + existing UI/code-built visuals + product demonstrations only, then approved the six-part story. Implemented the authorized homepage revamp; no further implementation is pending for that scope. Full delivery/story rationale/verification: `docs/specs/homepage-story-delivery.md`.
+
+- Hero: “One engineering decision. Follow it everywhere.” Preserved ivory/graphite/orange/green identity and shared site header/footer. Compact short-desktop hero keeps the trial action visible.
+- `frontend/src/features/landing/EngineeringStory.tsx`, `home-story-content.ts`, `home-story.css`: five illustrative document views, explicit propose → review → apply with keep/reset, synchronized local control text, keyboard focus continuity and reduced-motion CSS. The demonstration never mutates engineering data or invents improved ratings.
+- `LandingPage.tsx`: disconnected-files context, connected engineering thread, reviewed change, seven revisitable activities, review/history/evidence, trial/contact close. Existing section/hash/query links, quote prefill, contact payload/status/validation, metadata and backend readiness retained. Lazy risk calculator retained; its separate guest handler replaced with shared TrialButton.
+- Verification PASS: frontend TypeScript/production build, backend build, targeted oxlint, actual browser views/review/keyboard reset/all seven activities/calculator/navigation/anchors/quote prefill/native form validity. Desktop and narrow 310px content fit, no duplicate IDs or overflow, no errors after final reload. No real contact submission or trial-account creation in QA. Reduced-motion CSS reviewed, preference emulation not performed.
+- Screenshots outside shipped assets: `C:/Users/Palak/.codex/visualizations/2026/10/18/01a15026-af67-7522-87fc-f43cefdb4e2b/homepage-story-desktop.png`, `homepage-engineering-thread.png`, `homepage-form-mobile.png`.
+- Directory README sync completed; homepage product-story skill and generator catalog updated. Graphify AST refresh completed after the code changes; final handoff refresh follows the documentation checkpoint. Existing optional SQL-parser warning remains. The user subsequently requested push and explicitly confirmed patch version **0.12.3**. Root/backend/frontend manifests and both lockfile root versions are aligned; dependency resolutions and database are unchanged. Prior PFD v0.12.2 work is preserved.
+- Runtime: existing Vite localhost:5173 retained; no process restarted. Browser viewport restored; homepage preview retained as deliverable. Publication is authorized for 0.12.3. Next step after the push is deployment verification if requested; future releases need separate version confirmation. Never infer deployment success solely from a Git push.
 
 ## Latest request — restore PFD multi-flow symbols & governance rules (completed)
 
