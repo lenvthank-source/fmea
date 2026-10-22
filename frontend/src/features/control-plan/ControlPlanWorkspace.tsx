@@ -12,6 +12,8 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  List,
+  ListItemText,
   MenuItem,
   Paper,
   Stack,
@@ -46,7 +48,10 @@ import type {
   CpEnvelope,
   CpLine,
   SyncPreview,
+  AnyCpDocument,
 } from "./controlPlanDocument";
+import { isCpDocumentV2, getDocLines } from "./controlPlanDocument";
+import { ControlPlanV2View } from "./ControlPlanV2View";
 
 interface Revision {
   id: string;
@@ -75,12 +80,68 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [revisionId, setRevisionId] = useState("");
   const [envelope, setEnvelope] = useState<CpEnvelope | null>(null);
-  const [document, setDocument] = useState<CpDocument | null>(null);
+  const [document, setDocument] = useState<AnyCpDocument | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<CpLine | null>(null);
+
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradePreview, setUpgradePreview] = useState<{
+    expectedVersion: number;
+    previewHash: string;
+    v2Document: any;
+    warnings: string[];
+  } | null>(null);
+  const [upgrading, setUpgrading] = useState(false);
+
+  const handleOpenUpgrade = async () => {
+    if (!envelope || !revisionId) return;
+    try {
+      setBusy(true);
+      const res = await request(
+        `/revisions/${revisionId}/control-plan-document/upgrade-preview`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ expectedVersion: envelope.version }),
+        },
+      );
+      setUpgradePreview(res);
+      setUpgradeOpen(true);
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleApplyUpgrade = async () => {
+    if (!upgradePreview || !envelope || !revisionId) return;
+    try {
+      setUpgrading(true);
+      await request(
+        `/revisions/${revisionId}/control-plan-document/upgrade-apply`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            expectedVersion: upgradePreview.expectedVersion,
+            previewHash: upgradePreview.previewHash,
+          }),
+        },
+      );
+      setUpgradeOpen(false);
+      setUpgradePreview(null);
+      const env = await request(`/revisions/${revisionId}/control-plan-document`);
+      setEnvelope(env);
+      setDocument(env.document);
+      setNotice('Upgraded to Control Plan Version 2 successfully!');
+    } catch (err) {
+      fail(err);
+    } finally {
+      setUpgrading(false);
+    }
+  };
   const [configOpen, setConfigOpen] = useState(false);
   const [sourceRevisionId, setSourceRevisionId] = useState("");
   const [preview, setPreview] = useState<SyncPreview | null>(null);
@@ -234,7 +295,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       void load(revisionId);
     }
   }, [revisionId, token]);
-  const update = (value: CpDocument) => {
+  const update = (value: AnyCpDocument) => {
     setDocument(value);
     setDirty(true);
     setNotice("");
@@ -274,7 +335,8 @@ export const ControlPlanWorkspace: React.FC = () => {
   );
   const groups = useMemo(() => {
     const result = new Map<string, CpLine[]>();
-    document?.lines.forEach((line) => {
+    const lines = isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? []);
+    lines.forEach((line) => {
       const key = [
         line.operationId,
         line.operationNumber,
@@ -311,7 +373,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       { key: "source", label: "Source provenance" },
       { key: "sourceState", label: "Source review state" },
     ],
-    rows: document!.lines.map((line) => ({
+    rows: (isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).map((line) => ({
       ...line,
       source: line.source ? JSON.stringify(line.source) : "",
     })),
@@ -589,7 +651,7 @@ export const ControlPlanWorkspace: React.FC = () => {
           />
           <Chip size="small" label={editable ? "Draft editing" : "Read only"} />
           <Typography variant="body2">
-            {document?.lines.length ?? 0} control lines · {groups.length}{" "}
+            {(isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).length} control lines · {groups.length}{" "}
             operations
           </Typography>
           <Button
@@ -693,17 +755,59 @@ export const ControlPlanWorkspace: React.FC = () => {
                 .join("; ") || "None selected"}
             </Typography>
           </Paper>
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 1,
-              mb: 1,
-            }}
-          >
-            <Typography variant="h6">Operation controls</Typography>
+          {document && document.schemaVersion === 1 && (
+            <Alert
+              severity="info"
+              sx={{ mb: 2 }}
+              action={
+                hasPermission("cp.edit") && (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => handleOpenUpgrade()}
+                  >
+                    Upgrade to Version 2
+                  </Button>
+                )
+              }
+            >
+              This Control Plan is running Schema Version 1. Upgrade to Version 2 to unlock operation-wise navigation, execution rules, and field-level content review.
+            </Alert>
+          )}
+
+          {isCpDocumentV2(document) ? (
+            <ControlPlanV2View
+              document={isCpDocumentV2(document) ? null : (document as any)}
+              revisionId={revisionId}
+              version={envelope?.version ?? 0}
+              writable={editable}
+              token={token || ''}
+              onUpdateDocument={(nextDoc) => {
+                setDocument(nextDoc);
+                setDirty(true);
+              }}
+              onReload={() => {
+                void request(`/revisions/${revisionId}/control-plan-document`).then((env) => {
+                  setEnvelope(env);
+                  setDocument(env.document);
+                  setDirty(false);
+                });
+              }}
+              request={request}
+            />
+          ) : (
+            <>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h6">Operation controls</Typography>
             <Button
               data-tour="control-plan-workflow"
               variant="outlined"
@@ -833,12 +937,14 @@ export const ControlPlanWorkspace: React.FC = () => {
               </Paper>
             ))
           )}
+            </>
+          )}
         </>
       )}
       <ControlLineEditor
         line={editing}
         editable={editable}
-        existing={!!document?.lines.some((line) => line.id === editing?.id)}
+        existing={!!(isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).some((line) => line.id === editing?.id)}
         operations={operations}
         sourceRevisionLabel={
           revisions.find(
@@ -851,13 +957,14 @@ export const ControlPlanWorkspace: React.FC = () => {
         onClose={() => setEditing(null)}
         onKeep={() => {
           if (!editing || !document) return;
+          const docV1 = document as any;
           update({
-            ...document,
-            lines: document.lines.some((line) => line.id === editing.id)
-              ? document.lines.map((line) =>
+            ...docV1,
+            lines: (docV1.lines || []).some((line: any) => line.id === editing.id)
+              ? (docV1.lines || []).map((line: any) =>
                   line.id === editing.id ? editing : line,
                 )
-              : [...document.lines, editing],
+              : [...(docV1.lines || []), editing],
           });
           setEditing(null);
         }}
@@ -868,9 +975,10 @@ export const ControlPlanWorkspace: React.FC = () => {
             !window.confirm("Remove this control line from this draft?")
           )
             return;
+          const docV1 = document as any;
           update({
-            ...document,
-            lines: document.lines.filter((line) => line.id !== editing.id),
+            ...docV1,
+            lines: (docV1.lines || []).filter((line: any) => line.id !== editing.id),
           });
           setEditing(null);
         }}
@@ -937,7 +1045,7 @@ export const ControlPlanWorkspace: React.FC = () => {
                 value={document.config.phase}
                 onChange={(event) =>
                   update({
-                    ...document,
+                    ...document as any,
                     config: { ...document.config, phase: event.target.value },
                   })
                 }
@@ -1179,7 +1287,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       </Dialog>
       <SourceChangeReview
         preview={preview}
-        document={document}
+        document={isCpDocumentV2(document) ? null : (document as any)}
         decisions={decisions}
         reasons={exclusionReasons}
         resolutions={resolutions}
@@ -1216,7 +1324,7 @@ export const ControlPlanWorkspace: React.FC = () => {
           ) : (
             <>
               <Typography>
-                {importDocument?.lines.length ?? 0} control lines passed
+                {(isCpDocumentV2(importDocument) ? getDocLines(importDocument) : (importDocument?.lines ?? [])).length} control lines passed
                 structural validation.
               </Typography>
               <Alert severity="warning" sx={{ mt: 2 }}>
@@ -1268,13 +1376,14 @@ export const ControlPlanWorkspace: React.FC = () => {
                   sx={{ justifyContent: "flex-start", textAlign: "left" }}
                   onClick={() => {
                     setReadiness(null);
+                    const dLines = isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? []);
                     if (
                       lineNumber &&
-                      document?.lines[Number(lineNumber[1]) - 1]
+                      dLines[Number(lineNumber[1]) - 1]
                     )
                       setEditing(
                         structuredClone(
-                          document.lines[Number(lineNumber[1]) - 1],
+                          dLines[Number(lineNumber[1]) - 1],
                         ),
                       );
                     else setConfigOpen(true);
@@ -1340,6 +1449,58 @@ export const ControlPlanWorkspace: React.FC = () => {
               Approve revision
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+      {/* V2 Upgrade Preview Dialog */}
+      <Dialog
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Upgrade to Control Plan Schema Version 2</DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This upgrade will convert your flat control lines into structured operations, separate characteristics and controls, and introduce typed execution rules and content-bound field reviews.
+          </Alert>
+          {upgradePreview && (
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Conversion Summary:
+              </Typography>
+              <Typography variant="body2">
+                • Operations to create: {upgradePreview.v2Document?.operations?.length || 0}
+              </Typography>
+              <Typography variant="body2">
+                • Total characteristics: {upgradePreview.v2Document?.operations?.reduce((acc: number, op: any) => acc + (op.characteristics?.length || 0), 0) || 0}
+              </Typography>
+              {upgradePreview.warnings?.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#ed6c02' }}>
+                    Conversion Warnings:
+                  </Typography>
+                  <List dense>
+                    {upgradePreview.warnings.map((w: string, i: number) => (
+                      <ListItemText key={i} primary={`• ${w}`} />
+                    ))}
+                  </List>
+                </Box>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUpgradeOpen(false)} disabled={upgrading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleApplyUpgrade}
+            disabled={upgrading}
+          >
+            {upgrading ? 'Upgrading...' : 'Confirm & Upgrade to V2'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

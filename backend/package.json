@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "description": "",
   "author": "",
   "private": true,
@@ -30,6 +30,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.20.0",
+    "@types/pdfkit": "^0.17.7",
     "bcryptjs": "^3.0.3",
     "bullmq": "^6.2.2",
     "class-transformer": "^0.5.1",
@@ -38,6 +39,7 @@
     "ioredis": "^6.0.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.20.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

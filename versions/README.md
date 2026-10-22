@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.13.0.md` — Control Plan Evolution engine: hierarchical V2 operations, shared equipment resources, process/product characteristics, granular controls, tenant source concurrency fences, lineage and phase bindings, field-level review decisions, validation engine, landscape PDFKit export, and approval package worker.
 - `v0.12.4.md` — Corrected guest sign-in history tracking, eliminated misleading "Never logged in" admin displays, updated inactive user archival, overhauled project card phase presentation, and added subtle guest-origin yellow card highlighting.
 - `v0.12.3.md` — Demonstration-led homepage, explicit reviewed-control preview, responsive engineering thread and unified direct trial entry.
 - `v0.12.2.md` — Restored multi-flow symbol support in PFD tables per AIAG-VDA / ASME process chart standards, non-destructive multi-select editing, side-by-side SVG badges, and formal architectural invariants.

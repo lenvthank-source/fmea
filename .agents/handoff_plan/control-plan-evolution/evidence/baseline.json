@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-22",
+  "repository": "F:\\proj-fmea",
+  "branch": "main",
+  "commit": "52daced79fd366bae2916f5db2bed8d06e9a0158",
+  "version": "0.12.4",
+  "initial_dirty": [
+    "Control_Plan_Consolidated_Development_Plan.md (untracked input)"
+  ],
+  "sha256": {
+    "Control_Plan_Consolidated_Development_Plan.md": "84c655adba1c400e748bf1e28951d9fc20dcece82cc8411bc72a0f159f34da9b",
+    "backend/src/modules/control-plan/control-plan-document.ts": "bd5b87d3596514b11ba597313bc76d49b0e508348f32156853c60cabf0c7a143",
+    "backend/src/modules/control-plan/control-plan-document.service.ts": "5094b7e0d3d8d3107d0e7cbebbbf832f00cbbc141c7e0eb66baad092ba14500f",
+    "backend/src/modules/project/project.service.ts": "a5a421a4a582729fe15b662d41070525c6747325bf5d8dc6a1bfbe922b9241b0",
+    "backend/src/modules/pfmea/pfmea-row.service.ts": "fe4ea70a74298dba832b58823564992885cd8215d97313234de817350b270d7c",
+    "frontend/src/features/pfmea/PfmeaWorkspace.tsx": "781bf954d236da273d2552fd0c09aef2fbc7849181f405ea07ae01f677037ab8",
+    "frontend/src/features/control-plan/ControlPlanWorkspace.tsx": "fa142f7691513b5ad41ba3a0e5d0edfe98ae35aa4493290f448aea076ea86cc6",
+    "backend/prisma/schema.prisma": "616c2aa5c694d361375867595157f4eba82472fadc5adae77beaba1f9de1914e"
+  }
+}

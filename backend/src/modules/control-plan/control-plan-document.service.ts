@@ -9,6 +9,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { assertEngineeringRevisionAccess } from '../../common/engineering-access';
 import {
   normalizeCpDocument,
+  normalizeAnyCpDocument,
+  isCpDocumentV2,
+  previewV1ToV2Conversion,
+  applyV1ToV2Conversion,
   controlPlanReadiness,
   blankCpLine,
   emptyCpDocument,
@@ -18,7 +22,7 @@ import {
   fingerprint,
   sourceFields,
 } from './control-plan-document';
-import type { CpDocument, CpLine } from './control-plan-document';
+import type { CpDocument, CpDocumentV1, CpDocumentV2, AnyCpDocument, CpLine } from './control-plan-document';
 import type { Prisma } from '@prisma/client';
 const CP_TRANSACTION_OPTIONS = {
   isolationLevel: 'Serializable' as const,
@@ -82,7 +86,7 @@ export class ControlPlanDocumentService {
     id: string,
   ): Promise<{
     version: number;
-    document: CpDocument;
+    document: AnyCpDocument;
     legacyReviewRequired: boolean;
   }> {
     const saved = await db.controlPlanDocument.findUnique({
@@ -91,7 +95,7 @@ export class ControlPlanDocumentService {
     if (saved)
       return {
         version: saved.version,
-        document: normalizeCpDocument(saved.data),
+        document: normalizeAnyCpDocument(saved.data),
         legacyReviewRequired: false,
       };
     const revision = await db.documentRevision.findUniqueOrThrow({
@@ -253,6 +257,13 @@ export class ControlPlanDocumentService {
       throw error;
     }
   }
+  async getProjectContext(actor: CpActor, id: string) {
+    const revision = await this.context(this.prisma, actor, id);
+    return {
+      projectId: revision.document.projectId,
+      revisionId: id,
+    };
+  }
   async get(actor: CpActor, id: string) {
     const revision = await this.context(this.prisma, actor, id);
     const loaded = await this.load(this.prisma, id);
@@ -267,8 +278,44 @@ export class ControlPlanDocumentService {
     db: Prisma.TransactionClient,
     actor: CpActor,
     id: string,
-    document: CpDocument,
+    document: AnyCpDocument,
   ) {
+    if (isCpDocumentV2(document)) {
+      const refs = [
+        ...document.sourceBaselines.map((b) => b.revisionId),
+        ...(document.sourceExclusions ?? []).map((e) => e.revisionId),
+      ];
+      for (const op of document.operations) {
+        if (op.lineageId) refs.push(op.lineageId);
+        for (const b of op.sourceBindings ?? []) {
+          if (b.sourceRevisionId) refs.push(b.sourceRevisionId);
+          if (b.entityId) refs.push(b.entityId);
+        }
+      }
+      if (
+        refs.some(
+          (ref) =>
+            ref &&
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              ref,
+            ),
+        )
+      ) {
+        throw new BadRequestException('Invalid control-plan reference identifier.');
+      }
+      const target = await db.documentRevision.findUniqueOrThrow({
+        where: { id },
+        include: { document: true },
+      });
+      const projectId = target.document.projectId;
+      for (const baseline of document.sourceBaselines) {
+        const rev = await assertEngineeringRevisionAccess(db, actor, baseline.revisionId);
+        if (rev.document.projectId !== projectId) {
+          throw new BadRequestException('Source baseline belongs to another program.');
+        }
+      }
+      return;
+    }
     const refs = [
       ...document.lines.flatMap((l) => [
         l.operationId,
@@ -436,13 +483,13 @@ export class ControlPlanDocumentService {
     actor: CpActor,
     id: string,
     expectedVersion: number,
-    document: CpDocument,
+    document: AnyCpDocument,
   ) {
     if (!Number.isInteger(expectedVersion) || expectedVersion < 0)
       throw new BadRequestException(
         'Expected version must be a nonnegative integer.',
       );
-    document = normalizeCpDocument(document);
+    document = normalizeAnyCpDocument(document);
     const access = await this.context(db, actor, id, true);
     await this.validateLinks(db, actor, id, document);
     const existing = await db.controlPlanDocument.findUnique({
@@ -497,13 +544,14 @@ export class ControlPlanDocumentService {
       legacyReviewRequired: false,
     };
   }
-  async readiness(actor: CpActor, id: string) {
-    await this.context(this.prisma, actor, id);
-    const loaded = await this.load(this.prisma, id),
+  async readiness(actor: CpActor, id: string, client?: Prisma.TransactionClient) {
+    const db = client ?? this.prisma;
+    await this.context(db, actor, id);
+    const loaded = await this.load(db, id),
       result = controlPlanReadiness(loaded.document);
     for (const baseline of loaded.document.sourceBaselines) {
       const preview = await this.makePreview(
-        this.prisma,
+        db,
         actor,
         id,
         baseline.revisionId,
@@ -524,7 +572,7 @@ export class ControlPlanDocumentService {
   async save(
     actor: CpActor,
     id: string,
-    body: { expectedVersion: number; document: CpDocument },
+    body: { expectedVersion: number; document: AnyCpDocument },
   ) {
     return this.transaction((tx) =>
       this.persist(tx, actor, id, body.expectedVersion, body.document),
@@ -724,7 +772,7 @@ export class ControlPlanDocumentService {
       expectedVersion: loaded.version,
       sourceRevisionId,
       sourceFingerprint: fingerprint(source.candidates),
-      changes: previewCp(loaded.document, source.candidates, sourceRevisionId),
+      changes: previewCp(loaded.document as CpDocumentV1, source.candidates, sourceRevisionId),
       warnings: source.warnings,
       document: loaded.document,
       type: source.type,
@@ -773,7 +821,7 @@ export class ControlPlanDocumentService {
           'Control plan or source changed. Preview again.',
         );
       const document = applyCpChanges(
-        preview.document,
+        preview.document as CpDocumentV1,
         preview.changes,
         body.decisions,
       );
@@ -837,6 +885,45 @@ export class ControlPlanDocumentService {
           type: preview.type,
         });
       return this.persist(tx, actor, id, body.expectedVersion, document);
+    });
+  }
+
+  async upgradePreview(actor: CpActor, id: string, expectedVersion: number) {
+    const loaded = await this.load(this.prisma, id);
+    if (loaded.version !== expectedVersion) {
+      throw new ConflictException('Control plan changed. Reload before upgrading.');
+    }
+    if (isCpDocumentV2(loaded.document)) {
+      throw new BadRequestException('Control plan document is already schema version 2.');
+    }
+    const preview = previewV1ToV2Conversion(loaded.document as CpDocumentV1);
+    return {
+      expectedVersion: loaded.version,
+      previewHash: preview.previewHash,
+      v2Document: preview.v2,
+      warnings: preview.warnings,
+    };
+  }
+
+  async upgradeApply(
+    actor: CpActor,
+    id: string,
+    body: { expectedVersion: number; previewHash: string; confirmed: boolean },
+  ) {
+    if (!body.confirmed) {
+      throw new BadRequestException('Explicit confirmation is required to upgrade to schema version 2.');
+    }
+    return this.transaction(async (tx) => {
+      await this.context(tx, actor, id, true);
+      const loaded = await this.load(tx, id);
+      if (loaded.version !== body.expectedVersion) {
+        throw new ConflictException('Control plan changed. Reload before upgrading.');
+      }
+      if (isCpDocumentV2(loaded.document)) {
+        throw new BadRequestException('Control plan document is already schema version 2.');
+      }
+      const v2Document = applyV1ToV2Conversion(loaded.document as CpDocumentV1, body.previewHash);
+      return this.persist(tx, actor, id, body.expectedVersion, v2Document);
     });
   }
 }

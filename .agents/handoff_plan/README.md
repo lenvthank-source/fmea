@@ -4,6 +4,8 @@ Canonical location: `.agents/handoff_plan/<plan-slug>/PLAN.md`. Keep evidence an
 
 ## Plan index
 
+- [Controlled Control Plan evolution](control-plan-evolution/PLAN.md) — `control-plan-evolution`, revision 1, status `completed` (2026-10-23). Codebase-verified extension of existing CP, explicit identity/source reviews, v2 compatibility, atomic snapshots/approval packages, operation navigator workspace, PDFKit export, and verification suites. 208 backend tests and 35 frontend tests pass.
+
 - [Project identity and yellow guest-project boxes](project-card-badges/PLAN.md) — `project-card-badges`, revision 2, status `completed` (2026-10-21). Guest origin identified purely by subtle yellow card/row box; eliminated erroneous PFMEA and 24h trial badges; added backend presentation resolver and fixed replication phase assignment. 187 backend tests and 28 frontend tests pass.
 
 - [Correct guest sign-in history and inactivity interpretation](guest-login-activity/PLAN.md) — `guest-login-activity`, revision 1, status `completed` (2026-10-21). Fixed missing guest and session login timestamps, truthful admin display, and activity-aware archival. 180 backend tests and 28 frontend tests pass.

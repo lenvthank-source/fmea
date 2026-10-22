@@ -4,7 +4,7 @@ Purpose: Module folder managing common logic and assets.
 
 ## Directory Metadata
 - **Path**: `backend/src/common`
-- **Files Count**: 9
+- **Files Count**: 10
 - **Subdirectories Count**: 0
 
 ## File Map
@@ -20,3 +20,4 @@ Purpose: Module folder managing common logic and assets.
 | [`global-exception.filter.ts`](./global-exception.filter.ts) | Source code component implementing global-exception.filter functionality. |
 | [`request-id.middleware.ts`](./request-id.middleware.ts) | Source code component implementing request-id.middleware functionality. |
 | [`revision-guard.ts`](./revision-guard.ts) | Source code component implementing revision-guard functionality. |
+| [`source-fence.ts`](./source-fence.ts) | Acquires the tenant-level EngineeringSourceFence row lock inside the active transaction. Consistent lock order: source fence -> sorted revision IDs -> aggregate row. Never hold this lock during PDF rendering, file storage, or external network I/O. |

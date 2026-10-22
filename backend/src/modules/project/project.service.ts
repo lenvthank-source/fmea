@@ -2190,6 +2190,7 @@ export class ProjectService {
       ).readiness(
         { tenantId, userId: actorUserId || revision.createdById },
         revisionId,
+        db,
       );
       const data = canonical.data as any;
       for (const baseline of data.sourceBaselines || []) {

@@ -209,6 +209,7 @@ model DocumentRevision {
   lockedAt          DateTime?  @map("locked_at") @db.Timestamptz
   pfdGraph          Json?      @map("pfd_graph")
   pfdGraphVersion   Int        @default(0) @map("pfd_graph_version")
+  cpApprovalPackageId String?  @unique @map("cp_approval_package_id") @db.Uuid
   document          Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
   creator           User          @relation("RevisionCreator", fields: [createdById], references: [id])
   approvals         Approval[]
@@ -217,6 +218,7 @@ model DocumentRevision {
   controlPlanRows   ControlPlanRow[]
   dfmeaDocument     DfmeaDocument?
   controlPlanDocument ControlPlanDocument?
+  cpApprovalPackage CpApprovalPackage? @relation("RevisionApprovalPackage", fields: [cpApprovalPackageId], references: [id], onDelete: Restrict)
 
   @@unique([documentId, revisionNumber])
   @@index([documentId])
@@ -250,6 +252,223 @@ model ControlPlanDocument {
   revision DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   @@index([tenantId])
   @@map("control_plan_document")
+}
+
+model EngineeringSourceFence {
+  tenantId   String   @id @map("tenant_id") @db.Uuid
+  generation Int      @default(0)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("engineering_source_fence")
+}
+
+model CpPhaseHead {
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  documentId        String    @map("document_id") @db.Uuid
+  phase             String    @db.VarChar(50)
+  currentRevisionId String?   @map("current_revision_id") @db.Uuid
+  version           Int       @default(0)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([tenantId, documentId, phase])
+  @@index([tenantId, documentId])
+  @@map("cp_phase_head")
+}
+
+model OperationLineage {
+  id          String                     @id @default(uuid()) @db.Uuid
+  tenantId    String                     @map("tenant_id") @db.Uuid
+  projectId   String                     @map("project_id") @db.Uuid
+  createdById String?                    @map("created_by_id") @db.Uuid
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz
+  bindings    OperationVersionBinding[]
+
+  @@index([tenantId, projectId])
+  @@map("operation_lineage")
+}
+
+model OperationVersionBinding {
+  id               String           @id @default(uuid()) @db.Uuid
+  tenantId         String           @map("tenant_id") @db.Uuid
+  projectId        String           @map("project_id") @db.Uuid
+  lineageId        String           @map("lineage_id") @db.Uuid
+  sourceRevisionId String           @map("source_revision_id") @db.Uuid
+  processStepId    String           @unique @map("process_step_id") @db.Uuid
+  provenance       Json?
+  actorId          String?          @map("actor_id") @db.Uuid
+  reason           String?
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  lineage          OperationLineage @relation(fields: [lineageId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, projectId])
+  @@index([sourceRevisionId])
+  @@map("operation_version_binding")
+}
+
+model OperationLineageRelation {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  groupId       String   @map("group_id") @db.Uuid
+  predecessorId String   @map("predecessor_id") @db.Uuid
+  successorId   String   @map("successor_id") @db.Uuid
+  kind          String   @db.VarChar(50)
+  actorId       String?  @map("actor_id") @db.Uuid
+  reason        String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([tenantId, projectId])
+  @@index([groupId])
+  @@map("operation_lineage_relation")
+}
+
+model CpRequirementProfileRevision {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  key                String    @db.VarChar(100)
+  version            Int
+  status             String    @default("draft") @db.VarChar(50)
+  content            Json
+  contentHash        String    @map("content_hash") @db.VarChar(64)
+  ruleSourceMetadata Json?     @map("rule_source_metadata")
+  authorId           String?   @map("author_id") @db.Uuid
+  publishedById      String?   @map("published_by_id") @db.Uuid
+  publishedAt        DateTime? @map("published_at") @db.Timestamptz
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([tenantId, key, version])
+  @@index([tenantId])
+  @@map("cp_requirement_profile_revision")
+}
+
+model CpSourceCapture {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  projectId        String   @map("project_id") @db.Uuid
+  cpRevisionId     String   @map("cp_revision_id") @db.Uuid
+  sourceRevisionId String?  @map("source_revision_id") @db.Uuid
+  sourceScope      String   @map("source_scope") @db.VarChar(50)
+  snapshot         Json
+  snapshotHash     String   @map("snapshot_hash") @db.VarChar(64)
+  capturedById     String?  @map("captured_by_id") @db.Uuid
+  capturedAt       DateTime @default(now()) @map("captured_at") @db.Timestamptz
+
+  @@index([tenantId, projectId])
+  @@index([cpRevisionId])
+  @@map("cp_source_capture")
+}
+
+model CpMutationReceipt {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  cpRevisionId  String   @map("cp_revision_id") @db.Uuid
+  actorId       String   @map("actor_id") @db.Uuid
+  requestId     String   @map("request_id") @db.Uuid
+  payloadHash   String   @map("payload_hash") @db.VarChar(64)
+  resultVersion Int      @map("result_version")
+  entityIds     Json?    @map("entity_ids")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([tenantId, cpRevisionId, actorId, requestId])
+  @@index([tenantId, projectId])
+  @@map("cp_mutation_receipt")
+}
+
+model CpReviewDecision {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tenantId                String   @map("tenant_id") @db.Uuid
+  cpRevisionId            String   @map("cp_revision_id") @db.Uuid
+  observedDocumentVersion Int      @map("observed_document_version")
+  targetKind              String   @map("target_kind") @db.VarChar(50)
+  targetId                String   @map("target_id") @db.Uuid
+  targetPath              String?  @map("target_path") @db.VarChar(255)
+  valueHash               String   @map("value_hash") @db.VarChar(64)
+  sourceSetHash           String?  @map("source_set_hash") @db.VarChar(64)
+  mappingHash             String?  @map("mapping_hash") @db.VarChar(64)
+  decision                String   @db.VarChar(50)
+  reason                  String?
+  actorId                 String   @map("actor_id") @db.Uuid
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([cpRevisionId])
+  @@index([tenantId])
+  @@map("cp_review_decision")
+}
+
+model CpValidationRun {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  cpRevisionId       String   @map("cp_revision_id") @db.Uuid
+  documentHash       String   @map("document_hash") @db.VarChar(64)
+  sourceSetHash      String   @map("source_set_hash") @db.VarChar(64)
+  mappingHash        String   @map("mapping_hash") @db.VarChar(64)
+  profileRevisionId  String?  @map("profile_revision_id") @db.Uuid
+  profileHash        String   @map("profile_hash") @db.VarChar(64)
+  validatorVersion   String   @map("validator_version") @db.VarChar(50)
+  findings           Json
+  actorId            String?  @map("actor_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([cpRevisionId])
+  @@index([tenantId])
+  @@map("cp_validation_run")
+}
+
+model CpApprovalPackage {
+  id                 String            @id @default(uuid()) @db.Uuid
+  tenantId           String            @map("tenant_id") @db.Uuid
+  projectId          String            @map("project_id") @db.Uuid
+  revisionId         String            @map("revision_id") @db.Uuid
+  expectedVersion    Int               @map("expected_version")
+  frozenSnapshot     Json              @map("frozen_snapshot")
+  frozenSnapshotHash String            @map("frozen_snapshot_hash") @db.VarChar(64)
+  sourceCaptureId    String?           @map("source_capture_id") @db.Uuid
+  profileRevisionId  String?           @map("profile_revision_id") @db.Uuid
+  validationRunId    String?           @map("validation_run_id") @db.Uuid
+  intentActorId      String            @map("intent_actor_id") @db.Uuid
+  intentComment      String?           @map("intent_comment")
+  intentDecisionAt   DateTime          @map("intent_decision_at") @db.Timestamptz
+  state              String            @default("queued") @db.VarChar(50)
+  leaseToken         String?           @map("lease_token") @db.VarChar(100)
+  leaseExpiresAt     DateTime?         @map("lease_expires_at") @db.Timestamptz
+  attempts           Int               @default(0)
+  lastError          String?           @map("last_error")
+  finalizedAt        DateTime?         @map("finalized_at") @db.Timestamptz
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  artifacts          CpArtifact[]
+  documentRevision   DocumentRevision? @relation("RevisionApprovalPackage")
+
+  @@index([tenantId, projectId])
+  @@index([revisionId])
+  @@index([state])
+  @@map("cp_approval_package")
+}
+
+model CpArtifact {
+  id              String            @id @default(uuid()) @db.Uuid
+  tenantId        String            @map("tenant_id") @db.Uuid
+  projectId       String            @map("project_id") @db.Uuid
+  packageId       String            @map("package_id") @db.Uuid
+  kind            String            @db.VarChar(50)
+  mimeType        String            @map("mime_type") @db.VarChar(100)
+  fileName        String            @map("file_name") @db.VarChar(255)
+  content         Bytes
+  size            Int
+  sha256          String            @db.VarChar(64)
+  rendererVersion String?           @map("renderer_version") @db.VarChar(50)
+  templateVersion String?           @map("template_version") @db.VarChar(50)
+  fontVersions    Json?             @map("font_versions")
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  package         CpApprovalPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, projectId])
+  @@index([packageId])
+  @@map("cp_artifact")
 }
 
 model Approval {

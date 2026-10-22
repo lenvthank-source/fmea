@@ -46,7 +46,7 @@ export type CpLine = Record<LineField, string> & {
   };
   sourceState?: string;
 };
-export interface CpDocument {
+export interface CpDocumentV1 {
   schemaVersion: 1;
   config: {
     phase: string;
@@ -70,12 +70,167 @@ export interface CpDocument {
   }[];
   lines: CpLine[];
 }
+export type CpSourceLocatorModel =
+  | 'PFD_STEP'
+  | 'PFMEA_ROW'
+  | 'WORKSHEET_CONTROL'
+  | 'TREE_FAILURE_FIELD'
+  | 'TREE_LINK_ACTION'
+  | 'WORKSHEET_ACTION_FIELDS'
+  | 'TRACKER_ACTION';
+
+export interface CpSourceLocator {
+  model: CpSourceLocatorModel;
+  sourceRevisionId: string | null;
+  captureId?: string;
+  entityId: string;
+  parentIds?: string[];
+  fieldPath?: string;
+  sourceScope: 'revision' | 'captured_project_context';
+  capturedValueHash?: string;
+}
+
+export interface CpResourceV2 {
+  id: string;
+  kind: 'manufacturing_equipment' | 'jig_fixture' | 'tooling' | 'environment' | 'unspecified';
+  text: string;
+  controlledReference?: string;
+  sources?: CpSourceLocator[];
+}
+
+export interface CpCriteriaV2 {
+  kind: 'numeric' | 'attribute' | 'controlled_reference' | 'legacy_text' | 'unspecified';
+  specification: string;
+  tolerance: string;
+  unit?: string;
+  lowerLimit?: string;
+  upperLimit?: string;
+  controlledReference?: string;
+}
+
+export type CpExecutionMode =
+  | 'count'
+  | 'all_units'
+  | 'event'
+  | 'continuous'
+  | 'controlled_reference'
+  | 'unspecified';
+
+export interface CpExecutionRuleV2 {
+  mode: CpExecutionMode;
+  sampleSize?: number;
+  frequency?: string;
+  volumeBasis?: string;
+  trigger?: string;
+  summary?: string;
+  coverage?: string;
+  monitoredScope?: string;
+  systemIdentity?: string;
+  version?: string;
+  locator?: string;
+  legacySampleSize?: string;
+  legacyFrequency?: string;
+  legacyVolumeBasis?: string;
+}
+
+export interface CpReactionV2 {
+  trigger: string;
+  plan: string;
+  procedure?: string;
+  responsible: string;
+  containment?: string;
+  restartCriteria?: string;
+  recordReference?: string;
+}
+
+export interface CpControlV2 {
+  id: string;
+  controlType: 'prevention' | 'detection' | 'unspecified';
+  method: string;
+  evaluationMethod: string;
+  measurementEquipment?: string;
+  executionRule: CpExecutionRuleV2;
+  reaction: CpReactionV2;
+  responsibility: string;
+  recordReference?: string;
+  implementation?: {
+    status: string;
+    reportedAt?: string;
+    evidenceReferences?: string[];
+  };
+  sourceBindings?: CpSourceLocator[];
+  legacyFields?: Record<string, string>;
+}
+
+export interface CpCharacteristicV2 {
+  id: string;
+  number: string;
+  kind: 'product' | 'process' | 'unspecified';
+  name: string;
+  description?: string;
+  criteria: CpCriteriaV2;
+  classification: string;
+  sources?: CpSourceLocator[];
+  controls: CpControlV2[];
+}
+
+export interface CpOperationV2 {
+  id: string;
+  lineageId?: string | null;
+  order: number;
+  number: string;
+  name: string;
+  sourceBindings?: CpSourceLocator[];
+  resources: CpResourceV2[];
+  applicability?: string;
+  characteristics: CpCharacteristicV2[];
+}
+
+export interface CpDocumentV2 {
+  schemaVersion: 2;
+  config: {
+    phase: string;
+    safeLaunch: {
+      enabled: boolean;
+      entryCriteria: string;
+      exitCriteria: string;
+      additionalControls: string;
+    };
+    requirementProfileRevisionId?: string;
+    standardProfile: string;
+    customerRequirements: string;
+    applicability?: string;
+    sourceExceptionJustification: string;
+  };
+  header: Record<string, string>;
+  sourceBaselines: {
+    revisionId: string;
+    type: string;
+    capturedScope?: string;
+  }[];
+  operations: CpOperationV2[];
+  sourceExclusions?: {
+    key: string;
+    revisionId: string;
+    reason: string;
+    sourceFingerprint: string;
+  }[];
+  legacyUnmappedContent?: Record<string, unknown>[];
+}
+
+export type CpDocument = CpDocumentV1;
+export type AnyCpDocument = CpDocumentV1 | CpDocumentV2;
+
+export function isCpDocumentV2(doc: any): doc is CpDocumentV2 {
+  return Boolean(doc && doc.schemaVersion === 2);
+}
+
 export interface CpEnvelope {
   forkable?:boolean;
   revisionId: string;
   version: number;
   writable: boolean;
-  document: CpDocument;
+  document: AnyCpDocument;
   legacyReviewRequired: boolean;
 }
 export interface SyncPreview {
@@ -91,6 +246,46 @@ export interface SyncPreview {
   }[];
   warnings: string[];
 }
+export function getDocLines(doc: AnyCpDocument | null | undefined): CpLine[] {
+  if (!doc) return [];
+  if (doc.schemaVersion === 1) return doc.lines ?? [];
+  const result: CpLine[] = [];
+  for (const op of doc.operations ?? []) {
+    for (const char of op.characteristics ?? []) {
+      for (const ctrl of char.controls ?? []) {
+        const line = blankLine();
+        line.id = ctrl.id;
+        line.operationId = op.id;
+        line.operationNumber = op.number;
+        line.operationName = op.name;
+        line.equipment = op.resources?.map((r: CpResourceV2) => r.text).join(', ') ?? '';
+        line.characteristicId = char.id;
+        line.characteristicNumber = char.number;
+        line.characteristicName = char.name;
+        line.characteristicKind = char.kind;
+        line.classification = char.classification;
+        line.specification = char.criteria?.specification ?? '';
+        line.tolerance = char.criteria?.tolerance ?? '';
+        line.unit = char.criteria?.unit ?? '';
+        line.controlMethod = ctrl.method;
+        line.controlType = ctrl.controlType;
+        line.evaluationMethod = ctrl.evaluationMethod;
+        line.gauge = ctrl.measurementEquipment ?? '';
+        line.sampleSize = ctrl.executionRule?.legacySampleSize ?? (ctrl.executionRule?.sampleSize ? String(ctrl.executionRule.sampleSize) : '');
+        line.frequency = ctrl.executionRule?.legacyFrequency ?? ctrl.executionRule?.frequency ?? '';
+        line.volumeBasis = ctrl.executionRule?.legacyVolumeBasis ?? ctrl.executionRule?.volumeBasis ?? '';
+        line.reactionPlan = ctrl.reaction?.plan ?? '';
+        line.reactionOwner = ctrl.reaction?.responsible ?? '';
+        line.reactionProcedure = ctrl.reaction?.procedure ?? '';
+        line.responsible = ctrl.responsibility;
+        line.recordReference = ctrl.recordReference ?? '';
+        result.push(line);
+      }
+    }
+  }
+  return result;
+}
+
 export const blankLine = (): CpLine =>
   ({
     ...Object.fromEntries(lineFields.map(([key]) => [key, ""])),
