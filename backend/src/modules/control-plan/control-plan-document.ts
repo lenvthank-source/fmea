@@ -368,11 +368,12 @@ export function normalizeCpDocument(value: unknown): CpDocumentV1 {
   return d;
 }
 
-export function normalizeAnyCpDocument(value: unknown): AnyCpDocument {
+export function normalizeAnyCpDocument(value: unknown): CpDocumentV2 {
   if (!record(value))
     throw new BadRequestException('Unsupported control-plan document format.');
   if (value.schemaVersion === 2) return normalizeCpDocumentV2(value);
-  return normalizeCpDocument(value);
+  const v1 = normalizeCpDocument(value);
+  return applyV1ToV2Conversion(v1);
 }
 
 export function normalizeCpDocumentV2(value: unknown): CpDocumentV2 {
@@ -765,10 +766,10 @@ export function previewV1ToV2Conversion(doc: CpDocumentV1): {
 
 export function applyV1ToV2Conversion(
   doc: CpDocumentV1,
-  previewHash: string,
+  previewHash?: string,
 ): CpDocumentV2 {
   const { v2, previewHash: actualHash } = previewV1ToV2Conversion(doc);
-  if (previewHash !== actualHash) {
+  if (previewHash && previewHash !== actualHash) {
     throw new BadRequestException('Conversion preview hash mismatch or stale document.');
   }
   validateCpDocumentV2(v2);

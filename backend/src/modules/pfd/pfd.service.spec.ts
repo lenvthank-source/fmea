@@ -105,7 +105,7 @@ function fixture() {
       delete: jest.fn().mockResolvedValue(step),
     },
     pfmeaRow: { count: jest.fn().mockResolvedValue(0) },
-    controlPlanRow: { count: jest.fn().mockResolvedValue(0) },
+    operationVersionBinding: { count: jest.fn().mockResolvedValue(0) },
     project: { findFirst: jest.fn().mockResolvedValue(project) },
   };
   prisma.$transaction = jest.fn(async (callback: any) => callback(prisma));

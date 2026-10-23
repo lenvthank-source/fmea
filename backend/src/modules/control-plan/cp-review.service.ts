@@ -1,3 +1,4 @@
+import { assertEngineeringRevisionAccess } from '../../common/engineering-access';
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -63,6 +64,14 @@ export class CpReviewService {
     if (['reject', 'not_applicable', 'retain_current', 'modify_accept'].includes(dto.decision) && !dto.reason?.trim()) {
       throw new BadRequestException(`A reason is required for decision '${dto.decision}'.`);
     }
+
+    await assertEngineeringRevisionAccess(
+      db,
+      { tenantId, userId: actorId },
+      cpRevisionId,
+      'CONTROL_PLAN',
+      true,
+    );
 
     const valueHash = this.computeValueHash(dto.value);
 

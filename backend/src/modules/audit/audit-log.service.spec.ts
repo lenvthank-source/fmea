@@ -12,7 +12,6 @@ describe('Workspace activity', () => {
         'documentRevision',
         'processStep',
         'pfmeaRow',
-        'controlPlanRow',
         'action',
         'structureFunction',
         'structureFailure',

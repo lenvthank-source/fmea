@@ -511,7 +511,7 @@ export class PfdService {
         // Validate dependencies before any mutation, including downstream orphan flags.
         const [fmeaCount, cpCount] = await Promise.all([
           tx.pfmeaRow.count({ where: { processStepId: stepId } }),
-          tx.controlPlanRow.count({ where: { processStepId: stepId } }),
+          tx.operationVersionBinding.count({ where: { processStepId: stepId } }),
         ]);
         if (fmeaCount > 0 || cpCount > 0)
           throw new BadRequestException(

@@ -44,11 +44,15 @@ export class CpApprovalPackageService {
 
         const revision = await tx.documentRevision.findUnique({
           where: { id: cpRevisionId },
-          include: { document: true },
+          include: { document: { include: { project: true } } },
         });
 
         if (!revision || revision.document.tenantId !== tenantId) {
           throw new NotFoundException('Revision not found.');
+        }
+
+        if (revision.document.project?.status === 'archived') {
+          throw new ForbiddenException('Archived engineering projects are read only');
         }
 
         if (revision.lockedAt) {

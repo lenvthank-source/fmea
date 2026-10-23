@@ -1,3 +1,6 @@
+jest.mock('../../common/engineering-access', () => ({
+  assertEngineeringRevisionAccess: jest.fn().mockResolvedValue({ id: 'rev-1', writable: true, projectWritable: true }),
+}));
 import { CpReviewService } from './cp-review.service';
 import { CpDocumentV2 } from './control-plan-document';
 import { BadRequestException } from '@nestjs/common';

@@ -19,7 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { CpDocument, SyncPreview } from "./controlPlanDocument";
-import { lineFields } from "./controlPlanDocument";
+import { lineFields, getDocLines } from "./controlPlanDocument";
 interface Props {
   preview: SyncPreview | null;
   document: CpDocument | null;
@@ -77,9 +77,9 @@ export function SourceChangeReview({
           <Typography>No pending changes for this source baseline.</Typography>
         )}
         {preview?.changes.map((change) => {
-          const current = document?.lines.find(
-            (line) => line.id === change.lineId,
-          );
+          const current = document
+            ? getDocLines(document).find((line) => line.id === change.lineId)
+            : undefined;
           const fields = Object.keys(
             change.candidate.source?.snapshot ?? {},
           ).filter(

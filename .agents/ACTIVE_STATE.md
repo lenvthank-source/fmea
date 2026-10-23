@@ -1,8 +1,32 @@
 # FMEApex — active handoff
 
-Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.13.0** (0.13.0), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.13.0.md`. Hosted deployment completion is separate.
+Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.14.0** (0.14.0), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.14.0.md`. Hosted deployment completion is separate.
 
-## Latest request — consolidated Control Plan evolution (completed)
+## Latest request — complete retirement of Control Plan Version 1 & standardization on Version 2 (completed)
+
+2026-10-23. User requested complete elimination of Version 1 workflow, tables, and UI, sticking exclusively to Control Plan Schema Version 2 across Database, Backend, and Frontend.
+Delivered:
+- **Database & Prisma Schema**:
+  - Dropped prototype tables `control_plan_pfmea_link` and `control_plan_row` via migration `20261023180000_retire_control_plan_v1`.
+  - Removed models `ControlPlanRow` and `ControlPlanPfmeaLink` and their relation fields from `schema.prisma`.
+  - Verified remote database: schema is up to date, 0 active V1 documents existed in database.
+- **Backend Clean-up & Security Guard**:
+  - Deleted legacy `control-plan-row.controller.ts` and `control-plan-row.service.ts`.
+  - Updated `control-plan.module.ts`, `revision-guard.ts`, `audit-log.service.ts`, `pfd.service.ts`, `project.service.ts`, `project-history.spec.ts`, and `revision-readiness.ts`.
+  - Fixed 403 write guard bug on archived engineering projects (`assertRevisionWritable` and archived project check in `cp-review.service.ts` and `cp-approval-package.service.ts`).
+  - Standardized `ControlPlanDocumentService.load()` to initialize `emptyCpDocumentV2()`; `upgradePreview` and `upgradeApply` handle V2 cleanly.
+- **Frontend Clean-up & UI Standardization**:
+  - Deleted `ControlLineEditor.tsx`.
+  - Updated `ControlPlanWorkspace.tsx`: removed the ~700-line legacy V1 flat table editor, flat line modals, upgrade alert banner, and upgrade preview dialog; passes `document={document}` unconditionally to `ControlPlanV2View` as the sole canonical interface.
+  - Updated `SourceChangeReview.tsx` to read projected lines via `getDocLines(document)`.
+  - Updated `controlPlanDocument.ts` type aliases: `CpDocument = CpDocumentV2`, `AnyCpDocument = CpDocumentV2`, exported `emptyCpDocumentV2` and `applyV1ToV2Conversion`, updated `validateImport` for V2.
+  - Updated unit tests in `controlPlanDocument.test.mjs` and `controlPlanV2.test.mjs`.
+- **Verification**:
+  - Backend Jest tests: **29/29 suites PASS, 208/208 tests PASS**.
+  - Frontend unit tests: **45/45 tests PASS** (8 Control Plan tests, 37 PFD tests).
+  - Production builds: Backend Nest build PASS; Frontend Vite build PASS.
+  - Directory README sync complete across all modules.
+  - Knowledge graph updated: 4,431 nodes, 7,734 edges, 341 communities.
 
 2026-10-23. User requested execution of `.agents/handoff_plan/control-plan-evolution/PLAN.md` (completed, revision 1).
 Delivered:

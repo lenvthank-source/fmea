@@ -218,11 +218,168 @@ export interface CpDocumentV2 {
   legacyUnmappedContent?: Record<string, unknown>[];
 }
 
-export type CpDocument = CpDocumentV1;
-export type AnyCpDocument = CpDocumentV1 | CpDocumentV2;
+export type CpDocument = CpDocumentV2;
+export type AnyCpDocument = CpDocumentV2;
 
 export function isCpDocumentV2(doc: any): doc is CpDocumentV2 {
   return Boolean(doc && doc.schemaVersion === 2);
+}
+
+export function emptyCpDocumentV2(
+  header: Record<string, string> = {},
+): CpDocumentV2 {
+  return {
+    schemaVersion: 2,
+    config: {
+      phase: 'unspecified',
+      safeLaunch: {
+        enabled: false,
+        entryCriteria: '',
+        exitCriteria: '',
+        additionalControls: '',
+      },
+      standardProfile: 'fmeapex-cp-baseline-v1',
+      customerRequirements: '',
+      sourceExceptionJustification: '',
+    },
+    header,
+    sourceBaselines: [],
+    operations: [],
+    sourceExclusions: [],
+  };
+}
+
+export function applyV1ToV2Conversion(doc: any): CpDocumentV2 {
+  const v2: CpDocumentV2 = {
+    schemaVersion: 2,
+    config: {
+      phase: doc?.config?.phase ?? 'unspecified',
+      safeLaunch: structuredClone(doc?.config?.safeLaunch ?? {
+        enabled: false,
+        entryCriteria: '',
+        exitCriteria: '',
+        additionalControls: '',
+      }),
+      standardProfile: doc?.config?.standardProfile || 'fmeapex-cp-baseline-v1',
+      customerRequirements: doc?.config?.customerRequirements || '',
+      sourceExceptionJustification: doc?.config?.sourceExceptionJustification || '',
+    },
+    header: structuredClone(doc?.header ?? {}),
+    sourceBaselines: (doc?.sourceBaselines ?? []).map((b: any) => ({
+      revisionId: b.revisionId,
+      type: b.type,
+      capturedScope: 'revision',
+    })),
+    operations: [],
+    sourceExclusions: structuredClone(doc?.sourceExclusions ?? []),
+  };
+
+  const lines: CpLine[] = Array.isArray(doc?.lines) ? doc.lines : [];
+  const opGroups = new Map<string, CpLine[]>();
+  for (const line of lines) {
+    const key = line.operationId?.trim() || `op_${line.operationNumber?.trim() || 'unassigned'}`;
+    if (!opGroups.has(key)) opGroups.set(key, []);
+    opGroups.get(key)!.push(line);
+  }
+
+  let opOrder = 1;
+  for (const [, opLines] of opGroups.entries()) {
+    const first = opLines[0];
+    const opId = first.operationId?.trim() ? first.operationId : `op_${first.operationNumber?.trim() || opOrder}`;
+    const resources: CpResourceV2[] = [];
+    const resourceTexts = new Set<string>();
+
+    let resIdx = 1;
+    for (const line of opLines) {
+      if (line.equipment?.trim() && !resourceTexts.has(line.equipment.trim())) {
+        resourceTexts.add(line.equipment.trim());
+        resources.push({
+          id: `res_${opId}_${resIdx++}`,
+          kind: 'manufacturing_equipment',
+          text: line.equipment.trim(),
+        });
+      }
+    }
+
+    const characteristics: CpCharacteristicV2[] = [];
+    for (const [lineIdx, line] of opLines.entries()) {
+      const charId = line.characteristicId?.trim() ? line.characteristicId : `char_${opId}_${lineIdx + 1}`;
+      const controlId = line.id || `ctrl_${charId}_1`;
+
+      const sourceBindings: CpSourceLocator[] = line.source
+        ? [
+            {
+              model: 'PFMEA_ROW',
+              sourceRevisionId: line.source.revisionId,
+              entityId: line.source.pfmeaRowId || line.id,
+              sourceScope: 'revision',
+            },
+          ]
+        : [];
+
+      const ctrl: CpControlV2 = {
+        id: controlId,
+        controlType: (line.controlType as any) ?? 'unspecified',
+        method: line.controlMethod ?? '',
+        evaluationMethod: line.evaluationMethod ?? '',
+        measurementEquipment: line.gauge ?? '',
+        executionRule: {
+          mode: 'unspecified',
+          legacySampleSize: line.sampleSize ?? '',
+          legacyFrequency: line.frequency ?? '',
+          legacyVolumeBasis: line.volumeBasis ?? '',
+        },
+        reaction: {
+          trigger: '',
+          plan: line.reactionPlan ?? '',
+          procedure: line.reactionProcedure ?? '',
+          responsible: line.reactionOwner || line.responsible || '',
+          containment: line.containmentRationale ?? '',
+          recordReference: line.recordReference ?? '',
+        },
+        responsibility: line.responsible ?? '',
+        recordReference: line.recordReference ?? '',
+        sourceBindings,
+        legacyFields: {
+          notes: line.notes ?? '',
+          passThrough: line.passThrough ?? '',
+          errorProofing: line.errorProofing ?? '',
+          reworkRepair: line.reworkRepair ?? '',
+          alternativeControl: line.alternativeControl ?? '',
+          systemReference: line.systemReference ?? '',
+          sourceRequirement: line.sourceRequirement ?? '',
+        },
+      };
+
+      const char: CpCharacteristicV2 = {
+        id: charId,
+        number: line.characteristicNumber ?? '',
+        name: line.characteristicName ?? '',
+        kind: (line.characteristicKind as any) ?? 'unspecified',
+        classification: line.classification ?? '',
+        criteria: {
+          kind: line.specification || line.tolerance ? 'legacy_text' : 'unspecified',
+          specification: line.specification ?? '',
+          tolerance: line.tolerance ?? '',
+          unit: line.unit ?? '',
+        },
+        sources: sourceBindings,
+        controls: [ctrl],
+      };
+      characteristics.push(char);
+    }
+
+    v2.operations.push({
+      id: opId,
+      order: opOrder++,
+      number: first.operationNumber ?? '',
+      name: first.operationName ?? '',
+      resources,
+      characteristics,
+    });
+  }
+
+  return v2;
 }
 
 export interface CpEnvelope {
@@ -248,7 +405,7 @@ export interface SyncPreview {
 }
 export function getDocLines(doc: AnyCpDocument | null | undefined): CpLine[] {
   if (!doc) return [];
-  if (doc.schemaVersion === 1) return doc.lines ?? [];
+  if ('lines' in (doc as any)) return ((doc as any).lines as CpLine[]) ?? [];
   const result: CpLine[] = [];
   for (const op of doc.operations ?? []) {
     for (const char of op.characteristics ?? []) {
@@ -298,13 +455,13 @@ export function validateImport(value: unknown): string[] {
   const errors: string[] = [];
   if (!value || typeof value !== "object")
     return ["Expected a versioned Control Plan document."];
-  const document = value as CpDocument;
+  const document = value as CpDocumentV2;
   if (
-    document.schemaVersion !== 1 ||
+    document.schemaVersion !== 2 ||
     !document.config ||
     !document.config.safeLaunch ||
     !document.header ||
-    !Array.isArray(document.lines) ||
+    !Array.isArray(document.operations) ||
     !Array.isArray(document.sourceBaselines)
   )
     return ["Invalid document structure or unsupported schema version."];
@@ -337,8 +494,11 @@ export function validateImport(value: unknown): string[] {
     Object.values(document.header).some((value) => typeof value !== "string")
   )
     errors.push("Invalid header or standard configuration.");
-  const ids = new Set<string>();
-  const sourceKeys = new Set<string>();
+
+  const opIds = new Set<string>();
+  const charIds = new Set<string>();
+  const ctrlIds = new Set<string>();
+
   document.sourceBaselines.forEach((baseline, index) => {
     if (
       !baseline ||
@@ -350,50 +510,29 @@ export function validateImport(value: unknown): string[] {
         `Source baseline ${index + 1}: valid revision and document type required.`,
       );
   });
-  document.lines.forEach((line, index) => {
-    if (!line || typeof line.id !== "string" || !line.id || ids.has(line.id)) {
-      errors.push(`Line ${index + 1}: missing or duplicate identity.`);
+
+  document.operations.forEach((op, opIdx) => {
+    if (!op || typeof op.id !== "string" || !op.id || opIds.has(op.id)) {
+      errors.push(`Operation ${opIdx + 1}: missing or duplicate identity.`);
       return;
     }
-    ids.add(line.id);
-    if (line.source) {
-      const source = line.source;
-      if (
-        typeof source.key !== "string" ||
-        !source.key ||
-        typeof source.revisionId !== "string" ||
-        !source.revisionId ||
-        !source.snapshot ||
-        typeof source.snapshot !== "object" ||
-        Array.isArray(source.snapshot) ||
-        Object.values(source.snapshot).some(
-          (value) => typeof value !== "string",
-        )
-      )
-        errors.push(`Line ${index + 1}: invalid source provenance.`);
-      if (sourceKeys.has(source.key))
-        errors.push(`Line ${index + 1}: duplicate source mapping.`);
-      sourceKeys.add(source.key);
-    }
-    if (
-      line.sourceState &&
-      !["current", "changed", "removed", "manual"].includes(line.sourceState)
-    )
-      errors.push(`Line ${index + 1}: invalid source review state.`);
-    lineFields.forEach(([key, label]) => {
-      if (typeof line[key] !== "string")
-        errors.push(`Line ${index + 1}: ${label} must be text.`);
+    opIds.add(op.id);
+    op.characteristics?.forEach((char, charIdx) => {
+      if (!char || typeof char.id !== "string" || !char.id || charIds.has(char.id)) {
+        errors.push(`Operation ${opIdx + 1}, Characteristic ${charIdx + 1}: missing or duplicate identity.`);
+        return;
+      }
+      charIds.add(char.id);
+      char.controls?.forEach((ctrl, ctrlIdx) => {
+        if (!ctrl || typeof ctrl.id !== "string" || !ctrl.id || ctrlIds.has(ctrl.id)) {
+          errors.push(`Operation ${opIdx + 1}, Control ${ctrlIdx + 1}: missing or duplicate identity.`);
+          return;
+        }
+        ctrlIds.add(ctrl.id);
+      });
     });
-    if (
-      !["product", "process", "unspecified"].includes(
-        line.characteristicKind,
-      ) ||
-      !["prevention", "detection", "unspecified"].includes(line.controlType)
-    )
-      errors.push(
-        `Line ${index + 1}: invalid characteristic or control category.`,
-      );
   });
+
   if (document.sourceExclusions !== undefined) {
     if (!Array.isArray(document.sourceExclusions))
       errors.push("Source exclusions must be a list.");

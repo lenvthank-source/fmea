@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ControlPlanDocumentController } from './control-plan-document.controller';
 import { ControlPlanDocumentService } from './control-plan-document.service';
-import { ControlPlanRowController } from './control-plan-row.controller';
-import { ControlPlanRowService } from './control-plan-row.service';
 import { CpLineageService } from './cp-lineage.service';
 import { CpSourceAdapterService } from './cp-source-adapter.service';
 import { CpSourceCaptureService } from './cp-source-capture.service';
@@ -13,9 +11,8 @@ import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [ControlPlanRowController, ControlPlanDocumentController],
+  controllers: [ControlPlanDocumentController],
   providers: [
-    ControlPlanRowService,
     ControlPlanDocumentService,
     CpLineageService,
     CpSourceAdapterService,
@@ -25,7 +22,6 @@ import { PrismaModule } from '../../prisma/prisma.module';
     CpApprovalPackageService,
   ],
   exports: [
-    ControlPlanRowService,
     ControlPlanDocumentService,
     CpLineageService,
     CpSourceAdapterService,

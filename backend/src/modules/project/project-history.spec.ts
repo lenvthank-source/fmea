@@ -52,7 +52,7 @@ function fixture() {
     },
     document: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
     pfmeaRow: { count: jest.fn().mockResolvedValue(0) },
-    controlPlanRow: { count: jest.fn().mockResolvedValue(0) },
+    operationVersionBinding: { count: jest.fn().mockResolvedValue(0) },
     controlPlanDocument: { count: jest.fn().mockResolvedValue(0) },
     dfmeaDocument: { count: jest.fn().mockResolvedValue(0) },
     auditLog: { create: jest.fn() },
@@ -206,7 +206,7 @@ describe('project and revision protected history mutations', () => {
   });
   it('does not cascade a routing draft into other analysis revisions', async () => {
     const f = fixture();
-    f.db.controlPlanRow.count.mockResolvedValue(1);
+    f.db.operationVersionBinding.count.mockResolvedValue(1);
     await expect(
       f.service.adminDeleteRevision(tenantId, userId, revisionId),
     ).rejects.toThrow('Resolve source links');

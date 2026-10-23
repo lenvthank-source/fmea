@@ -5,7 +5,7 @@ export interface RevisionReadinessInput {
   graph?: unknown;
   steps: { id: string; stepType: string }[];
   rows: { rowNumber: number; processStepId?: string | null; severity?: number | null; occurrence?: number | null; detection?: number | null; functions: unknown[]; requirements: unknown[]; failureModes: unknown[]; effects: unknown[]; causes: unknown[]; controls: unknown[] }[];
-  controlRows: { rowNumber: number; processStepId?: string | null; measurementMethod?: string | null; controlMethod?: string | null; reactionPlan?: string | null }[];
+  controlRows?: { rowNumber: number; processStepId?: string | null; measurementMethod?: string | null; controlMethod?: string | null; reactionPlan?: string | null }[];
 }
 /** Product submission policy: drafts remain iterative; release artifacts must be coherent. */
 export function revisionReadiness(input: RevisionReadinessInput) {
@@ -27,8 +27,8 @@ export function revisionReadiness(input: RevisionReadinessInput) {
     }
   }
   if (input.type === 'CONTROL_PLAN') {
-    if (!input.controlRows.length) errors.push('Add control-plan operations and controls before submission.');
-    for (const row of input.controlRows) {
+    const cRows = input.controlRows || []; if (!cRows.length) errors.push('Add control-plan operations and controls before submission.');
+    for (const row of cRows) {
       if (!row.processStepId) errors.push(`Control row ${row.rowNumber}: link a manufacturing operation.`);
       if (!row.measurementMethod?.trim() && !row.controlMethod?.trim()) errors.push(`Control row ${row.rowNumber}: record a control or measurement method.`);
       if (!row.reactionPlan?.trim()) errors.push(`Control row ${row.rowNumber}: record a reaction plan.`);

@@ -98,4 +98,9 @@ D10: Keep Draft -> InReview -> Approved/rejected-to-Draft. Active selection is s
 - T05: `CpPdfService` multi-page landscape PDF rendering with PDFKit, column wrapping, and header stamps; structured JSON reports.
 - T06: `CpApprovalPackageService` approval intent, lease CAS worker, private Postgres `Bytes` artifact storage, and revision finalization.
 - T07-T09: `ControlPlanV2View` component with operations navigator, shared equipment chips, characteristic/control grid, field review dialogs, profile validation findings, and approval pipeline stepper; seamlessly integrated into `ControlPlanWorkspace.tsx` with upgrade affordance.
+- V1 Retirement & Cleanup: Completely eliminated legacy V1 workflow, tables, and UI:
+  - Database: Dropped `control_plan_row` and `control_plan_pfmea_link` tables in migration `20261023180000_retire_control_plan_v1`.
+  - Backend: Removed `ControlPlanRowController`, `ControlPlanRowService`, and references across `ProjectService`, `PfdService`, `AuditLogService`, `CpReviewService`, and `CpApprovalPackageService`; fixed 403 write guard on archived projects.
+  - Frontend: Deleted `ControlLineEditor.tsx`; removed legacy ~700-line V1 table, flat-line modals, upgrade banner, and upgrade dialog in `ControlPlanWorkspace.tsx`; rendered `ControlPlanV2View` as the sole canonical interface; updated `controlPlanDocument.ts`, `SourceChangeReview.tsx`, and test suites.
+  - Verification: 29/29 backend test suites (208/208 tests) PASS; 45/45 frontend tests PASS; backend Nest build & frontend Vite build PASS.
 - T10-T11: Complete verification suites green (208 backend + 35 frontend tests), README synchronization, and Graphify update completed.

@@ -79,27 +79,4 @@ export class RevisionGuard {
       throw new BadRequestException('Can only modify rows in draft revisions');
     }
   }
-
-  async assertRevisionWritableByControlPlanRow(tenantId: string, rowId: string): Promise<void> {
-    const row = await this.prisma.controlPlanRow.findUnique({
-      where: { id: rowId },
-      select: { revisionId: true, revision: { select: { status: true, lockedAt: true, document: { select: { tenantId: true } } } } },
-    });
-
-    if (!row) {
-      throw new BadRequestException('Control plan row not found');
-    }
-
-    if (row.revision?.document?.tenantId !== tenantId) {
-      throw new BadRequestException('Control plan row not found');
-    }
-
-    if (row.revision?.lockedAt !== null) {
-      throw new BadRequestException('Cannot modify a locked revision');
-    }
-
-    if (row.revision?.status !== 'draft') {
-      throw new BadRequestException('Can only modify rows in draft revisions');
-    }
-  }
 }

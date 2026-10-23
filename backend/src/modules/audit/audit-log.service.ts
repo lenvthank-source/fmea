@@ -102,16 +102,12 @@ export class AuditLogService {
     const revisionScope = {
       revision: { document: { tenantId, projectId: { in: projectIds } } },
     };
-    const [steps, rows, controls, actions, functions] = await Promise.all([
+    const [steps, rows, actions, functions] = await Promise.all([
       this.prisma.processStep.findMany({
         where: revisionScope,
         select: { id: true, revisionId: true },
       }),
       this.prisma.pfmeaRow.findMany({
-        where: revisionScope,
-        select: { id: true, revisionId: true },
-      }),
-      this.prisma.controlPlanRow.findMany({
         where: revisionScope,
         select: { id: true, revisionId: true },
       }),
@@ -139,7 +135,6 @@ export class AuditLogService {
     for (const [type, entities] of [
       ['process_step', steps],
       ['pfmea_row', rows],
-      ['control_plan_row', controls],
     ] as const) {
       entities.forEach((e) =>
         add(

@@ -697,47 +697,6 @@ export class ProjectService {
                 });
               }
             }
-          } else if (type === 'CONTROL_PLAN') {
-            const oldCpRows = await tx.controlPlanRow.findMany({
-              where: { revisionId: oldRevisionId },
-              include: { pfmeaRows: true },
-              orderBy: { rowNumber: 'asc' },
-            });
-            for (const cpRow of oldCpRows) {
-              const newStepId = cpRow.processStepId
-                ? stepIdMap.get(cpRow.processStepId)
-                : null;
-
-              await tx.controlPlanRow.create({
-                data: {
-                  revisionId: revision.id,
-                  processStepId:
-                    newStepId ||
-                    (() => {
-                      throw new BadRequestException(
-                        'Include the source PFD when copying legacy Control Plan rows',
-                      );
-                    })(),
-                  characteristicId: cpRow.characteristicId,
-                  rowNumber: cpRow.rowNumber,
-                  specTolerance: cpRow.specTolerance,
-                  measurementMethod: cpRow.measurementMethod,
-                  sampleSize: cpRow.sampleSize,
-                  frequency: cpRow.frequency,
-                  controlType: cpRow.controlType,
-                  controlMethod: cpRow.controlMethod,
-                  reactionPlan: cpRow.reactionPlan,
-                  responsible: cpRow.responsible,
-                  notes: cpRow.notes,
-                  pfmeaRows: {
-                    create: cpRow.pfmeaRows
-                      .map((l) => ({ pfmeaRowId: stepIdMap.get(l.pfmeaRowId) }))
-                      .filter((l) => !!l.pfmeaRowId)
-                      .map((l) => ({ pfmeaRowId: l.pfmeaRowId! })),
-                  },
-                },
-              });
-            }
           }
         }
       }
@@ -1073,52 +1032,6 @@ export class ProjectService {
                 })),
               });
             }
-          }
-        } else if (type === 'CONTROL_PLAN') {
-          const oldCpRows = await tx.controlPlanRow.findMany({
-            where: { revisionId: sourceRevisionId },
-            include: { pfmeaRows: true },
-            orderBy: { rowNumber: 'asc' },
-          });
-          for (const cpRow of oldCpRows) {
-            const newStepId = cpRow.processStepId
-              ? stepIdMap.get(cpRow.processStepId)
-              : null;
-            if (!newStepId && cpRow.processStepId) {
-              throw new BadRequestException(
-                'Include the source PFD when copying legacy Control Plan rows',
-              );
-            }
-
-            await tx.controlPlanRow.create({
-              data: {
-                revisionId: revision.id,
-                processStepId:
-                  newStepId ||
-                  (() => {
-                    throw new BadRequestException(
-                      'Include the source PFD when copying legacy Control Plan rows',
-                    );
-                  })(),
-                characteristicId: cpRow.characteristicId,
-                rowNumber: cpRow.rowNumber,
-                specTolerance: cpRow.specTolerance,
-                measurementMethod: cpRow.measurementMethod,
-                sampleSize: cpRow.sampleSize,
-                frequency: cpRow.frequency,
-                controlType: cpRow.controlType,
-                controlMethod: cpRow.controlMethod,
-                reactionPlan: cpRow.reactionPlan,
-                responsible: cpRow.responsible,
-                notes: cpRow.notes,
-                pfmeaRows: {
-                  create: cpRow.pfmeaRows
-                    .map((l) => ({ pfmeaRowId: stepIdMap.get(l.pfmeaRowId) }))
-                    .filter((l) => !!l.pfmeaRowId)
-                    .map((l) => ({ pfmeaRowId: l.pfmeaRowId! })),
-                },
-              },
-            });
           }
         }
       }
@@ -1578,38 +1491,6 @@ export class ProjectService {
             }
           }
 
-          // Copy ControlPlanRows (for CONTROL_PLAN documents)
-          if (doc.type === 'CONTROL_PLAN') {
-            const oldCpRows = await tx.controlPlanRow.findMany({
-              where: { revisionId: oldRevisionId },
-              include: { pfmeaRows: true },
-            });
-            for (const cpRow of oldCpRows) {
-              await tx.controlPlanRow.create({
-                data: {
-                  revisionId: newRevision.id,
-                  processStepId: cpRow.processStepId,
-                  characteristicId: cpRow.characteristicId,
-                  rowNumber: cpRow.rowNumber,
-                  specTolerance: cpRow.specTolerance,
-                  measurementMethod: cpRow.measurementMethod,
-                  sampleSize: cpRow.sampleSize,
-                  frequency: cpRow.frequency,
-                  controlType: cpRow.controlType,
-                  controlMethod: cpRow.controlMethod,
-                  reactionPlan: cpRow.reactionPlan,
-                  responsible: cpRow.responsible,
-                  notes: cpRow.notes,
-                  pfmeaRows: {
-                    create: cpRow.pfmeaRows.map((l) => ({
-                      pfmeaRowId: l.pfmeaRowId,
-                    })),
-                  },
-                },
-              });
-            }
-          }
-
           await this.copyEngineeringDocument(
             tx,
             oldRevisionId,
@@ -1684,7 +1565,6 @@ export class ProjectService {
           select: {
             processSteps: true,
             pfmeaRows: true,
-            controlPlanRows: true,
           },
         },
         creator: {
@@ -1713,7 +1593,6 @@ export class ProjectService {
           select: {
             processSteps: true,
             pfmeaRows: true,
-            controlPlanRows: true,
           },
         },
         creator: {
@@ -1791,12 +1670,7 @@ export class ProjectService {
             processStep: { revisionId },
           },
         }),
-        tx.controlPlanRow.count({
-          where: {
-            revisionId: { not: revisionId },
-            processStep: { revisionId },
-          },
-        }),
+        tx.operationVersionBinding.count({ where: { sourceRevisionId: revisionId } }),
       ]);
       const [canonicalPlanLinks, designLinks] = await Promise.all([
         tx.controlPlanDocument.count({
@@ -1911,7 +1785,6 @@ export class ProjectService {
           select: {
             processSteps: true,
             pfmeaRows: true,
-            controlPlanRows: true,
           },
         },
         creator: {
@@ -2155,7 +2028,6 @@ export class ProjectService {
             controls: { include: { control: true } },
           },
         },
-        controlPlanRows: true,
       },
     });
     if (!revision) throw new NotFoundException('Revision not found');
@@ -2233,7 +2105,7 @@ export class ProjectService {
       graph: revision.pfdGraph,
       steps: revision.processSteps,
       rows,
-      controlRows: revision.controlPlanRows,
+      controlRows: [],
     });
   }
 

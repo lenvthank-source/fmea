@@ -5,7 +5,7 @@ Purpose: Module folder managing migrations logic and assets.
 ## Directory Metadata
 - **Path**: `backend/prisma/migrations`
 - **Files Count**: 1
-- **Subdirectories Count**: 8
+- **Subdirectories Count**: 9
 
 ## File Map
 
@@ -23,3 +23,4 @@ Purpose: Module folder managing migrations logic and assets.
 - [20261019190000_controlled_engineering_documents](./20261019190000_controlled_engineering_documents/README.md) - Subdirectory folder containing localized modules.
 - [20261020190000_pfd_selected_symbols](./20261020190000_pfd_selected_symbols/README.md) - Subdirectory folder containing localized modules.
 - [20261023000000_control_plan_evolution](./20261023000000_control_plan_evolution/README.md) - Subdirectory folder containing localized modules.
+- [20261023180000_retire_control_plan_v1](./20261023180000_retire_control_plan_v1/README.md) - Subdirectory folder containing localized modules.

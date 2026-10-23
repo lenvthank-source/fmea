@@ -12,17 +12,9 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  List,
-  ListItemText,
   MenuItem,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -36,21 +28,21 @@ import {
 } from "../shared/engineeringDocumentExport";
 import type { EngineeringDocument } from "../shared/engineeringDocumentExport";
 import {
-  blankLine,
   lineFields,
   validateImport,
   importControlRows,
+  applyV1ToV2Conversion,
+  emptyCpDocumentV2,
+  isCpDocumentV2,
+  getDocLines,
 } from "./controlPlanDocument";
-import { ControlLineEditor } from "./ControlLineEditor";
 import { SourceChangeReview } from "./SourceChangeReview";
 import type {
   CpDocument,
   CpEnvelope,
   CpLine,
   SyncPreview,
-  AnyCpDocument,
 } from "./controlPlanDocument";
-import { isCpDocumentV2, getDocLines } from "./controlPlanDocument";
 import { ControlPlanV2View } from "./ControlPlanV2View";
 
 interface Revision {
@@ -61,17 +53,20 @@ interface Revision {
   documentType?: string;
   documentId?: string;
 }
+
 interface DocumentContext {
   id: string;
   type: string;
   currentRevisionId: string;
 }
+
 const panel = {
   p: 2,
   border: "1px solid #e3e4db",
   borderRadius: 2,
   boxShadow: "none",
 };
+
 export const ControlPlanWorkspace: React.FC = () => {
   const { projectId } = useParams();
   const { token, hasPermission } = useAuth();
@@ -80,68 +75,12 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [revisionId, setRevisionId] = useState("");
   const [envelope, setEnvelope] = useState<CpEnvelope | null>(null);
-  const [document, setDocument] = useState<AnyCpDocument | null>(null);
+  const [document, setDocument] = useState<CpDocument | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [editing, setEditing] = useState<CpLine | null>(null);
 
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [upgradePreview, setUpgradePreview] = useState<{
-    expectedVersion: number;
-    previewHash: string;
-    v2Document: any;
-    warnings: string[];
-  } | null>(null);
-  const [upgrading, setUpgrading] = useState(false);
-
-  const handleOpenUpgrade = async () => {
-    if (!envelope || !revisionId) return;
-    try {
-      setBusy(true);
-      const res = await request(
-        `/revisions/${revisionId}/control-plan-document/upgrade-preview`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ expectedVersion: envelope.version }),
-        },
-      );
-      setUpgradePreview(res);
-      setUpgradeOpen(true);
-    } catch (err) {
-      fail(err);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleApplyUpgrade = async () => {
-    if (!upgradePreview || !envelope || !revisionId) return;
-    try {
-      setUpgrading(true);
-      await request(
-        `/revisions/${revisionId}/control-plan-document/upgrade-apply`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            expectedVersion: upgradePreview.expectedVersion,
-            previewHash: upgradePreview.previewHash,
-          }),
-        },
-      );
-      setUpgradeOpen(false);
-      setUpgradePreview(null);
-      const env = await request(`/revisions/${revisionId}/control-plan-document`);
-      setEnvelope(env);
-      setDocument(env.document);
-      setNotice('Upgraded to Control Plan Version 2 successfully!');
-    } catch (err) {
-      fail(err);
-    } finally {
-      setUpgrading(false);
-    }
-  };
   const [configOpen, setConfigOpen] = useState(false);
   const [sourceRevisionId, setSourceRevisionId] = useState("");
   const [preview, setPreview] = useState<SyncPreview | null>(null);
@@ -166,11 +105,12 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [forkOpen, setForkOpen] = useState(false);
   const [forkNumber, setForkNumber] = useState("");
   const [forkPhase, setForkPhase] = useState("prototype");
-  const [operations, setOperations] = useState<
+  const [, setOperations] = useState<
     { id: string; stepNumber: string; name: string }[]
   >([]);
 
   const editable = !!envelope?.writable && hasPermission("cp.edit") && !busy;
+
   const request = async (path: string, options: RequestInit = {}) => {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
@@ -184,6 +124,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       throw new Error(await parseApiError(response, "The request failed."));
     return response.json();
   };
+
   useEffect(() => {
     if (!token || !documents.length) return;
     let active = true;
@@ -207,6 +148,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       active = false;
     };
   }, [documents, token, JSON.stringify(document?.sourceBaselines ?? [])]);
+
   useEffect(() => {
     const listener = (event: BeforeUnloadEvent) => {
       if (dirty) {
@@ -217,6 +159,7 @@ export const ControlPlanWorkspace: React.FC = () => {
     window.addEventListener("beforeunload", listener);
     return () => window.removeEventListener("beforeunload", listener);
   }, [dirty]);
+
   const fork = async () => {
     setBusy(true);
     try {
@@ -240,13 +183,16 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   const fail = (reason: unknown) =>
     setError(reason instanceof Error ? reason.message : String(reason));
+
   const accept = (value: CpEnvelope) => {
     setEnvelope(value);
-    setDocument(value.document);
+    setDocument(value.document as CpDocument);
     setDirty(false);
   };
+
   const load = async (id: string) => {
     setBusy(true);
     setError("");
@@ -258,6 +204,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   useEffect(() => {
     if (!token || !projectId) return;
     let active = true;
@@ -287,6 +234,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       active = false;
     };
   }, [projectId, token]);
+
   useEffect(() => {
     if (revisionId && token) {
       setReadiness(null);
@@ -295,11 +243,13 @@ export const ControlPlanWorkspace: React.FC = () => {
       void load(revisionId);
     }
   }, [revisionId, token]);
-  const update = (value: AnyCpDocument) => {
+
+  const update = (value: CpDocument) => {
     setDocument(value);
     setDirty(true);
     setNotice("");
   };
+
   const save = async () => {
     if (!document || !envelope) return;
     setBusy(true);
@@ -318,6 +268,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   const cpDoc = documents.find((item) => item.type === "CONTROL_PLAN");
   const cpRevisions = revisions.filter(
     (item) =>
@@ -333,9 +284,13 @@ export const ControlPlanWorkspace: React.FC = () => {
         "",
     ),
   );
+
+  const lines = useMemo(() => {
+    return document ? getDocLines(document) : [];
+  }, [document]);
+
   const groups = useMemo(() => {
     const result = new Map<string, CpLine[]>();
-    const lines = isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? []);
     lines.forEach((line) => {
       const key = [
         line.operationId,
@@ -345,8 +300,10 @@ export const ControlPlanWorkspace: React.FC = () => {
       result.set(key, [...(result.get(key) ?? []), line]);
     });
     return [...result.values()];
-  }, [document]);
+  }, [lines]);
+
   const selectedRevision = revisions.find((item) => item.id === revisionId);
+
   const exportDocument = (): EngineeringDocument => ({
     canonicalModel: document,
     printIdentityKeys: ["operationNumber", "characteristicNumber", "id"],
@@ -373,11 +330,12 @@ export const ControlPlanWorkspace: React.FC = () => {
       { key: "source", label: "Source provenance" },
       { key: "sourceState", label: "Source review state" },
     ],
-    rows: (isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).map((line) => ({
+    rows: lines.map((line) => ({
       ...line,
       source: line.source ? JSON.stringify(line.source) : "",
     })),
   });
+
   const downloadJson = () => {
     const link = window.document.createElement("a");
     const url = URL.createObjectURL(
@@ -390,14 +348,17 @@ export const ControlPlanWorkspace: React.FC = () => {
     link.click();
     URL.revokeObjectURL(url);
   };
+
   const beginImport = async (file: File) => {
     setImportOpen(true);
     setImportErrors([]);
     setImportDocument(null);
     try {
       let value: unknown;
-      if (file.name.endsWith(".json")) value = JSON.parse(await file.text());
-      else {
+      if (file.name.endsWith(".json")) {
+        const parsed = JSON.parse(await file.text());
+        value = isCpDocumentV2(parsed) ? parsed : applyV1ToV2Conversion(parsed);
+      } else {
         const sheet = await parseEngineeringXlsx(file);
         const missing = lineFields
           .map(([, label]) => label)
@@ -406,13 +367,16 @@ export const ControlPlanWorkspace: React.FC = () => {
           throw new Error(
             `Missing columns: ${missing.join(", ")}. Use an exported workbook as the template.`,
           );
-        value =
-          !sheet.worksheetChanged && sheet.model
+        const importedLines = importControlRows(sheet.rows);
+        const baseDoc =
+          sheet.model && isCpDocumentV2(sheet.model)
             ? sheet.model
-            : {
-                ...((sheet.model as CpDocument) ?? document),
-                lines: importControlRows(sheet.rows),
-              };
+            : (document ?? emptyCpDocumentV2());
+        value = applyV1ToV2Conversion({
+          ...baseDoc,
+          schemaVersion: 1,
+          lines: importedLines,
+        });
       }
       const errors = validateImport(value);
       setImportErrors(errors);
@@ -423,6 +387,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       ]);
     }
   };
+
   const previewSync = async () => {
     setBusy(true);
     setError("");
@@ -443,6 +408,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   const applySync = async () => {
     if (!preview) return;
     setBusy(true);
@@ -479,6 +445,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   const transition = async (action: "submit" | "approve" | "reject") => {
     setBusy(true);
     setError("");
@@ -509,6 +476,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       setBusy(false);
     }
   };
+
   return (
     <Box sx={{ minWidth: 0, pb: 3 }}>
       <Stack
@@ -651,8 +619,7 @@ export const ControlPlanWorkspace: React.FC = () => {
           />
           <Chip size="small" label={editable ? "Draft editing" : "Read only"} />
           <Typography variant="body2">
-            {(isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).length} control lines · {groups.length}{" "}
-            operations
+            {lines.length} control lines · {groups.length} operations
           </Typography>
           <Button
             disabled={busy || !revisionId}
@@ -687,15 +654,17 @@ export const ControlPlanWorkspace: React.FC = () => {
               Submit for review
             </Button>
           )}
-          {revisions.find((item) => item.id === revisionId)?.status === "in_review" &&
-            (hasPermission("revision.approve") || hasPermission("revision.review")) && (
-            <Button
-              disabled={busy || dirty}
-              onClick={() => setApprovalOpen(true)}
-            >
-              Review decision
-            </Button>
-          )}
+          {revisions.find((item) => item.id === revisionId)?.status ===
+            "in_review" &&
+            (hasPermission("revision.approve") ||
+              hasPermission("revision.review")) && (
+              <Button
+                disabled={busy || dirty}
+                onClick={() => setApprovalOpen(true)}
+              >
+                Review decision
+              </Button>
+            )}
         </Stack>
       </Paper>
       {busy && !document && <CircularProgress size={24} />}
@@ -724,7 +693,11 @@ export const ControlPlanWorkspace: React.FC = () => {
                 select
                 label="Source revision"
                 value={sourceRevisionId}
-                sx={{ minWidth: 0, width: { xs: "100%", sm: 240 }, maxWidth: "100%" }}
+                sx={{
+                  minWidth: 0,
+                  width: { xs: "100%", sm: 240 },
+                  maxWidth: "100%",
+                }}
                 onChange={(event) => setSourceRevisionId(event.target.value)}
               >
                 {sourceRevisions.map((item) => (
@@ -755,234 +728,30 @@ export const ControlPlanWorkspace: React.FC = () => {
                 .join("; ") || "None selected"}
             </Typography>
           </Paper>
-          {document && document.schemaVersion === 1 && (
-            <Alert
-              severity="info"
-              sx={{ mb: 2 }}
-              action={
-                hasPermission("cp.edit") && (
-                  <Button
-                    color="inherit"
-                    size="small"
-                    onClick={() => handleOpenUpgrade()}
-                  >
-                    Upgrade to Version 2
-                  </Button>
-                )
-              }
-            >
-              This Control Plan is running Schema Version 1. Upgrade to Version 2 to unlock operation-wise navigation, execution rules, and field-level content review.
-            </Alert>
-          )}
 
-          {isCpDocumentV2(document) ? (
-            <ControlPlanV2View
-              document={isCpDocumentV2(document) ? null : (document as any)}
-              revisionId={revisionId}
-              version={envelope?.version ?? 0}
-              writable={editable}
-              token={token || ''}
-              onUpdateDocument={(nextDoc) => {
-                setDocument(nextDoc);
-                setDirty(true);
-              }}
-              onReload={() => {
-                void request(`/revisions/${revisionId}/control-plan-document`).then((env) => {
-                  setEnvelope(env);
-                  setDocument(env.document);
-                  setDirty(false);
-                });
-              }}
-              request={request}
-            />
-          ) : (
-            <>
-              <Stack
-                direction="row"
-                sx={{
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 1,
-                  mb: 1,
-                }}
-              >
-                <Typography variant="h6">Operation controls</Typography>
-            <Button
-              data-tour="control-plan-workflow"
-              variant="outlined"
-              disabled={!editable}
-              onClick={() => setEditing(blankLine())}
-            >
-              Add control line
-            </Button>
-          </Stack>
-          {groups.length === 0 ? (
-            <Paper sx={panel}>
-              <Typography>
-                No control lines yet. Add a line or preview an explicit
-                PFD/PFMEA source revision.
-              </Typography>
-            </Paper>
-          ) : (
-            groups.map((lines, index) => (
-              <Paper
-                key={lines[0].id}
-                sx={{ ...panel, p: 0, mb: 1.5, overflow: "hidden" }}
-              >
-                <Box sx={{ px: 2, py: 1, bgcolor: "#eff2e8" }}>
-                  <Typography variant="subtitle2">
-                    {lines[0].operationNumber || `Operation ${index + 1}`} ·{" "}
-                    {lines[0].operationName || "Name not specified"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {lines[0].equipment || "Equipment not specified"}
-                  </Typography>
-                </Box>
-                <TableContainer sx={{ overflowX: "auto" }}>
-                  <Table
-                    size="small"
-                    aria-label={`Controls for ${lines[0].operationName || index + 1}`}
-                  >
-                    <TableHead>
-                      <TableRow>
-                        {[
-                          "Characteristic",
-                          "Specification",
-                          "Evaluation / sampling",
-                          "Control / reaction",
-                          "Source",
-                          "",
-                        ].map((heading, i) => (
-                          <TableCell key={i}>{heading}</TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {lines.map((line) => (
-                        <TableRow key={line.id} hover>
-                          <TableCell
-                            sx={{ minWidth: 140, overflowWrap: "anywhere" }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {line.characteristicNumber}{" "}
-                              {line.characteristicName || "Not defined"}
-                            </Typography>
-                            <Typography variant="caption">
-                              {line.characteristicKind} ·{" "}
-                              {line.classification || "Unclassified"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              minWidth: 140,
-                              whiteSpace: "pre-wrap",
-                              overflowWrap: "anywhere",
-                            }}
-                          >
-                            {line.specification || "—"} {line.tolerance}{" "}
-                            {line.unit}
-                          </TableCell>
-                          <TableCell
-                            sx={{ minWidth: 160, whiteSpace: "pre-wrap" }}
-                          >
-                            {line.evaluationMethod || "—"}
-                            <Typography
-                              variant="caption"
-                              sx={{ display: "block" }}
-                            >
-                              {[line.sampleSize, line.frequency]
-                                .filter(Boolean)
-                                .join(" / ") || "Sampling not specified"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell
-                            sx={{ minWidth: 180, whiteSpace: "pre-wrap" }}
-                          >
-                            {line.controlMethod || "—"}
-                            <Typography
-                              variant="caption"
-                              sx={{ display: "block" }}
-                            >
-                              {line.reactionPlan ||
-                                line.reactionProcedure ||
-                                "Reaction not specified"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              variant="outlined"
-                              label={
-                                line.sourceState ??
-                                (line.source ? "Linked" : "Manual")
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              onClick={() => setEditing(structuredClone(line))}
-                            >
-                              {editable ? "Edit" : "View"}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            ))
-          )}
-            </>
-          )}
+          <ControlPlanV2View
+            document={document}
+            revisionId={revisionId}
+            version={envelope?.version ?? 0}
+            writable={editable}
+            token={token || ""}
+            onUpdateDocument={(nextDoc) => {
+              setDocument(nextDoc);
+              setDirty(true);
+            }}
+            onReload={() => {
+              void request(
+                `/revisions/${revisionId}/control-plan-document`,
+              ).then((env) => {
+                setEnvelope(env);
+                setDocument(env.document as CpDocument);
+                setDirty(false);
+              });
+            }}
+            request={request}
+          />
         </>
       )}
-      <ControlLineEditor
-        line={editing}
-        editable={editable}
-        existing={!!(isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? [])).some((line) => line.id === editing?.id)}
-        operations={operations}
-        sourceRevisionLabel={
-          revisions.find(
-            (revision) => revision.id === editing?.source?.revisionId,
-          )?.revisionNumber ??
-          editing?.source?.revisionId ??
-          ""
-        }
-        onChange={setEditing}
-        onClose={() => setEditing(null)}
-        onKeep={() => {
-          if (!editing || !document) return;
-          const docV1 = document as any;
-          update({
-            ...docV1,
-            lines: (docV1.lines || []).some((line: any) => line.id === editing.id)
-              ? (docV1.lines || []).map((line: any) =>
-                  line.id === editing.id ? editing : line,
-                )
-              : [...(docV1.lines || []), editing],
-          });
-          setEditing(null);
-        }}
-        onRemove={() => {
-          if (
-            !editing ||
-            !document ||
-            !window.confirm("Remove this control line from this draft?")
-          )
-            return;
-          const docV1 = document as any;
-          update({
-            ...docV1,
-            lines: (docV1.lines || []).filter((line: any) => line.id !== editing.id),
-          });
-          setEditing(null);
-        }}
-      />
       <Dialog
         open={forkOpen}
         onClose={() => setForkOpen(false)}
@@ -1045,7 +814,7 @@ export const ControlPlanWorkspace: React.FC = () => {
                 value={document.config.phase}
                 onChange={(event) =>
                   update({
-                    ...document as any,
+                    ...document,
                     config: { ...document.config, phase: event.target.value },
                   })
                 }
@@ -1287,7 +1056,7 @@ export const ControlPlanWorkspace: React.FC = () => {
       </Dialog>
       <SourceChangeReview
         preview={preview}
-        document={isCpDocumentV2(document) ? null : (document as any)}
+        document={document}
         decisions={decisions}
         reasons={exclusionReasons}
         resolutions={resolutions}
@@ -1324,8 +1093,8 @@ export const ControlPlanWorkspace: React.FC = () => {
           ) : (
             <>
               <Typography>
-                {(isCpDocumentV2(importDocument) ? getDocLines(importDocument) : (importDocument?.lines ?? [])).length} control lines passed
-                structural validation.
+                {(importDocument ? getDocLines(importDocument) : []).length}{" "}
+                control lines passed structural validation.
               </Typography>
               <Alert severity="warning" sx={{ mt: 2 }}>
                 This replaces the current draft in memory. Review every field
@@ -1368,31 +1137,18 @@ export const ControlPlanWorkspace: React.FC = () => {
               : `${readiness?.errors.length ?? 0} review findings`}
           </Alert>
           <Stack spacing={1}>
-            {readiness?.errors.map((finding, index) => {
-              const lineNumber = /Control line (\d+)/.exec(finding);
-              return (
-                <Button
-                  key={index}
-                  sx={{ justifyContent: "flex-start", textAlign: "left" }}
-                  onClick={() => {
-                    setReadiness(null);
-                    const dLines = isCpDocumentV2(document) ? getDocLines(document) : (document?.lines ?? []);
-                    if (
-                      lineNumber &&
-                      dLines[Number(lineNumber[1]) - 1]
-                    )
-                      setEditing(
-                        structuredClone(
-                          dLines[Number(lineNumber[1]) - 1],
-                        ),
-                      );
-                    else setConfigOpen(true);
-                  }}
-                >
-                  {finding}
-                </Button>
-              );
-            })}
+            {readiness?.errors.map((finding, index) => (
+              <Button
+                key={index}
+                sx={{ justifyContent: "flex-start", textAlign: "left" }}
+                onClick={() => {
+                  setReadiness(null);
+                  setConfigOpen(true);
+                }}
+              >
+                {finding}
+              </Button>
+            ))}
             {readiness?.warnings.map((warning, index) => (
               <Typography key={index} variant="caption" color="text.secondary">
                 {warning}
@@ -1420,14 +1176,16 @@ export const ControlPlanWorkspace: React.FC = () => {
               value={comment}
               onChange={(event) => setComment(event.target.value)}
             />
-            {hasPermission("revision.approve") && <TextField
-              size="small"
-              type="password"
-              label="Confirm password for approval"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-            />}
+            {hasPermission("revision.approve") && (
+              <TextField
+                size="small"
+                type="password"
+                label="Confirm password for approval"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -1451,59 +1209,8 @@ export const ControlPlanWorkspace: React.FC = () => {
           )}
         </DialogActions>
       </Dialog>
-      {/* V2 Upgrade Preview Dialog */}
-      <Dialog
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Upgrade to Control Plan Schema Version 2</DialogTitle>
-        <DialogContent dividers>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            This upgrade will convert your flat control lines into structured operations, separate characteristics and controls, and introduce typed execution rules and content-bound field reviews.
-          </Alert>
-          {upgradePreview && (
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Conversion Summary:
-              </Typography>
-              <Typography variant="body2">
-                • Operations to create: {upgradePreview.v2Document?.operations?.length || 0}
-              </Typography>
-              <Typography variant="body2">
-                • Total characteristics: {upgradePreview.v2Document?.operations?.reduce((acc: number, op: any) => acc + (op.characteristics?.length || 0), 0) || 0}
-              </Typography>
-              {upgradePreview.warnings?.length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#ed6c02' }}>
-                    Conversion Warnings:
-                  </Typography>
-                  <List dense>
-                    {upgradePreview.warnings.map((w: string, i: number) => (
-                      <ListItemText key={i} primary={`• ${w}`} />
-                    ))}
-                  </List>
-                </Box>
-              )}
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUpgradeOpen(false)} disabled={upgrading}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleApplyUpgrade}
-            disabled={upgrading}
-          >
-            {upgrading ? 'Upgrading...' : 'Confirm & Upgrade to V2'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
+
 export default ControlPlanWorkspace;

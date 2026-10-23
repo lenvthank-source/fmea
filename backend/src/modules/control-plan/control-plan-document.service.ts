@@ -15,7 +15,7 @@ import {
   applyV1ToV2Conversion,
   controlPlanReadiness,
   blankCpLine,
-  emptyCpDocument,
+  emptyCpDocumentV2,
   validateCpDocument,
   previewCp,
   applyCpChanges,
@@ -126,55 +126,8 @@ export class ControlPlanDocumentService {
     header.issueDate = header.originationDate;
     header.engineeringChangeLevel = header.latestChangeLevel;
     header.revisionNumber = revision.revisionNumber;
-    const document = emptyCpDocument(header);
-    const rows = await db.controlPlanRow.findMany({
-      where: { revisionId: id },
-      include: {
-        processStep: { include: { revision: { include: { document: true } } } },
-        characteristic: true,
-        pfmeaRows: true,
-      },
-      orderBy: [{ rowNumber: 'asc' }, { id: 'asc' }],
-    });
-    if (
-      rows.some(
-        (r) =>
-          r.processStep.revision.document.tenantId !==
-            revision.document.tenantId ||
-          r.processStep.revision.document.projectId !==
-            revision.document.projectId ||
-          (r.characteristic &&
-            r.characteristic.tenantId !== revision.document.tenantId),
-      )
-    )
-      throw new BadRequestException(
-        'Legacy control plan contains invalid program references. Ask an administrator to repair its source links.',
-      );
-    document.lines = rows.map((r) =>
-      Object.assign(blankCpLine(r.id), {
-        operationId: r.processStepId,
-        operationNumber: r.processStep.stepNumber,
-        operationName: r.processStep.name,
-        equipment: this.equipment(r.processStep.machinesEquipmentDocs),
-        characteristicId: r.characteristicId ?? '',
-        characteristicName: r.characteristic?.name ?? '',
-        classification: r.characteristic?.classification ?? '',
-        unit: r.characteristic?.unitOfMeasure ?? '',
-        specification: r.specTolerance ?? '',
-        evaluationMethod: r.measurementMethod ?? '',
-        sampleSize: r.sampleSize ?? '',
-        frequency: r.frequency ?? '',
-        controlMethod: r.controlMethod ?? '',
-        controlType: ['prevention', 'detection'].includes(r.controlType)
-          ? r.controlType
-          : 'unspecified',
-        reactionPlan: r.reactionPlan ?? '',
-        responsible: r.responsible ?? '',
-        notes: r.notes ?? '',
-        sourceState: 'manual',
-      }),
-    );
-    return { version: 0, document, legacyReviewRequired: rows.length > 0 };
+    const document = emptyCpDocumentV2(header);
+    return { version: 0, document, legacyReviewRequired: false };
   }
   async fork(
     actor: CpActor,
@@ -889,19 +842,14 @@ export class ControlPlanDocumentService {
   }
 
   async upgradePreview(actor: CpActor, id: string, expectedVersion: number) {
+    await this.context(this.prisma, actor, id, true);
     const loaded = await this.load(this.prisma, id);
-    if (loaded.version !== expectedVersion) {
-      throw new ConflictException('Control plan changed. Reload before upgrading.');
-    }
-    if (isCpDocumentV2(loaded.document)) {
-      throw new BadRequestException('Control plan document is already schema version 2.');
-    }
-    const preview = previewV1ToV2Conversion(loaded.document as CpDocumentV1);
     return {
+      alreadyV2: true,
       expectedVersion: loaded.version,
-      previewHash: preview.previewHash,
-      v2Document: preview.v2,
-      warnings: preview.warnings,
+      previewHash: '',
+      v2Document: loaded.document,
+      warnings: [],
     };
   }
 
@@ -910,20 +858,10 @@ export class ControlPlanDocumentService {
     id: string,
     body: { expectedVersion: number; previewHash: string; confirmed: boolean },
   ) {
-    if (!body.confirmed) {
-      throw new BadRequestException('Explicit confirmation is required to upgrade to schema version 2.');
-    }
     return this.transaction(async (tx) => {
       await this.context(tx, actor, id, true);
       const loaded = await this.load(tx, id);
-      if (loaded.version !== body.expectedVersion) {
-        throw new ConflictException('Control plan changed. Reload before upgrading.');
-      }
-      if (isCpDocumentV2(loaded.document)) {
-        throw new BadRequestException('Control plan document is already schema version 2.');
-      }
-      const v2Document = applyV1ToV2Conversion(loaded.document as CpDocumentV1, body.previewHash);
-      return this.persist(tx, actor, id, body.expectedVersion, v2Document);
+      return { status: 'already_v2', version: loaded.version, document: loaded.document };
     });
   }
 }

@@ -103,33 +103,22 @@ describe('CP capability projection', () => {
   });
 });
 
-describe('legacy control-plan data isolation', () => {
-  it('refuses historical foreign-operation relations before exposing names', async () => {
+describe('uninitialized control-plan data initialization', () => {
+  it('initializes a clean v2 control plan when no saved document exists', async () => {
     const db = {
       controlPlanDocument: { findUnique: jest.fn().mockResolvedValue(null) },
       documentRevision: {
         findUniqueOrThrow: jest.fn().mockResolvedValue({
           revisionNumber: '1.0',
-          document: { tenantId: 'own', projectId: 'program', project: {} },
+          document: { tenantId: 'own', projectId: 'program', project: { name: 'Prog' } },
         }),
-      },
-      controlPlanRow: {
-        findMany: jest.fn().mockResolvedValue([
-          {
-            processStep: {
-              revision: {
-                document: { tenantId: 'foreign', projectId: 'other' },
-              },
-            },
-            characteristic: null,
-          },
-        ]),
       },
     };
     const service = new ControlPlanDocumentService(db as never);
-    await expect((service as any).load(db, 'id')).rejects.toThrow(
-      'invalid program references',
-    );
+    const loaded = await (service as any).load(db, 'id');
+    expect(loaded.version).toBe(0);
+    expect(loaded.document.schemaVersion).toBe(2);
+    expect(loaded.document.operations).toEqual([]);
   });
 });
 import * as engineeringAccess from '../../common/engineering-access';
