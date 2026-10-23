@@ -88,6 +88,38 @@ describe('CpReviewService', () => {
     expect(res.findings.length).toBeGreaterThan(0);
     expect(res.findings.some((f) => f.ruleId === 'HDR-001')).toBe(true);
     expect(res.findings.some((f) => f.ruleId === 'OPR-001')).toBe(true);
-    expect(mockPrisma.cpValidationRun.create).toHaveBeenCalled();
+    expect(mockPrisma.cpValidationRun.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          profileRevisionId: null,
+        }),
+      }),
+    );
+  });
+
+  it('persists valid profileRevisionId UUID when configured in document config', async () => {
+    const customProfileUuid = '550e8400-e29b-41d4-a716-446655440000';
+    const docWithProfile: CpDocumentV2 = {
+      schemaVersion: 2,
+      config: {
+        phase: 'prototype',
+        safeLaunch: { enabled: false },
+        standardProfile: 'custom-profile',
+        requirementProfileRevisionId: customProfileUuid,
+      },
+      header: {},
+      sourceBaselines: [],
+      operations: [],
+    };
+
+    const res = await service.runValidation('tenant-1', 'rev-1', docWithProfile);
+    expect(mockPrisma.cpValidationRun.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          profileRevisionId: customProfileUuid,
+        }),
+      }),
+    );
+    expect(res.profileRevisionId).toBe(customProfileUuid);
   });
 });

@@ -11,6 +11,7 @@ import { createHash, randomUUID } from 'crypto';
 import { CpPdfService } from './cp-pdf.service';
 import { CpDocumentV2 } from './control-plan-document';
 import { acquireSourceFence } from '../../common/source-fence';
+import { toUuidOrNull } from './cp-review.service';
 
 const CP_PACKAGE_MAX_BYTES = 50 * 1024 * 1024; // 50 MiB resource limit
 
@@ -120,7 +121,7 @@ export class CpApprovalPackageService {
             expectedVersion: dto.expectedVersion,
             frozenSnapshot: doc as unknown as Prisma.InputJsonValue,
             frozenSnapshotHash: snapshotHash,
-            profileRevisionId: validationRun.profileRevisionId,
+            profileRevisionId: toUuidOrNull(validationRun.profileRevisionId),
             validationRunId: validationRun.id,
             intentActorId: actorId,
             intentComment: dto.comment?.trim(),

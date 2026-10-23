@@ -4,6 +4,8 @@ Canonical location: `.agents/handoff_plan/<plan-slug>/PLAN.md`. Keep evidence an
 
 ## Plan index
 
+- [Fix Control Plan validation UUID crash & canonical save](control-plan-validation-uuid-fix/PLAN.md) — `control-plan-validation-uuid-fix`, revision 1, status `completed` (2026-10-23). Fix PostgreSQL UUID column crash on CP validation run, sanitize profileRevisionId/actorId, and enable explicit saving of initial version 0 Control Plans to unblock submission readiness. 211 backend tests and 45 frontend tests pass.
+
 - [One-click Initialize Design FMEA button](initialize-dfmea-button/PLAN.md) — `initialize-dfmea-button`, revision 1, status `completed` (2026-10-23). Provide an active, transactional "Initialize Design FMEA for this Program" button in DfmeaWorkspace when a program lacks a DFMEA document, with backend creation and multi-tenant/archive guards. 210 backend tests and 45 frontend tests pass.
 
 - [Controlled Control Plan evolution](control-plan-evolution/PLAN.md) — `control-plan-evolution`, revision 1, status `completed` (2026-10-23). Codebase-verified extension of existing CP, explicit identity/source reviews, v2 compatibility, atomic snapshots/approval packages, operation navigator workspace, PDFKit export, and verification suites. 208 backend tests and 35 frontend tests pass.

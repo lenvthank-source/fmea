@@ -52,7 +52,7 @@ describe('CpApprovalPackageService', () => {
         findUnique: jest.fn().mockResolvedValue({
           id: 'val-run-1',
           cpRevisionId: 'rev-1',
-          profileRevisionId: 'prof-1',
+          profileRevisionId: null,
           profileHash: 'hash-1',
           findings: [],
         }),

@@ -35,6 +35,10 @@ export interface ValidationRunResult {
   createdAt: Date;
 }
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+export const toUuidOrNull = (val?: string | null): string | null =>
+  typeof val === 'string' && UUID_REGEX.test(val) ? val : null;
+
 @Injectable()
 export class CpReviewService {
   constructor(private readonly prisma: PrismaService) {}
@@ -235,6 +239,9 @@ export class CpReviewService {
     const blockers = findings.filter((f) => f.category === 'blocker');
     const isValid = blockers.length === 0;
 
+    const dbProfileRevisionId = toUuidOrNull(doc.config?.requirementProfileRevisionId);
+    const dbActorId = toUuidOrNull(actorId);
+
     const run = await db.cpValidationRun.create({
       data: {
         tenantId,
@@ -242,11 +249,11 @@ export class CpReviewService {
         documentHash,
         sourceSetHash,
         mappingHash: '',
-        profileRevisionId: profile.key,
+        profileRevisionId: dbProfileRevisionId,
         profileHash,
         validatorVersion: '1.0.0',
         findings: findings as any,
-        actorId,
+        actorId: dbActorId,
       },
     });
 
@@ -255,7 +262,7 @@ export class CpReviewService {
       isValid,
       documentHash,
       sourceSetHash,
-      profileRevisionId: profile.key,
+      profileRevisionId: dbProfileRevisionId ?? profile.key,
       findings,
       createdAt: run.createdAt,
     };

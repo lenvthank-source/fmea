@@ -1,6 +1,23 @@
 # FMEApex — active handoff
 
-Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.15.0** (0.15.0), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.15.0.md`. Hosted deployment completion is separate.
+Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.15.1** (0.15.1), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.15.1.md`. Hosted deployment completion is separate.
+
+## Latest request — fix Control Plan validation UUID crash & initial save (completed)
+
+2026-10-23. User reported NestJS server error log: `POST /api/v1/revisions/:id/control-plan-document/validate` failed with 500 error (`PrismaClientKnownRequestError: Inconsistent column data: Error creating UUID, invalid character: expected an optional prefix of urn:uuid: followed by [0-9a-fA-F-], found m at 2`) and 400 warning on submission (`Review and save the canonical Control Plan before submission`).
+Delivered:
+- **Backend UUID Column Data Fix**:
+  - Added `toUuidOrNull` validator in `cp-review.service.ts` and `cp-approval-package.service.ts`.
+  - In `CpReviewService.runValidation`: sanitized `profileRevisionId` (storing `null` in DB for built-in baseline profile while preserving `'fmeapex-cp-baseline-v1'` in API response) and sanitized `actorId`.
+  - In `CpApprovalPackageService`: sanitized `profileRevisionId` during approval package creation.
+  - Added unit test asserting `profileRevisionId: null` for baseline validation runs and valid UUID persistence when configured (`cp-review.service.spec.ts`), plus updated `cp-approval-package.service.spec.ts`.
+- **Frontend Initial Save Enablement**:
+  - In `ControlPlanToolbar.tsx`: updated Save button disabled condition to remain active when `props.version === 0`, displaying "Save initial plan" and allowing users to explicitly save newly initialized in-memory plans before making manual edits.
+- **Verification**:
+  - Backend Jest tests: **29/29 suites PASS, 211/211 tests PASS**.
+  - Frontend unit tests: **45/45 tests PASS**.
+  - Production builds: Backend Nest build PASS; Frontend Vite build PASS (0 errors).
+  - Directory README sync complete; Graphify knowledge graph updated.
 
 ## Latest request — one-click initialize Design FMEA button (completed)
 

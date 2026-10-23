@@ -94,7 +94,17 @@ export function ControlPlanToolbar(props: ControlPlanToolbarProps) {
           <Tooltip title="Plan options">
             <IconButton size="small" aria-label="Plan options" aria-haspopup="menu" aria-expanded={!!moreAnchor} aria-controls={moreAnchor ? 'cp-options-menu' : undefined} onClick={e => setMoreAnchor(e.currentTarget)}><MoreHoriz /></IconButton>
           </Tooltip>
-          {props.canEdit && <Button size="small" variant="contained" startIcon={<SaveOutlined />} disabled={!props.writable || !props.dirty || props.busy} onClick={props.onSave}>{props.busy ? 'Working…' : 'Save changes'}</Button>}
+          {props.canEdit && (
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<SaveOutlined />}
+              disabled={!props.writable || (!props.dirty && props.version > 0) || props.busy}
+              onClick={props.onSave}
+            >
+              {props.busy ? 'Working…' : props.version === 0 ? 'Save initial plan' : 'Save changes'}
+            </Button>
+          )}
         </Stack>
       </Stack>
 

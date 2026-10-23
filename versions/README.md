@@ -16,6 +16,7 @@ Human write short summaries. Coding agents parse this folder to reconstruct what
 ```
 
 ## Release index (newest first)
+- `v0.15.1.md` — Fix PostgreSQL UUID column data crash in Control Plan validation run, sanitize profileRevisionId and actorId, and enable explicit saving of initial version 0 Control Plans.
 - `v0.15.0.md` — One-Click Initialize Design FMEA (DFMEA) for process-only programs, active workspace onboarding, and compact Control Plan workspace UX with streamlined header, grouped menus, and 210px operation navigator.
 - `v0.14.0.md` — Complete retirement of Control Plan Version 1 (V1), dropping relational prototype SQL tables (`control_plan_row`, `control_plan_pfmea_link`), purging legacy flat-line workspace code, and standardizing permanently on Schema Version 2 (V2).
 - `v0.13.0.md` — Control Plan Evolution engine: hierarchical V2 operations, shared equipment resources, process/product characteristics, granular controls, tenant source concurrency fences, lineage and phase bindings, field-level review decisions, validation engine, landscape PDFKit export, and approval package worker.
