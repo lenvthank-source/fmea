@@ -18,7 +18,7 @@ import {
   assertEngineeringProjectAccess,
   EngineeringActor,
 } from '../../common/engineering-access';
-import { dfmeaReadiness, DfmeaData } from '../dfmea/dfmea-document';
+import { dfmeaReadiness, DfmeaData, emptyDfmea } from '../dfmea/dfmea-document';
 import { ControlPlanDocumentService } from '../control-plan/control-plan-document.service';
 import { Prisma } from '@prisma/client';
 import { resolveProjectPresentation } from './project-presentation';
@@ -53,6 +53,108 @@ export class ProjectService {
     if (projectId && revision.document.projectId !== projectId)
       throw new BadRequestException('Revision belongs to another project');
     return revision;
+  }
+
+  async initializeDfmea(actor: EngineeringActor, projectId: string) {
+    const project = await this.assertActorProjectAccess(actor, projectId, true);
+
+    const existingDoc = await this.prisma.document.findFirst({
+      where: {
+        projectId,
+        type: 'DFMEA',
+        tenantId: actor.tenantId,
+      },
+      include: {
+        revisions: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (existingDoc) {
+      return {
+        documentId: existingDoc.id,
+        revisionId:
+          existingDoc.currentRevisionId ||
+          existingDoc.revisions[0]?.id ||
+          '',
+        alreadyExisted: true,
+      };
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Re-verify inside transaction to avoid race conditions
+      const doubleCheck = await tx.document.findFirst({
+        where: {
+          projectId,
+          type: 'DFMEA',
+          tenantId: actor.tenantId,
+        },
+      });
+      if (doubleCheck) {
+        return {
+          documentId: doubleCheck.id,
+          revisionId: doubleCheck.currentRevisionId || '',
+          alreadyExisted: true,
+        };
+      }
+
+      const document = await tx.document.create({
+        data: {
+          tenantId: actor.tenantId,
+          projectId: project.id,
+          type: 'DFMEA',
+          name: `${project.name || 'Program'} - Design FMEA`,
+          status: 'active',
+          createdById: actor.userId,
+        },
+      });
+
+      const revision = await tx.documentRevision.create({
+        data: {
+          documentId: document.id,
+          revisionNumber: '1.0',
+          status: 'draft',
+          summary: 'Initial Design FMEA version',
+          changeDescription: 'Document initialized for program.',
+          createdById: actor.userId,
+        },
+      });
+
+      await tx.document.update({
+        where: { id: document.id },
+        data: { currentRevisionId: revision.id },
+      });
+
+      await tx.dfmeaDocument.create({
+        data: {
+          revisionId: revision.id,
+          tenantId: actor.tenantId,
+          data: emptyDfmea() as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      await this.auditLogService.createEntry({
+        tenantId: actor.tenantId,
+        userId: actor.userId,
+        entityType: 'document',
+        entityId: document.id,
+        action: 'create',
+        newValue: {
+          name: document.name,
+          type: 'DFMEA',
+          projectId: project.id,
+          revisionNumber: '1.0',
+        },
+      });
+
+      return {
+        documentId: document.id,
+        revisionId: revision.id,
+        alreadyExisted: false,
+      };
+    });
   }
   private async copyProcessContainer(
     tx: Prisma.TransactionClient,

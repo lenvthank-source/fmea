@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -40,10 +39,10 @@ import { SourceChangeReview } from "./SourceChangeReview";
 import type {
   CpDocument,
   CpEnvelope,
-  CpLine,
   SyncPreview,
 } from "./controlPlanDocument";
 import { ControlPlanV2View } from "./ControlPlanV2View";
+import { ControlPlanToolbar } from "./ControlPlanToolbar";
 
 interface Revision {
   id: string;
@@ -60,13 +59,6 @@ interface DocumentContext {
   currentRevisionId: string;
 }
 
-const panel = {
-  p: 2,
-  border: "1px solid #e3e4db",
-  borderRadius: 2,
-  boxShadow: "none",
-};
-
 export const ControlPlanWorkspace: React.FC = () => {
   const { projectId } = useParams();
   const { token, hasPermission } = useAuth();
@@ -82,6 +74,7 @@ export const ControlPlanWorkspace: React.FC = () => {
   const [notice, setNotice] = useState("");
 
   const [configOpen, setConfigOpen] = useState(false);
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
   const [sourceRevisionId, setSourceRevisionId] = useState("");
   const [preview, setPreview] = useState<SyncPreview | null>(null);
   const [decisions, setDecisions] = useState<Record<string, string>>({});
@@ -289,19 +282,6 @@ export const ControlPlanWorkspace: React.FC = () => {
     return document ? getDocLines(document) : [];
   }, [document]);
 
-  const groups = useMemo(() => {
-    const result = new Map<string, CpLine[]>();
-    lines.forEach((line) => {
-      const key = [
-        line.operationId,
-        line.operationNumber,
-        line.operationName,
-      ].join("|");
-      result.set(key, [...(result.get(key) ?? []), line]);
-    });
-    return [...result.values()];
-  }, [lines]);
-
   const selectedRevision = revisions.find((item) => item.id === revisionId);
 
   const exportDocument = (): EngineeringDocument => ({
@@ -478,271 +458,87 @@ export const ControlPlanWorkspace: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minWidth: 0, pb: 3 }}>
-      <Stack
-        direction="row"
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "start",
-          gap: 2,
-          flexWrap: "wrap",
-          mb: 2,
-        }}
-      >
-        <Box>
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{
-              fontWeight: 800,
-              letterSpacing: "-.03em",
-              fontSize: { xs: 24, sm: 30 },
-            }}
-          >
-            Control Plan
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {String(project.name ?? "")} · Controls, characteristics and
-            reviewed source traceability.
-          </Typography>
-        </Box>
-        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
-          <Button onClick={() => setConfigOpen(true)} disabled={!document}>
-            Plan details
-          </Button>
-          {hasPermission("cp.edit") && (
-            <Button
-              disabled={!envelope?.forkable || !document || dirty || busy}
-              onClick={() => setForkOpen(true)}
-            >
-              New phase / revision
-            </Button>
-          )}
-          <Button
-            disabled={!document || busy}
-            onClick={() => {
-              void exportEngineeringXlsx(exportDocument()).catch(fail);
-            }}
-          >
-            XLSX
-          </Button>
-          <Button
-            disabled={!document}
-            onClick={() => {
-              try {
-                printEngineeringDocument(exportDocument());
-              } catch (reason) {
-                fail(reason);
-              }
-            }}
-          >
-            Print / PDF
-          </Button>
-          <Button disabled={!document} onClick={downloadJson}>
-            JSON
-          </Button>
-          <Button component="label" disabled={!editable || busy}>
-            Import
-            <input
-              type="file"
-              hidden
-              accept=".json,.xlsx"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void beginImport(file);
-                event.target.value = "";
-              }}
-            />
-          </Button>
-          <Button
-            variant="contained"
-            disabled={!editable || !dirty || busy}
-            onClick={save}
-          >
-            {busy ? "Working…" : "Save changes"}
-          </Button>
-        </Stack>
-      </Stack>
+    <Box sx={{ minWidth: 0, pb: 2 }}>
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
+        <Alert severity="error" sx={{ mb: 1 }} onClose={() => setError("")}>
           {error}{" "}
-          {dirty &&
-            "Your unsaved edits are retained. Save a JSON copy before reloading a conflicting revision."}
+          {dirty && "Your unsaved edits are retained. Save a JSON copy before reloading a conflicting revision."}
         </Alert>
       )}
-      {notice && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {notice}
-        </Alert>
-      )}
-      <Paper sx={{ ...panel, mb: 2 }}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}
-        >
-          <TextField
-            size="small"
-            select
-            label="Revision"
-            disabled={busy}
-            value={revisionId}
-            sx={{ minWidth: 200 }}
-            onChange={(event) => {
-              if (
-                !dirty ||
-                window.confirm(
-                  "Discard unsaved edits and open another revision?",
-                )
-              )
-                setRevisionId(event.target.value);
-            }}
-          >
-            {(cpRevisions.length
-              ? cpRevisions
-              : [{ id: revisionId, revisionNumber: "Current", status: "" }]
-            )
-              .filter((item) => item.id)
-              .map((item) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.revisionNumber} {item.status}
-                </MenuItem>
-              ))}
-          </TextField>
-          <Chip
-            size="small"
-            label={
-              dirty
-                ? "Unsaved changes"
-                : `Saved version ${envelope?.version ?? "—"}`
-            }
-            color={dirty ? "warning" : "default"}
-          />
-          <Chip size="small" label={editable ? "Draft editing" : "Read only"} />
-          <Typography variant="body2">
-            {lines.length} control lines · {groups.length} operations
-          </Typography>
-          <Button
-            disabled={busy || !revisionId}
-            onClick={() => {
-              if (!dirty || window.confirm("Discard unsaved edits and reload?"))
-                void load(revisionId);
-            }}
-          >
-            Reload
-          </Button>
-          <Button
-            disabled={busy || dirty || !revisionId}
-            onClick={async () => {
-              try {
-                setReadiness(
-                  await request(
-                    `/projects/${projectId}/revisions/${revisionId}/readiness`,
-                  ),
-                );
-              } catch (reason) {
-                fail(reason);
-              }
-            }}
-          >
-            Check readiness
-          </Button>
-          {editable && hasPermission("revision.submit") && (
-            <Button
-              disabled={busy || dirty}
-              onClick={() => void transition("submit")}
-            >
-              Submit for review
-            </Button>
-          )}
-          {revisions.find((item) => item.id === revisionId)?.status ===
-            "in_review" &&
-            (hasPermission("revision.approve") ||
-              hasPermission("revision.review")) && (
-              <Button
-                disabled={busy || dirty}
-                onClick={() => setApprovalOpen(true)}
-              >
-                Review decision
-              </Button>
-            )}
-        </Stack>
-      </Paper>
-      {busy && !document && <CircularProgress size={24} />}
+      {notice && <Alert severity="success" sx={{ mb: 1 }} onClose={() => setNotice("")}>{notice}</Alert>}
+      {!document && <Stack direction="row" sx={{ alignItems: "center", gap: 1.5, py: 1 }}><Typography component="h1" variant="h5">Control Plan</Typography>{busy && <CircularProgress size={20} />}</Stack>}
       {document && (
         <>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Automotive baseline. Customer requirements must be configured
-            explicitly. Complete handbook conformity has not been independently
-            verified.
-          </Alert>
           {envelope?.legacyReviewRequired && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              Legacy content is preserved for review. Verify source mappings and
-              engineering decisions before release; opening this page does not
-              approve or migrate the original records.
+            <Alert severity="warning" sx={{ mb: 1 }}>
+              Legacy content is preserved for review. Verify source mappings and engineering decisions before release; opening this page does not approve or migrate the original records.
             </Alert>
           )}
-          <Paper sx={{ ...panel, mb: 2 }}>
-            <Stack
-              direction="row"
-              sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
-            >
-              <Typography variant="subtitle2">Source review</Typography>
-              <TextField
-                size="small"
-                select
-                label="Source revision"
-                value={sourceRevisionId}
-                sx={{
-                  minWidth: 0,
-                  width: { xs: "100%", sm: 240 },
-                  maxWidth: "100%",
-                }}
-                onChange={(event) => setSourceRevisionId(event.target.value)}
-              >
-                {sourceRevisions.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.document?.type ??
-                      item.documentType ??
-                      documents.find((doc) => doc.id === item.documentId)
-                        ?.type}{" "}
-                    · {item.revisionNumber} · {item.status}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <Button
-                disabled={!editable || dirty || busy || !sourceRevisionId}
-                onClick={previewSync}
-              >
-                Preview changes
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Save first. Changes require explicit review and preserve your
-                execution decisions.
-              </Typography>
-            </Stack>
-            <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
-              Baselines:{" "}
-              {document.sourceBaselines
-                .map((source) => `${source.type}: ${source.revisionId}`)
-                .join("; ") || "None selected"}
-            </Typography>
-          </Paper>
-
           <ControlPlanV2View
+            key={revisionId}
             document={document}
             revisionId={revisionId}
             version={envelope?.version ?? 0}
             writable={editable}
+            canUseSavedDocument={!dirty && !busy}
             token={token || ""}
+            onOpenSources={() => setSourcesExpanded(true)}
+            renderToolbar={(actions) => (
+              <ControlPlanToolbar
+                projectName={String(project.name || project.partName || "")}
+                revisionId={revisionId}
+                revisions={(cpRevisions.length ? cpRevisions : [{ id: revisionId, revisionNumber: "Current", status: "" }]).filter(item => item.id)}
+                phase={document.config.phase}
+                safeLaunch={document.config.safeLaunch.enabled}
+                version={envelope?.version ?? 0}
+                dirty={dirty}
+                busy={busy}
+                writable={!!envelope?.writable && hasPermission("cp.edit")}
+                canEdit={hasPermission("cp.edit")}
+                canFork={!!envelope?.forkable}
+                canSubmit={editable && hasPermission("revision.submit")}
+                canApprove={editable && hasPermission("revision.approve")}
+                canReviewDecision={selectedRevision?.status === "in_review" && (hasPermission("revision.approve") || hasPermission("revision.review"))}
+                operationCount={document.operations.length}
+                controlCount={lines.length}
+                sources={sourceRevisions.map(item => ({ ...item, type: item.document?.type ?? item.documentType ?? documents.find(doc => doc.id === item.documentId)?.type ?? "" }))}
+                baselines={document.sourceBaselines}
+                sourceRevisionId={sourceRevisionId}
+                sourcesExpanded={sourcesExpanded}
+                validating={actions.validating}
+                exportingPdf={actions.exportingPdf}
+                onRevisionChange={id => {
+                  if (!dirty || window.confirm("Discard unsaved edits and open another revision?")) setRevisionId(id);
+                }}
+                onSave={() => void save()}
+                onDetails={() => setConfigOpen(true)}
+                onFork={() => setForkOpen(true)}
+                onReload={() => {
+                  if (!dirty || window.confirm("Discard unsaved edits and reload?")) void load(revisionId);
+                }}
+                onImport={file => void beginImport(file)}
+                onExportXlsx={() => void exportEngineeringXlsx(exportDocument()).catch(fail)}
+                onExportPdf={() => void actions.exportPdf()}
+                onExportJson={downloadJson}
+                onPrint={() => { try { printEngineeringDocument(exportDocument()); } catch (reason) { fail(reason); } }}
+                onValidate={() => void actions.validateProfile()}
+                onReadiness={() => {
+                  void request(`/projects/${projectId}/revisions/${revisionId}/readiness`).then(setReadiness).catch(fail);
+                }}
+                onSubmit={() => void transition("submit")}
+                onApprove={actions.openApproval}
+                onReviewDecision={() => setApprovalOpen(true)}
+                onToggleSources={() => setSourcesExpanded(value => !value)}
+                onSourceChange={setSourceRevisionId}
+                onPreview={previewSync}
+              />
+            )}
             onUpdateDocument={(nextDoc) => {
               setDocument(nextDoc);
               setDirty(true);
             }}
             onReload={() => {
-              void request(
-                `/revisions/${revisionId}/control-plan-document`,
-              ).then((env) => {
+              void request(`/revisions/${revisionId}/control-plan-document`).then((env) => {
                 setEnvelope(env);
                 setDocument(env.document as CpDocument);
                 setDirty(false);

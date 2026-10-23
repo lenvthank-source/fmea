@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -25,6 +25,7 @@ import type {
   CpOperationV2,
   CpCharacteristicV2,
 } from './controlPlanDocument';
+import { API_BASE_URL } from '../../config';
 
 interface ValidationFinding {
   ruleId: string;
@@ -44,10 +45,19 @@ interface ControlPlanV2ViewProps {
   revisionId: string;
   version: number;
   writable: boolean;
+  canUseSavedDocument: boolean;
   token: string;
   onUpdateDocument: (nextDoc: CpDocumentV2) => void;
   onReload: () => void;
   request: (path: string, options?: RequestInit) => Promise<any>;
+  onOpenSources: () => void;
+  renderToolbar: (actions: {
+    validating: boolean;
+    exportingPdf: boolean;
+    validateProfile: () => Promise<void>;
+    exportPdf: () => Promise<void>;
+    openApproval: () => void;
+  }) => React.ReactNode;
 }
 
 export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
@@ -55,6 +65,10 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
   revisionId,
   version,
   writable,
+  canUseSavedDocument,
+  token,
+  renderToolbar,
+  onOpenSources,
   onUpdateDocument,
   onReload,
   request,
@@ -76,10 +90,14 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
   } | null>(null);
   const [reviewDecision, setReviewDecision] = useState<string>('accept');
   const [reviewReason, setReviewReason] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'worksheet' | 'validation' | 'header'>('worksheet');
+  const [activeTab, setActiveTab] = useState<'worksheet' | 'validation'>('worksheet');
 
   const operations = document.operations || [];
   const currentOp: CpOperationV2 | undefined = operations[selectedOpIndex];
+
+  useEffect(() => {
+    setValidationResult(null);
+  }, [document, version]);
 
   // Run Profile Validation
   const handleRunValidation = async () => {
@@ -107,12 +125,12 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
         body.selectedOperationIds = [currentOp.id];
       }
       const response = await fetch(
-        `/api/v1/revisions/${revisionId}/control-plan-document/reports`,
+        `${API_BASE_URL}/revisions/${revisionId}/control-plan-document/reports`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(body),
         },
@@ -266,88 +284,26 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
   };
 
   return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      {/* Top Action Toolbar */}
-      <Paper sx={{ p: 2, mb: 2, border: '1px solid #e3e4db', boxShadow: 'none' }}>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a252f' }}>
-              Control Plan V2
-            </Typography>
-            <Chip
-              label={document.config.phase.toUpperCase()}
-              size="small"
-              color={document.config.phase === 'production' ? 'success' : 'primary'}
-            />
-            {document.config.safeLaunch.enabled && (
-              <Chip label="Safe Launch" size="small" color="warning" />
-            )}
-            <Chip
-              label={`${operations.length} Operations`}
-              size="small"
-              variant="outlined"
-            />
-          </Stack>
-
-          <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleRunValidation}
-              disabled={validating}
-              startIcon={validating ? <CircularProgress size={16} /> : undefined}
-            >
-              {validating ? 'Validating...' : 'Validate Profile'}
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => handleExportPdf('full')}
-              disabled={exportingPdf}
-            >
-              {exportingPdf ? 'Exporting...' : 'Export PDF'}
-            </Button>
-            {writable && (
-              <Button
-                variant="contained"
-                size="small"
-                color="success"
-                onClick={() => setApprovalDialogOpen(true)}
-              >
-                Approve Plan
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-
-        <Tabs
-          value={activeTab}
-          onChange={(_, val) => setActiveTab(val)}
-          sx={{ mt: 1, minHeight: 36 }}
-        >
-          <Tab label="Operations & Controls" value="worksheet" sx={{ minHeight: 36, py: 0.5 }} />
-          <Tab
-            label={`Validation Findings ${validationResult ? `(${validationResult.findings.length})` : ''}`}
-            value="validation"
-            sx={{ minHeight: 36, py: 0.5 }}
-          />
-          <Tab label="Header & Metadata" value="header" sx={{ minHeight: 36, py: 0.5 }} />
+    <Box sx={{ width: '100%', minWidth: 0 }}>
+      <Paper sx={{ mb: 1.5, border: '1px solid #e3e4db', borderRadius: 2, boxShadow: 'none', overflow: 'hidden' }}>
+        {renderToolbar({
+          validating,
+          exportingPdf,
+          validateProfile: handleRunValidation,
+          exportPdf: () => handleExportPdf('full'),
+          openApproval: () => setApprovalDialogOpen(true),
+        })}
+        <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)} variant="scrollable" scrollButtons="auto" aria-label="Control plan views" sx={{ px: { xs: 0.75, sm: 1.5 }, minHeight: 36, borderTop: '1px solid #eeeee7', '& .MuiTab-root': { minHeight: 36, py: 0.5, px: 1.5, fontSize: 12, textTransform: 'none' } }}>
+          <Tab id="cp-operations-tab" aria-controls="cp-operations-panel" label="Operations & controls" value="worksheet" />
+          <Tab id="cp-findings-tab" aria-controls="cp-findings-panel" label={`Findings${validationResult ? ` (${validationResult.findings.length})` : ''}`} value="validation" />
         </Tabs>
       </Paper>
 
       {/* Main Content Area */}
       {activeTab === 'worksheet' && (
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+        <Box id="cp-operations-panel" role="tabpanel" aria-labelledby="cp-operations-tab" sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 1.5 }}>
           {/* Operations Navigator (Left Column) */}
-          <Box sx={{ width: { xs: '100%', md: 280 }, flexShrink: 0 }}>
+          {operations.length > 0 && <Box sx={{ width: { xs: '100%', md: 210 }, flexShrink: 0, minWidth: 0 }}>
             <Paper sx={{ p: 1.5, border: '1px solid #e3e4db', boxShadow: 'none' }}>
               <Stack
                 direction="row"
@@ -358,11 +314,11 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                 </Typography>
                 {writable && (
                   <Button size="small" variant="text" onClick={handleAddOperation}>
-                    + Add Op
+                    + Add
                   </Button>
                 )}
               </Stack>
-              <List dense sx={{ maxHeight: 600, overflowY: 'auto' }}>
+              <List dense sx={{ maxHeight: { xs: 150, md: 'calc(100dvh - 270px)' }, overflowY: 'auto', py: 0 }}>
                 {operations.map((op, idx) => (
                   <ListItemButton
                     key={op.id || idx}
@@ -372,37 +328,38 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                       borderRadius: 1,
                       mb: 0.5,
                       '&.Mui-selected': {
-                        bgcolor: '#eef2f6',
-                        borderLeft: '4px solid #1976d2',
+                        bgcolor: '#eff2e8',
+                        borderLeft: '3px solid #45664c',
                       },
                     }}
                   >
                     <ListItemText
                       primary={`Op ${op.number}: ${op.name}`}
                       secondary={`${op.characteristics?.length || 0} characteristics`}
+                      slotProps={{ primary: { sx: { fontSize: 12, fontWeight: 600, overflowWrap: 'anywhere' } }, secondary: { sx: { fontSize: 11 } } }}
                     />
                   </ListItemButton>
                 ))}
               </List>
             </Paper>
-          </Box>
+          </Box>}
 
           {/* Operation Details & Control Grid (Right Column) */}
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             {currentOp ? (
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 {/* Operation Summary Header */}
-                <Paper sx={{ p: 2, border: '1px solid #e3e4db', boxShadow: 'none' }}>
+                <Paper sx={{ p: 1.5, border: '1px solid #e3e4db', boxShadow: 'none' }}>
                   <Stack
                     direction="row"
-                    sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+                    sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', '& > *': { minWidth: 0 } }}
                   >
                     <Box>
-                      <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>
+                      <Typography variant="h6" sx={{ fontSize: 15, fontWeight: 700, overflowWrap: 'anywhere' }}>
                         Op {currentOp.number}: {currentOp.name}
                       </Typography>
                       {/* Shared Manufacturing Resources */}
-                      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mt: 1 }}>
+                      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75, mt: 0.75, flexWrap: 'wrap' }}>
                         <Typography variant="caption" sx={{ color: '#666', fontWeight: 600 }}>
                           Equipment:
                         </Typography>
@@ -413,7 +370,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                               label={res.text}
                               size="small"
                               variant="outlined"
-                              sx={{ fontSize: 11 }}
+                              sx={{ fontSize: 11, maxWidth: '100%', height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', py: 0.25, overflowWrap: 'anywhere' } }}
                             />
                           ))
                         ) : (
@@ -424,20 +381,24 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                       </Stack>
                     </Box>
 
-                    <Stack direction="row" sx={{ gap: 1 }}>
+                    <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap' }}>
                       <Button
                         size="small"
                         variant="outlined"
                         onClick={() => handleExportPdf('selected')}
+                        disabled={exportingPdf || !canUseSavedDocument}
+                        title={!canUseSavedDocument ? 'Save changes before exporting this operation' : undefined}
                       >
-                        Print Op
+                        Operation PDF
                       </Button>
                       <Button
                         size="small"
                         variant="outlined"
                         onClick={() => openReview('operation', currentOp.id, `Op ${currentOp.number}`, currentOp)}
+                        disabled={!writable || !canUseSavedDocument}
+                        title={!writable ? 'This revision is read only' : !canUseSavedDocument ? 'Save changes before recording a review' : undefined}
                       >
-                        Review Op
+                        Review operation
                       </Button>
                       {writable && (
                         <Button size="small" variant="contained" onClick={handleAddCharacteristic}>
@@ -452,15 +413,15 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                 {currentOp.characteristics?.map((char, cIdx) => (
                   <Paper
                     key={char.id || cIdx}
-                    sx={{ p: 2, border: '1px solid #e3e4db', borderRadius: 2, boxShadow: 'none' }}
+                    sx={{ p: 1.5, border: '1px solid #e3e4db', borderRadius: 2, boxShadow: 'none', minWidth: 0 }}
                   >
                     {/* Characteristic Header */}
                     <Stack
                       direction="row"
-                      sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                      sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
                     >
-                      <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: 14 }}>
+                      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: 13, overflowWrap: 'anywhere' }}>
                           #{char.number || cIdx + 1}: {char.description}
                         </Typography>
                         <Chip
@@ -483,6 +444,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                         size="small"
                         variant="text"
                         onClick={() => openReview('characteristic', char.id, char.description || '', char)}
+                        disabled={!writable || !canUseSavedDocument}
                       >
                         Review
                       </Button>
@@ -507,17 +469,18 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                           key={ctrl.id || ctrlIdx}
                           sx={{
                             mt: 1,
-                            p: 1.5,
+                            p: 1.25,
                             border: '1px solid #eee',
                             borderRadius: 1,
                             bgcolor: '#fff',
                             display: 'flex',
                             flexDirection: { xs: 'column', sm: 'row' },
-                            gap: 2,
-                            alignItems: 'center',
+                            gap: 1.5,
+                            alignItems: { xs: 'stretch', sm: 'center' },
+                            overflowWrap: 'anywhere',
                           }}
                         >
-                          <Box sx={{ flex: 2 }}>
+                          <Box sx={{ flex: 2, minWidth: 0 }}>
                             <Typography variant="caption" sx={{ color: '#888' }}>
                               Method & Evaluation
                             </Typography>
@@ -529,7 +492,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                             </Typography>
                           </Box>
 
-                          <Box sx={{ flex: 2 }}>
+                          <Box sx={{ flex: 2, minWidth: 0 }}>
                             <Typography variant="caption" sx={{ color: '#888' }}>
                               Sample / Rule
                             </Typography>
@@ -543,7 +506,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                             </Typography>
                           </Box>
 
-                          <Box sx={{ flex: 2 }}>
+                          <Box sx={{ flex: 2, minWidth: 0 }}>
                             <Typography variant="caption" sx={{ color: '#888' }}>
                               Reaction Plan
                             </Typography>
@@ -557,6 +520,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                               size="small"
                               variant="text"
                               onClick={() => openReview('control', ctrl.id, ctrl.method, ctrl)}
+                              disabled={!writable || !canUseSavedDocument}
                             >
                               Review
                             </Button>
@@ -568,7 +532,16 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
                 ))}
               </Stack>
             ) : (
-              <Alert severity="info">No operations defined. Click &quot;+ Add Op&quot; to begin.</Alert>
+              <Paper variant="outlined" sx={{ minHeight: { xs: 230, md: 300 }, display: 'grid', placeItems: 'center', p: 3, borderStyle: 'dashed', bgcolor: '#fff', borderColor: '#dce0d2' }}>
+                <Box sx={{ textAlign: 'center', maxWidth: 360 }}>
+                  <Typography component="h2" sx={{ fontSize: 18, fontWeight: 700, mb: 0.75 }}>Build your control plan</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Start with an operation, or review your PFD and PFMEA sources.</Typography>
+                  <Stack direction="row" sx={{ justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    {writable && <Button variant="contained" size="small" onClick={handleAddOperation}>Add operation</Button>}
+                    <Button size="small" onClick={onOpenSources}>Review sources</Button>
+                  </Stack>
+                </Box>
+              </Paper>
             )}
           </Box>
         </Box>
@@ -576,10 +549,7 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
 
       {/* Validation Findings View */}
       {activeTab === 'validation' && (
-        <Paper sx={{ p: 3, border: '1px solid #e3e4db', boxShadow: 'none' }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Profile Validation Results
-          </Typography>
+        <Paper id="cp-findings-panel" role="tabpanel" aria-labelledby="cp-findings-tab" sx={{ p: 2, border: '1px solid #e3e4db', boxShadow: 'none' }}>
           {validationResult ? (
             validationResult.isValid ? (
               <Alert severity="success" sx={{ mb: 2 }}>
@@ -622,30 +592,9 @@ export const ControlPlanV2View: React.FC<ControlPlanV2ViewProps> = ({
             )
           ) : (
             <Alert severity="info">
-              Click &quot;Validate Profile&quot; on the toolbar to check your control plan against the customer-neutral baseline profile.
+              Use Review → Validate profile to check your control plan against the customer-neutral baseline profile.
             </Alert>
           )}
-        </Paper>
-      )}
-
-      {/* Header & Metadata View */}
-      {activeTab === 'header' && (
-        <Paper sx={{ p: 3, border: '1px solid #e3e4db', boxShadow: 'none' }}>
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Control Plan Header Information
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 2 }}>
-            {Object.entries(document.header).map(([key, val]) => (
-              <Box key={key}>
-                <Typography variant="caption" sx={{ color: '#888', fontWeight: 600 }}>
-                  {key}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {String(val || '—')}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
         </Paper>
       )}
 

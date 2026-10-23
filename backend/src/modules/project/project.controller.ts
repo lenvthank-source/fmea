@@ -196,6 +196,15 @@ export class ProjectController {
     return this.projectService.findDocuments(req.user.tenantId, id, isAdmin);
   }
 
+  @Post(':id/initialize-dfmea')
+  @Permissions('dfmea.create')
+  async initializeDfmea(
+    @Request() req: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    return this.projectService.initializeDfmea(actor(req), id);
+  }
+
   @Post(':id/revisions')
   @Permissions('project.edit')
   async createRevision(

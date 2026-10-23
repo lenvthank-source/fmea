@@ -269,3 +269,88 @@ describe('transaction rollback and canonical source preservation', () => {
     expect(f.db.auditLog.create).not.toHaveBeenCalled();
   });
 });
+
+describe('initializeDfmea', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('creates DFMEA document, revision 1.0, empty DFMEA data, and audit entry when none exists', async () => {
+    const f = fixture();
+    const actor = { tenantId, userId, isGuest: false };
+    const createdDoc = { id: randomUUID(), name: 'Synthetic project - Design FMEA' };
+    const createdRev = { id: randomUUID(), revisionNumber: '1.0' };
+
+    f.db.document.findFirst = jest.fn().mockResolvedValue(null);
+    f.db.document.create = jest.fn().mockResolvedValue(createdDoc);
+    f.db.documentRevision.create = jest.fn().mockResolvedValue(createdRev);
+    f.db.document.update = jest.fn().mockResolvedValue({ ...createdDoc, currentRevisionId: createdRev.id });
+    f.db.dfmeaDocument.create = jest.fn().mockResolvedValue({ id: randomUUID() });
+
+    const auditSpy = jest.fn().mockResolvedValue({});
+    (f.service as any).auditLogService = { createEntry: auditSpy };
+
+    const result = await f.service.initializeDfmea(actor, projectId);
+
+    expect(result).toEqual({
+      documentId: createdDoc.id,
+      revisionId: createdRev.id,
+      alreadyExisted: false,
+    });
+    expect(f.db.document.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'DFMEA',
+          projectId,
+          tenantId,
+        }),
+      }),
+    );
+    expect(f.db.documentRevision.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          documentId: createdDoc.id,
+          revisionNumber: '1.0',
+          status: 'draft',
+        }),
+      }),
+    );
+    expect(f.db.dfmeaDocument.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          revisionId: createdRev.id,
+          tenantId,
+        }),
+      }),
+    );
+    expect(auditSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId,
+        userId,
+        entityType: 'document',
+        action: 'create',
+      }),
+    );
+  });
+
+  it('idempotently returns existing document and revision if DFMEA already exists', async () => {
+    const f = fixture();
+    const actor = { tenantId, userId, isGuest: false };
+    const existingDocId = randomUUID();
+    const existingRevId = randomUUID();
+
+    f.db.document.findFirst = jest.fn().mockResolvedValue({
+      id: existingDocId,
+      currentRevisionId: existingRevId,
+      revisions: [{ id: existingRevId }],
+    });
+    f.db.document.create = jest.fn();
+
+    const result = await f.service.initializeDfmea(actor, projectId);
+
+    expect(result).toEqual({
+      documentId: existingDocId,
+      revisionId: existingRevId,
+      alreadyExisted: true,
+    });
+    expect(f.db.document.create).not.toHaveBeenCalled();
+  });
+});

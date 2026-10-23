@@ -154,6 +154,8 @@ export function DfmeaWorkspace() {
   const { token, hasPermission } = useAuth();
   const [initialLoading, setInitialLoading] = useState(true);
   const [missingDocument, setMissingDocument] = useState(false);
+  const [initializing, setInitializing] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
   const [data, setData] = useState<DfmeaData>(emptyDfmea);
   const [revision, setRevision] = useState("");
   const [history, setHistory] = useState<Revision[]>([]);
@@ -232,7 +234,14 @@ export function DfmeaWorkspace() {
     setRevision("");
     void (async () => {
       try {
-        const docs = await request("/projects/" + projectId + "/documents");
+        const [docs, p] = await Promise.all([
+          request("/projects/" + projectId + "/documents"),
+          request("/projects/" + projectId),
+        ]);
+        if (!stop) {
+          setName(p.name ?? p.partName ?? "Design analysis");
+          setIsArchived(p.status === "archived");
+        }
         const doc = docs.find((d: { type: string }) => d.type === "DFMEA");
         if (!doc) {
           if (!stop) setMissingDocument(true);
@@ -246,8 +255,6 @@ export function DfmeaWorkspace() {
           ),
         );
         setRevision(doc.currentRevisionId ?? "");
-        const p = await request("/projects/" + projectId);
-        if (!stop) setName(p.name ?? p.partName ?? "Design analysis");
       } catch (e) {
         if (!stop) setError(String(e));
       } finally {
@@ -258,6 +265,30 @@ export function DfmeaWorkspace() {
       stop = true;
     };
   }, [projectId, token, request]);
+
+  const handleInitializeDfmea = async () => {
+    if (!projectId || !token || initializing) return;
+    setInitializing(true);
+    setError("");
+    try {
+      const result = await request(
+        "/projects/" + projectId + "/initialize-dfmea",
+        { method: "POST" },
+      );
+      setMissingDocument(false);
+      setRevision(result.revisionId);
+      const revs = await request("/projects/" + projectId + "/revisions");
+      setHistory(
+        revs.filter(
+          (r: { document: { type: string } }) => r.document.type === "DFMEA",
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setInitializing(false);
+    }
+  };
   useEffect(() => {
     if (!revision) return;
     let stop = false;
@@ -1231,9 +1262,66 @@ export function DfmeaWorkspace() {
             </h2>
             <p>
               {missingDocument
-                ? "This program does not contain a Design FMEA document. Open a program with DFMEA enabled, or include Design FMEA when creating a new program."
+                ? "This program does not currently contain a Design FMEA document. You can initialize one now to start authoring system and component failure chains, functions, and verified risk mitigation."
                 : error || "No revision is selected for this document."}
             </p>
+            {error && missingDocument && (
+              <p role="alert" style={{ color: "#dc2626", fontWeight: 500, marginTop: "8px" }}>
+                {error}
+              </p>
+            )}
+            {missingDocument && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  alignItems: "center",
+                  marginTop: "16px",
+                  marginBottom: "16px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {isArchived ? (
+                  <span
+                    style={{
+                      color: "#b45309",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      background: "#fef3c7",
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    Archived programs are read only
+                  </span>
+                ) : (
+                  <Button
+                    variant="contained"
+                    disabled={initializing || !hasPermission("dfmea.create")}
+                    onClick={handleInitializeDfmea}
+                    sx={{
+                      bgcolor: "#242621",
+                      color: "#ffffff",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 2,
+                      py: 1,
+                      "&:hover": { bgcolor: "#383a34" },
+                      "&:disabled": { bgcolor: "#9ca3af", color: "#f3f4f6" },
+                    }}
+                  >
+                    {initializing
+                      ? "Initializing Design FMEA…"
+                      : "Initialize Design FMEA for this Program"}
+                  </Button>
+                )}
+                {!isArchived && !hasPermission("dfmea.create") && (
+                  <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>
+                    Requires Quality Engineer role (dfmea.create permission)
+                  </span>
+                )}
+              </div>
+            )}
             <Link to="/app/projects">Back to programs</Link>
           </section>
         )}

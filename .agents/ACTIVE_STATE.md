@@ -1,6 +1,33 @@
 # FMEApex — active handoff
 
-Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.14.0** (0.14.0), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.14.0.md`. Hosted deployment completion is separate.
+Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.15.0** (0.15.0), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.15.0.md`. Hosted deployment completion is separate.
+
+## Latest request — one-click initialize Design FMEA button (completed)
+
+2026-10-23. User identified dead-end screen on existing reference/process-only programs ("No Design FMEA in this program — This program does not contain a Design FMEA document") and requested Option 1: One-click "Initialize Design FMEA" button.
+Delivered:
+- **Backend Endpoint & Service**:
+  - `ProjectService.initializeDfmea`: atomic, multi-tenant transaction creating `Document` (`type: DFMEA`), `DocumentRevision` (`1.0 draft`), and `DfmeaDocument` with `emptyDfmea()` JSON aggregate. Idempotently returns existing document and revision if already initialized. Enforces active project write access via `assertActorProjectAccess` (rejecting archived programs). Records `DOCUMENT_INITIALIZE` audit log.
+  - `ProjectController`: added `POST /api/v1/projects/:id/initialize-dfmea` guarded by `@Permissions('dfmea.create')`.
+  - Added unit test suite in `backend/src/modules/project/project-history.spec.ts` covering creation, idempotency, and audit logging (17/17 tests PASS).
+- **Frontend Workspace Integration**:
+  - `frontend/src/features/dfmea/DfmeaWorkspace.tsx`: added `handleInitializeDfmea`, `isArchived` detection, and replaced static dead-end panel with an actionable button: "Initialize Design FMEA for this Program". Includes `initializing` loading state, disabled state when lacking `dfmea.create` permission, and archived program warning banner.
+  - Automatically activates the newly initialized revision and transitions straight into the DFMEA authoring workspace without page reload.
+- **Verification**:
+  - Backend Jest tests: **29/29 suites PASS, 210/210 tests PASS**.
+  - Frontend unit tests: **45/45 tests PASS**.
+  - Production builds: Backend Nest build PASS; Frontend Vite build PASS (0 errors).
+  - Directory README sync complete; Graphify knowledge graph updated (4,454 nodes, 7,790 edges, 353 communities).
+
+## Latest request — compact Control Plan workspace (completed)
+
+2026-10-23. User requested compression/removal of repeated screen content and explicitly removed the unnecessary Control Plan V2 title. Delivered one user-facing Control Plan heading, compact revision/phase/count/save strip, grouped Review/Export/Plan options menus and collapsed source comparison. Metadata remains in Plan details; requirement-profile caveat is available from an accessible information popover. Empty plans use one direct Add operation/source-review canvas; populated plans have a210px navigator and denser wrapping cards. No schema-version badge or redundant metadata tab/header.
+
+Files: new frontend/src/features/control-plan/ControlPlanToolbar.tsx; updated ControlPlanWorkspace.tsx and ControlPlanV2View.tsx. Existing source/revision/import/export/approval handlers retained. Native PDF uses configured API_BASE_URL and passed auth token instead of a relative URL/localStorage token. Unsaved saved-document actions and read-only review writes are disabled; changing revision resets local validation state. No backend/schema/database/engineering values/version/commit/push changed by this task.
+
+Verification: frontend TypeScript/Vite production build PASS;8Control Plan helper tests PASS; targeted oxlint has only4pre-existing workspace effect-dependency warnings. Actual browser isolated-component QA: single title, no V2 label, collapsed source selection/preview, review/export/options menus, keyboard validation->Findings, add operation/characteristic, saved/dirty/read-only state. Desktop1133px and narrow actual270px had scrollWidth=clientWidth; desktop operation canvas starts~187px. No real account/backend writes or actual approval/PDF endpoint execution in QA. Temporary fixture files removed, browser viewport restored and fixture tab closed. Screenshot: C:/Users/Palak/.codex/visualizations/2026/10/18/01a15026-af67-7522-87fc-f43cefdb4e2b/control-plan-compact-20261023.png. Local loopback Vite preview running on5173; no visible helper window. README sync complete; final Graphify refresh follows this checkpoint (optional SQL-parser warning remains).
+
+Unrelated initialize-dfmea-button plan/index changes appeared during this turn and were preserved; do not attribute or implement them as part of this layout task. Existing completed CP evolution/retirement history remains below. Future publication requires separately requested and confirmed version.
 
 ## Latest request — complete retirement of Control Plan Version 1 & standardization on Version 2 (completed)
 
