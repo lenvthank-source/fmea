@@ -789,13 +789,17 @@ export function fingerprint(value: unknown) {
 }
 
 export function previewCp(
-  document: CpDocumentV1,
+  document: AnyCpDocument,
   candidates: CpLine[],
   sourceRevisionId: string,
 ): CpChange[] {
+  if (isCpDocumentV2(document)) {
+    return previewCpV2(document, candidates, sourceRevisionId);
+  }
+  const lines = (document as CpDocumentV1).lines ?? [];
   const changes: CpChange[] = [];
   const existing = new Map(
-    document.lines
+    lines
       .filter((l) => l.source?.revisionId === sourceRevisionId)
       .map((l) => [l.source!.key, l]),
   );
@@ -922,7 +926,7 @@ function previewCpV2(
 }
 
 export function applyCpChanges(
-  document: CpDocumentV1,
+  document: AnyCpDocument,
   changes: CpChange[],
   decisions: {
     key: string;
@@ -930,7 +934,10 @@ export function applyCpChanges(
     reason?: string;
     resolutions?: Record<string, 'source' | 'current'>;
   }[],
-): CpDocumentV1 {
+): AnyCpDocument {
+  if (isCpDocumentV2(document)) {
+    return applyCpChangesV2(document, changes, decisions);
+  }
   const result = structuredClone(document) as CpDocumentV1,
     byKey = new Map(changes.map((c) => [c.key, c]));
   const seen = new Set<string>();

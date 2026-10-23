@@ -1,6 +1,8 @@
 import {
   blankCpLine,
   emptyCpDocument,
+  emptyCpDocumentV2,
+  isCpDocumentV2,
   validateCpDocument,
   previewCp,
   applyCpChanges,
@@ -214,5 +216,26 @@ describe('reviewed control-plan source governance', () => {
     expect(
       controlPlanReadiness(d).errors.some((e) => e.includes('sampling')),
     ).toBe(true);
+  });
+  it('previews and applies changes on V2 control-plan document without crashing on undefined lines', () => {
+    const d = emptyCpDocumentV2();
+    expect(isCpDocumentV2(d)).toBe(true);
+    const c = candidate();
+    const changes = previewCp(d, [c], 'source');
+    expect(changes).toHaveLength(1);
+    expect(changes[0].kind).toBe('add');
+    const result = applyCpChanges(d, changes, [
+      { key: 'stable', action: 'add' },
+    ]);
+    expect(isCpDocumentV2(result)).toBe(true);
+    if (isCpDocumentV2(result)) {
+      expect(result.operations).toHaveLength(1);
+      expect(result.operations[0].characteristics).toHaveLength(1);
+      expect(result.operations[0].characteristics[0].controls).toHaveLength(1);
+      expect(
+        result.operations[0].characteristics[0].controls[0].sourceBindings?.[0]
+          ?.entityId,
+      ).toBe('stable');
+    }
   });
 });

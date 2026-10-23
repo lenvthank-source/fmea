@@ -725,7 +725,7 @@ export class ControlPlanDocumentService {
       expectedVersion: loaded.version,
       sourceRevisionId,
       sourceFingerprint: fingerprint(source.candidates),
-      changes: previewCp(loaded.document as CpDocumentV1, source.candidates, sourceRevisionId),
+      changes: previewCp(loaded.document, source.candidates, sourceRevisionId),
       warnings: source.warnings,
       document: loaded.document,
       type: source.type,
@@ -774,59 +774,61 @@ export class ControlPlanDocumentService {
           'Control plan or source changed. Preview again.',
         );
       const document = applyCpChanges(
-        preview.document as CpDocumentV1,
+        preview.document,
         preview.changes,
         body.decisions,
       );
-      const detached = document.lines.filter(
-        (line) =>
-          !line.source &&
-          preview.changes.some(
-            (change) => change.kind === 'remove' && change.lineId === line.id,
-          ),
-      );
-      const operationIds = [
-        ...new Set(detached.map((line) => line.operationId).filter(Boolean)),
-      ];
-      const characteristicIds = [
-        ...new Set(
-          detached.map((line) => line.characteristicId).filter(Boolean),
-        ),
-      ];
-      const [existingOperations, existingCharacteristics] = await Promise.all([
-        operationIds.length
-          ? tx.processStep.findMany({
-              where: {
-                id: { in: operationIds },
-                revision: { document: { tenantId: actor.tenantId } },
-              },
-              select: { id: true },
-            })
-          : Promise.resolve([]),
-        characteristicIds.length
-          ? tx.characteristic.findMany({
-              where: {
-                id: { in: characteristicIds },
-                tenantId: actor.tenantId,
-              },
-              select: { id: true },
-            })
-          : Promise.resolve([]),
-      ]);
-      const presentOperations = new Set(
-          existingOperations.map((value) => value.id),
-        ),
-        presentCharacteristics = new Set(
-          existingCharacteristics.map((value) => value.id),
+      if (!isCpDocumentV2(document)) {
+        const detached = document.lines.filter(
+          (line) =>
+            !line.source &&
+            preview.changes.some(
+              (change) => change.kind === 'remove' && change.lineId === line.id,
+            ),
         );
-      for (const line of detached) {
-        if (line.operationId && !presentOperations.has(line.operationId))
-          line.operationId = '';
-        if (
-          line.characteristicId &&
-          !presentCharacteristics.has(line.characteristicId)
-        )
-          line.characteristicId = '';
+        const operationIds = [
+          ...new Set(detached.map((line) => line.operationId).filter(Boolean)),
+        ];
+        const characteristicIds = [
+          ...new Set(
+            detached.map((line) => line.characteristicId).filter(Boolean),
+          ),
+        ];
+        const [existingOperations, existingCharacteristics] = await Promise.all([
+          operationIds.length
+            ? tx.processStep.findMany({
+                where: {
+                  id: { in: operationIds },
+                  revision: { document: { tenantId: actor.tenantId } },
+                },
+                select: { id: true },
+              })
+            : Promise.resolve([]),
+          characteristicIds.length
+            ? tx.characteristic.findMany({
+                where: {
+                  id: { in: characteristicIds },
+                  tenantId: actor.tenantId,
+                },
+                select: { id: true },
+              })
+            : Promise.resolve([]),
+        ]);
+        const presentOperations = new Set(
+            existingOperations.map((value) => value.id),
+          ),
+          presentCharacteristics = new Set(
+            existingCharacteristics.map((value) => value.id),
+          );
+        for (const line of detached) {
+          if (line.operationId && !presentOperations.has(line.operationId))
+            line.operationId = '';
+          if (
+            line.characteristicId &&
+            !presentCharacteristics.has(line.characteristicId)
+          )
+            line.characteristicId = '';
+        }
       }
       if (
         !document.sourceBaselines.some(

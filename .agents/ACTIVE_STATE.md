@@ -1,6 +1,20 @@
 # FMEApex — active handoff
 
-Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.15.1** (0.15.1), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.15.1.md`. Hosted deployment completion is separate.
+Updated 2026-10-23. Workspace F:/proj-fmea. Release **v0.15.2** (0.15.2), user-confirmed for Git publication. Target `origin/main`; compare its SHA with HEAD when resuming. Release ledger: `versions/v0.15.2.md`. Hosted deployment completion is separate.
+
+## Latest request — fix Control Plan sync-preview & apply 500 error on V2 documents (completed)
+
+2026-10-23. User reported NestJS server error log: `POST /api/v1/revisions/:id/control-plan-document/sync-preview` failed with 500 error (`TypeError: Cannot read properties of undefined (reading 'filter') at previewCp ... at ControlPlanDocumentService.makePreview`).
+Delivered:
+- **Backend Sync Preview & Apply V2 Dispatch**:
+  - In `control-plan-document.ts`: `previewCp` and `applyCpChanges` now check `isCpDocumentV2(document)` and route directly to `previewCpV2` and `applyCpChangesV2` respectively.
+  - In `ControlPlanDocumentService.apply`: guarded `document.lines.filter` detached line cleanup inside `if (!isCpDocumentV2(document))` so V2 structured plans are not queried for missing flat `.lines`.
+  - Added unit test in `control-plan-document.spec.ts` verifying that candidate lines reconcile into V2 operations and characteristics with proper source bindings.
+- **Verification**:
+  - Backend Jest tests: **29/29 suites PASS, 212/212 tests PASS**.
+  - Frontend unit tests: **45/45 tests PASS**.
+  - Production builds: Backend Nest build PASS; Frontend Vite build PASS (0 errors).
+  - Directory README sync complete; Graphify knowledge graph updated.
 
 ## Latest request — fix Control Plan validation UUID crash & initial save (completed)
 
